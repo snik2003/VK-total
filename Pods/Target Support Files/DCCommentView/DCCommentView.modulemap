@@ -1,0 +1,6 @@
+framework module DCCommentView {
+  umbrella header "DCCommentView-umbrella.h"
+
+  export *
+  module * { export * }
+}
