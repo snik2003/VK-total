@@ -285,7 +285,6 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
         alertController.addAction(action1)
         
         if vkSingleton.shared.adminGroupID.count > 0 {
-            print(vkSingleton.shared.adminGroupID.count)
             let action2 = UIAlertAction(title: "Управление сообществами", style: .default){ action in
                 
                 self.openGroupsListController(uid: vkSingleton.shared.userID, title: "Управление", type: "admin")
