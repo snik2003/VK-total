@@ -42,8 +42,14 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
             self.searchBar.showsCancelButton = false
             
             if self.userID == vkSingleton.shared.userID && self.type == "" && self.source == "" {
-                let actionButton = UIBarButtonItem(barButtonSystemItem: .compose, target: self, action: #selector(self.tapActionButton(sender:)))
-                self.navigationItem.rightBarButtonItem = actionButton
+                
+                if vkSingleton.shared.adminGroupID.count == 0 {
+                    let actionButton = UIBarButtonItem(barButtonSystemItem: .search, target: self, action: #selector(self.tapSearchButton(sender:)))
+                    self.navigationItem.rightBarButtonItem = actionButton
+                } else {
+                    let actionButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(self.tapActionButton(sender:)))
+                    self.navigationItem.rightBarButtonItem = actionButton
+                }
             }
             
             self.tableView.separatorStyle = .none
@@ -269,7 +275,9 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
         }
     }
     
-        
+    @objc func tapSearchButton(sender: UIBarButtonItem) {
+        self.openGroupsListController(uid: vkSingleton.shared.userID, title: "Поиск", type: "search")
+    }
         
     @objc func tapActionButton(sender: UIBarButtonItem) {
      
