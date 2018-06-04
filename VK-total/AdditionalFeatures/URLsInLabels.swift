@@ -407,11 +407,17 @@ extension UILabel {
                 }
                 
                 if isLongPress == false {
-                    self.becomeFirstResponder()
-                    let menu = UIMenuController.shared
-                    if !menu.isMenuVisible {
-                        menu.setTargetRect(self.bounds, in: self)
-                        menu.setMenuVisible(true, animated: true)
+                    if let vc = delegate as? DialogController {
+                        vc.action1Message(sender: longPress)
+                    } else if let vc = delegate as? GroupDialogController {
+                        vc.actionMessage(sender: longPress)
+                    } else {
+                      self.becomeFirstResponder()
+                        let menu = UIMenuController.shared
+                        if !menu.isMenuVisible {
+                            menu.setTargetRect(self.bounds, in: self)
+                            menu.setMenuVisible(true, animated: true)
+                        }
                     }
                 }
             }
