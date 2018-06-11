@@ -38,6 +38,9 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     var commentView: DCCommentView!
     var attachments = ""
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -71,6 +74,11 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
         super.viewDidLoad()
 
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.configureTableView()
             
             self.tableView.register(CommentCell2.self, forCellReuseIdentifier: "commentCell")
@@ -310,6 +318,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+        commentView.tabHeight = self.tabHeight
         
         if vkSingleton.shared.commentFromGroup > 0 && vkSingleton.shared.commentFromGroup == abs(Int(self.ownerID)!) {
             setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)

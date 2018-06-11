@@ -42,6 +42,9 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
     var tableView = UITableView()
     var commentView: DCCommentView!
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
     var statusLabel = UILabel()
@@ -88,6 +91,11 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
         }
         
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.configureTableView()
             self.tableView.separatorStyle = .none
             
@@ -169,6 +177,7 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+        commentView.tabHeight = self.tabHeight
         
         if let gid = Int(self.groupID) {
             setCommentFromGroupID(id: gid, controller: self)

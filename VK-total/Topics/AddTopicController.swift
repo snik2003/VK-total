@@ -38,8 +38,16 @@ class AddTopicController: UIViewController, UIImagePickerControllerDelegate, UIN
     var typeOf: [String] = []
     var isLoad: [Bool] = []
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if UIScreen.main.nativeBounds.height == 2436 {
+            self.navHeight = 88
+            self.tabHeight = 83
+        }
         
         pickerController.delegate = self
         textView.delegate = self
@@ -97,13 +105,13 @@ class AddTopicController: UIViewController, UIImagePickerControllerDelegate, UIN
         fromGroupLabel.isHidden = false
         
         if attach.count > 0 {
-            titleView.frame = CGRect(x: 10, y: 110, width: UIScreen.main.bounds.width - 20, height: 60)
-            textView.frame = CGRect(x: 10, y: 180, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 180 - 100 - 44 - 48)
+            titleView.frame = CGRect(x: 10, y: navHeight + 50, width: UIScreen.main.bounds.width - 20, height: 60)
+            textView.frame = CGRect(x: 10, y: titleView.frame.maxY, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - titleView.frame.maxY - 100 - 44 - tabHeight)
             collectionView.frame = CGRect(x: 10, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width - 20, height: 80)
             toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 100, width: UIScreen.main.bounds.width, height: 44)
         } else {
-            titleView.frame = CGRect(x: 10, y: 110, width: UIScreen.main.bounds.width - 20, height: 100)
-            textView.frame = CGRect(x: 10, y: 220, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 220 - 10 - 44 - 48)
+            titleView.frame = CGRect(x: 10, y: navHeight + 50, width: UIScreen.main.bounds.width - 20, height: 100)
+            textView.frame = CGRect(x: 10, y: titleView.frame.maxY, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - titleView.frame.maxY - 10 - 44 - tabHeight)
             collectionView.frame = CGRect(x: 10, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width - 20, height: 0)
             toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 44)
         }
@@ -164,13 +172,13 @@ class AddTopicController: UIViewController, UIImagePickerControllerDelegate, UIN
         fromGroupLabel.isHidden = true
         
         if attach.count > 0 {
-            titleView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: 30)
-            textView.frame = CGRect(x: 10, y: 110, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 110 - kbSize.height - 100 - 44)
+            titleView.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: 30)
+            textView.frame = CGRect(x: 10, y: navHeight + 50, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - navHeight - 50 - kbSize.height - 100 - 44)
             collectionView.frame = CGRect(x: 10, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width - 20, height: 80)
             toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 100, width: UIScreen.main.bounds.width, height: 44)
         } else {
-            titleView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: 60)
-            textView.frame = CGRect(x: 10, y: 140, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 140 - kbSize.height - 10 - 44)
+            titleView.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: 60)
+            textView.frame = CGRect(x: 10, y: navHeight + 80, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - navHeight - 80 - kbSize.height - 10 - 44)
             collectionView.frame = CGRect(x: 10, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width - 20, height: 0)
             toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 44)
         }

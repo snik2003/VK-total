@@ -139,5 +139,7 @@ class PersonalController: UITableViewController {
             parseDialog.addDependency(getServerDataOperation)
             OperationQueue().addOperation(parseDialog)
         }
+        
+        tableView.deselectRow(at: indexPath, animated: false)
     }
 }

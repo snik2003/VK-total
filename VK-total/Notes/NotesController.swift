@@ -19,10 +19,18 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     var tableView: UITableView!
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.createTableView()
             
             if self.userID == vkSingleton.shared.userID {
@@ -72,7 +80,7 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     func createTableView() {
         tableView = UITableView()
-        tableView.frame = CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 48 - 60)
+        tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
         
         tableView.delegate = self
         tableView.dataSource = self

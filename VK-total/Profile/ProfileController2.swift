@@ -42,6 +42,9 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     let count = 20
     var isRefresh = false
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -52,6 +55,11 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         super.viewDidLoad()
         
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.createTableView()
             
             self.barItem.isEnabled = true
@@ -86,7 +94,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     
     func createTableView() {
         tableView = UITableView()
-        tableView.frame = CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 60 - 48)
+        tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
     
         tableView.delegate = self
         tableView.dataSource = self

@@ -29,8 +29,16 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     var isPlaying = false
     var playIndexPath: IndexPath!
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if UIScreen.main.nativeBounds.height == 2436 {
+            self.navHeight = 88
+            self.tabHeight = 83
+        }
         
         OperationQueue.main.addOperation {
             ViewControllerUtils().showActivityIndicator(uiView: self.view)
@@ -74,7 +82,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         
         tableView.register(MyMusicCell.self, forCellReuseIdentifier: "music")
         
-        tableView.frame = CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 60 - 48)
+        tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
         self.view.addSubview(tableView)
     }
     

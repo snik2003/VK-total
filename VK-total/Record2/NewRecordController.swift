@@ -57,10 +57,18 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
     var repostItemID = 0
     var repostAccessKey = ""
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.pickerController.delegate = self
             self.textView.delegate = self
             
@@ -245,12 +253,12 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
     func startConfigureView() {
         
         if attach.count > 0 || link != "" {
-            textView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 70 - 48 - 90 - 30 - 44)
+            textView.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - navHeight - 10 - tabHeight - 90 - 30 - 44)
             collectionView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 80)
             setupLabel.frame = CGRect(x: 10, y: textView.frame.maxY + 90, width: UIScreen.main.bounds.width-20, height: 30)
             toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 90 + 30, width: UIScreen.main.bounds.width, height: 44)
         } else {
-            textView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 70 - 48 - 30 - 44)
+            textView.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - navHeight - 10 - tabHeight - 30 - 44)
             collectionView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 0)
             setupLabel.frame = CGRect(x: 10, y: textView.frame.maxY, width: UIScreen.main.bounds.width-20, height: 30)
             toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 30, width: UIScreen.main.bounds.width, height: 44)

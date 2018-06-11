@@ -40,6 +40,9 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -58,6 +61,11 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         super.viewDidLoad()
 
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
             self.navigationItem.rightBarButtonItem = self.barButton
             
@@ -1149,7 +1157,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         let dFont = UIFont(name: "Verdana", size: 12)!
         
         let maxWidth = UIScreen.main.bounds.width - 4 * 10
-        let maxHeight = UIScreen.main.bounds.height - 48 - 60 - 20
+        let maxHeight = UIScreen.main.bounds.height - navHeight - tabHeight - 20
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
         let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: dFont], context: nil)

@@ -40,8 +40,16 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
     var typeOf: [String] = []
     var isLoad: [Bool] = []
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if UIScreen.main.nativeBounds.height == 2436 {
+            self.navHeight = 88
+            self.tabHeight = 83
+        }
         
         configureSetupLabel()
         
@@ -168,7 +176,7 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
         }
         
         if attach.count > 0 {
-            textView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 70 - 48 - 100 - setupLabelSize - 44)
+            textView.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - navHeight - 10 - tabHeight - 100 - setupLabelSize - 44)
             collectionView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 80)
             
             if replyID != 0 {
@@ -177,7 +185,7 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
             
             toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 100 + setupLabelSize, width: UIScreen.main.bounds.width, height: 44)
         } else {
-            textView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - 70 - 48 - 20 - setupLabelSize - 44)
+            textView.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - navHeight - 10 - tabHeight - 20 - setupLabelSize - 44)
             collectionView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 0)
             
             if replyID != 0 {

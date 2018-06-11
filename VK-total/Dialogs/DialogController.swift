@@ -13,6 +13,9 @@ import SwiftyJSON
 
 class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     var chat: [ChatInfo] = []
     var dialogs: [DialogHistory] = []
     var users: [DialogsUsers] = []
@@ -84,6 +87,11 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         super.viewDidLoad()
         
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.configureTableView()
             self.tableView.separatorStyle = .none
             
@@ -169,6 +177,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+        commentView.tabHeight = self.tabHeight
         
         setCommentFromGroupID(id: 0, controller: self)
         

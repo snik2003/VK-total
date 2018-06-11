@@ -22,6 +22,9 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     var offset = 0
     var count = 30
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     var topics: [Topic] = []
     var topicProfiles: [WallProfiles] = []
     
@@ -60,6 +63,11 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
         super.viewDidLoad()
 
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.createTableView()
         }
         
@@ -81,6 +89,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+        commentView.tabHeight = self.tabHeight
         
         if vkSingleton.shared.commentFromGroup > 0 && vkSingleton.shared.commentFromGroup == abs(Int(self.groupID)!) {
             setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)

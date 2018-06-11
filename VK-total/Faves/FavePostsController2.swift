@@ -39,6 +39,9 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     let count = 100
     var isRefresh = false
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -50,6 +53,11 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        if UIScreen.main.nativeBounds.height == 2436 {
+            self.navHeight = 88
+            self.tabHeight = 83
+        }
+        
         createTableView()
         let menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[0], items: itemsMenu as [AnyObject])
         menuView.cellBackgroundColor = UIColor.white
@@ -121,7 +129,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     
     func createTableView() {
         tableView = UITableView()
-        tableView.frame = CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 60 - 48)
+        tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
         
         tableView.delegate = self
         tableView.dataSource = self

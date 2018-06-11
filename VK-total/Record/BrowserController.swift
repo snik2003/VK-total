@@ -29,13 +29,21 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     var workURL = ""
     var avatarURL = ""
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if UIScreen.main.nativeBounds.height == 2436 {
+            self.navHeight = 88
+            self.tabHeight = 83
+        }
         
         ViewControllerUtils().showActivityIndicator(uiView: self.view)
         
         let configuration = WKWebViewConfiguration()
-        let frameRect = CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 60 - 48 - 44)
+        let frameRect = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight - 44)
         
         webView = WKWebView(frame: frameRect, configuration: configuration)
         webView.translatesAutoresizingMaskIntoConstraints = false

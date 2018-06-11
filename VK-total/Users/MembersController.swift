@@ -29,10 +29,18 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
     var members = [Friends]()
     var searchMembers = [Friends]()
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         OperationQueue.main.addOperation {
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
             self.createSearchBar()
             self.createTableView()
             
@@ -55,14 +63,14 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
     }
 
     func createSearchBar() {
-        searchBar = UISearchBar(frame: CGRect(x: 0, y: 60, width: UIScreen.main.bounds.width, height: 54))
+        searchBar = UISearchBar(frame: CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: 54))
         
         self.view.addSubview(searchBar)
     }
     
     func createTableView() {
         tableView = UITableView()
-        tableView.frame = CGRect(x: 0, y: searchBar.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 48 - searchBar.frame.maxY)
+        tableView.frame = CGRect(x: 0, y: searchBar.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - tabHeight - searchBar.frame.maxY)
         
         tableView.delegate = self
         tableView.dataSource = self

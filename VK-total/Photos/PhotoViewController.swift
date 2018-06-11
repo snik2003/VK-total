@@ -22,6 +22,9 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
     var likes = [Likes]()
     var reposts = [Likes]()
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -30,6 +33,11 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if UIScreen.main.nativeBounds.height == 2436 {
+            self.navHeight = 88
+            self.tabHeight = 83
+        }
         
         OperationQueue.main.addOperation {
             ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
@@ -325,9 +333,9 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.row == 0 {
             if photo.count > 0 {
-                return tableView.bounds.height - 40 - 110
+                return tableView.bounds.height - 40 - navHeight - tabHeight
             }
-            return tableView.bounds.height - 110
+            return tableView.bounds.height - navHeight - tabHeight
         }
         if indexPath.row == 1 {
             return 40

@@ -22,6 +22,9 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     var tableView = UITableView()
     var commentView: DCCommentView!
     
+    var navHeight: CGFloat = 64
+    var tabHeight: CGFloat = 49
+    
     var ownerID = ""
     var itemID = ""
     var accessKey = ""
@@ -77,6 +80,13 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
         super.viewDidLoad()
 
         OperationQueue.main.addOperation {
+            
+            if UIScreen.main.nativeBounds.height == 2436 {
+                self.navHeight = 88
+                self.tabHeight = 83
+            }
+            
+            print("tab = \(self.tabHeight)")
             self.configureTableView()
             
             let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
@@ -102,6 +112,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+        commentView.tabHeight = self.tabHeight
         
         setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
         
@@ -396,7 +407,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     
                     if self.news.count > 0 {
                         if self.news[0].canComment == 0 {
-                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 44)
+                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
                             self.view.addSubview(self.tableView)
                             self.commentView.removeFromSuperview()
                         } else {
@@ -535,7 +546,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     
                     if self.news.count > 0 {
                         if self.news[0].canComment == 0 {
-                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 44)
+                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
                             self.view.addSubview(self.tableView)
                             self.commentView.removeFromSuperview()
                         } else {
