@@ -86,7 +86,6 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                 self.tabHeight = 83
             }
             
-            print("tab = \(self.tabHeight)")
             self.configureTableView()
             
             let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
