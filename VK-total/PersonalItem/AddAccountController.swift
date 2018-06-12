@@ -68,7 +68,7 @@ class AddAccountController: UITableViewController {
                 let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
                 alertController.addAction(cancelAction)
                 
-                let action1 = UIAlertAction(title: "Сменить учетную запись", style: .destructive) { action in
+                let action1 = UIAlertAction(title: "Перейти в «\(account.firstName) \(account.lastName)»", style: .destructive) { action in
                     
                     vkSingleton.shared.userID = "\(account.userID)"
                     vkSingleton.shared.avatarURL = ""
