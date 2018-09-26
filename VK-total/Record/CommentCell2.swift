@@ -306,7 +306,7 @@ class CommentCell2: UITableViewCell {
                                 let setAnimatedImageToRow = SetAnimatedImageToRow.init(data: data, imageView: photoImage, cell: cell, indexPath: indexPath, tableView: tableView)
                                 OperationQueue.main.addOperation(setAnimatedImageToRow)
                                 OperationQueue.main.addOperation {
-                                    photoImage.bringSubview(toFront: gifSizeLabel)
+                                    photoImage.bringSubviewToFront(gifSizeLabel)
                                     gifImage.removeFromSuperview()
                                 }
                             }
@@ -445,21 +445,21 @@ class CommentCell2: UITableViewCell {
     }
     
     func setLikesButton(comment: Comments) {
-        likesButton.setTitle("\(comment.countLikes)", for: UIControlState.normal)
-        likesButton.setTitle("\(comment.countLikes)", for: UIControlState.selected)
+        likesButton.setTitle("\(comment.countLikes)", for: UIControl.State.normal)
+        likesButton.setTitle("\(comment.countLikes)", for: UIControl.State.selected)
         
         if comment.userLikes == 1 {
-            likesButton.setTitleColor(UIColor.purple, for: UIControlState.normal)
-            likesButton.setTitleColor(UIColor.purple, for: UIControlState.selected)
-            likesButton.setTitleColor(UIColor.purple, for: UIControlState.disabled)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.purple), for: UIControlState.normal)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.purple), for: UIControlState.selected)
+            likesButton.setTitleColor(UIColor.purple, for: UIControl.State.normal)
+            likesButton.setTitleColor(UIColor.purple, for: UIControl.State.selected)
+            likesButton.setTitleColor(UIColor.purple, for: UIControl.State.disabled)
+            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.purple), for: UIControl.State.normal)
+            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.purple), for: UIControl.State.selected)
         } else {
-            likesButton.setTitleColor(UIColor.darkGray, for: UIControlState.normal)
-            likesButton.setTitleColor(UIColor.darkGray, for: UIControlState.selected)
-            likesButton.setTitleColor(UIColor.darkGray, for: UIControlState.disabled)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.darkGray), for: UIControlState.normal)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.darkGray), for: UIControlState.selected)
+            likesButton.setTitleColor(UIColor.darkGray, for: UIControl.State.normal)
+            likesButton.setTitleColor(UIColor.darkGray, for: UIControl.State.selected)
+            likesButton.setTitleColor(UIColor.darkGray, for: UIControl.State.disabled)
+            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.darkGray), for: UIControl.State.normal)
+            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.darkGray), for: UIControl.State.selected)
         }
     }
 
@@ -484,7 +484,7 @@ class CommentCell2: UITableViewCell {
         let maxWidth = UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(rect.size.width)
         var height = Double(rect.size.height)
@@ -572,7 +572,7 @@ class CommentCell2: UITableViewCell {
             let range = (fullString as NSString).range(of: replyText)
             
             let attributedString = NSMutableAttributedString(string: fullString)
-            attributedString.setAttributes([NSAttributedStringKey.foregroundColor:  dateLabel.tintColor], range: range)
+            attributedString.setAttributes([NSAttributedString.Key.foregroundColor:  dateLabel.tintColor], range: range)
             dateLabel.attributedText = attributedString
         }
         

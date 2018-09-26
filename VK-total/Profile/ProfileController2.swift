@@ -69,7 +69,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             self.tableView.separatorStyle = .none
             
             self.refreshControl.attributedTitle = NSAttributedString(string: "Обновляем данные")
-            self.refreshControl.addTarget(self, action: #selector(self.pullToRefresh), for: UIControlEvents.valueChanged)
+            self.refreshControl.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
             self.refreshControl.tintColor = UIColor.gray
             self.tableView.addSubview(self.refreshControl)
             

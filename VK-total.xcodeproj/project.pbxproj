@@ -927,7 +927,7 @@
 				TargetAttributes = {
 					17624A801FEBC4A20028016E = {
 						CreatedOnToolsVersion = 9.2;
-						LastSwiftMigration = 0920;
+						LastSwiftMigration = 1000;
 						ProvisioningStyle = Manual;
 						SystemCapabilities = {
 							com.apple.BackgroundModes = {
@@ -1432,7 +1432,7 @@
 				PROVISIONING_PROFILE = "36a0a398-8d4a-4564-a76c-37361945b0aa";
 				PROVISIONING_PROFILE_SPECIFIER = snik2003.VKon;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
@@ -1475,7 +1475,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "744fe015-9152-4ce5-9a50-eaa59f9c0122";
 				PROVISIONING_PROFILE_SPECIFIER = snik2003.VKon.distribution;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;

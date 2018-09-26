@@ -17,7 +17,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.3.9</string>
+	<string>2.4.0</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -49,7 +49,7 @@
 	<key>NSCalendarsUsageDescription</key>
 	<string>$(PRODUCT_NAME) calendar events</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Приложение "ВКлючайся!" запрашивает доступ к вашей библиотеке фотографий и камере.</string>
+	<string>Вы сможете делать фотографии и отправлять их в личных сообщениях, прикреплять к вашим записям и комментариям.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>$(PRODUCT_NAME) contact use</string>
 	<key>NSLocationAlwaysUsageDescription</key>
@@ -59,9 +59,9 @@
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app requires to access your microphone to record video with your voice send via chat</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Приложение "ВКлючайся!" запрашивает доступ к вашей библиотеке фотографий и камере.</string>
+	<string>Вы сможете добавлять медиафайлы из галереи устройства и сохранять их, отправлять в личных сообщениях или прикреплять к своим записям и комментариям.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Приложение "ВКлючайся!" запрашивает доступ к вашей библиотеке фотографий и камере.</string>
+	<string>Вы сможете добавлять медиафайлы из галереи устройства и сохранять их, отправлять в личных сообщениях или прикреплять к своим записям и комментариям.</string>
 	<key>NSRemindersUsageDescription</key>
 	<string>$(PRODUCT_NAME) reminder use</string>
 	<key>UIBackgroundModes</key>

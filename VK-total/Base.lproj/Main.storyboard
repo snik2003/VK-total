@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14109" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="dBU-YW-1s6">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="14313.18" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="dBU-YW-1s6">
     <device id="retina4_0" orientation="portrait">
         <adaptation id="fullscreen"/>
     </device>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14088"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="14283.14"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
@@ -1391,13 +1391,13 @@
                                                                 <autoresizingMask key="autoresizingMask"/>
                                                                 <subviews>
                                                                     <label opaque="NO" userInteractionEnabled="NO" tag="1" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="100" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="rAm-RV-15M">
-                                                                        <rect key="frame" x="-0.5" y="10" width="65" height="24.5"/>
+                                                                        <rect key="frame" x="0.0" y="10" width="65" height="24.5"/>
                                                                         <fontDescription key="fontDescription" name="Verdana-Bold" family="Verdana" pointSize="20"/>
                                                                         <nil key="textColor"/>
                                                                         <nil key="highlightedColor"/>
                                                                     </label>
                                                                     <label opaque="NO" userInteractionEnabled="NO" tag="2" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="фото" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.80000000000000004" enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MO7-3a-VYM">
-                                                                        <rect key="frame" x="-0.5" y="36.5" width="65" height="13.5"/>
+                                                                        <rect key="frame" x="0.0" y="36.5" width="65" height="13.5"/>
                                                                         <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
                                                                         <nil key="textColor"/>
                                                                         <nil key="highlightedColor"/>
@@ -3285,7 +3285,7 @@
                                 </prototypes>
                             </tableView>
                             <segmentedControl opaque="NO" contentMode="scaleAspectFit" contentHorizontalAlignment="center" contentVerticalAlignment="center" segmentControlStyle="bar" selectedSegmentIndex="0" translatesAutoresizingMaskIntoConstraints="NO" id="Q8D-xn-WUb">
-                                <rect key="frame" x="9.5" y="528" width="300" height="31"/>
+                                <rect key="frame" x="10" y="528" width="300" height="31"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="30" id="0Uw-vi-ilf"/>
                                 </constraints>
@@ -4698,14 +4698,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Оставить отзыв в AppStore" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="luR-Fr-YWh">
-                                                    <rect key="frame" x="63" y="0.0" width="242" height="44.5"/>
+                                                    <rect key="frame" x="70" y="0.0" width="235" height="44.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="14"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" image="pers_itunes" id="edB-YC-SJ4">
-                                                    <rect key="frame" x="8" y="2" width="40" height="40"/>
+                                                    <rect key="frame" x="15" y="2" width="40" height="40"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                 </imageView>
                                             </subviews>
@@ -4719,14 +4719,14 @@
                                             <autoresizingMask key="autoresizingMask"/>
                                             <subviews>
                                                 <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Написать разработчикам" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="pS8-Nh-CwH">
-                                                    <rect key="frame" x="63" y="0.0" width="242" height="44.5"/>
+                                                    <rect key="frame" x="70" y="0.0" width="235" height="44.5"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                     <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="14"/>
                                                     <nil key="textColor"/>
                                                     <nil key="highlightedColor"/>
                                                 </label>
                                                 <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" image="pers_feedback" id="6j0-a7-fIF">
-                                                    <rect key="frame" x="8" y="2" width="40" height="40"/>
+                                                    <rect key="frame" x="15" y="2" width="40" height="40"/>
                                                     <autoresizingMask key="autoresizingMask"/>
                                                 </imageView>
                                             </subviews>
@@ -4801,7 +4801,7 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Выберите учетную запись:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Tg-d2-xhw">
-                                            <rect key="frame" x="10" y="-0.5" width="300" height="30"/>
+                                            <rect key="frame" x="10" y="0.0" width="300" height="30"/>
                                             <fontDescription key="fontDescription" name="Verdana-Bold" family="Verdana" pointSize="12"/>
                                             <nil key="textColor"/>
                                             <nil key="highlightedColor"/>
@@ -4853,7 +4853,7 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Push-уведомления" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="eTI-xR-PAH">
-                                            <rect key="frame" x="15" y="10" width="231" height="19.5"/>
+                                            <rect key="frame" x="15" y="10" width="231" height="20"/>
                                             <constraints>
                                                 <constraint firstAttribute="height" constant="20" id="Rm1-fR-AtD"/>
                                             </constraints>
@@ -4869,7 +4869,7 @@
                                             <color key="onTintColor" red="0.14562258119999999" green="0.42388910060000001" blue="0.63527506590000005" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                         </switch>
                                         <label hidden="YES" opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="top" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Label" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" enabled="NO" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="zqg-Wp-UgI">
-                                            <rect key="frame" x="40" y="39.5" width="260" height="35.5"/>
+                                            <rect key="frame" x="40" y="40" width="260" height="35"/>
                                             <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
                                             <nil key="textColor"/>
                                             <nil key="highlightedColor"/>
@@ -4927,7 +4927,7 @@
                                             </userDefinedRuntimeAttributes>
                                         </view>
                                         <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Новые сообщения" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="eC7-A5-H4l">
-                                            <rect key="frame" x="80" y="0.5" width="225" height="40"/>
+                                            <rect key="frame" x="80" y="0.0" width="225" height="40"/>
                                             <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="14"/>
                                             <nil key="textColor"/>
                                             <nil key="highlightedColor"/>
@@ -5329,10 +5329,10 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" maximumZoomScale="10" translatesAutoresizingMaskIntoConstraints="NO" id="bri-cJ-FKF">
-                                            <rect key="frame" x="0.0" y="0.0" width="320" height="436"/>
+                                            <rect key="frame" x="0.0" y="0.0" width="320" height="435.5"/>
                                             <subviews>
                                                 <imageView clipsSubviews="YES" tag="1" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="kXW-Qo-phA">
-                                                    <rect key="frame" x="0.0" y="0.0" width="320" height="436"/>
+                                                    <rect key="frame" x="0.0" y="0.0" width="320" height="435.5"/>
                                                     <gestureRecognizers/>
                                                 </imageView>
                                             </subviews>
@@ -5459,12 +5459,12 @@
             </objects>
             <point key="canvasLocation" x="-1956" y="784"/>
         </scene>
-        <!--Профиль-->
+        <!--Profile Controller2-->
         <scene sceneID="QuS-jI-Ljv">
             <objects>
                 <viewController storyboardIdentifier="ProfileController2" useStoryboardIdentifierAsRestorationIdentifier="YES" id="hgO-oQ-C5o" customClass="ProfileController2" customModule="VK_total" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
-                    <navigationItem key="navigationItem" title="Профиль" id="ezJ-pP-0Ur" userLabel="Я">
+                    <navigationItem key="navigationItem" id="ezJ-pP-0Ur" userLabel="Я">
                         <barButtonItem key="backBarButtonItem" title="Назад" id="FL3-fL-Rad"/>
                         <barButtonItem key="rightBarButtonItem" image="three-dots" id="N5R-zf-E1z">
                             <connections>
@@ -6342,11 +6342,11 @@
             </objects>
             <point key="canvasLocation" x="1840" y="784"/>
         </scene>
-        <!--Профиль-->
+        <!--Navigation Controller-->
         <scene sceneID="AGi-5m-aKK">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="GGS-9T-4v3" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="Профиль" image="profile" landscapeImage="profile" largeContentSizeImage="profile" id="kqx-J7-MYb"/>
+                    <tabBarItem key="tabBarItem" title="" image="profile" landscapeImage="profile" largeContentSizeImage="profile" id="kqx-J7-MYb"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="j7e-zM-WSA">
                         <rect key="frame" x="0.0" y="20" width="320" height="44"/>

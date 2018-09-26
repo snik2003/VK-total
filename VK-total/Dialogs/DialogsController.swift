@@ -36,7 +36,7 @@ class DialogsController: UITableViewController {
         tableView.addSubview(refreshControl!)
         
         OperationQueue.main.addOperation {
-            let addButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.add, target: self, action: #selector(self.addDialog))
+            let addButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonItem.SystemItem.add, target: self, action: #selector(self.addDialog))
             self.navigationItem.rightBarButtonItem = addButton
             
             self.tableView.separatorStyle = .none

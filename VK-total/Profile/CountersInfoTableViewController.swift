@@ -44,7 +44,7 @@ class CountersInfoTableViewController: UITableViewController, UISearchBarDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.refreshControl?.addTarget(self, action: #selector(CountersInfoTableViewController.refresh), for: UIControlEvents.valueChanged)
+        self.refreshControl?.addTarget(self, action: #selector(CountersInfoTableViewController.refresh), for: UIControl.Event.valueChanged)
         self.refreshControl?.tintColor = UIColor.gray
         tableView.addSubview(self.refreshControl!)
 
@@ -52,7 +52,7 @@ class CountersInfoTableViewController: UITableViewController, UISearchBarDelegat
             if self.typeData != "photosCount" && self.typeData != "followersCount"{
                 self.searchBar = UISearchBar()
                 self.searchBar.delegate = self
-                self.searchBar.searchBarStyle = UISearchBarStyle.minimal
+                self.searchBar.searchBarStyle = UISearchBar.Style.minimal
                 self.searchBar.sizeToFit()
                 self.searchBar.placeholder = ""
                 self.searchBar.showsCancelButton = false

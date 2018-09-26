@@ -42,7 +42,7 @@ class ProfileController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: UIControlEvents.valueChanged)
+        self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
         refreshControl?.tintColor = UIColor.gray
         tableView.addSubview(refreshControl!)
         
@@ -218,7 +218,7 @@ class ProfileController: UITableViewController {
             }
         }
         
-        return UITableViewAutomaticDimension
+        return UITableView.automaticDimension
     }
     
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

@@ -1038,7 +1038,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                 let rangeOfColoredString = (fullString as NSString).range(of: "●")
                 let attributedString = NSMutableAttributedString(string: fullString)
                 
-                attributedString.setAttributes([NSAttributedStringKey.foregroundColor: nameLabel.tintColor /*UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)*/], range: rangeOfColoredString)
+                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: nameLabel.tintColor /*UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)*/], range: rangeOfColoredString)
                 
                 nameLabel.attributedText = attributedString
             }
@@ -1160,7 +1160,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         let maxHeight = UIScreen.main.bounds.height - navHeight - tabHeight - 20
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: dFont], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: dFont], context: nil)
         
         let width = maxWidth + 20
         var height = rect.size.height + 40

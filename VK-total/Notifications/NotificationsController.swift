@@ -24,16 +24,18 @@ class NotificationsController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        self.refreshControl?.addTarget(self, action: #selector(self.updateNotifications), for: UIControlEvents.valueChanged)
+        self.refreshControl?.addTarget(self, action: #selector(self.updateNotifications), for: UIControl.Event.valueChanged)
         refreshControl?.tintColor = UIColor.black
         tableView.addSubview(refreshControl!)
+        
+        self.refreshControl?.beginRefreshing()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         OperationQueue.main.addOperation {
-            self.refreshControl?.beginRefreshing()
+            
             self.tableView.separatorStyle = .none
             ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
         }

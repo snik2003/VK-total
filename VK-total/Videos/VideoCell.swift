@@ -197,8 +197,8 @@ class VideoCell: UITableViewCell {
         repostsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
         repostsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
         
-        repostsButton.setTitle("\(record.countReposts)", for: UIControlState.normal)
-        repostsButton.setTitle("\(record.countReposts)", for: UIControlState.selected)
+        repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
+        repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
         repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
         repostsButton.imageView?.tintColor = UIColor.black
         repostsButton.setTitleColor(UIColor.black, for: .normal)
@@ -215,8 +215,8 @@ class VideoCell: UITableViewCell {
          commentsButton.setImage(UIImage(named: "message2"), for: .normal)
          commentsButton.setTitleColor(UIColor.init(red: 124/255, green: 172/255, blue: 238/255, alpha: 1), for: .normal)
          
-         commentsButton.setTitle("\(record.countComments)", for: UIControlState.normal)
-         commentsButton.setTitle("\(record.countComments)", for: UIControlState.selected)
+         commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
+         commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
          
          self.addSubview(commentsButton)
     }
@@ -414,8 +414,8 @@ class VideoCell: UITableViewCell {
     }
     
     func setLikesButton(record: Videos) {
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.normal)
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.selected)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
         if record.userLikes == 1 {
             likesButton.setTitleColor(UIColor.purple, for: .normal)
@@ -461,7 +461,7 @@ class VideoCell: UITableViewCell {
         let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(rect.size.width)
         var height = Double(rect.size.height)
         

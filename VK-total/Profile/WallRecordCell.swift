@@ -401,19 +401,19 @@ class WallRecordCell: UITableViewCell {
         
         repostsButton.frame = CGRect(x: bounds.size.width - likesButtonWight - leftInsets, y: topY, width: likesButtonWight, height: likesButtonHeight)
         
-        repostsButton.setTitle("\(record.countReposts)", for: UIControlState.normal)
-        repostsButton.setTitle("\(record.countReposts)", for: UIControlState.selected)
+        repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
+        repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
         
         commentsButton.frame = CGRect(x: (bounds.size.width - likesButtonWight) / 2.0, y: topY, width: likesButtonWight, height: likesButtonHeight)
         
-        commentsButton.setTitle("\(record.countComments)", for: UIControlState.normal)
-        commentsButton.setTitle("\(record.countComments)", for: UIControlState.selected)
+        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
+        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
         
     }
     
     func setLikesButton(record: Wall) {
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.normal)
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.selected)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
         if record.userLikes == 1 {
             likesButton.setTitleColor(UIColor.purple, for: .normal)
@@ -493,7 +493,7 @@ class WallRecordCell: UITableViewCell {
                                 let setAnimatedImageToRow = SetAnimatedImageToRow.init(data: data, imageView: imageView, cell: cell, indexPath: indexPath, tableView: tableView)
                                 OperationQueue.main.addOperation(setAnimatedImageToRow)
                                 OperationQueue.main.addOperation {
-                                    imageView.bringSubview(toFront: gifSizeLabel)
+                                    imageView.bringSubviewToFront(gifSizeLabel)
                                     gifImage.removeFromSuperview()
                                 }
                             }
@@ -736,7 +736,7 @@ class WallRecordCell: UITableViewCell {
         let maxWidth = bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(rect.size.width)
         var height = Double(rect.size.height)
         
@@ -769,7 +769,7 @@ class WallRecordCell: UITableViewCell {
         let maxWidth = bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(rect.size.width)
         var height = Double(rect.size.height)
         

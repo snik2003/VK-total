@@ -17,7 +17,7 @@ class ProfileView: UIView {
     var onlineStatusLabel = UILabel()
     var ageLabel = UILabel()
     var nameLabel = UILabel()
-    var infoButton = UIButton(type: UIButtonType.detailDisclosure)
+    var infoButton = UIButton(type: UIButton.ButtonType.detailDisclosure)
     var messageButton = UIButton()
     var friendButton = UIButton()
     var allRecordsButton = UIButton()
@@ -55,35 +55,35 @@ class ProfileView: UIView {
         
         if profile.friendStatus == 0 {
             if profile.canSendFriendRequest == 1 {
-                friendButton.setTitle("Добавить в друзья", for: UIControlState.normal)
-                friendButton.setTitle("Добавить в друзья", for: UIControlState.disabled)
+                friendButton.setTitle("Добавить в друзья", for: UIControl.State.normal)
+                friendButton.setTitle("Добавить в друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = true
                 friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
             } else {
-                friendButton.setTitle("Вы не друзья", for: UIControlState.normal)
-                friendButton.setTitle("Вы не друзья", for: UIControlState.disabled)
+                friendButton.setTitle("Вы не друзья", for: UIControl.State.normal)
+                friendButton.setTitle("Вы не друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = false
                 friendButton.backgroundColor = UIColor.lightGray
             }
         }
         
         if profile.friendStatus == 1 {
-            friendButton.setTitle("Вы подписаны", for: UIControlState.normal)
-            friendButton.setTitle("Вы подписаны", for: UIControlState.disabled)
+            friendButton.setTitle("Вы подписаны", for: UIControl.State.normal)
+            friendButton.setTitle("Вы подписаны", for: UIControl.State.disabled)
             friendButton.isEnabled = true
             friendButton.backgroundColor = UIColor.lightGray
         }
         
         if profile.friendStatus == 2 {
-            friendButton.setTitle("Подписан на вас", for: UIControlState.normal)
-            friendButton.setTitle("Подписан на вас", for: UIControlState.disabled)
+            friendButton.setTitle("Подписан на вас", for: UIControl.State.normal)
+            friendButton.setTitle("Подписан на вас", for: UIControl.State.disabled)
             friendButton.isEnabled = true
             friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         }
         
         if profile.friendStatus == 3 {
-            friendButton.setTitle("У Вас в друзьях", for: UIControlState.normal)
-            friendButton.setTitle("У Вас в друзьях", for: UIControlState.disabled)
+            friendButton.setTitle("У Вас в друзьях", for: UIControl.State.normal)
+            friendButton.setTitle("У Вас в друзьях", for: UIControl.State.disabled)
             friendButton.isEnabled = true
             friendButton.backgroundColor = UIColor.lightGray
         }
@@ -93,37 +93,46 @@ class ProfileView: UIView {
         
         messageButton.layer.borderColor = UIColor.black.cgColor
         messageButton.layer.borderWidth = 0.6
-        messageButton.layer.cornerRadius = 15
+        messageButton.layer.cornerRadius = statusButtonHeight/3
         messageButton.clipsToBounds = true
         messageButton.setTitle("Сообщение", for: .normal)
         
-        friendButton.titleLabel?.textAlignment = .center
-        friendButton.layer.borderColor = UIColor.black.cgColor
-        friendButton.layer.borderWidth = 0.6
-        friendButton.layer.cornerRadius = 15
-        friendButton.clipsToBounds = true
-        
-        if profile.canWritePrivateMessage == 1 {
-            messageButton.isEnabled = true
-            messageButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-        } else {
-            messageButton.isEnabled = false
-            messageButton.backgroundColor = UIColor.lightGray
-        }
-        
-        updateFriendButton(profile: profile)
+        messageButton.isEnabled = true
+        messageButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         
         messageButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
-        friendButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
         
-        let width = (UIScreen.main.bounds.width - 2 * leftInsets2 - interInsets2) / 2
-        let friendButtonX = UIScreen.main.bounds.width - leftInsets2 - width
-        
-        messageButton.frame = CGRect(x: leftInsets2, y: topY + topInsets2, width: width, height: statusButtonHeight)
-        friendButton.frame = CGRect(x: friendButtonX, y: topY + topInsets2, width: width, height: statusButtonHeight)
-        
+        if profile.uid == vkSingleton.shared.userID {
+            messageButton.setTitle("Отправить сообщение себе", for: .normal)
+            
+            let width = UIScreen.main.bounds.width - 4 * leftInsets2
+            messageButton.frame = CGRect(x: 2 * leftInsets2, y: topY + topInsets2, width: width, height: statusButtonHeight)
+        } else {
+            friendButton.titleLabel?.textAlignment = .center
+            friendButton.layer.borderColor = UIColor.black.cgColor
+            friendButton.layer.borderWidth = 0.6
+            friendButton.layer.cornerRadius = statusButtonHeight/3
+            friendButton.clipsToBounds = true
+            
+            if profile.canWritePrivateMessage == 0 {
+                messageButton.isEnabled = false
+                messageButton.backgroundColor = UIColor.lightGray
+            }
+            
+            updateFriendButton(profile: profile)
+            
+            friendButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
+            
+            let width = (UIScreen.main.bounds.width - 2 * leftInsets2 - interInsets2) / 2
+            let friendButtonX = UIScreen.main.bounds.width - leftInsets2 - width
+            
+            messageButton.frame = CGRect(x: leftInsets2, y: topY + topInsets2, width: width, height: statusButtonHeight)
+            friendButton.frame = CGRect(x: friendButtonX, y: topY + topInsets2, width: width, height: statusButtonHeight)
+            
+            self.addSubview(friendButton)
+        }
+    
         self.addSubview(messageButton)
-        self.addSubview(friendButton)
         
         return topY + statusButtonHeight + 2 * topInsets2
     }
@@ -133,7 +142,7 @@ class ProfileView: UIView {
         let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets3
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(rect.size.width)
         let height = Double(rect.size.height)
         
@@ -468,6 +477,7 @@ class ProfileView: UIView {
         let infoButtonY = UIScreen.main.bounds.width * 0.9 - bottomInfoButton - infoButtonHeight
         infoButton.frame = CGRect(x: infoButtonX, y: infoButtonY, width: infoButtonHeight, height: infoButtonHeight)
         
+        
         self.addSubview(avatarImage)
         self.addSubview(nameLabel)
         self.addSubview(onlineStatusLabel)
@@ -477,10 +487,7 @@ class ProfileView: UIView {
         setCustomFields(profile: profile)
         
         topY = UIScreen.main.bounds.width * 0.9
-        
-        if profile.uid != vkSingleton.shared.userID {
-            topY = setStatusButtons(profile, topY)
-        }
+        topY = setStatusButtons(profile, topY)
         
         return topY
     }

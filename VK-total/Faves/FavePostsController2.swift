@@ -59,7 +59,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         }
         
         createTableView()
-        let menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[0], items: itemsMenu as [AnyObject])
+        let menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[0], items: itemsMenu)
         menuView.cellBackgroundColor = UIColor.white
         menuView.cellSelectionColor = UIColor.white
         menuView.cellTextLabelAlignment = .center
@@ -325,7 +325,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             }
         }
         
-        return UITableViewAutomaticDimension
+        return UITableView.automaticDimension
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
@@ -371,7 +371,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 return height
             }
         }
-        return UITableViewAutomaticDimension
+        return UITableView.automaticDimension
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {

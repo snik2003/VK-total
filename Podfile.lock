@@ -1,23 +1,23 @@
 PODS:
-  - Alamofire (4.7.2)
+  - Alamofire (4.7.3)
   - BEMCheckBox (1.4.1)
-  - BTNavigationDropdownMenu (0.4.1)
+  - BTNavigationDropdownMenu (0.5)
   - CMPhotoCropEditor (1.0.1)
   - DCCommentView (0.1.6)
-  - DropDown (2.3.2)
+  - DropDown (2.3.6)
   - FLAnimatedImage (1.0.12)
   - Popover (1.2.0)
-  - Realm (3.5.0):
-    - Realm/Headers (= 3.5.0)
-  - Realm/Headers (3.5.0)
-  - RealmSwift (3.5.0):
-    - Realm (= 3.5.0)
+  - Realm (3.10.0):
+    - Realm/Headers (= 3.10.0)
+  - Realm/Headers (3.10.0)
+  - RealmSwift (3.10.0):
+    - Realm (= 3.10.0)
   - SCLAlertView (0.8)
-  - SmileLock (3.0.2)
-  - SwiftMessages (4.1.4):
-    - SwiftMessages/App (= 4.1.4)
-  - SwiftMessages/App (4.1.4)
-  - SwiftyJSON (4.1.0)
+  - SmileLock (3.0.5)
+  - SwiftMessages (6.0.0):
+    - SwiftMessages/App (= 6.0.0)
+  - SwiftMessages/App (6.0.0)
+  - SwiftyJSON (4.2.0)
   - SWRevealViewController (2.3.0)
 
 DEPENDENCIES:
@@ -55,20 +55,20 @@ SPEC REPOS:
     - SWRevealViewController
 
 SPEC CHECKSUMS:
-  Alamofire: e4fa87002c137ba2d8d634d2c51fabcda0d5c223
+  Alamofire: c7287b6e5d7da964a70935e5db17046b7fde6568
   BEMCheckBox: 5ba6e37ade3d3657b36caecc35c8b75c6c2b1a4e
-  BTNavigationDropdownMenu: 093f3cbfad1572f2c222bdf8d17584d1e13380d4
+  BTNavigationDropdownMenu: ba3a26fdb6a56c4721c31df8a0875106c259663a
   CMPhotoCropEditor: 50010afad0ec87be9c49c98a99e65be90f23a249
   DCCommentView: 9b46fc2c78f64a28c72f482e5f7d75574b8ff5a8
-  DropDown: 7f87abecc28f9b4edad810fe1211c5c018c257e5
+  DropDown: e8bfbce001b2e6b7e8abfdd42e12b565712d84f4
   FLAnimatedImage: 4a0b56255d9b05f18b6dd7ee06871be5d3b89e31
   Popover: 28c1ac8e937ab2b3965bd2da7dd18324357abc41
-  Realm: 0378021c424e4e2bd6a0e63b27881e929d9b9ad1
-  RealmSwift: 3322562622fda2ad596985ead4d8d8be30cf838c
+  Realm: 85ab9e4f779d66f6e9ffeb118dc25b7f130c96ac
+  RealmSwift: 69121c8b86d0ae005fb779efdb10e606732e1c74
   SCLAlertView: 6a77bb2edfc65e04dbe57725546cb4107a506b85
-  SmileLock: c03dc80d208b33731606e996f5c3fed61255cf59
-  SwiftMessages: 2c33fdee8b8f38dfc7e1036684456b505891da8c
-  SwiftyJSON: c29297daf073d2aa016295d5809cdd68045c39b3
+  SmileLock: 8f57ad4626cd23a8e1e01230521ede7761b38b0c
+  SwiftMessages: da7c981256a65b3e58022d9027a36584cf4eccf5
+  SwiftyJSON: c4bcba26dd9ec7a027fc8eade48e2c911f229e96
   SWRevealViewController: 6d3fd97f70112fd7cef9de14df4260eacce4c63a
 
 PODFILE CHECKSUM: 504f6fe4167c7da99328e4d00de29b8c9bb85f07

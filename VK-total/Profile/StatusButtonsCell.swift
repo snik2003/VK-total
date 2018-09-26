@@ -53,35 +53,35 @@ class StatusButtonsCell: UITableViewCell {
         
         if profile.friendStatus == 0 {
             if profile.canSendFriendRequest == 1 {
-                friendButton.setTitle("Добавить в друзья", for: UIControlState.normal)
-                friendButton.setTitle("Добавить в друзья", for: UIControlState.disabled)
+                friendButton.setTitle("Добавить в друзья", for: UIControl.State.normal)
+                friendButton.setTitle("Добавить в друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = true
                 friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
             } else {
-                friendButton.setTitle("Вы не друзья", for: UIControlState.normal)
-                friendButton.setTitle("Вы не друзья", for: UIControlState.disabled)
+                friendButton.setTitle("Вы не друзья", for: UIControl.State.normal)
+                friendButton.setTitle("Вы не друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = false
                 friendButton.backgroundColor = UIColor.lightGray
             }
         }
         
         if profile.friendStatus == 1 {
-            friendButton.setTitle("Вы подписаны", for: UIControlState.normal)
-            friendButton.setTitle("Вы подписаны", for: UIControlState.disabled)
+            friendButton.setTitle("Вы подписаны", for: UIControl.State.normal)
+            friendButton.setTitle("Вы подписаны", for: UIControl.State.disabled)
             friendButton.isEnabled = true
             friendButton.backgroundColor = UIColor.lightGray
         }
         
         if profile.friendStatus == 2 {
-            friendButton.setTitle("Подписан на вас", for: UIControlState.normal)
-            friendButton.setTitle("Подписан на вас", for: UIControlState.disabled)
+            friendButton.setTitle("Подписан на вас", for: UIControl.State.normal)
+            friendButton.setTitle("Подписан на вас", for: UIControl.State.disabled)
             friendButton.isEnabled = true
             friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         }
         
         if profile.friendStatus == 3 {
-            friendButton.setTitle("У Вас в друзьях", for: UIControlState.normal)
-            friendButton.setTitle("У Вас в друзьях", for: UIControlState.disabled)
+            friendButton.setTitle("У Вас в друзьях", for: UIControl.State.normal)
+            friendButton.setTitle("У Вас в друзьях", for: UIControl.State.disabled)
             friendButton.isEnabled = true
             friendButton.backgroundColor = UIColor.lightGray
         }

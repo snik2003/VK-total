@@ -205,7 +205,7 @@ class GroupProfileView: UIView {
         
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(rect.size.width)
         let height = Double(rect.size.height)
@@ -312,7 +312,7 @@ class GroupProfileView: UIView {
         
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(rect.size.width)
         let height = Double(rect.size.height)
@@ -404,7 +404,7 @@ class GroupProfileView: UIView {
         isMemberButton.titleLabel?.textAlignment = NSTextAlignment.center
         isMemberButton.layer.borderColor = UIColor.black.cgColor
         isMemberButton.layer.borderWidth = 0.6
-        isMemberButton.layer.cornerRadius = 10
+        isMemberButton.layer.cornerRadius = memberButtonHeight/3
         isMemberButton.clipsToBounds = true
         isMemberButton.isEnabled = true
         isMemberButton.isHidden = false
@@ -430,7 +430,7 @@ class GroupProfileView: UIView {
             messageButton.titleLabel?.textAlignment = NSTextAlignment.center
             messageButton.layer.borderColor = UIColor.black.cgColor
             messageButton.layer.borderWidth = 0.6
-            messageButton.layer.cornerRadius = 10
+            messageButton.layer.cornerRadius = memberButtonHeight/3
             messageButton.clipsToBounds = true
             messageButton.isEnabled = true
             messageButton.isHidden = false
@@ -452,7 +452,7 @@ class GroupProfileView: UIView {
             groupMessagesButton.titleLabel?.textAlignment = NSTextAlignment.center
             groupMessagesButton.layer.borderColor = UIColor.black.cgColor
             groupMessagesButton.layer.borderWidth = 0.6
-            groupMessagesButton.layer.cornerRadius = 10
+            groupMessagesButton.layer.cornerRadius = memberButtonHeight/3
             groupMessagesButton.clipsToBounds = true
             groupMessagesButton.isEnabled = true
             groupMessagesButton.isHidden = false

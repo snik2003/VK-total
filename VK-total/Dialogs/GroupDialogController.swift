@@ -1275,17 +1275,20 @@ extension GroupDialogController {
         picker.dismiss(animated: true, completion: nil)
     }
     
-    @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+    @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+// Local variable inserted by Swift 4.2 migrator.
+let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
+
         
         if picker == pickerController {
-            if let chosenImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
+            if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
                 
                 var imageType = "JPG"
                 var imagePath = NSURL(string: "photo.jpg")
                 var imageData: Data!
                 if pickerController.sourceType == .photoLibrary {
                     if #available(iOS 11.0, *) {
-                        imagePath = info[UIImagePickerControllerImageURL] as? NSURL
+                        imagePath = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.imageURL)] as? NSURL
                     }
                     
                     if (imagePath?.absoluteString?.containsIgnoringCase(find: ".gif"))! {
@@ -1345,7 +1348,7 @@ extension GroupDialogController {
         }
         
         if picker == pickerController2 {
-            if let chosenImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
+            if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
                 loadChatPhotoToServer(chatID: "", image: chosenImage, filename: "file")
             }
         }
@@ -1557,4 +1560,14 @@ extension GroupDialogController: UICollectionViewDelegate, UICollectionViewDataS
         
         return cell
     }
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromUIImagePickerControllerInfoKeyDictionary(_ input: [UIImagePickerController.InfoKey: Any]) -> [String: Any] {
+	return Dictionary(uniqueKeysWithValues: input.map {key, value in (key.rawValue, value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromUIImagePickerControllerInfoKey(_ input: UIImagePickerController.InfoKey) -> String {
+	return input.rawValue
 }

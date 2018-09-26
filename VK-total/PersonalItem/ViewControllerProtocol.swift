@@ -1599,7 +1599,7 @@ extension UIViewController: NotificationCellProtocol {
         
         //var text1 = text.components(separatedBy: [".","!","?"])
         //let iconImage = UIImage(named: "AppIcon")
-        let view = MessageView.viewFromNib(layout: .cardView)
+        let view = MessageView.viewFromNib(layout: .tabView)
         view.configureContent(title: "ВКлючайся!", body: text, iconImage: nil, iconText: nil, buttonImage: nil, buttonTitle: "", buttonTapHandler: nil)
         
         
@@ -1618,8 +1618,8 @@ extension UIViewController: NotificationCellProtocol {
         view.configureDropShadow()
         var config = SwiftMessages.defaultConfig
         config.presentationStyle = .top
-        config.presentationContext = .window(windowLevel: UIWindowLevelStatusBar)
-        config.duration = .seconds(seconds: 5)
+        config.presentationContext1 = .viewController(self)
+        config.duration = .seconds(seconds: 4)
         config.interactiveHide = true
         
         SwiftMessages.show(config: config, view: view)
@@ -1740,7 +1740,7 @@ extension UIViewController: NotificationCellProtocol {
     }
     
     func showMessageOnScreen(title: String, text: String, image: UIImage?, userID: Int, chatID: Int, groupID: Int, startID: Int) {
-        let view = MessageView.viewFromNib(layout: .cardView)
+        let view = MessageView.viewFromNib(layout: .tabView)
         view.configureContent(title: title, body: text, iconImage: image, iconText: nil, buttonImage: nil, buttonTitle: "", buttonTapHandler: nil)
         
         if image != nil {
@@ -1805,8 +1805,8 @@ extension UIViewController: NotificationCellProtocol {
         view.configureDropShadow()
         var config = SwiftMessages.defaultConfig
         config.presentationStyle = .top
-        config.presentationContext = .window(windowLevel: UIWindowLevelStatusBar)
-        config.duration = .seconds(seconds: 6)
+        config.presentationContext1 = .viewController(self)
+        config.duration = .seconds(seconds: 4)
         config.interactiveHide = true
         
         SwiftMessages.show(config: config, view: view)
@@ -1878,9 +1878,9 @@ extension UIViewController: NotificationCellProtocol {
         let attributedString = NSMutableAttributedString(string: fullString)
         
         if vkSingleton.shared.commentFromGroup == 0 {
-            attributedString.setAttributes([NSAttributedStringKey.foregroundColor: UIColor.red], range: rangeOfColoredString)
+            attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.red], range: rangeOfColoredString)
         } else {
-            attributedString.setAttributes([NSAttributedStringKey.foregroundColor: ownLabel.tintColor], range: rangeOfColoredString)
+            attributedString.setAttributes([NSAttributedString.Key.foregroundColor: ownLabel.tintColor], range: rangeOfColoredString)
         }
         
         ownLabel.attributedText = attributedString
@@ -1973,9 +1973,9 @@ extension UIViewController: NotificationCellProtocol {
                             let attributedString = NSMutableAttributedString(string: fullString)
                             
                             if vkSingleton.shared.commentFromGroup == gid {
-                                attributedString.setAttributes([NSAttributedStringKey.foregroundColor: UIColor.red], range: rangeOfColoredString)
+                                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.red], range: rangeOfColoredString)
                             } else {
-                                attributedString.setAttributes([NSAttributedStringKey.foregroundColor: ownLabel.tintColor], range: rangeOfColoredString)
+                                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: ownLabel.tintColor], range: rangeOfColoredString)
                             }
                             
                             ownLabel.attributedText = attributedString

@@ -11,6 +11,12 @@ import DCCommentView
 import Popover
 import SwiftyJSON
 
+enum DialogSource {
+    case all
+    case important
+    case preview
+}
+
 class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var navHeight: CGFloat = 64
@@ -26,6 +32,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     var count = 50
     var totalCount = 0
     var mode = ""
+    var source = DialogSource.all
     
     var userID = ""
     var chatID = ""
@@ -116,6 +123,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             self.navigationItem.hidesBackButton = true
             let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
             self.navigationItem.leftBarButtonItem = closeButton
+            
+            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
         }
         
         getDialog()
@@ -226,7 +235,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         let feedFont = UIFont(name: "Verdana", size: 13)!
         
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
-        let rect = feedbackText.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: feedFont], context: nil)
+        let rect = feedbackText.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: feedFont], context: nil)
         
         let width = maxWidth + 20
         let height = rect.size.height + 40
@@ -246,13 +255,90 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         self.popover.show(view, point: startPoint)
     }
     
+    func getImportantMessages() {
+        
+        dialogs.removeAll(keepingCapacity: false)
+        estimatedHeightCache.removeAll(keepingCapacity: false)
+        
+        let url = "/method/messages.getImportantMessages"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "offset": "\(offset)",
+            "count": "200",
+            "peer_id": "\(userID)",
+            "fields": "id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,last_name_gen,online,can_write_private_message,sex",
+            "extended": "1",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        getServerDataOperation.completionBlock = {
+            guard let data = getServerDataOperation.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            //print(json)
+            
+            self.totalCount = json["response"]["messages"]["count"].intValue
+            
+            let dialogs = json["response"]["messages"]["items"].compactMap { DialogHistory(json: $0.1) }
+            for dialog in dialogs.reversed() {
+                if "\(dialog.peerID)" == self.userID {
+                    dialog.readState = 1
+                    if "\(dialog.peerID)" == vkSingleton.shared.userID {
+                        dialog.out = 0
+                    }
+                    self.dialogs.append(dialog)
+                } else {
+                    self.totalCount -= 1
+                }
+            }
+            
+            let users = json["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+            self.users.append(contentsOf: users)
+            let groups = json["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
+            
+            if groups.count > 0 {
+                for group in groups {
+                    let newGroup = DialogsUsers(json: JSON.null)
+                    newGroup.uid = "-\(group.gid)"
+                    newGroup.firstName = group.name
+                    newGroup.maxPhotoOrigURL = group.photo200
+                    if group.type == "group" {
+                        if group.isClosed == 0 {
+                            newGroup.firstNameAbl = "Открытая группа"
+                        } else if group.isClosed == 1 {
+                            newGroup.firstNameAbl = "Закрытая группа"
+                        } else {
+                            newGroup.firstNameAbl = "Частная группа"
+                        }
+                    } else if group.type == "page" {
+                        newGroup.firstNameAbl = "Публичная страница"
+                    } else {
+                        newGroup.firstNameAbl = "Мероприятие"
+                    }
+                    self.users.append(newGroup)
+                }
+            }
+            
+            OperationQueue.main.addOperation {
+                self.offset += 200
+                self.collectionView.reloadData()
+                self.tableView.reloadData()
+                self.tableView.separatorStyle = .none
+                if self.tableView.numberOfSections > 1 {
+                    self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                }
+                ViewControllerUtils().hideActivityIndicator()
+            }
+        }
+        OperationQueue().addOperation(getServerDataOperation)
+    }
+    
     func getDialog() {
         let opq = OperationQueue()
         
+        dialogs.removeAll(keepingCapacity: false)
+        users.removeAll(keepingCapacity: false)
         estimatedHeightCache.removeAll(keepingCapacity: false)
-        OperationQueue.main.addOperation {
-            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
-        }
         
         let url = "/method/messages.getHistory"
         var parameters = [
@@ -832,6 +918,20 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                         alertController.addAction(action3)
                     }
                     
+                    if dialog.important == 0 {
+                        let action5 = UIAlertAction(title: "Пометить как «Важное»", style: .default) { action in
+                            
+                            self.setImportantMessage(dialog: dialog)
+                        }
+                        alertController.addAction(action5)
+                    } else {
+                        let action5 = UIAlertAction(title: "Снять пометку «Важное»", style: .destructive) { action in
+                            
+                            self.setImportantMessage(dialog: dialog)
+                        }
+                        alertController.addAction(action5)
+                    }
+                    
                     if dialog.body != "" {
                         let action4 = UIAlertAction(title: "Скопировать текст", style: .default){ action in
                             
@@ -847,6 +947,49 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                 }
             }
         }
+    }
+    
+    func setImportantMessage(dialog: DialogHistory) {
+        
+        let url = "/method/messages.markAsImportant"
+        var parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "message_ids": "\(dialog.id)",
+            "v": vkSingleton.shared.version
+        ]
+        
+        if dialog.important == 0 {
+            parameters["important"] = "1"
+        } else {
+            parameters["important"] = "0"
+        }
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            //print(json)
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            
+            if error.errorCode == 0 {
+                OperationQueue.main.addOperation {
+                    if dialog.important == 0 {
+                        dialog.important = 1
+                    } else {
+                        dialog.important = 0
+                    }
+                    
+                    self.tableView.reloadData()
+                }
+            } else {
+                self.showErrorMessage(title: "«Важные» сообщения", msg: "\nОшибка #\(error.errorCode): \(error.errorMsg)\n")
+            }
+            self.setOfflineStatus(dependence: request)
+        }
+        OperationQueue().addOperation(request)
     }
     
     func tapEditMessage(dialog: DialogHistory) {
@@ -1206,7 +1349,52 @@ extension DialogController {
         
         if chatID == "" {
             if let id = Int(self.userID) {
-                self.openProfileController(id: id, name: "")
+                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                alertController.addAction(cancelAction)
+                
+                if id > 0 {
+                    let action1 = UIAlertAction(title: "Перейти в профиль собеседника", style: .default) { action in
+                        
+                        self.openProfileController(id: id, name: "")
+                    }
+                    alertController.addAction(action1)
+                } else if id < 0 {
+                    let action1 = UIAlertAction(title: "Перейти на страницу сообщества", style: .default) { action in
+                        
+                        self.openProfileController(id: id, name: "")
+                    }
+                    alertController.addAction(action1)
+                }
+                
+                
+                if mode == "" && id > 0 {
+                    if self.source == .all {
+                        let action2 = UIAlertAction(title: "Показать важные сообщения", style: .default) { action in
+                            
+                            self.source = .important
+                            self.offset = 0
+                            
+                            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+                            self.getImportantMessages()
+                        }
+                        alertController.addAction(action2)
+                    } else {
+                        let action2 = UIAlertAction(title: "Показать вcе сообщения", style: .default) { action in
+                            
+                            self.source = .all
+                            self.offset = 0
+                            
+                            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+                            self.getDialog()
+                        }
+                        alertController.addAction(action2)
+                    }
+                }
+                
+                
+                self.present(alertController, animated: true)
             }
         } else {
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
@@ -1641,17 +1829,20 @@ extension DialogController {
         picker.dismiss(animated: true, completion: nil)
     }
     
-    @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
+    @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+// Local variable inserted by Swift 4.2 migrator.
+let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
+
         
         if picker == pickerController {
-            if let chosenImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
+            if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
                 
                 var imageType = "JPG"
                 var imagePath = NSURL(string: "photo.jpg")
                 var imageData: Data!
                 if pickerController.sourceType == .photoLibrary {
                     if #available(iOS 11.0, *) {
-                        imagePath = info[UIImagePickerControllerImageURL] as? NSURL
+                        imagePath = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.imageURL)] as? NSURL
                     }
                     
                     if (imagePath?.absoluteString?.containsIgnoringCase(find: ".gif"))! {
@@ -1711,7 +1902,7 @@ extension DialogController {
         }
         
         if picker == pickerController2 {
-            if let chosenImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
+            if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
                 loadChatPhotoToServer(chatID: self.chatID, image: chosenImage, filename: "file")
             }
         }
@@ -1945,4 +2136,14 @@ extension CALayer {
         }
         return nil
     }
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromUIImagePickerControllerInfoKeyDictionary(_ input: [UIImagePickerController.InfoKey: Any]) -> [String: Any] {
+	return Dictionary(uniqueKeysWithValues: input.map {key, value in (key.rawValue, value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromUIImagePickerControllerInfoKey(_ input: UIImagePickerController.InfoKey) -> String {
+	return input.rawValue
 }

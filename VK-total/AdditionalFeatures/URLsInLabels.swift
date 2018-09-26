@@ -126,12 +126,12 @@ extension UILabel {
             
             let fullString = text
             let attributedString = NSMutableAttributedString(string: fullString)
-            attributedString.setAttributes([NSAttributedStringKey.font: self.font], range: NSRange(location: 0, length: fullString.length))
+            attributedString.setAttributes([NSAttributedString.Key.font: self.font], range: NSRange(location: 0, length: fullString.length))
             
             for match in allMatches1 {
                 let range = (fullString as NSString).range(of: match.getNameFromLink())
                 
-                attributedString.addAttributes([NSAttributedStringKey.foregroundColor: self.tintColor], range: range)
+                attributedString.addAttributes([NSAttributedString.Key.foregroundColor: self.tintColor], range: range)
                 
                 ranges1[match] = range
             }
@@ -151,7 +151,7 @@ extension UILabel {
             let allMatches22 = regex22.matches(in: fullString, options:[], range:NSMakeRange(0, fullString.length))
             
             for match in allMatches22 {
-                attributedString.addAttributes([NSAttributedStringKey.foregroundColor: self.tintColor], range: match.range)
+                attributedString.addAttributes([NSAttributedString.Key.foregroundColor: self.tintColor], range: match.range)
             }
             
             // url'ы
@@ -160,7 +160,7 @@ extension UILabel {
             var ranges3: [String:NSRange] = [:]
             
             for match in allMatches3 {
-                attributedString.addAttributes([NSAttributedStringKey.foregroundColor: self.tintColor], range: match.range)
+                attributedString.addAttributes([NSAttributedString.Key.foregroundColor: self.tintColor], range: match.range)
                 
                 if let url = match.url {
                     ranges3[url.absoluteString] = match.range

@@ -39,7 +39,7 @@ class Newsfeed2Controller: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu as [AnyObject])
+        let menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
         menuView.cellBackgroundColor = UIColor.white
         menuView.cellSelectionColor = UIColor.white
         menuView.cellTextLabelAlignment = .center
@@ -92,7 +92,7 @@ class Newsfeed2Controller: UITableViewController {
             }
         }
         
-        self.refreshControl?.addTarget(self, action: #selector(self.refreshButtonClick), for: UIControlEvents.valueChanged)
+        self.refreshControl?.addTarget(self, action: #selector(self.refreshButtonClick), for: UIControl.Event.valueChanged)
         refreshControl?.tintColor = UIColor.gray
         tableView.addSubview(refreshControl!)
         

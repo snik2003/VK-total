@@ -384,8 +384,8 @@ class WallRecordCell2: UITableViewCell {
             repostsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
             repostsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
             
-            repostsButton.setTitle("\(record.countReposts)", for: UIControlState.normal)
-            repostsButton.setTitle("\(record.countReposts)", for: UIControlState.selected)
+            repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
+            repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
             repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
             repostsButton.imageView?.tintColor = UIColor.black
             repostsButton.setTitleColor(UIColor.black, for: .normal)
@@ -400,8 +400,8 @@ class WallRecordCell2: UITableViewCell {
             viewsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
             viewsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
             
-            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControlState.normal)
-            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControlState.selected)
+            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.normal)
+            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.selected)
             viewsButton.setImage(UIImage(named: "views"), for: .normal)
             viewsButton.setTitleColor(UIColor.darkGray, for: .normal)
             viewsButton.isEnabled = false
@@ -415,8 +415,8 @@ class WallRecordCell2: UITableViewCell {
             commentsButton.setImage(UIImage(named: "message2"), for: .normal)
             commentsButton.setTitleColor(UIColor.init(red: 124/255, green: 172/255, blue: 238/255, alpha: 1), for: .normal)
             
-            commentsButton.setTitle("\(record.countComments)", for: UIControlState.normal)
-            commentsButton.setTitle("\(record.countComments)", for: UIControlState.selected)
+            commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
+            commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
             
             self.addSubview(commentsButton)
         }
@@ -532,8 +532,8 @@ class WallRecordCell2: UITableViewCell {
     }
     
     func setLikesButton(record: Wall) {
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.normal)
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.selected)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
         if record.userLikes == 1 {
             likesButton.setTitleColor(UIColor.purple, for: .normal)
@@ -616,7 +616,7 @@ class WallRecordCell2: UITableViewCell {
                                 let setAnimatedImageToRow = SetAnimatedImageToRow.init(data: data, imageView: imageView, cell: cell, indexPath: indexPath, tableView: tableView)
                                 OperationQueue.main.addOperation(setAnimatedImageToRow)
                                 OperationQueue.main.addOperation {
-                                    imageView.bringSubview(toFront: gifSizeLabel)
+                                    imageView.bringSubviewToFront(gifSizeLabel)
                                     gifImage.removeFromSuperview()
                                 }
                             }
@@ -876,7 +876,7 @@ class WallRecordCell2: UITableViewCell {
         let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(rect.size.width)
         var height = Double(rect.size.height)
         
@@ -901,7 +901,7 @@ class WallRecordCell2: UITableViewCell {
         let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(maxWidth)
         let height = Double(rect.size.height)
         
@@ -920,7 +920,7 @@ class WallRecordCell2: UITableViewCell {
         let maxWidth = bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(rect.size.width)
         var height = Double(rect.size.height)
         

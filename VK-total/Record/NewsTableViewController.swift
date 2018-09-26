@@ -43,7 +43,7 @@ class NewsTableViewController: UITableViewController {
         tapGesture1 = UITapGestureRecognizer(target: self, action: #selector(readMoreClick1(sender:)))
         tapGesture2 = UITapGestureRecognizer(target: self, action: #selector(readMoreClick2(sender:)))
         
-        let menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu as [AnyObject])
+        let menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
         menuView.cellBackgroundColor = UIColor.white
         menuView.cellSelectionColor = UIColor.white
         menuView.cellTextLabelAlignment = .center
@@ -91,7 +91,7 @@ class NewsTableViewController: UITableViewController {
             }
         }
         
-        self.refreshControl?.addTarget(self, action: #selector(NewsTableViewController.refreshButtonClick), for: UIControlEvents.valueChanged)
+        self.refreshControl?.addTarget(self, action: #selector(NewsTableViewController.refreshButtonClick), for: UIControl.Event.valueChanged)
         refreshControl?.tintColor = UIColor.gray
         tableView.addSubview(refreshControl!)
 
@@ -198,7 +198,7 @@ class NewsTableViewController: UITableViewController {
             if str == "" {
                 return 0
             }
-            return UITableViewAutomaticDimension
+            return UITableView.automaticDimension
         case 2:
             if news[indexPath.section].repostOwnerID != 0 {
                 return 44
@@ -210,7 +210,7 @@ class NewsTableViewController: UITableViewController {
             if str == "" {
                 return 0
             }
-            return UITableViewAutomaticDimension
+            return UITableView.automaticDimension
         case 4...13:
             let record = news[indexPath.section]
             
@@ -242,7 +242,7 @@ class NewsTableViewController: UITableViewController {
         case 34:
             return 40
         default:
-            return UITableViewAutomaticDimension
+            return UITableView.automaticDimension
         }
     }
     
@@ -528,14 +528,14 @@ class NewsTableViewController: UITableViewController {
             
             let record = news[indexPath.section]
             
-            cell.likesButton.setTitle("\(record.countLikes)", for: UIControlState.normal)
-            cell.likesButton.setTitle("\(record.countLikes)", for: UIControlState.selected)
+            cell.likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
+            cell.likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
             
-            cell.repostsButton.setTitle("\(record.countReposts)", for: UIControlState.normal)
-            cell.repostsButton.setTitle("\(record.countReposts)", for: UIControlState.selected)
+            cell.repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
+            cell.repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
             
-            cell.commentsButton.setTitle("\(record.countComments)", for: UIControlState.normal)
-            cell.commentsButton.setTitle("\(record.countComments)", for: UIControlState.selected)
+            cell.commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
+            cell.commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
             
             if record.userLikes == 1 {
                 cell.likesButton.setTitleColor(UIColor.purple, for: .normal)
@@ -621,7 +621,7 @@ class NewsTableViewController: UITableViewController {
     }
     
     @objc func readMoreClick1(sender: UITapGestureRecognizer) {
-        if sender.state == UIGestureRecognizerState.ended {
+        if sender.state == UIGestureRecognizer.State.ended {
             let readMoreLabel: UILabel = (sender.view as? UILabel)!
             let tapLocation = sender.location(in: self.tableView)
             
@@ -641,7 +641,7 @@ class NewsTableViewController: UITableViewController {
     }
 
     @objc func readMoreClick2(sender: UITapGestureRecognizer) {
-        if sender.state == UIGestureRecognizerState.ended {
+        if sender.state == UIGestureRecognizer.State.ended {
             let readMoreLabel: UILabel = (sender.view as? UILabel)!
             let tapLocation = sender.location(in: self.tableView)
             

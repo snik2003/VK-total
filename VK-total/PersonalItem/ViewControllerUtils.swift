@@ -27,7 +27,7 @@ class ViewControllerUtils {
         ViewControllerUtils.loadingView.layer.cornerRadius = 10
         
         ViewControllerUtils.activityIndicator.frame = CGRect(x: 0, y: 0, width: 40, height: 40);
-        ViewControllerUtils.activityIndicator.activityIndicatorViewStyle = UIActivityIndicatorViewStyle.whiteLarge
+        ViewControllerUtils.activityIndicator.style = UIActivityIndicatorView.Style.whiteLarge
         //ViewControllerUtils.activityIndicator.color = UIColor.black
         ViewControllerUtils.activityIndicator.center = CGPoint(x: ViewControllerUtils.loadingView.frame.size.width / 2, y: ViewControllerUtils.loadingView.frame.size.height / 2);
         

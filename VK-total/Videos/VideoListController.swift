@@ -57,7 +57,7 @@ class VideoListController: UIViewController, UITableViewDelegate, UITableViewDat
             
             self.searchBar.delegate = self
             self.searchBar.returnKeyType = .search
-            self.searchBar.searchBarStyle = UISearchBarStyle.minimal
+            self.searchBar.searchBarStyle = UISearchBar.Style.minimal
             self.searchBar.showsCancelButton = false
             self.searchBar.sizeToFit()
             self.searchBar.placeholder = ""

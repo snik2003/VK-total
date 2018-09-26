@@ -133,7 +133,7 @@ class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDa
                 let attributedString = NSMutableAttributedString(string: fullString)
                 
                 if let color = cell.textLabel?.tintColor {
-                    attributedString.setAttributes([NSAttributedStringKey.foregroundColor:  color], range: rangeOfColoredString)
+                    attributedString.setAttributes([NSAttributedString.Key.foregroundColor:  color], range: rangeOfColoredString)
                 }
                 cell.textLabel?.attributedText = attributedString
             }
@@ -192,7 +192,7 @@ extension UILabel {
         
         let range2 = NSMakeRange(textString.length-1, attachmentStr.length);
         
-        mutableAttributedString.setAttributes([NSAttributedStringKey.foregroundColor: self.tintColor], range: range2)
+        mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: self.tintColor], range: range2)
         
         self.attributedText = mutableAttributedString
     }
@@ -219,7 +219,7 @@ extension UILabel {
         if online == 1 {
             let range2 = NSMakeRange(0, attachmentStr.length);
             
-            mutableAttributedString.setAttributes([NSAttributedStringKey.foregroundColor: UIColor.blue], range: range2)
+            mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.blue], range: range2)
         }
         
         let textString = NSAttributedString(string: text, attributes: [.font: self.font])

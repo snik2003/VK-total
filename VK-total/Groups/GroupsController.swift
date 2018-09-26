@@ -34,7 +34,7 @@ class GroupsController: UITableViewController, UISearchBarDelegate {
             
             self.searchBar = UISearchBar()
             self.searchBar.delegate = self
-            self.searchBar.searchBarStyle = UISearchBarStyle.minimal
+            self.searchBar.searchBarStyle = UISearchBar.Style.minimal
             self.searchBar.sizeToFit()
             self.searchBar.placeholder = ""
             self.searchBar.showsCancelButton = false
@@ -144,7 +144,7 @@ class GroupsController: UITableViewController, UISearchBarDelegate {
         return cell
     }
     
-    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCellEditingStyle, forRowAt indexPath: IndexPath) {
+    override func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle == .delete {
             
             var group = groups[indexPath.row]

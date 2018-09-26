@@ -14,9 +14,6 @@ class NotificationCell: UITableViewCell {
     var not: Notifications!
     var indexPath: IndexPath!
     var notLabel: UILabel!
-    var range1: NSRange!
-    var range2: NSRange!
-    var tapRecognizer = UITapGestureRecognizer()
     var avatarTapRecognizer1 = UITapGestureRecognizer()
     var avatarTapRecognizer2 = UITapGestureRecognizer()
     var delegate: NotificationCellProtocol!
@@ -43,7 +40,7 @@ class NotificationCell: UITableViewCell {
         let maxWidth = UIScreen.main.bounds.width - 4 * leftInsets - avatarSize
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(rect.size.width)
         let height = Double(rect.size.height)
         
@@ -763,82 +760,68 @@ class NotificationCell: UITableViewCell {
     
     func setColorText(fullString: String, avatarString: String, postString: String, parent: String, feedback: String) {
         
-        let rangeOfAvatarString = (fullString as NSString).range(of: avatarString)
         let rangeOfPostString = (fullString as NSString).range(of: postString)
         let rangeOfParentString = (fullString as NSString).range(of: parent)
         let rangeOfFeedbackString = (fullString as NSString).range(of: feedback)
         
         let attributedString = NSMutableAttributedString(string: fullString)
         
-        attributedString.setAttributes([NSAttributedStringKey.foregroundColor: linkColor, NSAttributedStringKey.font: colorFont], range: rangeOfAvatarString)
-        attributedString.addAttributes([NSAttributedStringKey.foregroundColor: linkColor, NSAttributedStringKey.font: colorFont], range: rangeOfPostString)
-        attributedString.addAttributes([NSAttributedStringKey.foregroundColor: parentColor, NSAttributedStringKey.font: parentFont], range: rangeOfParentString)
-        attributedString.addAttributes([NSAttributedStringKey.foregroundColor: feedbackColor, NSAttributedStringKey.font: feedbackFont], range: rangeOfFeedbackString)
+        attributedString.setAttributes([NSAttributedString.Key.foregroundColor: linkColor, NSAttributedString.Key.font: colorFont], range: rangeOfPostString)
+        attributedString.addAttributes([NSAttributedString.Key.foregroundColor: parentColor, NSAttributedString.Key.font: parentFont], range: rangeOfParentString)
+        attributedString.addAttributes([NSAttributedString.Key.foregroundColor: feedbackColor, NSAttributedString.Key.font: feedbackFont], range: rangeOfFeedbackString)
         
-        tapRecognizer.addTarget(self, action: #selector(tapLabel(sender:)))
-        tapRecognizer.numberOfTapsRequired = 1
-        
-        notLabel.attributedText = attributedString
-        notLabel.addGestureRecognizer(tapRecognizer)
-        notLabel.isUserInteractionEnabled = true
-        
-        range1 = rangeOfAvatarString
-        range2 = rangeOfPostString
-    }
-    
-    @objc func tapLabel(sender: UITapGestureRecognizer) {
-        
-        if sender.didTapAttributedTextInLabel(label: notLabel, inRange: range1) {
-            
-            self.delegate.openProfileController(id: not.feedback[indexPath.row].fromID, name: "")
-            
-        } else if sender.didTapAttributedTextInLabel(label: notLabel, inRange: range2) {
-            
-            if not.type == "comment_video" || not.type == "reply_comment_video" || not.type == "like_video" || not.type == "like_comment_video" || not.type == "copy_video" || not.type == "mention_comment_video" {
-                //print("tap video")
+        let tap = UITapGestureRecognizer()
+        tap.add {
+            if let not = self.not, let indexPath = self.indexPath {
                 
-                if not.type == "reply_comment_video" || not.type == "like_comment_video" {
-                    print("\(not.parent[0].ownerID) - \(not.parent[0].typeID)")
-                    self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].typeID)", accessKey: "", title: "Видеозапись")
-                } else {
-                    self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].id)", accessKey: "", title: "Видеозапись")
-                }
-                
-            } else if not.type == "comment_photo" || not.type == "reply_comment_photo" || not.type == "like_photo" || not.type == "like_comment_photo" || not.type == "copy_photo" || not.type == "mention_comment_photo" {
-                
-                //print("tap photo")
-                self.delegate.openPhoto(not: not)
-                
-            } else if not.type == "like_comment_topic" {
-                
-                self.delegate.openTopicController(groupID: "\(abs(not.parent[0].ownerID))", topicID: "\(not.parent[0].typeID)", title: "", delegate: self.delegate as! UIViewController)
-                
-            } else if not.type == "group_invite" {
-                
-                // print("tap group invite")
-                
-                var name = not.feedback[indexPath.row].text
-                if name.length > 20 {
-                        name = "\((name).prefix(20))..."
-                } else {
-                    name = "Сообщество"
-                }
-                
-                self.delegate.openProfileController(id: -1 * not.feedback[indexPath.row].id, name: name)
-            } else {
-                //print("tap record")
-                if not.type == "mention" || not.type == "wall" || not.type == "wall_publish" {
-                    self.delegate.openWallRecord(ownerID: not.feedback[indexPath.row].toID, postID: not.feedback[indexPath.row].id, accessKey: "", type: "post")
-                } else if not.type == "like_comment" || not.type == "reply_comment"{
-                    self.delegate.openWallRecord(ownerID: not.parent[0].fromID, postID: not.parent[0].typeID, accessKey: "", type: "post")
+                if not.type == "follow" || not.type == "friend_accepted" {
+                    self.delegate.openProfileController(id: not.feedback[indexPath.row].fromID, name: "")
                     
+                } else if not.type == "comment_video" || not.type == "reply_comment_video" || not.type == "like_video" || not.type == "like_comment_video" || not.type == "copy_video" || not.type == "mention_comment_video" {
+                    //print("tap video")
+                    
+                    if not.type == "reply_comment_video" || not.type == "like_comment_video" {
+                        self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].typeID)", accessKey: "", title: "Видеозапись")
+                    } else {
+                        self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].id)", accessKey: "", title: "Видеозапись")
+                    }
+                    
+                } else if not.type == "comment_photo" || not.type == "reply_comment_photo" || not.type == "like_photo" || not.type == "like_comment_photo" || not.type == "copy_photo" || not.type == "mention_comment_photo" {
+                    
+                    //print("tap photo")
+                    self.delegate.openPhoto(not: not)
+                    
+                } else if not.type == "like_comment_topic" {
+                    
+                    self.delegate.openTopicController(groupID: "\(abs(not.parent[0].ownerID))", topicID: "\(not.parent[0].typeID)", title: "", delegate: self.delegate as! UIViewController)
+                    
+                } else if not.type == "group_invite" {
+                    
+                    // print("tap group invite")
+                    
+                    var name = not.feedback[indexPath.row].text
+                    if name.length > 20 {
+                        name = "\((name).prefix(20))..."
+                    } else {
+                        name = "Сообщество"
+                    }
+                    
+                    self.delegate.openProfileController(id: -1 * not.feedback[indexPath.row].id, name: name)
+                } else if not.type == "mention" || not.type == "wall" || not.type == "wall_publish" {
+                        self.delegate.openWallRecord(ownerID: not.feedback[indexPath.row].toID, postID: not.feedback[indexPath.row].id, accessKey: "", type: "post")
+                } else if not.type == "like_comment" || not.type == "reply_comment"{
+                        self.delegate.openWallRecord(ownerID: not.parent[0].fromID, postID: not.parent[0].typeID, accessKey: "", type: "post")
+                        
                 } else {
                     self.delegate.openWallRecord(ownerID: not.parent[0].toID, postID: not.parent[0].id, accessKey: "", type: "post")
                 }
             }
-        } else {
-            print("tap nothing")
         }
+        tap.numberOfTapsRequired = 1
+        
+        notLabel.attributedText = attributedString
+        notLabel.addGestureRecognizer(tap)
+        notLabel.isUserInteractionEnabled = true
     }
     
     @objc func tapAvatar(sender: UITapGestureRecognizer) {

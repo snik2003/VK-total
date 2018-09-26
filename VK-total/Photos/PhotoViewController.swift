@@ -302,8 +302,8 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
             if photo.count > 0 {
                 let curPhoto = photo[0]
                 
-                likesButton.setTitle("\(curPhoto.likesCount)", for: UIControlState.normal)
-                likesButton.setTitle("\(curPhoto.likesCount)", for: UIControlState.selected)
+                likesButton.setTitle("\(curPhoto.likesCount)", for: UIControl.State.normal)
+                likesButton.setTitle("\(curPhoto.likesCount)", for: UIControl.State.selected)
                 
                 if curPhoto.userLikesThisPhoto == 1 {
                     likesButton.setTitleColor(UIColor.init(red: 228/255, green: 71/255, blue: 71/255, alpha: 1), for: .normal)
@@ -313,8 +313,8 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                     likesButton.setImage(UIImage(named: "like"), for: .normal)
                 }
                 
-                commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControlState.normal)
-                commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControlState.selected)
+                commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControl.State.normal)
+                commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControl.State.selected)
 
                 commentsButton.isEnabled = true
                 likesButton.isHidden = false

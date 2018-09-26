@@ -30,7 +30,7 @@ class AddGroupController: UITableViewController, UISearchBarDelegate {
             
             self.searchBar = UISearchBar()
             self.searchBar.delegate = self
-            self.searchBar.searchBarStyle = UISearchBarStyle.minimal
+            self.searchBar.searchBarStyle = UISearchBar.Style.minimal
             self.searchBar.sizeToFit()
             self.searchBar.placeholder = ""
             self.searchBar.showsCancelButton = false

@@ -97,7 +97,7 @@ extension UIViewController: vkUserLongPollProtocol {
                         vkUserLongPoll.shared.ts = json["ts"].stringValue
                         vkUserLongPoll.shared.updates = json["updates"].compactMap { Updates(json: $0.1) }
                         
-                        //print(json)
+                        print(json)
                         self.handleUpdates()
                         self.longPoll()
                     } else if failed == 2 && failed == 3 {
@@ -322,7 +322,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                             OperationQueue.main.addOperation {
                                                 controller.dialogs.append(mess)
                                                 controller.totalCount += 1
-                                                controller.tableView.reloadData()
+                                                controller.tableView.insertRows(at: <#T##[IndexPath]#>, with: <#T##UITableView.RowAnimation#>)
                                                 if controller.tableView.numberOfSections > 0 {
                                                     controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                                                 }

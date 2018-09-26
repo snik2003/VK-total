@@ -71,8 +71,13 @@ class ReloadNotificationsController: Operation {
             controller.tableView.tableHeaderView = nil
         }
     
+        if controller.notifications.count > 0 {
+            controller.tableView.separatorStyle = .singleLine
+        } else {
+            controller.tableView.separatorStyle = .none
+        }
+        
         controller.tableView.reloadData()
-        controller.tableView.separatorStyle = .singleLine
         controller.refreshControl?.endRefreshing()
         ViewControllerUtils().hideActivityIndicator()
     }

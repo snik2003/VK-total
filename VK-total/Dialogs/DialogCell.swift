@@ -399,11 +399,27 @@ class DialogCell: UITableViewCell {
             }
             
             messView.frame = CGRect(x: bubbleX, y: bubbleY, width: bubbleWidth, height: bubbleHeight)
+            if !dialog.hasSticker {
+                messView.configureMessageView(out: dialog.out, radius: 12)
+            }
             self.addSubview(messView)
             
             var markX: CGFloat = 10
             if dialog.out == 0 {
                 markX = UIScreen.main.bounds.width - 10 - 20
+            }
+            
+            if dialog.important == 1 {
+                let favoriteImage = UIImageView()
+                favoriteImage.tag = 200
+                favoriteImage.image = UIImage(named: "favorite")
+                favoriteImage.contentMode = .scaleAspectFill
+                var leftX = bubbleX - 25
+                if dialog.out == 0 {
+                    leftX = bubbleX + bubbleWidth + 5
+                }
+                favoriteImage.frame = CGRect(x: leftX, y: bubbleY + bubbleHeight - 25, width: 20, height: 20)
+                self.addSubview(favoriteImage)
             }
             
             let markCheck = BEMCheckBox()
@@ -451,10 +467,10 @@ class DialogCell: UITableViewCell {
             
             if dialog.out == 0 {
                 dateLabel.textAlignment = .left
-                dateLabel.frame = CGRect(x: messView.frame.minX + 5, y: messView.frame.maxY, width: 200, height: 16)
+                dateLabel.frame = CGRect(x: messView.frame.minX + 8, y: messView.frame.maxY, width: 200, height: 16)
             } else {
                 dateLabel.textAlignment = .right
-                dateLabel.frame = CGRect(x: messView.frame.maxX - 200 - 5, y: messView.frame.maxY, width: 200, height: 16)
+                dateLabel.frame = CGRect(x: messView.frame.maxX - 200 - 8, y: messView.frame.maxY, width: 200, height: 16)
             }
             
             self.addSubview(dateLabel)
@@ -661,7 +677,7 @@ class DialogCell: UITableViewCell {
         let maxWidth = 0.7 * (UIScreen.main.bounds.width - 2 * leftInsets - avatarSize)
         let size = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(rect.size.width + 20)
         var height = Double(rect.size.height + 20)
@@ -678,7 +694,7 @@ class DialogCell: UITableViewCell {
         let maxWidth = 0.7 * UIScreen.main.bounds.width - 20
         let size = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(maxWidth + 20)
         var height = Double(rect.size.height + 20)
@@ -732,6 +748,16 @@ class DialogCell: UITableViewCell {
         
         avatar.frame = CGRect(x: leftInsets, y: leftInsets + 15, width: 30, height: 30)
         view.addSubview(avatar)
+        
+        let tap = UITapGestureRecognizer()
+        tap.add {
+            if self.delegate.mode == "" {
+                self.delegate.openProfileController(id: mess.userID, name: name)
+            }
+        }
+        tap.numberOfTapsRequired = 1
+        avatar.isUserInteractionEnabled = true
+        avatar.addGestureRecognizer(tap)
         
         let nameLabel = UILabel()
         nameLabel.tag = 200
@@ -1168,7 +1194,7 @@ class ClosureSleeve {
 }
 
 extension UIControl {
-    func add (for controlEvents: UIControlEvents, _ closure: @escaping ()->()) {
+    func add (for controlEvents: UIControl.Event, _ closure: @escaping ()->()) {
         let sleeve = ClosureSleeve(closure)
         addTarget(sleeve, action: #selector(ClosureSleeve.invoke), for: controlEvents)
         objc_setAssociatedObject(self, String(format: "[%d]", arc4random()), sleeve, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN)
@@ -1200,3 +1226,38 @@ extension Array where Element: Equatable {
     }
 }
 
+extension UIView {
+    
+    func configureMessageView(out: Int, radius: CGFloat) {
+        
+        if #available(iOS 11.0, *) {
+            self.layer.borderColor = UIColor.gray.cgColor
+            self.layer.borderWidth = 1
+            self.layer.cornerRadius = radius
+            if out == 0 {
+                self.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner, .layerMaxXMinYCorner]
+            } else {
+                self.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner, .layerMinXMinYCorner]
+            }
+        } else {
+            if out == 0 {
+                self.roundCorners([.bottomLeft, .bottomRight, .topRight], radius: radius)
+            } else {
+                self.roundCorners([.bottomLeft, .bottomRight, .topLeft], radius: radius)
+            }
+        }
+    }
+    
+    func roundCorners(_ corners: UIRectCorner, radius: CGFloat) {
+        
+        let mask = CAShapeLayer()
+        mask.bounds = self.frame
+        mask.position = self.center
+        //mask.borderColor = UIColor.gray.cgColor
+        //mask.borderWidth = 1
+        
+        mask.path = UIBezierPath(roundedRect: self.bounds, byRoundingCorners: corners, cornerRadii: CGSize(width: radius, height: radius)).cgPath
+        
+        self.layer.mask = mask
+    }
+}

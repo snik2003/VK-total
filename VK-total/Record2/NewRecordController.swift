@@ -305,16 +305,16 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWasShown(notification:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWasShown(notification:)), name: UIResponder.keyboardWillShowNotification, object: nil)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillBeHidden(notification:)), name: NSNotification.Name.UIKeyboardWillHide, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(self.keyboardWillBeHidden(notification:)), name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillShow, object: nil)
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name.UIKeyboardWillHide, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillShowNotification, object: nil)
+        NotificationCenter.default.removeObserver(self, name: UIResponder.keyboardWillHideNotification, object: nil)
     }
     
     override func didReceiveMemoryWarning() {
@@ -393,7 +393,7 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
     @objc func keyboardWasShown(notification: Notification) {
         
         let info = notification.userInfo! as NSDictionary
-        let kbSize = (info.value(forKey: UIKeyboardFrameEndUserInfoKey) as! NSValue).cgRectValue.size
+        let kbSize = (info.value(forKey: UIResponder.keyboardFrameEndUserInfoKey) as! NSValue).cgRectValue.size
         
         if attach.count > 0 || link != "" {
             textView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - kbSize.height - 70 - 90 - 30 - 44)
@@ -581,7 +581,9 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
                     self.startConfigureView()
                     self.collectionView.reloadData()
                 } else {
-                    self.showErrorMessage(title: "Ошибка", msg: "Некорректная ссылка:\n\(textField.text)")
+                    if let text = textField.text {
+                        self.showErrorMessage(title: "Ошибка", msg: "Некорректная ссылка:\n\(text)")
+                    }
                 }
             }
             
@@ -614,16 +616,19 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
         picker.dismiss(animated: true, completion: nil)
     }
     
-    @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any])
+    @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any])
     {
-        if let chosenImage = info[UIImagePickerControllerOriginalImage] as? UIImage {
+// Local variable inserted by Swift 4.2 migrator.
+let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
+
+        if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
             
             var imageType = "JPG"
             var imagePath = NSURL(string: "photo.jpg")
             var imageData: Data!
             if pickerController.sourceType == .photoLibrary {
                 if #available(iOS 11.0, *) {
-                    imagePath = info[UIImagePickerControllerImageURL] as? NSURL
+                    imagePath = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.imageURL)] as? NSURL
                 }
                 
                 if (imagePath?.absoluteString?.containsIgnoringCase(find: ".gif"))! {
@@ -1024,4 +1029,14 @@ extension NewRecordController: UICollectionViewDelegate, UICollectionViewDataSou
             }
         }
     }
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromUIImagePickerControllerInfoKeyDictionary(_ input: [UIImagePickerController.InfoKey: Any]) -> [String: Any] {
+	return Dictionary(uniqueKeysWithValues: input.map {key, value in (key.rawValue, value)})
+}
+
+// Helper function inserted by Swift 4.2 migrator.
+fileprivate func convertFromUIImagePickerControllerInfoKey(_ input: UIImagePickerController.InfoKey) -> String {
+	return input.rawValue
 }

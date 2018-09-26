@@ -20,13 +20,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     var window: UIWindow?
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
         registerForPushNotifications()
         application.applicationIconBadgeNumber = 0
         UNUserNotificationCenter.current().delegate = self
         
-        if let userInfo = launchOptions?[UIApplicationLaunchOptionsKey.remoteNotification] as? [AnyHashable: Any] {
+        if let userInfo = launchOptions?[UIApplication.LaunchOptionsKey.remoteNotification] as? [AnyHashable: Any] {
             vkSingleton.shared.pushInfo = userInfo
         }
         
@@ -101,10 +101,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if rootViewController is UITabBarController {
             let tabbarController =  rootViewController as! UITabBarController
             return self.topViewControllerWithRootViewController(rootViewController: tabbarController.selectedViewController)
-        } else if rootViewController is UINavigationController {
+        } /*else if rootViewController is UINavigationController {
             let navigationController = rootViewController as! UINavigationController
             return self.topViewControllerWithRootViewController(rootViewController: navigationController.visibleViewController)
-        } else if rootViewController.presentedViewController != nil {
+        } */else if rootViewController.presentedViewController != nil {
             let controller = rootViewController.presentedViewController
             
             return self.topViewControllerWithRootViewController(rootViewController: controller)

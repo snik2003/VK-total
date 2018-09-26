@@ -159,7 +159,7 @@ class GroupProfileController: UIViewController, UITableViewDelegate, UITableView
             }
         }
         
-        return UITableViewAutomaticDimension
+        return UITableView.automaticDimension
     }
     
     

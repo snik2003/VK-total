@@ -3294,7 +3294,7 @@ extension UIViewController {
         
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
-        let imageData = UIImageJPEGRepresentation(image, 1)
+        let imageData = image.jpegData(compressionQuality: 1)
             
         if imageData == nil { return }
             

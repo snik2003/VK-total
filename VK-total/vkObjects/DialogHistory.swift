@@ -20,6 +20,7 @@ class DialogHistory: Equatable {
     var id = 0
     var userID = 0
     var fromID = 0
+    var peerID = 0
     var date = 0
     var readState = 0
     var out = 0
@@ -46,11 +47,14 @@ class DialogHistory: Equatable {
     var photo100 = ""
     var photo200 = ""
     
+    var hasSticker = false
+    
     init(json: JSON) {
         self.id = json["id"].intValue
         self.chatID = json["chat_id"].intValue
         self.userID = json["user_id"].intValue
         self.fromID = json["from_id"].intValue
+        self.peerID = json["peer_id"].intValue
         self.date = json["date"].intValue
         self.readState = json["read_state"].intValue
         self.out = json["out"].intValue
@@ -78,6 +82,20 @@ class DialogHistory: Equatable {
             self.photo50 = json["photo_50"].stringValue
             self.photo100 = json["photo_100"].stringValue
             self.photo200 = json["photo_200"].stringValue
+        }
+        
+        if self.fromID == 0 {
+            if self.out != 0 {
+                self.fromID = self.userID
+            } else {
+                if let id = Int(vkSingleton.shared.userID) {
+                    self.fromID = id
+                }
+            }
+        }
+        
+        if self.body == "" {
+            self.body = json["text"].stringValue
         }
         
         for index in 0...9 {
@@ -115,6 +133,8 @@ class DialogHistory: Equatable {
             }
             
             if att.type == "sticker" {
+                self.hasSticker = true
+                
                 let sticker = StickerAttach(json: JSON.null)
                 sticker.id = json["attachments"][index]["sticker"]["id"].intValue
                 sticker.productID = json["attachments"][index]["sticker"]["product_id"].intValue
@@ -179,9 +199,18 @@ class DialogHistory: Equatable {
         for index1 in 0...19 {
             let mess = Message(json: JSON.null)
             mess.userID = json["fwd_messages"][index1]["user_id"].intValue
+            
+            if mess.userID == 0 {
+                mess.userID = json["fwd_messages"][index1]["from_id"].intValue
+            }
+            
             if mess.userID != 0 {
                 mess.date = json["fwd_messages"][index1]["date"].intValue
                 mess.body = json["fwd_messages"][index1]["body"].stringValue
+                
+                if mess.body == "" {
+                    mess.body = json["fwd_messages"][index1]["text"].stringValue
+                }
                 
                 for index2 in 0...9 {
                     let att = DialogAttach(json: JSON.null)

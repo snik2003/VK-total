@@ -652,7 +652,7 @@ class GroupDialogCell: UITableViewCell {
         let maxWidth = 0.7 * (UIScreen.main.bounds.width - 2 * leftInsets - avatarSize)
         let size = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(rect.size.width + 20)
         var height = Double(rect.size.height + 20)
@@ -669,7 +669,7 @@ class GroupDialogCell: UITableViewCell {
         let maxWidth = 0.7 * UIScreen.main.bounds.width - 20
         let size = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(maxWidth + 20)
         var height = Double(rect.size.height + 20)

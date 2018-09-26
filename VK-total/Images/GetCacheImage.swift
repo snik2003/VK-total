@@ -95,7 +95,7 @@ class GetCacheImage: Operation {
     
     private func saveImageToCache() {
         guard let fileName = filePath, let image = outputImage else { return }
-        let data = UIImagePNGRepresentation(image)
+        let data = image.pngData()
         FileManager.default.createFile(atPath: fileName, contents: data, attributes: nil)
     }
     

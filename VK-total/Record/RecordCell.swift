@@ -367,13 +367,13 @@ class RecordCell: UITableViewCell {
         
         viewsButton.frame = CGRect(x: UIScreen.main.bounds.width - likesButtonWidth - leftInsets, y: topY, width: likesButtonWidth, height: likesButtonHeight)
         
-        viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControlState.normal)
-        viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControlState.selected)
+        viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.normal)
+        viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.selected)
         
         commentsButton.frame = CGRect(x: leftInsets + likesButton.frame.width + leftInsets, y: topY, width: likesButtonWidth, height: likesButtonHeight)
         
-        commentsButton.setTitle("\(record.countReposts)", for: UIControlState.normal)
-        commentsButton.setTitle("\(record.countReposts)", for: UIControlState.selected)
+        commentsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
+        commentsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
         
         likesButton.isHidden = false
         commentsButton.isHidden = false
@@ -382,8 +382,8 @@ class RecordCell: UITableViewCell {
     }
     
     func setLikesButton(record: Record) {
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.normal)
-        likesButton.setTitle("\(record.countLikes)", for: UIControlState.selected)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
+        likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
         if record.userLikes == 1 {
             likesButton.setTitleColor(UIColor.purple, for: .normal)
@@ -639,7 +639,7 @@ class RecordCell: UITableViewCell {
                                 let setAnimatedImageToRow = SetAnimatedImageToRow.init(data: data, imageView: imageView, cell: cell, indexPath: indexPath, tableView: tableView)
                                 OperationQueue.main.addOperation(setAnimatedImageToRow)
                                 OperationQueue.main.addOperation {
-                                    imageView.bringSubview(toFront: gifSizeLabel)
+                                    imageView.bringSubviewToFront(gifSizeLabel)
                                     gifImage.removeFromSuperview()
                                 }
                             }
@@ -868,7 +868,7 @@ class RecordCell: UITableViewCell {
         let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(maxWidth)
         var height = Double(rect.size.height)
         
@@ -891,7 +891,7 @@ class RecordCell: UITableViewCell {
         let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
-        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedStringKey.font: font], context: nil)
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(maxWidth)
         var height = Double(rect.size.height)
         

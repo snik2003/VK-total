@@ -47,7 +47,7 @@ extension UIBarButtonItem {
         // Initialiaze Badge's label
         let label = CATextLayer()
         label.string = "\(number)"
-        label.alignmentMode = kCAAlignmentCenter
+        label.alignmentMode = CATextLayerAlignmentMode.center
         label.fontSize = 11
         label.frame = CGRect(x: location.x - radius, y: location.y - radius, width: radius * 2, height: radius * 2)
         label.foregroundColor = filled ? UIColor.white.cgColor : color.cgColor
