@@ -17,7 +17,7 @@ class ProfileView: UIView {
     var onlineStatusLabel = UILabel()
     var ageLabel = UILabel()
     var nameLabel = UILabel()
-    var infoButton = UIButton(type: UIButton.ButtonType.detailDisclosure)
+    var infoButton = UIButton(type: UIButton.ButtonType.infoLight)
     var messageButton = UIButton()
     var friendButton = UIButton()
     var allRecordsButton = UIButton()
@@ -275,63 +275,6 @@ class ProfileView: UIView {
     
     func configureCell(profile: UserProfileInfo) -> CGFloat {
         
-        nameLabel.text = "\(profile.firstName) \(profile.lastName)"
-        nameLabel.textColor = UIColor.black //UIColor.white
-        nameLabel.textAlignment = .center
-        nameLabel.backgroundColor = UIColor(displayP3Red: 146/255, green: 146/255, blue: 146/255, alpha: 1).withAlphaComponent(0.8)
-        nameLabel.font = UIFont(name: "Verdana-Bold", size: 17)
-        
-        onlineStatusLabel.textAlignment = .center
-        onlineStatusLabel.backgroundColor = UIColor(displayP3Red: 146/255, green: 146/255, blue: 146/255, alpha: 1).withAlphaComponent(0.8)
-        onlineStatusLabel.font = UIFont(name: "Verdana", size: 12)
-        
-        if profile.onlineStatus == 1 {
-            onlineStatusLabel.text = " онлайн"
-            /*if profile.onlineMobile == 1 {
-                onlineStatusLabel.text = "онлайн (моб.)"
-            }*/
-            onlineStatusLabel.textColor = UIColor.blue
-        } else {
-            onlineStatusLabel.textColor = UIColor.black //UIColor.white
-            onlineStatusLabel.text = " заходил " + profile.lastSeen.toStringLastTime()
-            if profile.sex == 1 {
-                onlineStatusLabel.text = " заходила " + profile.lastSeen.toStringLastTime()
-            }
-        }
-        
-        if profile.platform > 0 && profile.platform != 7 {
-            onlineStatusLabel.setPlatformStatus(text: "\(onlineStatusLabel.text!)", platform: profile.platform, online: profile.onlineStatus)
-        }
-        
-        if let date = profile.birthDate.getDateFromString() {
-            let age = date.age
-            ageLabel.text = age.ageAdder()
-            
-            if profile.countryName != "" {
-                ageLabel.text = ageLabel.text! + ", \(profile.countryName)"
-            }
-            
-            if profile.cityName != "" {
-                ageLabel.text = ageLabel.text! + ", \(profile.cityName)"
-            }
-        } else {
-            if profile.countryName != "" {
-                ageLabel.text = "\(profile.countryName)"
-            }
-            
-            if profile.cityName != "" {
-                if ageLabel.text != "" {
-                    ageLabel.text = "\(ageLabel.text!), "
-                }
-                ageLabel.text = ageLabel.text! + "\(profile.cityName)"
-            }
-        }
-        
-        ageLabel.textColor = UIColor.black //UIColor.white
-        ageLabel.textAlignment = .center
-        ageLabel.backgroundColor = UIColor(displayP3Red: 146/255, green: 146/255, blue: 146/255, alpha: 1).withAlphaComponent(0.8)
-        ageLabel.font = UIFont(name: "Verdana", size: 12)
-        
         var topY: CGFloat = UIScreen.main.bounds.width * 0.9
         avatarImage.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: topY)
         
@@ -433,9 +376,86 @@ class ProfileView: UIView {
             self.avatarImage.clipsToBounds = true
         }
         
+        self.addSubview(avatarImage)
+        
+        createInfoView(profile: profile, radius: 12)
+        setCustomFields(profile: profile)
+        
+        topY = UIScreen.main.bounds.width * 0.9
+        topY = setStatusButtons(profile, topY)
+        
+        return topY
+    }
+    
+    func createInfoView(profile: UserProfileInfo, radius: CGFloat) {
+        let view = UIView()
+        view.layer.cornerRadius = radius
+        view.layer.borderColor = UIColor.gray.cgColor
+        view.layer.borderWidth = 1.0
+        
+        view.backgroundColor = UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.8)
+        view.dropShadow(color: UIColor.black, opacity: 0.9, offSet: CGSize(width: -1, height: 1), radius: radius)
+        
+        nameLabel.text = "\(profile.firstName) \(profile.lastName)"
+        nameLabel.textColor = UIColor.black
+        nameLabel.textAlignment = .center
+        nameLabel.backgroundColor = .clear
+        nameLabel.font = UIFont(name: "Verdana-Bold", size: 17)
+        
+        onlineStatusLabel.textAlignment = .center
+        onlineStatusLabel.backgroundColor = .clear
+        onlineStatusLabel.font = UIFont(name: "Verdana", size: 12)
+        onlineStatusLabel.adjustsFontSizeToFitWidth = true
+        onlineStatusLabel.minimumScaleFactor = 0.5
+        
+        if profile.onlineStatus == 1 {
+            onlineStatusLabel.text = " онлайн"
+            onlineStatusLabel.textColor = UIColor.blue
+        } else {
+            onlineStatusLabel.textColor = UIColor.black
+            onlineStatusLabel.text = " заходил " + profile.lastSeen.toStringLastTime()
+            if profile.sex == 1 {
+                onlineStatusLabel.text = " заходила " + profile.lastSeen.toStringLastTime()
+            }
+        }
+        
+        if profile.platform > 0 && profile.platform != 7 {
+            onlineStatusLabel.setPlatformStatus(text: "\(onlineStatusLabel.text!)", platform: profile.platform, online: profile.onlineStatus)
+        }
+        
+        if let date = profile.birthDate.getDateFromString() {
+            let age = date.age
+            ageLabel.text = age.ageAdder()
+            
+            if profile.countryName != "" {
+                ageLabel.text = ageLabel.text! + ", \(profile.countryName)"
+            }
+            
+            if profile.cityName != "" {
+                ageLabel.text = ageLabel.text! + ", \(profile.cityName)"
+            }
+        } else {
+            if profile.countryName != "" {
+                ageLabel.text = "\(profile.countryName)"
+            }
+            
+            if profile.cityName != "" {
+                if ageLabel.text != "" {
+                    ageLabel.text = "\(ageLabel.text!), "
+                }
+                ageLabel.text = ageLabel.text! + "\(profile.cityName)"
+            }
+        }
+        
+        ageLabel.textColor = UIColor.black
+        ageLabel.textAlignment = .center
+        ageLabel.backgroundColor = .clear
+        ageLabel.font = onlineStatusLabel.font
+        
+        
         if profile.deactivated != "" {
             if profile.deactivated == "banned" {
-                onlineStatusLabel.text = "заблокирован"
+                onlineStatusLabel.text = "страница заблокирована"
             }
             if profile.deactivated == "deleted" {
                 onlineStatusLabel.text = "страница удалена"
@@ -458,38 +478,32 @@ class ProfileView: UIView {
         ageLabel.isHidden = false
         infoButton.isHidden = false
         
-        topY = topY - bottomInsets
+        let width = UIScreen.main.bounds.width - 2 * leftInsets
+        var height: CGFloat = 5
         
-        if ageLabel.text != "" {
-            topY = topY - 15
-            ageLabel.frame = CGRect(x: leftInsets, y: topY, width: UIScreen.main.bounds.width - 2 * leftInsets, height: 15)
-        } else {
-            ageLabel.frame = CGRect(x: leftInsets, y: topY, width: UIScreen.main.bounds.width - 2 * leftInsets, height: 0)
+        nameLabel.frame = CGRect(x: leftInsets, y: height, width: width - 2 * leftInsets, height: 21)
+        view.addSubview(nameLabel)
+        height += 21
+        
+        onlineStatusLabel.frame = CGRect(x: leftInsets + infoButtonHeight, y: height, width: width - 2 * (leftInsets + infoButtonHeight), height: 15)
+        view.addSubview(onlineStatusLabel)
+        height += 15
+        
+        if let text = ageLabel.text, text != "" {
+            ageLabel.frame = CGRect(x: leftInsets, y: height, width: width - 2 * leftInsets, height: 15)
+            view.addSubview(ageLabel)
+            height += 15
         }
         
-        topY = topY - 15
-        onlineStatusLabel.frame = CGRect(x: leftInsets, y: topY, width: UIScreen.main.bounds.width - 2 * leftInsets, height: 15)
+        height += 5
+        let infoX = width - leftInsets - infoButtonHeight
+        let infoY = height/2 - infoButtonHeight/2
+        infoButton.frame = CGRect(x: infoX, y: infoY, width: infoButtonHeight, height: infoButtonHeight)
+        view.addSubview(infoButton)
         
-        topY = topY - 21
-        nameLabel.frame = CGRect(x: leftInsets, y: topY, width: UIScreen.main.bounds.width - 2 * leftInsets, height: 21)
-        
-        let infoButtonX = UIScreen.main.bounds.width - rightInfoButton - infoButtonHeight
-        let infoButtonY = UIScreen.main.bounds.width * 0.9 - bottomInfoButton - infoButtonHeight
-        infoButton.frame = CGRect(x: infoButtonX, y: infoButtonY, width: infoButtonHeight, height: infoButtonHeight)
-        
-        
-        self.addSubview(avatarImage)
-        self.addSubview(nameLabel)
-        self.addSubview(onlineStatusLabel)
-        self.addSubview(ageLabel)
-        self.addSubview(infoButton)
-        
-        setCustomFields(profile: profile)
-        
-        topY = UIScreen.main.bounds.width * 0.9
-        topY = setStatusButtons(profile, topY)
-        
-        return topY
+        let topY = UIScreen.main.bounds.width * 0.9 - leftInsets - height
+        view.frame = CGRect(x: leftInsets, y: topY, width: width, height: height)
+        self.addSubview(view)
     }
     
     func setCustomFields(profile: UserProfileInfo) {
@@ -502,7 +516,7 @@ class ProfileView: UIView {
             blackImage.contentMode = .scaleToFill
             blackImage.backgroundColor = UIColor(displayP3Red: 146/255, green: 146/255, blue: 146/255, alpha: 1).withAlphaComponent(0.75)
             blackImage.frame = CGRect(x: avatarImage.frame.maxX - leftInsets2 - 60, y: topInsets2, width: 60, height: 60)
-            blackImage.layer.cornerRadius = 21
+            blackImage.layer.cornerRadius = 10
             avatarImage.addSubview(blackImage)
         } else if profile.isFavorite == 1 {
             favoriteImage.image = UIImage(named: "favorite")
@@ -511,6 +525,21 @@ class ProfileView: UIView {
             favoriteImage.frame = CGRect(x: leftInsets2, y: topInsets2, width: 60, height: 60)
             avatarImage.addSubview(favoriteImage)
         }
+    }
+}
+
+extension UIView {
+    
+    func dropShadow(color: UIColor, opacity: Float = 0.5, offSet: CGSize, radius: CGFloat = 1, scale: Bool = true) {
+        layer.masksToBounds = false
+        layer.shadowColor = color.cgColor
+        layer.shadowOpacity = opacity
+        layer.shadowOffset = offSet
+        layer.shadowRadius = radius
+        
+        layer.shadowPath = UIBezierPath(rect: self.bounds).cgPath
+        layer.shouldRasterize = true
+        layer.rasterizationScale = scale ? UIScreen.main.scale : 1
     }
 }
 
