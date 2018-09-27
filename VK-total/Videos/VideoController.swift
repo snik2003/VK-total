@@ -293,6 +293,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapStickerButton(sender: UIButton) {
         
+        sender.buttonTouched()
         commentView.endEditing(true)
         
         let width = self.view.bounds.width - 20
@@ -307,6 +308,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapAccessoryButton(sender: UIButton) {
         
+        sender.buttonTouched()
         self.openNewCommentController(ownerID: ownerID, message: commentView.textView.text!, type: "new_video_comment", title: "Новый комментарий", replyID: 0, replyName: "", comment: nil, controller: self)
     }
     
@@ -328,6 +330,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
         
         
         commentView.accessoryImage = UIImage(named: "attachment")
+        commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
         commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
         
         tableView.delegate = self
@@ -341,6 +344,8 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     @objc func tapFromGroupButton(sender: UIButton) {
+        sender.buttonTouched()
+        
         self.commentView.endEditing(true)
         self.actionFromGroupButton(fromView: commentView.fromGroupButton)
     }

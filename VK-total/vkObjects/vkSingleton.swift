@@ -10,10 +10,10 @@ import UIKit
 
 final class vkSingleton {
     static let shared = vkSingleton()
+    
     let vkAppID: [String] = ["6363391","6483790","6483830","6483831"]
     var accessToken: String = ""
     
-    var groupToken: [Int: String] = [:]
     var adminGroupID: [Int] = []
     
     var avatarURL = ""
@@ -33,4 +33,6 @@ final class vkSingleton {
     var pushInfo: [AnyHashable: Any]? = nil
     
     let appOpenedCountKey = "APP_OPENED_COUNT"
+    
+    let mainColor = UIColor(red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
 }

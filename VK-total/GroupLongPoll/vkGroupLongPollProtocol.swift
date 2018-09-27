@@ -22,21 +22,15 @@ extension UIViewController: vkGroupLongPollProtocol {
     
     func launchAllGroupsLongPollServer() {
         
-        let userDefaults = UserDefaults.standard
-        
         var index = 0
         var code: [String] = []
         
         for gid in vkSingleton.shared.adminGroupID {
-            if let token = userDefaults.string(forKey: "\(vkSingleton.shared.userID)_groupToken_\(gid)") {
-                vkSingleton.shared.groupToken[gid] = token
-                
-                if vkGroupLongPoll.shared.firstLaunch[gid] != false && token != "" {
-                    let codex = "var a\(index) = API.messages.getLongPollServer({\"access_token\":\"\(token)\",\"lp_version\":\(vkSingleton.shared.lpVersion),\"v\":\"\(vkSingleton.shared.version)\"})"
-                    code.append(codex)
+            if vkGroupLongPoll.shared.firstLaunch[gid] != false {
+                let codex = "var a\(index) = API.messages.getLongPollServer({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"lp_version\":\(vkSingleton.shared.lpVersion),\"group_id\": \"\(gid)\",\"v\":\"\(vkSingleton.shared.version)\"})"
+                code.append(codex)
                     
-                    index += 1
-                }
+                index += 1
             }
         }
         
@@ -69,25 +63,21 @@ extension UIViewController: vkGroupLongPollProtocol {
                 
                 var index = 0
                 for gid in vkSingleton.shared.adminGroupID {
-                    if let token = userDefaults.string(forKey: "\(vkSingleton.shared.userID)_groupToken_\(gid)") {
-                        vkSingleton.shared.groupToken[gid] = token
+                    if vkGroupLongPoll.shared.firstLaunch[gid] != false {
+                            
+                        vkGroupLongPoll.shared.server[gid] = json["response"][index]["server"].stringValue
+                        vkGroupLongPoll.shared.key[gid] = json["response"][index]["key"].stringValue
+                        vkGroupLongPoll.shared.ts[gid] = json["response"][index]["ts"].stringValue
                         
-                        if vkGroupLongPoll.shared.firstLaunch[gid] != false && token != "" {
-                            
-                            vkGroupLongPoll.shared.server[gid] = json["response"][index]["server"].stringValue
-                            vkGroupLongPoll.shared.key[gid] = json["response"][index]["key"].stringValue
-                            vkGroupLongPoll.shared.ts[gid] = json["response"][index]["ts"].stringValue
-                            
-                            vkSingleton.shared.errorCode = json["error"][index]["error_code"].intValue
-                            vkSingleton.shared.errorMsg = json["error"][index]["error_msg"].stringValue
-                            
-                            if vkSingleton.shared.errorCode == 0 {
-                                self.groupLongPoll(gid)
-                            }  else {
-                                print("Ошибка #\(vkSingleton.shared.errorCode): \(vkSingleton.shared.errorMsg)")
-                            }
-                            index += 1
+                        vkSingleton.shared.errorCode = json["error"][index]["error_code"].intValue
+                        vkSingleton.shared.errorMsg = json["error"][index]["error_msg"].stringValue
+                        
+                        if vkSingleton.shared.errorCode == 0 {
+                            self.groupLongPoll(gid)
+                        }  else {
+                            print("Ошибка #\(vkSingleton.shared.errorCode): \(vkSingleton.shared.errorMsg)")
                         }
+                        index += 1
                     }
                 }
             }
@@ -97,39 +87,37 @@ extension UIViewController: vkGroupLongPollProtocol {
     
     func getGroupLongPollServer(groupID: Int) {
         if vkGroupLongPoll.shared.firstLaunch[groupID] != false {
-            if let token = vkSingleton.shared.groupToken[groupID], token != "" {
+            vkGroupLongPoll.shared.firstLaunch[groupID] = false
                 
-                vkGroupLongPoll.shared.firstLaunch[groupID] = false
+            let url = "/method/messages.getLongPollServer"
+            let parameters = [
+                "access_token": vkSingleton.shared.accessToken,
+                "need_pts": "1",
+                "lp_version": vkSingleton.shared.lpVersion,
+                "group_id": "\(groupID)",
+                "v": vkSingleton.shared.version
+            ]
+            
+            let request = GetServerDataOperation(url: url, parameters: parameters)
+            request.completionBlock = {
+                guard let data = request.data else { print("data error"); return }
                 
-                let url = "/method/messages.getLongPollServer"
-                let parameters = [
-                    "access_token": token,
-                    "need_pts": "1",
-                    "lp_version": vkSingleton.shared.lpVersion,
-                    "v": vkSingleton.shared.version
-                ]
+                guard let json = try? JSON(data: data) else { print("json error"); return }
                 
-                let request = GetServerDataOperation(url: url, parameters: parameters)
-                request.completionBlock = {
-                    guard let data = request.data else { print("data error"); return }
-                    
-                    guard let json = try? JSON(data: data) else { print("json error"); return }
-                    
-                    vkGroupLongPoll.shared.server[groupID] = json["response"]["server"].stringValue
-                    vkGroupLongPoll.shared.key[groupID] = json["response"]["key"].stringValue
-                    vkGroupLongPoll.shared.ts[groupID] = json["response"]["ts"].stringValue
-                    
-                    vkSingleton.shared.errorCode = json["error"]["error_code"].intValue
-                    vkSingleton.shared.errorMsg = json["error"]["error_msg"].stringValue
-                    
-                    if vkSingleton.shared.errorCode == 0 {
-                        self.groupLongPoll(groupID)
-                    }  else {
-                        print("Ошибка #\(vkSingleton.shared.errorCode): \(vkSingleton.shared.errorMsg)")
-                    }
+                vkGroupLongPoll.shared.server[groupID] = json["response"]["server"].stringValue
+                vkGroupLongPoll.shared.key[groupID] = json["response"]["key"].stringValue
+                vkGroupLongPoll.shared.ts[groupID] = json["response"]["ts"].stringValue
+                
+                vkSingleton.shared.errorCode = json["error"]["error_code"].intValue
+                vkSingleton.shared.errorMsg = json["error"]["error_msg"].stringValue
+                
+                if vkSingleton.shared.errorCode == 0 {
+                    self.groupLongPoll(groupID)
+                }  else {
+                    print("Ошибка #\(vkSingleton.shared.errorCode): \(vkSingleton.shared.errorMsg)")
                 }
-                OperationQueue().addOperation(request)
             }
+            OperationQueue().addOperation(request)
         }
     }
     

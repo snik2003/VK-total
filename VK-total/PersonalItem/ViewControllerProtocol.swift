@@ -2033,13 +2033,13 @@ extension UIViewController: NotificationCellProtocol {
 
 extension UIViewController {
     
-    var visibleViewController: UIViewController? {
+    var visibleViewController2: UIViewController? {
         if let navigationController = self as? UINavigationController {
-            return navigationController.topViewController?.visibleViewController
+            return navigationController.topViewController?.visibleViewController2
         } else if let tabBarController = self as? UITabBarController {
-            return tabBarController.selectedViewController?.visibleViewController
+            return tabBarController.selectedViewController?.visibleViewController2
         } else if let presentedViewController = presentedViewController {
-            return presentedViewController.visibleViewController
+            return presentedViewController.visibleViewController2
         } else {
             return self
         }

@@ -2161,44 +2161,43 @@ extension UIViewController: VkOperationProtocol {
     
     func deleteMessageGroupDialog(messIDs: String, forAll: Bool, spam: Bool, controller: GroupDialogController) {
         
-        if let gid = Int(controller.groupID), let token = vkSingleton.shared.groupToken[gid] {
-            let url = "/method/messages.delete"
-            var parameters: [String: Any] = [
-                "access_token": token,
-                "message_ids": messIDs,
-                "v": vkSingleton.shared.version
-            ]
-            
-            if spam {
-                parameters["spam"] = "1"
-            }
-            
-            if forAll {
-                parameters["delete_for_all"] = "1"
-            }
-            
-            let request = GetServerDataOperation(url: url, parameters: parameters)
-            
-            request.completionBlock = {
-                guard let data = request.data else { return }
-                
-                guard let json = try? JSON(data: data) else { print("json error"); return }
-                print(json)
-                
-                let error = ErrorJson(json: JSON.null)
-                error.errorCode = json["error"]["error_code"].intValue
-                error.errorMsg = json["error"]["error_msg"].stringValue
-                
-                if error.errorCode == 0 {
-                    
-                } else {
-                    self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
-                }
-                controller.markMessages.removeAll(keepingCapacity: false)
-                self.setOfflineStatus(dependence: request)
-            }
-            OperationQueue().addOperation(request)
+        let url = "/method/messages.delete"
+        var parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "message_ids": messIDs,
+            "group_id": controller.groupID,
+            "v": vkSingleton.shared.version
+        ]
+        
+        if spam {
+            parameters["spam"] = "1"
         }
+        
+        if forAll {
+            parameters["delete_for_all"] = "1"
+        }
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            print(json)
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            
+            if error.errorCode == 0 {
+                
+            } else {
+                self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
+            }
+            controller.markMessages.removeAll(keepingCapacity: false)
+            self.setOfflineStatus(dependence: request)
+        }
+        OperationQueue().addOperation(request)
     }
     
     func sendMessage(message: String, attachment: String, fwdMessages: String, stickerID: Int, controller: DialogController) {
@@ -2266,67 +2265,66 @@ extension UIViewController: VkOperationProtocol {
     
     func sendMessageGroupDialog(message: String, attachment: String, fwdMessages: String, stickerID: Int, controller: GroupDialogController) {
         
-        if let gid = Int(controller.groupID), let token = vkSingleton.shared.groupToken[gid] {
-            let url = "/method/messages.send"
-            var parameters: [String: Any] = [
-                "access_token": token,
-                "random_id": "",
-                "peer_id": controller.userID,
-                "message": message,
-                "v": vkSingleton.shared.version
-            ]
-            
-            if attachment != "" {
-                parameters["attachment"] = attachment
-            }
-            
-            if fwdMessages != "" {
-                parameters["forward_messages"] = fwdMessages
-            }
-            
-            if stickerID != 0 {
-                parameters["sticker_id"] = stickerID
-            }
-            
-            let request = GetServerDataOperation(url: url, parameters: parameters)
-            
-            request.completionBlock = {
-                guard let data = request.data else { return }
-                
-                guard let json = try? JSON(data: data) else { print("json error"); return }
-                //print(json)
-                
-                let error = ErrorJson(json: JSON.null)
-                error.errorCode = json["error"]["error_code"].intValue
-                error.errorMsg = json["error"]["error_msg"].stringValue
-                
-                if error.errorCode == 0 {
-                    //let messID = json["response"]["upload_url"].stringValue
-                    OperationQueue.main.addOperation {
-                        controller.attachments = ""
-                        controller.fwdMessages = ""
-                        controller.commentView.textView.text = ""
-                        
-                        controller.fwdMessagesID.removeAll(keepingCapacity: false)
-                        controller.attach.removeAll(keepingCapacity: false)
-                        controller.photos.removeAll(keepingCapacity: false)
-                        controller.isLoad.removeAll(keepingCapacity: false)
-                        controller.typeOf.removeAll(keepingCapacity: false)
-                        
-                        controller.setAttachments()
-                        controller.collectionView.reloadData()
-                    }
-                } else {
-                    if stickerID > 0 {
-                        self.showErrorMessage(title: "Ошибка при отправке стикера", msg: "Данный набор стикеров необходимо активировать в полной версии сайта (https://vk.com/stickers?tab=free).")
-                    } else {
-                        self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
-                    }
-                }
-                self.setOfflineStatus(dependence: request)
-            }
-            OperationQueue().addOperation(request)
+        let url = "/method/messages.send"
+        var parameters: [String: Any] = [
+            "access_token": vkSingleton.shared.accessToken,
+            "random_id": "",
+            "peer_id": controller.userID,
+            "message": message,
+            "group_id": controller.groupID,
+            "v": vkSingleton.shared.version
+        ]
+        
+        if attachment != "" {
+            parameters["attachment"] = attachment
         }
+        
+        if fwdMessages != "" {
+            parameters["forward_messages"] = fwdMessages
+        }
+        
+        if stickerID != 0 {
+            parameters["sticker_id"] = stickerID
+        }
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            //print(json)
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            
+            if error.errorCode == 0 {
+                //let messID = json["response"]["upload_url"].stringValue
+                OperationQueue.main.addOperation {
+                    controller.attachments = ""
+                    controller.fwdMessages = ""
+                    controller.commentView.textView.text = ""
+                    
+                    controller.fwdMessagesID.removeAll(keepingCapacity: false)
+                    controller.attach.removeAll(keepingCapacity: false)
+                    controller.photos.removeAll(keepingCapacity: false)
+                    controller.isLoad.removeAll(keepingCapacity: false)
+                    controller.typeOf.removeAll(keepingCapacity: false)
+                    
+                    controller.setAttachments()
+                    controller.collectionView.reloadData()
+                }
+            } else {
+                if stickerID > 0 {
+                    self.showErrorMessage(title: "Ошибка при отправке стикера", msg: "Данный набор стикеров необходимо активировать в полной версии сайта (https://vk.com/stickers?tab=free).")
+                } else {
+                    self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
+                }
+            }
+            self.setOfflineStatus(dependence: request)
+        }
+        OperationQueue().addOperation(request)
     }
     
     func editMessage(message: String, attachment: String, messageID: Int, controller: UIViewController) {
@@ -2377,17 +2375,18 @@ extension UIViewController: VkOperationProtocol {
             }
             
             OperationQueue().addOperation(request)
-        } else if let delegate = controller as? GroupDialogController, let gid = Int(delegate.groupID), let token = vkSingleton.shared.groupToken[gid] {
+        } else if let delegate = controller as? GroupDialogController {
             
             let url = "/method/messages.edit"
             let parameters = [
-                "access_token": token,
+                "access_token": vkSingleton.shared.accessToken,
                 "peer_id": delegate.userID,
                 "message": message,
                 "message_id": "\(messageID)",
                 "attachment": attachment,
                 "keep_forward_messages": "1",
                 "keep_snippets": "1",
+                "group_id": delegate.groupID,
                 "v": vkSingleton.shared.version
             ]
             
@@ -2458,12 +2457,13 @@ extension UIViewController: VkOperationProtocol {
                 OperationQueue().addOperation(request)
             }
             
-            if let delegate = controller as? GroupDialogController, let gid = Int(delegate.groupID), let token = vkSingleton.shared.groupToken[gid] {
+            if let delegate = controller as? GroupDialogController {
                 
                 let url = "/method/messages.markAsRead"
                 let parameters = [
-                    "access_token": token,
+                    "access_token": vkSingleton.shared.accessToken,
                     "peer_id": delegate.userID,
+                    "group_id": delegate.groupID,
                     "v": vkSingleton.shared.version
                 ]
                 

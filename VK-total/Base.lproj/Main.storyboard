@@ -3201,7 +3201,7 @@
                                 <rect key="frame" x="0.0" y="524" width="320" height="44"/>
                                 <color key="backgroundColor" red="0.0" green="0.32852089410000002" blue="0.57488495110000004" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <items>
-                                    <barButtonItem image="back-button" landscapeImage="back-button" largeContentSizeImage="back-button" id="H7P-fm-nCt">
+                                    <barButtonItem title="Item" image="back-button" landscapeImage="back-button" largeContentSizeImage="back-button" id="H7P-fm-nCt">
                                         <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                         <connections>
                                             <action selector="backWithSender:" destination="lBv-Zo-MfD" id="Omo-nc-81k"/>
@@ -3224,13 +3224,35 @@
                                 </items>
                                 <color key="barTintColor" red="0.0" green="0.32852089410000002" blue="0.57488495110000004" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                             </toolbar>
+                            <textField opaque="NO" contentMode="scaleToFill" enabled="NO" contentHorizontalAlignment="center" contentVerticalAlignment="center" text="link.ru" borderStyle="roundedRect" textAlignment="center" minimumFontSize="14" translatesAutoresizingMaskIntoConstraints="NO" id="fp3-w3-3J5">
+                                <rect key="frame" x="5" y="25" width="310" height="30"/>
+                                <color key="backgroundColor" red="0.90588235289999997" green="0.90196078430000004" blue="0.90196078430000004" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="30" id="jxo-e5-H2d"/>
+                                </constraints>
+                                <nil key="textColor"/>
+                                <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
+                                <textInputTraits key="textInputTraits"/>
+                            </textField>
+                            <progressView opaque="NO" contentMode="scaleToFill" verticalHuggingPriority="750" progress="0.5" translatesAutoresizingMaskIntoConstraints="NO" id="xEZ-Mu-fxT">
+                                <rect key="frame" x="7" y="58" width="306" height="2"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="2" id="Mn1-4f-tKE"/>
+                                </constraints>
+                            </progressView>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <constraints>
+                            <constraint firstItem="xEZ-Mu-fxT" firstAttribute="leading" secondItem="iTn-Kr-WRm" secondAttribute="leading" constant="7" id="1d8-eb-gr3"/>
+                            <constraint firstItem="xEZ-Mu-fxT" firstAttribute="top" secondItem="fp3-w3-3J5" secondAttribute="bottom" constant="3" id="B29-Lf-Zp5"/>
+                            <constraint firstItem="fp3-w3-3J5" firstAttribute="leading" secondItem="iTn-Kr-WRm" secondAttribute="leading" constant="5" id="TYH-Ht-gOw"/>
                             <constraint firstItem="l7q-04-qKo" firstAttribute="leading" secondItem="iTn-Kr-WRm" secondAttribute="leading" id="XOB-eI-hka"/>
                             <constraint firstItem="l7q-04-qKo" firstAttribute="trailing" secondItem="iTn-Kr-WRm" secondAttribute="trailing" id="d3G-Nu-4pb"/>
                             <constraint firstItem="l7q-04-qKo" firstAttribute="width" secondItem="38o-hB-4mi" secondAttribute="width" id="k3M-15-g8h"/>
+                            <constraint firstItem="iTn-Kr-WRm" firstAttribute="trailing" secondItem="fp3-w3-3J5" secondAttribute="trailing" constant="5" id="obC-q8-Wvc"/>
                             <constraint firstItem="iTn-Kr-WRm" firstAttribute="bottom" secondItem="l7q-04-qKo" secondAttribute="bottom" id="smI-gC-cHs"/>
+                            <constraint firstItem="iTn-Kr-WRm" firstAttribute="trailing" secondItem="xEZ-Mu-fxT" secondAttribute="trailing" constant="7" id="sup-Wy-pBc"/>
+                            <constraint firstItem="fp3-w3-3J5" firstAttribute="top" secondItem="iTn-Kr-WRm" secondAttribute="top" constant="5" id="upn-Xl-Nn4"/>
                         </constraints>
                         <viewLayoutGuide key="safeArea" id="iTn-Kr-WRm"/>
                     </view>
@@ -3241,7 +3263,9 @@
                     <connections>
                         <outlet property="backButton" destination="H7P-fm-nCt" id="Diz-nd-IJc"/>
                         <outlet property="forwardButton" destination="GoQ-nG-1Fo" id="nTK-KS-Vbi"/>
+                        <outlet property="progress" destination="xEZ-Mu-fxT" id="1UQ-9i-uBn"/>
                         <outlet property="reloadButton" destination="lCy-f8-PxP" id="Jjt-fr-VJW"/>
+                        <outlet property="urlTextField" destination="fp3-w3-3J5" id="81a-2y-JSc"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="HQo-V3-IJc" userLabel="First Responder" sceneMemberID="firstResponder"/>

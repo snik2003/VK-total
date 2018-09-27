@@ -101,10 +101,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if rootViewController is UITabBarController {
             let tabbarController =  rootViewController as! UITabBarController
             return self.topViewControllerWithRootViewController(rootViewController: tabbarController.selectedViewController)
-        } /*else if rootViewController is UINavigationController {
+        } else if rootViewController is UINavigationController {
             let navigationController = rootViewController as! UINavigationController
-            return self.topViewControllerWithRootViewController(rootViewController: navigationController.visibleViewController)
-        } */else if rootViewController.presentedViewController != nil {
+            return self.topViewControllerWithRootViewController(rootViewController: navigationController.visibleViewController2)
+        } else if rootViewController.presentedViewController != nil {
             let controller = rootViewController.presentedViewController
             
             return self.topViewControllerWithRootViewController(rootViewController: controller)

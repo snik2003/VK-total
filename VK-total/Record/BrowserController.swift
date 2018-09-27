@@ -17,6 +17,11 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     @IBOutlet weak var forwardButton: UIBarButtonItem!
     @IBOutlet weak var reloadButton: UIBarButtonItem!
     
+    @IBOutlet weak var progress: UIProgressView!
+    @IBOutlet weak var urlTextField: UITextField!
+    
+    var isObserving = false
+    
     var path: String = "https://geekbrains.ru/login"
     
     var type = ""
@@ -35,15 +40,16 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        progress.isHidden = true
+        progress.tintColor = vkSingleton.shared.mainColor
+        
         if UIScreen.main.nativeBounds.height == 2436 {
             self.navHeight = 88
             self.tabHeight = 83
         }
         
-        ViewControllerUtils().showActivityIndicator(uiView: self.view)
-        
         let configuration = WKWebViewConfiguration()
-        let frameRect = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight - 44)
+        let frameRect = CGRect(x: 0, y: navHeight + 50, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight - 50 - 44)
         
         webView = WKWebView(frame: frameRect, configuration: configuration)
         webView.translatesAutoresizingMaskIntoConstraints = false
@@ -61,10 +67,30 @@ class BrowserController: UIViewController, WKNavigationDelegate {
         
         if let url = URL(string: path), url.host != nil {
             let request = URLRequest(url: url)
+            urlTextField.text = path
             webView.load(request)
+            
+            if !isObserving {
+                isObserving = true
+                webView.addObserver(self, forKeyPath: "estimatedProgress", options: .new, context: nil)
+            }
         } else {
-            ViewControllerUtils().hideActivityIndicator()
             showErrorMessage(title: "Ошибка", msg: "Некорректная ссылка:\n\(path)")
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if isObserving {
+            webView.removeObserver(self, forKeyPath: "estimatedProgress")
+        }
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "estimatedProgress" {
+            //print(webView.estimatedProgress)
+            progress.progress = Float(webView.estimatedProgress);
         }
     }
     
@@ -74,15 +100,25 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     }
     
     func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-        ViewControllerUtils().showActivityIndicator(uiView: self.view)
+        if let url = webView.url {
+            urlTextField.text = url.absoluteString
+        }
+        progress.progress = 0.15
+        progress.isHidden = false
     }
     
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-        ViewControllerUtils().hideActivityIndicator()
+        if let url = webView.url {
+            urlTextField.text = url.absoluteString
+        }
+        progress.progress = 1
+        progress.isHidden = true
+        
     }
     
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
-        ViewControllerUtils().hideActivityIndicator()
+        progress.progress = 1
+        progress.isHidden = true
     }
     
     @IBAction func back(sender: UIBarButtonItem) {
@@ -98,12 +134,16 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     }
     
     @IBAction func reload(sender: UIBarButtonItem) {
-        let request = URLRequest(url: webView.url!)
-        webView.load(request)
+        if let url = webView.url {
+            let request = URLRequest(url: url)
+            webView.load(request)
+        }
     }
     
    private func webView(webView: WKWebView!, didFailProvisionalNavigation navigation: WKNavigation!, withError error: NSError!) {
     
+        self.progress.progress = 1
+        self.progress.isHidden = true
         self.showErrorMessage(title: "Ошибка!", msg: error.localizedDescription)
     }
     

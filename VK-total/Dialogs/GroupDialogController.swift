@@ -215,294 +215,292 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     func getDialog() {
-        if let gid = Int(self.groupID), let token = vkSingleton.shared.groupToken[gid] {
         
-            let opq = OperationQueue()
-            
-            estimatedHeightCache.removeAll(keepingCapacity: false)
-            OperationQueue.main.addOperation {
-                ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
-            }
-            
-            let url = "/method/messages.getHistory"
-            var parameters = [
-                "access_token": token,
-                "offset": "\(offset)",
-                "count": "\(count)",
-                "peer_id": "\(userID)",
-                "start_message_id": "-1",
-                "v": vkSingleton.shared.version
-            ]
-            
-            if startMessageID > 0 {
-                parameters["offset"] = "0"
-                parameters["start_message_id"] = "\(startMessageID)"
-            }
-            
-            let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
-            opq.addOperation(getServerDataOperation)
-            
-            let parseDialog = ParseDialogHistory()
-            parseDialog.completionBlock = {
-                var userIDs = "\(vkSingleton.shared.userID)"
-                
-                if let id = Int(self.userID), id > 0 {
-                    userIDs = "\(id),\(userIDs)"
-                }
-                
-                var groupIDs = self.groupID
-                if let id = Int(self.userID), id < 0 {
-                    groupIDs = "\(id),\(groupIDs)"
-                }
-                
-                for dialog in parseDialog.outputData {
-                    for index in 0...9 {
-                        if dialog.attach[index].type == "wall" {
-                            let id = dialog.attach[index].wall[0].fromID
-                            if id > 0 {
-                                userIDs = "\(id),\(userIDs)"
-                            } else {
-                                if groupIDs != "" {
-                                    groupIDs = "\(groupIDs),"
-                                }
-                                groupIDs = "\(groupIDs)\(abs(id))"
-                            }
-                        }
-                    }
-                    
-                    if dialog.fwdMessage.count > 0 {
-                        for mess in dialog.fwdMessage {
-                            let id = mess.userID
-                            if id > 0 {
-                                userIDs = "\(id),\(userIDs)"
-                            } else {
-                                if groupIDs != "" {
-                                    groupIDs = "\(groupIDs),"
-                                }
-                                groupIDs = "\(groupIDs)\(abs(id))"
-                            }
-                        }
-                    }
-                }
-                
-                var code = ""
-                
-                var index = -1
-                var usersIndex = 0
-                if userIDs != "" {
-                    code = "\(code) var a = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_ids\":\"\(userIDs)\",\"fields\":\"id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,online,can_write_private_message,sex\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
-                
-                    index += 1
-                    usersIndex = index
-                }
-                
-                var groupsIndex = 0
-                if groupIDs != "" {
-                    code = "\(code) var b = API.groups.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"group_ids\":\"\(groupIDs)\",\"fields\":\"activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
-                
-                    index += 1
-                    groupsIndex = index
-                }
-                
-                var returnString = ""
-                if userIDs != "" {
-                    returnString = "a"
-                }
-                
-                if groupIDs != "" {
-                    if returnString == "" {
-                        returnString = "b"
-                    } else {
-                        returnString = "\(returnString),b"
-                    }
-                }
-                
-                if returnString != "" {
-                    code = "\(code) return [\(returnString)];"
-                    
-                    let url2 = "/method/execute"
-                    let parameters2 = [
-                        "access_token": vkSingleton.shared.accessToken,
-                        "code": code,
-                        "v": vkSingleton.shared.version
-                    ]
-                    
-                    let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
-                    getServerDataOperation2.addDependency(parseDialog)
-                    getServerDataOperation2.completionBlock = {
-                        guard let data = getServerDataOperation2.data else { return }
-                        
-                        guard let json = try? JSON(data: data) else { print("json error"); return }
-                        //print(json)
-                        
-                        self.users = json["response"][usersIndex].compactMap { DialogsUsers(json: $0.1) }
-                        let groups = json["response"][groupsIndex].compactMap { GroupProfile(json: $0.1) }
-                        
-                        if groups.count > 0 {
-                            for group in groups {
-                                let newGroup = DialogsUsers(json: JSON.null)
-                                newGroup.uid = "-\(group.gid)"
-                                newGroup.firstName = group.name
-                                newGroup.maxPhotoOrigURL = group.photo200
-                                if group.type == "group" {
-                                    if group.isClosed == 0 {
-                                        newGroup.firstNameAbl = "Открытая группа"
-                                    } else if group.isClosed == 1 {
-                                        newGroup.firstNameAbl = "Закрытая группа"
-                                    } else {
-                                        newGroup.firstNameAbl = "Частная группа"
-                                    }
-                                } else if group.type == "page" {
-                                    newGroup.firstNameAbl = "Публичная страница"
-                                } else {
-                                    newGroup.firstNameAbl = "Мероприятие"
-                                }
-                                self.users.append(newGroup)
-                            }
-                        }
-                        
-                        for dialog in parseDialog.outputData.reversed() {
-                            self.dialogs.append(dialog)
-                        }
-                        self.totalCount = parseDialog.count
-                        
-                        OperationQueue.main.addOperation {
-                            let users = self.users.filter({ $0.uid == self.userID })
-                            if users.count > 0 {
-                                let titleItem = UIBarButtonItem(customView: self.setTitleView(user: users[0], status: ""))
-                                    self.navigationItem.rightBarButtonItem = titleItem
-                                    self.title = ""
-                            }
-                            
-                            self.offset += self.count
-                            self.collectionView.reloadData()
-                            self.tableView.reloadData()
-                            self.tableView.separatorStyle = .none
-                            if self.tableView.numberOfSections > 1 {
-                                self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
-                            }
-                            if parseDialog.unread > 0 {
-                                self.markAsReadMessages(controller: self)
-                            }
-                            ViewControllerUtils().hideActivityIndicator()
-                        }
-                    }
-                    opq.addOperation(getServerDataOperation2)
-                }
-            }
-            parseDialog.addDependency(getServerDataOperation)
-            opq.addOperation(parseDialog)
+        let opq = OperationQueue()
+        
+        estimatedHeightCache.removeAll(keepingCapacity: false)
+        OperationQueue.main.addOperation {
+            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
         }
-    }
-    
-    @objc func loadMoreMessages() {
         
-        if let gid = Int(self.groupID), let token = vkSingleton.shared.groupToken[gid] {
-            let opq = OperationQueue()
+        let url = "/method/messages.getHistory"
+        var parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "offset": "\(offset)",
+            "count": "\(count)",
+            "peer_id": "\(userID)",
+            "start_message_id": "-1",
+            "group_id": groupID,
+            "v": vkSingleton.shared.version
+        ]
         
-            estimatedHeightCache.removeAll(keepingCapacity: false)
-            OperationQueue.main.addOperation {
-                ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+        if startMessageID > 0 {
+            parameters["offset"] = "0"
+            parameters["start_message_id"] = "\(startMessageID)"
+        }
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        opq.addOperation(getServerDataOperation)
+        
+        let parseDialog = ParseDialogHistory()
+        parseDialog.completionBlock = {
+            var userIDs = "\(vkSingleton.shared.userID)"
+            
+            if let id = Int(self.userID), id > 0 {
+                userIDs = "\(id),\(userIDs)"
             }
             
-            let startID = dialogs[0].id
+            var groupIDs = self.groupID
+            if let id = Int(self.userID), id < 0 {
+                groupIDs = "\(id),\(groupIDs)"
+            }
             
-            let url = "/method/messages.getHistory"
-            let parameters = [
-                "access_token": token,
-                "offset": "0",
-                "count": "\(count+1)",
-                "peer_id": "\(userID)",
-                "start_message_id": "\(startID)",
-                "v": vkSingleton.shared.version
-            ]
-            
-            let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
-            opq.addOperation(getServerDataOperation)
-            
-            let parseDialog = ParseDialogHistory()
-            parseDialog.completionBlock = {
-                var userIDs = "\(vkSingleton.shared.userID)"
-                if let id = Int(self.userID), id > 0 {
-                    userIDs = "\(id),\(userIDs)"
-                }
-                
-                var groupIDs = ""
-                if let id = Int(self.userID), id < 0 {
-                    groupIDs = "\(abs(id))"
-                }
-                
-                for dialog in parseDialog.outputData {
-                    for index in 0...9 {
-                        if dialog.attach[index].type == "wall" {
-                            let id = dialog.attach[index].wall[0].fromID
-                            if id > 0 {
-                                userIDs = "\(id),\(userIDs)"
-                            } else {
-                                if groupIDs != "" {
-                                    groupIDs = "\(groupIDs),"
-                                }
-                                groupIDs = "\(groupIDs)\(abs(id))"
+            for dialog in parseDialog.outputData {
+                for index in 0...9 {
+                    if dialog.attach[index].type == "wall" {
+                        let id = dialog.attach[index].wall[0].fromID
+                        if id > 0 {
+                            userIDs = "\(id),\(userIDs)"
+                        } else {
+                            if groupIDs != "" {
+                                groupIDs = "\(groupIDs),"
                             }
-                        }
-                    }
-                    
-                    if dialog.fwdMessage.count > 0 {
-                        for mess in dialog.fwdMessage {
-                            let id = mess.userID
-                            if id > 0 {
-                                userIDs = "\(id),\(userIDs)"
-                            } else {
-                                if groupIDs != "" {
-                                    groupIDs = "\(groupIDs),"
-                                }
-                                groupIDs = "\(groupIDs)\(abs(id))"
-                            }
+                            groupIDs = "\(groupIDs)\(abs(id))"
                         }
                     }
                 }
                 
-                let url2 = "/method/users.get"
+                if dialog.fwdMessage.count > 0 {
+                    for mess in dialog.fwdMessage {
+                        let id = mess.userID
+                        if id > 0 {
+                            userIDs = "\(id),\(userIDs)"
+                        } else {
+                            if groupIDs != "" {
+                                groupIDs = "\(groupIDs),"
+                            }
+                            groupIDs = "\(groupIDs)\(abs(id))"
+                        }
+                    }
+                }
+            }
+            
+            var code = ""
+            
+            var index = -1
+            var usersIndex = 0
+            if userIDs != "" {
+                code = "\(code) var a = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_ids\":\"\(userIDs)\",\"fields\":\"id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,online,can_write_private_message,sex\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
+            
+                index += 1
+                usersIndex = index
+            }
+            
+            var groupsIndex = 0
+            if groupIDs != "" {
+                code = "\(code) var b = API.groups.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"group_ids\":\"\(groupIDs)\",\"fields\":\"activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
+            
+                index += 1
+                groupsIndex = index
+            }
+            
+            var returnString = ""
+            if userIDs != "" {
+                returnString = "a"
+            }
+            
+            if groupIDs != "" {
+                if returnString == "" {
+                    returnString = "b"
+                } else {
+                    returnString = "\(returnString),b"
+                }
+            }
+            
+            if returnString != "" {
+                code = "\(code) return [\(returnString)];"
+                
+                let url2 = "/method/execute"
                 let parameters2 = [
                     "access_token": vkSingleton.shared.accessToken,
-                    "user_ids": userIDs,
-                    "fields": "id, first_name, last_name, last_seen, photo_max_orig, photo_max, deactivated, first_name_abl, first_name_gen, online,  can_write_private_message, sex",
-                    "name_case": "nom",
+                    "code": code,
                     "v": vkSingleton.shared.version
                 ]
                 
                 let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
                 getServerDataOperation2.addDependency(parseDialog)
+                getServerDataOperation2.completionBlock = {
+                    guard let data = getServerDataOperation2.data else { return }
+                    
+                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    //print(json)
+                    
+                    self.users = json["response"][usersIndex].compactMap { DialogsUsers(json: $0.1) }
+                    let groups = json["response"][groupsIndex].compactMap { GroupProfile(json: $0.1) }
+                    
+                    if groups.count > 0 {
+                        for group in groups {
+                            let newGroup = DialogsUsers(json: JSON.null)
+                            newGroup.uid = "-\(group.gid)"
+                            newGroup.firstName = group.name
+                            newGroup.maxPhotoOrigURL = group.photo200
+                            if group.type == "group" {
+                                if group.isClosed == 0 {
+                                    newGroup.firstNameAbl = "Открытая группа"
+                                } else if group.isClosed == 1 {
+                                    newGroup.firstNameAbl = "Закрытая группа"
+                                } else {
+                                    newGroup.firstNameAbl = "Частная группа"
+                                }
+                            } else if group.type == "page" {
+                                newGroup.firstNameAbl = "Публичная страница"
+                            } else {
+                                newGroup.firstNameAbl = "Мероприятие"
+                            }
+                            self.users.append(newGroup)
+                        }
+                    }
+                    
+                    for dialog in parseDialog.outputData.reversed() {
+                        self.dialogs.append(dialog)
+                    }
+                    self.totalCount = parseDialog.count
+                    
+                    OperationQueue.main.addOperation {
+                        let users = self.users.filter({ $0.uid == self.userID })
+                        if users.count > 0 {
+                            let titleItem = UIBarButtonItem(customView: self.setTitleView(user: users[0], status: ""))
+                                self.navigationItem.rightBarButtonItem = titleItem
+                                self.title = ""
+                        }
+                        
+                        self.offset += self.count
+                        self.collectionView.reloadData()
+                        self.tableView.reloadData()
+                        self.tableView.separatorStyle = .none
+                        if self.tableView.numberOfSections > 1 {
+                            self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                        }
+                        if parseDialog.unread > 0 {
+                            self.markAsReadMessages(controller: self)
+                        }
+                        ViewControllerUtils().hideActivityIndicator()
+                    }
+                }
                 opq.addOperation(getServerDataOperation2)
-                
-                let parseDialogsUsers = ParseDialogsUsers()
-                parseDialogsUsers.addDependency(getServerDataOperation2)
-                opq.addOperation(parseDialogsUsers)
-                
-                let url3 = "/method/groups.getById"
-                let parameters3 = [
-                    "access_token": vkSingleton.shared.accessToken,
-                    "group_ids": groupIDs,
-                    "fields": "activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed",
-                    "v": vkSingleton.shared.version
-                ]
-                
-                let getServerDataOperation3 = GetServerDataOperation(url: url3, parameters: parameters3)
-                opq.addOperation(getServerDataOperation3)
-                
-                let parseGroupProfile = ParseGroupProfile()
-                parseGroupProfile.addDependency(getServerDataOperation3)
-                opq.addOperation(parseGroupProfile)
-                
-                let reloadController = ReloadGroupDialogController(controller: self, startID: startID)
-                reloadController.addDependency(parseDialog)
-                reloadController.addDependency(parseDialogsUsers)
-                reloadController.addDependency(parseGroupProfile)
-                OperationQueue.main.addOperation(reloadController)
             }
-            parseDialog.addDependency(getServerDataOperation)
-            opq.addOperation(parseDialog)
         }
+        parseDialog.addDependency(getServerDataOperation)
+        opq.addOperation(parseDialog)
+    }
+    
+    @objc func loadMoreMessages() {
+        
+        let opq = OperationQueue()
+    
+        estimatedHeightCache.removeAll(keepingCapacity: false)
+        OperationQueue.main.addOperation {
+            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+        }
+        
+        let startID = dialogs[0].id
+        
+        let url = "/method/messages.getHistory"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "offset": "0",
+            "count": "\(count+1)",
+            "peer_id": "\(userID)",
+            "start_message_id": "\(startID)",
+            "group_id": groupID,
+            "v": vkSingleton.shared.version
+        ]
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        opq.addOperation(getServerDataOperation)
+        
+        let parseDialog = ParseDialogHistory()
+        parseDialog.completionBlock = {
+            var userIDs = "\(vkSingleton.shared.userID)"
+            if let id = Int(self.userID), id > 0 {
+                userIDs = "\(id),\(userIDs)"
+            }
+            
+            var groupIDs = ""
+            if let id = Int(self.userID), id < 0 {
+                groupIDs = "\(abs(id))"
+            }
+            
+            for dialog in parseDialog.outputData {
+                for index in 0...9 {
+                    if dialog.attach[index].type == "wall" {
+                        let id = dialog.attach[index].wall[0].fromID
+                        if id > 0 {
+                            userIDs = "\(id),\(userIDs)"
+                        } else {
+                            if groupIDs != "" {
+                                groupIDs = "\(groupIDs),"
+                            }
+                            groupIDs = "\(groupIDs)\(abs(id))"
+                        }
+                    }
+                }
+                
+                if dialog.fwdMessage.count > 0 {
+                    for mess in dialog.fwdMessage {
+                        let id = mess.userID
+                        if id > 0 {
+                            userIDs = "\(id),\(userIDs)"
+                        } else {
+                            if groupIDs != "" {
+                                groupIDs = "\(groupIDs),"
+                            }
+                            groupIDs = "\(groupIDs)\(abs(id))"
+                        }
+                    }
+                }
+            }
+            
+            let url2 = "/method/users.get"
+            let parameters2 = [
+                "access_token": vkSingleton.shared.accessToken,
+                "user_ids": userIDs,
+                "fields": "id, first_name, last_name, last_seen, photo_max_orig, photo_max, deactivated, first_name_abl, first_name_gen, online,  can_write_private_message, sex",
+                "name_case": "nom",
+                "v": vkSingleton.shared.version
+            ]
+            
+            let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+            getServerDataOperation2.addDependency(parseDialog)
+            opq.addOperation(getServerDataOperation2)
+            
+            let parseDialogsUsers = ParseDialogsUsers()
+            parseDialogsUsers.addDependency(getServerDataOperation2)
+            opq.addOperation(parseDialogsUsers)
+            
+            let url3 = "/method/groups.getById"
+            let parameters3 = [
+                "access_token": vkSingleton.shared.accessToken,
+                "group_ids": groupIDs,
+                "fields": "activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed",
+                "v": vkSingleton.shared.version
+            ]
+            
+            let getServerDataOperation3 = GetServerDataOperation(url: url3, parameters: parameters3)
+            opq.addOperation(getServerDataOperation3)
+            
+            let parseGroupProfile = ParseGroupProfile()
+            parseGroupProfile.addDependency(getServerDataOperation3)
+            opq.addOperation(parseGroupProfile)
+            
+            let reloadController = ReloadGroupDialogController(controller: self, startID: startID)
+            reloadController.addDependency(parseDialog)
+            reloadController.addDependency(parseDialogsUsers)
+            reloadController.addDependency(parseGroupProfile)
+            OperationQueue.main.addOperation(reloadController)
+        }
+        parseDialog.addDependency(getServerDataOperation)
+        opq.addOperation(parseDialog)
     }
     
     func numberOfSections(in tableView: UITableView) -> Int {

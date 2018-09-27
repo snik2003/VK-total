@@ -632,6 +632,8 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     
     @objc func tapMessageButton(sender: UIButton) {
         
+        sender.buttonTouched()
+        
         let url = "/method/messages.getHistory"
         let parameters = [
             "access_token": vkSingleton.shared.accessToken,
@@ -659,8 +661,10 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         OperationQueue().addOperation(parseDialog)
     }
     
-    @objc func joinGroup() {
+    @objc func joinGroup(sender: UIButton) {
         if groupProfile.count > 0 {
+            
+            sender.buttonTouched()
             
             let group = groupProfile[0]
             
@@ -820,7 +824,6 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                             self.groupProfile[0].membersCounter -= 1
                             
                             UserDefaults.standard.removeObject(forKey: "\(vkSingleton.shared.userID)_groupToken_\(self.groupID)")
-                            vkSingleton.shared.groupToken[self.groupID] = nil
                             
                             if vkSingleton.shared.adminGroupID.contains(self.groupID) {
                                 vkSingleton.shared.adminGroupID.remove(object: self.groupID)
@@ -857,7 +860,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
             view.backgroundColor = UIColor.white
             
             var height = profileView.configureCell(profile: groupProfile[0])
-            profileView.isMemberButton.addTarget(self, action: #selector(self.joinGroup), for: .touchUpInside)
+            profileView.isMemberButton.addTarget(self, action: #selector(self.joinGroup(sender:)), for: .touchUpInside)
             profileView.messageButton.addTarget(self, action: #selector(self.tapMessageButton(sender:)), for: .touchUpInside)
             profileView.groupMessagesButton.addTarget(self, action: #selector(self.tapGroupMessagesButton(sender:)), for: .touchUpInside)
             if getNumberOfCounters() > 0 {
@@ -909,23 +912,8 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     
     @objc func tapGroupMessagesButton(sender: UIButton) {
         
-        if let token = userDefaults.string(forKey: "\(vkSingleton.shared.userID)_groupToken_\(groupID)") {
-            vkSingleton.shared.groupToken[groupID] = token
-            self.openGroupDialogs()
-        } else {
-            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-            
-            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-            alertController.addAction(cancelAction)
-            
-            let action1 = UIAlertAction(title: "Получить ключ доступа", style: .destructive){ action in
-                
-                self.vkGroupAutorize()
-            }
-            alertController.addAction(action1)
-            
-            self.present(alertController, animated: true)
-        }
+        sender.buttonTouched()
+        openGroupDialogs()
     }
     
     @objc func tabMembersLabel() {
@@ -1286,23 +1274,6 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                 alertController.addAction(action7)
             }
             
-            let userDefaults = UserDefaults.standard
-            if group.isAdmin == 1 {
-                if let _ = userDefaults.string(forKey: "\(vkSingleton.shared.userID)_groupToken_\(self.groupID)") {
-                    let action = UIAlertAction(title: "Забыть токен сообщества", style: .destructive) { action in
-                    
-                        userDefaults.removeObject(forKey: "\(vkSingleton.shared.userID)_groupToken_\(self.groupID)")
-                        vkSingleton.shared.groupToken[self.groupID] = nil
-                        
-                        if let request = vkGroupLongPoll.shared.request[self.groupID] {
-                            request.cancel()
-                            vkGroupLongPoll.shared.firstLaunch[self.groupID] = true
-                        }
-                    }
-                    alertController.addAction(action)
-                }
-            }
-            
             present(alertController, animated: true)
         }
     }
@@ -1509,76 +1480,5 @@ extension GroupProfileController2: UICollectionViewDelegate, UICollectionViewDat
         }
         
         return count
-    }
-}
-
-extension GroupProfileController2: WKNavigationDelegate {
-    func cleanCookies() {
-        HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
-        
-        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            records.forEach { record in
-                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
-            }
-        }
-    }
-    
-    func vkGroupAutorize() {
-        webview = WKWebView(frame: self.view.frame)
-        webview.navigationDelegate = self
-        webview.backgroundColor = UIColor.white
-        self.view.addSubview(webview)
-        cleanCookies()
-        
-        if vkSingleton.shared.vkAppID.count > 0 {
-            var urlComponents = URLComponents()
-            
-            urlComponents.scheme = "https"
-            urlComponents.host = "oauth.vk.com"
-            urlComponents.path = "/authorize"
-            
-            urlComponents.queryItems = [
-                URLQueryItem(name: "client_id", value: "\(vkSingleton.shared.vkAppID[0])"),
-                URLQueryItem(name: "display", value: "mobile"),
-                URLQueryItem(name: "group_ids", value: "\(abs(self.groupID))"),
-                URLQueryItem(name: "redirect_uri", value: "https://oauth.vk.com/blank.html"),
-                URLQueryItem(name: "scope", value: "manage,messages,photos,docs"),
-                URLQueryItem(name: "response_type", value: "token"),
-                URLQueryItem(name: "v", value: vkSingleton.shared.version)
-            ]
-            
-            let request = URLRequest(url: urlComponents.url!)
-            
-            webview.load(request)
-        }
-    }
-    
-    func webView(_ webView: WKWebView, decidePolicyFor navigationResponse: WKNavigationResponse, decisionHandler: @escaping (WKNavigationResponsePolicy) -> Void) {
-        
-        guard let url = navigationResponse.response.url, url.path == "/blank.html", let fragment = url.fragment  else {
-            decisionHandler(.allow)
-            
-            return
-        }
-        
-        let params = fragment
-            .components(separatedBy: "&")
-            .map { $0.components(separatedBy: "=") }
-            .reduce([String: String]()) { result, param in
-                var dict = result
-                let key = param[0]
-                let value = param[1]
-                dict[key] = value
-                return dict
-        }
-        
-        if let token = params["access_token_\(groupID)"] {
-            vkSingleton.shared.groupToken[groupID] = token
-            userDefaults.set(token, forKey: "\(vkSingleton.shared.userID)_groupToken_\(groupID)")
-            self.openGroupDialogs()
-        }
-        decisionHandler(.cancel)
-        webView.removeFromSuperview()
-        self.setOfflineStatus(dependence: nil)
     }
 }

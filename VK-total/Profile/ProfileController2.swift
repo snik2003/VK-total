@@ -1089,8 +1089,10 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         }
     }
     
-    @objc func addFriendButton() {
+    @objc func addFriendButton(sender: UIButton) {
         if userProfile.count > 0 {
+            
+            sender.buttonTouched()
             
             let user = userProfile[0]
             
@@ -1433,7 +1435,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             
             profileView.infoButton.addTarget(self, action: #selector(self.infoUserTouch(sender:)), for: .touchUpInside)
             profileView.messageButton.addTarget(self, action: #selector(self.tapMessageButton(sender:)), for: .touchUpInside)
-            profileView.friendButton.addTarget(self, action: #selector(self.addFriendButton), for: .touchUpInside)
+            profileView.friendButton.addTarget(self, action: #selector(self.addFriendButton(sender:)), for: .touchUpInside)
             profileView.newRecordButton.addTarget(self, action: #selector(self.tapNewRecordButton(sender:)), for: .touchUpInside)
             profileView.postponedWallButton.addTarget(self, action: #selector(self.tapPostponedWallButton(sender:)), for: .touchUpInside)
             
@@ -1447,6 +1449,8 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func tapMessageButton(sender: UIButton) {
+        
+        sender.buttonTouched()
         
         let url = "/method/messages.getHistory"
         let parameters = [
@@ -1505,6 +1509,8 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func tapAllRecordsButton(sender: UIButton) {
+        sender.buttonTouched()
+        
         filterRecords = "all"
         offset = 0
         OperationQueue.main.addOperation {
@@ -1514,6 +1520,8 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func tapOwnerButton(sender: UIButton) {
+        sender.buttonTouched()
+        
         filterRecords = "owner"
         offset = 0
         OperationQueue.main.addOperation {

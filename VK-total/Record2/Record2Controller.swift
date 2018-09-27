@@ -116,6 +116,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
         setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
         
         commentView.accessoryImage = UIImage(named: "attachment")
+        commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
         commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
         
         tableView.delegate = self
@@ -129,6 +130,8 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     @objc func tapFromGroupButton(sender: UIButton) {
+        sender.buttonTouched()
+        
         self.commentView.endEditing(true)
         self.actionFromGroupButton(fromView: commentView.fromGroupButton)
     }
@@ -243,6 +246,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     
     @objc func tapStickerButton(sender: UIButton) {
         
+        sender.buttonTouched()
         commentView.endEditing(true)
         
         let width = self.view.bounds.width - 20
@@ -257,6 +261,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     
     @objc func tapAccessoryButton(sender: UIButton) {
         
+        sender.buttonTouched()
         self.openNewCommentController(ownerID: ownerID, message: commentView.textView.text!, type: "new_record_comment", title: "Новый комментарий", replyID: 0, replyName: "", comment: nil, controller: self)
     }
     
@@ -1597,6 +1602,44 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alertController.addAction(cancelAction)
             
+            let action4 = UIAlertAction(title: "Скопировать ссылку", style: .default) { action in
+                
+                if self.type == "post" {
+                    let link = "https://vk.com/wall\(self.ownerID)_\(self.itemID)"
+                    UIPasteboard.general.string = link
+                    if let string = UIPasteboard.general.string {
+                        self.showInfoMessage(title: "Ссылка на пост:" , msg: "\(string)")
+                    }
+                } else if self.type == "photo" {
+                    let link = "https://vk.com/photo\(self.ownerID)_\(self.itemID)"
+                    UIPasteboard.general.string = link
+                    if let string = UIPasteboard.general.string {
+                        self.showInfoMessage(title: "Ссылка на фотографию:" , msg: "\(string)")
+                    }
+                }
+            }
+            alertController.addAction(action4)
+            
+            let action5 = UIAlertAction(title: "Добавить ссылку в \"Избранное\"", style: .default) { action in
+                
+                if self.type == "post" {
+                    var text = "Запись на стене"
+                    if record.text != "" {
+                        text = "Запись на стене:\n\(record.text.prepareTextForPublic().prefix(50))"
+                    } else if record.repostText != "" {
+                        text = "Запись на стене:\n\(record.repostText.prepareTextForPublic().prefix(50))"
+                    }
+                    
+                    let link = "https://vk.com/wall\(self.ownerID)_\(self.itemID)"
+                    self.addLinkToFave(link: link, text: text)
+                } else if self.type == "photo" {
+                    
+                    let link = "https://vk.com/photo\(self.ownerID)_\(self.itemID)"
+                    self.addLinkToFave(link: link, text: "Фотография")
+                }
+            }
+            alertController.addAction(action5)
+            
             if record.canPin == 1 && record.isPinned == 0 {
                 let action1 = UIAlertAction(title: "Закрепить на стене", style: .default) { action in
                     
@@ -1667,6 +1710,22 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     
                 }
                 alertController.addAction(action1)
+            }
+            
+            if record.postType == "post" && record.canDelete == 1 {
+                if record.canComment == 1 {
+                    let action = UIAlertAction(title: "Закрыть комментирование", style: .destructive) { action in
+                        
+                        self.closeComments()
+                    }
+                    alertController.addAction(action)
+                } else {
+                    let action = UIAlertAction(title: "Открыть комментирование", style: .default) { action in
+                        
+                        self.closeComments()
+                    }
+                    alertController.addAction(action)
+                }
             }
             
             if record.postType == "postpone" && delegate is PostponedWallController {
@@ -1856,44 +1915,6 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                 }
             }
             
-            let action4 = UIAlertAction(title: "Скопировать ссылку", style: .default) { action in
-                
-                if self.type == "post" {
-                    let link = "https://vk.com/wall\(self.ownerID)_\(self.itemID)"
-                    UIPasteboard.general.string = link
-                    if let string = UIPasteboard.general.string {
-                        self.showInfoMessage(title: "Ссылка на пост:" , msg: "\(string)")
-                    }
-                } else if self.type == "photo" {
-                    let link = "https://vk.com/photo\(self.ownerID)_\(self.itemID)"
-                    UIPasteboard.general.string = link
-                    if let string = UIPasteboard.general.string {
-                        self.showInfoMessage(title: "Ссылка на фотографию:" , msg: "\(string)")
-                    }
-                }
-            }
-            alertController.addAction(action4)
-            
-            let action5 = UIAlertAction(title: "Добавить ссылку в \"Избранное\"", style: .default) { action in
-                
-                if self.type == "post" {
-                    var text = "Запись на стене"
-                    if record.text != "" {
-                        text = "Запись на стене:\n\(record.text.prepareTextForPublic().prefix(50))"
-                    } else if record.repostText != "" {
-                        text = "Запись на стене:\n\(record.repostText.prepareTextForPublic().prefix(50))"
-                    }
-                    
-                    let link = "https://vk.com/wall\(self.ownerID)_\(self.itemID)"
-                    self.addLinkToFave(link: link, text: text)
-                } else if self.type == "photo" {
-                    
-                    let link = "https://vk.com/photo\(self.ownerID)_\(self.itemID)"
-                    self.addLinkToFave(link: link, text: "Фотография")
-                }
-            }
-            alertController.addAction(action5)
-            
             let action6 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
                 
                 self.reportOnObject(ownerID: self.ownerID, itemID: self.itemID, type: self.type)
@@ -2048,6 +2069,64 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
             
             self.present(alertController, animated: true)
         }
+    }
+    
+    func closeComments() {
+        
+        let record = news[0]
+        
+        var url = ""
+        
+        if record.canComment == 1 {
+            url = "/method/wall.closeComments"
+        } else {
+            url = "/method/wall.openComments"
+        }
+        
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "owner_id": "\(record.ownerID)",
+            "post_id": "\(record.id)",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            
+            if error.errorCode == 0 {
+                OperationQueue.main.addOperation {
+                    OperationQueue.main.addOperation {
+                        self.tableView.removeFromSuperview()
+                        self.commentView.removeFromSuperview()
+                        
+                        self.configureTableView()
+                        
+                        if record.canComment == 1 {
+                            record.canComment = 0
+                            
+                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
+                            self.view.addSubview(self.tableView)
+                            self.commentView.removeFromSuperview()
+                        } else {
+                            record.canComment = 1
+                            self.view.addSubview(self.commentView)
+                        }
+                        
+                        self.tableView.reloadData()
+                    }
+                }
+            } else {
+                self.showErrorMessage(title: "Редактирование параметров записи", msg: "\nОшибка #\(error.errorCode): \(error.errorMsg)\n")
+            }
+        }
+        OperationQueue().addOperation(request)
     }
 }
 

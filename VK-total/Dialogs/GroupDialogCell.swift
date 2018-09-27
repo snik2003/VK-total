@@ -119,7 +119,9 @@ class GroupDialogCell: UITableViewCell {
                 bubbleX = UIScreen.main.bounds.width - 2 * leftInsets - avatarSize - rect.width - 5
                 messView.backgroundColor = outBackColor
             }
-            
+            if !dialog.hasSticker {
+                messView.configureMessageView(out: dialog.out, radius: 12)
+            }
             messView.addSubview(messText)
             
             bubbleHeight = rect.height

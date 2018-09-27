@@ -341,11 +341,14 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             } else {
                 song = music[indexPath.row]
             }
-            self.openBrowserController(url: song.URL)
+            
+            self.openBrowserControllerNoCheck(url: song.URL)
         }
     }
     
     @objc func tapListenButton(sender: UIButton) {
+        sender.buttonTouched()
+        
         let buttonPosition: CGPoint = sender.convert(CGPoint.zero, to: self.tableView)
         
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
@@ -501,7 +504,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         let searchButton = UIButton()
         searchButton.layer.borderColor = UIColor.black.cgColor
         searchButton.layer.borderWidth = 0.6
-        searchButton.layer.cornerRadius = 10
+        searchButton.layer.cornerRadius = 7
         searchButton.clipsToBounds = true
         searchButton.setTitle("Очистить поиск", for: .normal)
         searchButton.setTitleColor(UIColor.white, for: .normal)
@@ -509,14 +512,14 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         searchButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 11)!
         searchButton.titleLabel?.adjustsFontSizeToFitWidth = true
         searchButton.titleLabel?.minimumScaleFactor = 0.5
-        searchButton.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width/2-45, height: 22)
+        searchButton.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width/2-45, height: 21)
         searchView.addSubview(searchButton)
         searchButton.addTarget(self, action: #selector(self.clearSearch(sender:)), for: .touchUpInside)
         
         let clearButton = UIButton()
         clearButton.layer.borderColor = UIColor.black.cgColor
         clearButton.layer.borderWidth = 0.6
-        clearButton.layer.cornerRadius = 10
+        clearButton.layer.cornerRadius = 7
         clearButton.clipsToBounds = true
         clearButton.setTitle("Поиск в ITunes", for: .normal)
         clearButton.setTitleColor(UIColor.white, for: .normal)
@@ -524,10 +527,10 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         clearButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
         clearButton.titleLabel?.adjustsFontSizeToFitWidth = true
         clearButton.titleLabel?.minimumScaleFactor = 0.5
-        clearButton.frame = CGRect(x: UIScreen.main.bounds.width/2+5, y: topY, width: UIScreen.main.bounds.width/2-45, height: 22)
+        clearButton.frame = CGRect(x: UIScreen.main.bounds.width/2+5, y: topY, width: UIScreen.main.bounds.width/2-45, height: 21)
         searchView.addSubview(clearButton)
         clearButton.addTarget(self, action: #selector(self.searchITunes(sender:)), for: .touchUpInside)
-        topY += 22
+        topY += 21
         
         //searchView.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
         searchView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: topY + 10)
@@ -535,6 +538,8 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     @objc func searchITunes(sender: UIButton) {
+        sender.buttonTouched()
+        
         artistTextField.resignFirstResponder()
         albumTextField.resignFirstResponder()
         songTextField.resignFirstResponder()
@@ -556,6 +561,12 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     @objc func clearSearch(sender:UIButton) {
+        sender.buttonTouched()
+        
+        artistTextField.text = ""
+        albumTextField.text = ""
+        songTextField.text = ""
+        
         search.removeAll(keepingCapacity: false)
         tableView.reloadData()
     }

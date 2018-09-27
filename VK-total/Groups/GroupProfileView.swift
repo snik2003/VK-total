@@ -442,7 +442,7 @@ class GroupProfileView: UIView {
             statusSeparator2.frame = CGRect(x: 0, y: topNew, width: UIScreen.main.bounds.width, height: statusSeparatorHeight)
         }
         
-        if profile.isAdmin == 1 {
+        if profile.isAdmin == 1 && profile.canMessage == 1{
             topNew += verticalSpacingInsets
             
             groupMessagesButton.setTitle("Сообщения сообщества", for: .normal)

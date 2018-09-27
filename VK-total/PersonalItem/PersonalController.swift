@@ -95,7 +95,6 @@ class PersonalController: UITableViewController {
                     if let request = vkGroupLongPoll.shared.request[id] {
                         request.cancel()
                         vkGroupLongPoll.shared.firstLaunch[id] = true
-                        vkSingleton.shared.groupToken[id] = nil
                     }
                 }
                 

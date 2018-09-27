@@ -191,6 +191,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         setCommentFromGroupID(id: 0, controller: self)
         
         commentView.accessoryImage = UIImage(named: "attachment")
+        commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
         commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
         
         tableView.delegate = self
@@ -1669,6 +1670,7 @@ extension DialogController {
     
     @objc func tapStickerButton(sender: UIButton) {
         
+        sender.buttonTouched()
         commentView.endEditing(true)
         
         let width = self.view.bounds.width - 20
@@ -1683,6 +1685,7 @@ extension DialogController {
     
     @objc func tapAccessoryButton(sender: UIButton) {
         
+        sender.buttonTouched()
         commentView.endEditing(true)
         
         if attach.count < maxCountAttach {
