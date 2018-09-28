@@ -85,7 +85,7 @@ class DialogHistory: Equatable {
         }
         
         if self.fromID == 0 {
-            if self.out != 0 {
+            if self.out == 0 {
                 self.fromID = self.userID
             } else {
                 if let id = Int(vkSingleton.shared.userID) {
@@ -289,4 +289,34 @@ class DialogHistory: Equatable {
     }
 }
 
+class HistoryAttachments: Equatable {
+    static func == (lhs: HistoryAttachments, rhs: HistoryAttachments) -> Bool {
+        if lhs.messID == rhs.messID {
+            return true
+        }
+        
+        return false
+    }
+    
+    var messID = 0
+    
+    init(json: JSON) {
+        self.messID = json["message_id"].intValue
+    }
+}
+
+extension Array where Element: Equatable {
+    
+    func removeDuplicates() -> [Element] {
+        var result = [Element]()
+        
+        for value in self {
+            if result.contains(value) == false {
+                result.append(value)
+            }
+        }
+        
+        return result
+    }
+}
 

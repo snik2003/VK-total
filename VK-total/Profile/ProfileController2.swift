@@ -1682,9 +1682,12 @@ extension ProfileController2: UICollectionViewDelegate, UICollectionViewDataSour
             
             if countersSection[indexPath.section].comment == "followersCount" {
                 
-                var title = "Подписчики"
-                if userProfile.count > 0 {
-                    title = "Подписчики \(userProfile[0].firstNameGen)"
+                var title = "Мои подписчики"
+                if userID != vkSingleton.shared.userID {
+                    title = "Подписчики"
+                    if userProfile.count > 0 {
+                        title = "Подписчики \(userProfile[0].firstNameGen)"
+                    }
                 }
                 
                 self.openUsersController(uid: userID, title: title, type: "followers")

@@ -17,6 +17,23 @@ enum DialogSource {
     case preview
 }
 
+enum DialogMode {
+    case dialog
+    case edit
+    case attachments
+    case important
+    case search
+}
+
+enum MediaType: String {
+    case photo = "photo"
+    case video = "video"
+    case audio = "audio"
+    case doc = "doc"
+    case link = "link"
+    case wall = "wall"
+}
+
 class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var navHeight: CGFloat = 64
@@ -31,8 +48,9 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     var offset = 0
     var count = 50
     var totalCount = 0
-    var mode = ""
+    var mode = DialogMode.dialog
     var source = DialogSource.all
+    var media = MediaType.photo
     
     var userID = ""
     var chatID = ""
@@ -51,6 +69,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     var tableView = UITableView()
     var commentView: DCCommentView!
+    var searchBar = UISearchBar()
+    var searchText = ""
     
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
@@ -62,6 +82,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     let pickerController2 = UIImagePickerController()
     var collectionView: UICollectionView!
     
+    var firstLaunch = true
     var markMessages: [Int] = []
     let deleteButton = UIButton()
     let resendButton = UIButton()
@@ -92,60 +113,83 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        OperationQueue.main.addOperation {
-            if UIScreen.main.nativeBounds.height == 2436 {
-                self.navHeight = 88
-                self.tabHeight = 83
-            }
-            
-            self.configureTableView()
-            self.tableView.separatorStyle = .none
-            
-            self.pickerController.delegate = self
-            self.pickerController2.delegate = self
-            
-            let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
-            layout.scrollDirection = .horizontal
-            layout.sectionInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
-            layout.itemSize = CGSize(width: 80, height: 80)
-            
-            self.collectionView = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 80), collectionViewLayout: layout)
-            self.collectionView.delegate = self
-            self.collectionView.dataSource = self
-            self.collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
-            self.collectionView.backgroundColor = self.tableView.backgroundColor
-            self.collectionView.showsVerticalScrollIndicator = false
-            self.collectionView.showsHorizontalScrollIndicator = true
-            self.view.addSubview(self.collectionView)
-            self.getAttachments()
-            
-            self.navigationItem.hidesBackButton = true
-            let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
-            self.navigationItem.leftBarButtonItem = closeButton
-            
-            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+    
+        if UIScreen.main.nativeBounds.height == 2436 {
+            self.navHeight = 88
+            self.tabHeight = 83
         }
         
-        getDialog()
+        self.configureTableView()
+        self.tableView.separatorStyle = .none
         
-        if userID == "-166099539" {
-            self.showFeedbackView()
+        self.navigationItem.hidesBackButton = true
+        let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
+        self.navigationItem.leftBarButtonItem = closeButton
+        
+        self.pickerController.delegate = self
+        self.pickerController2.delegate = self
+        
+        let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
+        layout.scrollDirection = .horizontal
+        layout.sectionInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+        layout.itemSize = CGSize(width: 80, height: 80)
+        
+        collectionView = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 80), collectionViewLayout: layout)
+        collectionView.delegate = self
+        collectionView.dataSource = self
+        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
+        collectionView.backgroundColor = self.tableView.backgroundColor
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.showsHorizontalScrollIndicator = true
+        getAttachments()
+        
+        searchBar.delegate = self
+        searchBar.returnKeyType = .search
+        searchBar.searchBarStyle = UISearchBar.Style.minimal
+        searchBar.showsCancelButton = false
+        searchBar.sizeToFit()
+        searchBar.placeholder = ""
+        
+        if mode == .dialog {
+            self.view.addSubview(self.collectionView)
+            
+            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+            getDialog()
+            
+            if userID == "-166099539" {
+                self.showFeedbackView()
+            }
+        }
+        
+        if mode == .attachments {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            self.getHistoryAttachments(mediaType: media)
+        }
+        
+        if mode == .important {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            self.getImportantMessages()
+        }
+        
+        if mode == .search {
+            if let user = users.filter({ $0.uid == userID }).first {
+                let titleItem = UIBarButtonItem(customView: self.setTitleView(user: user, status: ""))
+                self.navigationItem.rightBarButtonItem = titleItem
+                self.title = ""
+            }
         }
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        OperationQueue.main.addOperation {
-            var unread = 0
-            for dialog in self.dialogs {
-                if dialog.out == 0 && dialog.readState == 0 {
-                    unread += 1
-                }
-            }
-            self.markAsReadMessages(controller: self)
+        if self.mode == .dialog && !firstLaunch {
+            self.offset = 0
+            self.startMessageID = 0
+            
+            self.getDialog()
         }
+        firstLaunch = false
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -153,7 +197,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         
         if let popover = self.popover {
             self.markMessages.removeAll(keepingCapacity: false)
-            self.mode = ""
+            self.mode = .dialog
             popover.dismiss()
         }
     }
@@ -179,20 +223,39 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     }
     
     func configureTableView() {
+        
         commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds)
-        commentView.delegate = self
-        commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         
-        commentView.sendImage = UIImage(named: "send")
-        commentView.stickerImage = UIImage(named: "sticker")
-        commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-        commentView.tabHeight = self.tabHeight
+        if mode == .dialog {
+            commentView.delegate = self
+            commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            
+            commentView.sendImage = UIImage(named: "send")
+            commentView.stickerImage = UIImage(named: "sticker")
+            commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+            commentView.tabHeight = self.tabHeight
+            
+            setCommentFromGroupID(id: 0, controller: self)
+            
+            commentView.accessoryImage = UIImage(named: "attachment")
+            commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
+            commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
+            
+            self.view.addSubview(commentView)
+        }
         
-        setCommentFromGroupID(id: 0, controller: self)
+        if mode == .attachments || mode == .important {
+            tableView.frame = self.view.bounds
+            self.view.addSubview(tableView)
+        }
         
-        commentView.accessoryImage = UIImage(named: "attachment")
-        commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
-        commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
+        if mode == .search {
+            let bounds = self.view.bounds
+            searchBar.frame = CGRect(x: 0, y: navHeight, width: bounds.width, height: 50)
+            self.view.addSubview(searchBar)
+            tableView.frame = CGRect(x: 0, y: navHeight + 50, width: bounds.width, height: bounds.height - navHeight - 50 - tabHeight)
+            self.view.addSubview(tableView)
+        }
         
         tableView.delegate = self
         tableView.dataSource = self
@@ -201,24 +264,25 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         tableView.allowsMultipleSelection = false
         
         tableView.register(DialogCell.self, forCellReuseIdentifier: "dialogCell")
-        self.view.addSubview(commentView)
     }
     
     func didSendComment(_ text: String!) {
         
-        commentView.endEditing(true)
-        
-        var isLoadAttach = false
-        for load in isLoad {
-            if load == true {
-                isLoadAttach = true
+        if mode == .dialog {
+            commentView.endEditing(true)
+            
+            var isLoadAttach = false
+            for load in isLoad {
+                if load == true {
+                    isLoadAttach = true
+                }
             }
-        }
-        
-        if !isLoadAttach {
-            self.sendMessage(message: text, attachment: self.attachments, fwdMessages: self.fwdMessages, stickerID: 0, controller: self)
-        } else {
-            self.showInfoMessage(title: "Внимание!", msg: "Дождитесь завершения загрузки вложений.")
+            
+            if !isLoadAttach {
+                self.sendMessage(message: text, attachment: self.attachments, fwdMessages: self.fwdMessages, stickerID: 0, controller: self)
+            } else {
+                self.showInfoMessage(title: "Внимание!", msg: "Дождитесь завершения загрузки вложений.")
+            }
         }
     }
     
@@ -260,6 +324,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         
         dialogs.removeAll(keepingCapacity: false)
         estimatedHeightCache.removeAll(keepingCapacity: false)
+        totalCount = 0
+        tableView.reloadData()
         
         let url = "/method/messages.getImportantMessages"
         let parameters = [
@@ -321,13 +387,101 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             }
             
             OperationQueue.main.addOperation {
+                if let user = self.users.filter({ $0.uid == self.userID }).first {
+                    let titleItem = UIBarButtonItem(customView: self.setTitleView(user: user, status: ""))
+                    self.navigationItem.rightBarButtonItem = titleItem
+                    self.title = ""
+                }
+                
                 self.offset += 200
-                self.collectionView.reloadData()
                 self.tableView.reloadData()
                 self.tableView.separatorStyle = .none
                 if self.tableView.numberOfSections > 1 {
                     self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                 }
+                ViewControllerUtils().hideActivityIndicator()
+            }
+        }
+        OperationQueue().addOperation(getServerDataOperation)
+    }
+    
+    func getSearchMessages() {
+        
+        estimatedHeightCache.removeAll(keepingCapacity: false)
+        
+        if self.offset == 0 {
+            dialogs.removeAll(keepingCapacity: false)
+            totalCount = 0
+            tableView.reloadData()
+        }
+        
+        let url = "/method/messages.search"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "q": searchText,
+            "peer_id": "\(userID)",
+            "offset": "\(offset)",
+            "count": "\(count)",
+            "extended": "1",
+            "fields": "id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,last_name_gen,online,can_write_private_message,sex",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        getServerDataOperation.completionBlock = {
+            guard let data = getServerDataOperation.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            print(json)
+            
+            self.totalCount = json["response"]["count"].intValue
+            
+            var newCount = self.dialogs.count
+            let dialogs = json["response"]["items"].compactMap { DialogHistory(json: $0.1) }
+            for dialog in dialogs {
+                self.dialogs.insert(dialog, at: 0)
+            }
+            newCount = self.dialogs.count - newCount
+            
+            let users = json["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+            self.users.append(contentsOf: users)
+            
+            let groups = json["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
+            if groups.count > 0 {
+                for group in groups {
+                    let newGroup = DialogsUsers(json: JSON.null)
+                    newGroup.uid = "-\(group.gid)"
+                    newGroup.firstName = group.name
+                    newGroup.maxPhotoOrigURL = group.photo200
+                    if group.type == "group" {
+                        if group.isClosed == 0 {
+                            newGroup.firstNameAbl = "Открытая группа"
+                        } else if group.isClosed == 1 {
+                            newGroup.firstNameAbl = "Закрытая группа"
+                        } else {
+                            newGroup.firstNameAbl = "Частная группа"
+                        }
+                    } else if group.type == "page" {
+                        newGroup.firstNameAbl = "Публичная страница"
+                    } else {
+                        newGroup.firstNameAbl = "Мероприятие"
+                    }
+                    self.users.append(newGroup)
+                }
+            }
+            
+            OperationQueue.main.addOperation {
+                self.tableView.reloadData()
+                self.tableView.separatorStyle = .none
+                if self.offset == 0 {
+                    if self.tableView.numberOfSections > 1 {
+                        self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                    }
+                } else {
+                    if self.tableView.numberOfSections > 0 {
+                        self.tableView.scrollToRow(at: IndexPath(row: newCount+1, section: 1), at: .bottom, animated: false)
+                    }
+                }
+                self.offset += self.count
                 ViewControllerUtils().hideActivityIndicator()
             }
         }
@@ -340,6 +494,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         dialogs.removeAll(keepingCapacity: false)
         users.removeAll(keepingCapacity: false)
         estimatedHeightCache.removeAll(keepingCapacity: false)
+        totalCount = 0
+        tableView.reloadData()
         
         let url = "/method/messages.getHistory"
         var parameters = [
@@ -505,12 +661,12 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                         
                         self.chat.append(chat)
                         self.chatUsers = json["response"][chatIndex]["users"].compactMap { Friends(json: $0.1) }
-                    }
-                    
-                    OperationQueue.main.addOperation {
-                        let titleItem = UIBarButtonItem(customView: self.setChatTitleView(chatInfo: self.chat))
-                        self.navigationItem.rightBarButtonItem = titleItem
-                        self.title = ""
+                        
+                        OperationQueue.main.addOperation {
+                            let titleItem = UIBarButtonItem(customView: self.setChatTitleView(chatInfo: self.chat))
+                            self.navigationItem.rightBarButtonItem = titleItem
+                            self.title = ""
+                        }
                     }
                     
                     self.users = json["response"][usersIndex].compactMap { DialogsUsers(json: $0.1) }
@@ -748,8 +904,21 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                 countButton.titleLabel?.adjustsFontSizeToFitWidth = true
                 countButton.titleLabel?.minimumScaleFactor = 0.5
                 countButton.frame = CGRect(x: 0, y: 10, width: self.view.bounds.width, height: 30)
-                countButton.addTarget(self, action: #selector(self.loadMoreMessages), for: .touchUpInside)
                 view.addSubview(countButton)
+                
+                if mode == .dialog {
+                    countButton.add(for: .touchUpInside) {
+                        self.loadMoreMessages()
+                    }
+                } else if mode == .important {
+                    countButton.add(for: .touchUpInside) {
+                        
+                    }
+                } else if mode == .search {
+                    countButton.add(for: .touchUpInside) {
+                        self.getSearchMessages()
+                    }
+                }
                 
                 view.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: 50)
                 return view
@@ -1009,7 +1178,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     }
     
     @objc func actionMessage(sender: UITapGestureRecognizer) {
-        if self.mode == "" {
+        if self.mode == .dialog {
             commentView.endEditing(true)
             
             let width = self.view.bounds.width - 8
@@ -1050,7 +1219,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             cancelButton.titleLabel?.minimumScaleFactor = 0.5
             cancelButton.add(for: .touchUpInside) {
                 self.markMessages.removeAll(keepingCapacity: false)
-                self.mode = ""
+                self.mode = .dialog
                 self.popover.dismiss()
                 self.tableView.reloadData()
                 if self.tableView.numberOfSections > 1 {
@@ -1060,7 +1229,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             cancelButton.frame = CGRect(x: width * 0, y: height-40, width: width * 0.25, height: 30)
             actionView.addSubview(cancelButton)
             
-            self.mode = "action"
+            self.mode = .edit
             let startPoint = CGPoint(x: self.view.bounds.width/2,
                                      y: self.view.bounds.height - 52)
             self.popover = Popover(options: [.type(.up),
@@ -1112,7 +1281,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         let action1 = UIAlertAction(title: "Удалить", style: .destructive){ action in
          
             self.deleteMessage(messIDs: messIDs, forAll: false, spam: false, controller: self)
-            self.mode = ""
+            self.mode = .dialog
             self.popover.dismiss()
         }
         alertController.addAction(action1)
@@ -1121,7 +1290,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             let action2 = UIAlertAction(title: "Удалить для всех", style: .destructive){ action in
              
                 self.deleteMessage(messIDs: messIDs, forAll: true, spam: false, controller: self)
-                self.mode = ""
+                self.mode = .dialog
                 self.popover.dismiss()
             }
             alertController.addAction(action2)
@@ -1131,7 +1300,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             let action3 = UIAlertAction(title: "Пометить как спам", style: .destructive){ action in
              
                 self.deleteMessage(messIDs: messIDs, forAll: false, spam: true, controller: self)
-                self.mode = ""
+                self.mode = .dialog
                 self.popover.dismiss()
             }
             alertController.addAction(action3)
@@ -1150,7 +1319,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             
             self.openDialogsController(attachments: "", image: nil, messIDs: self.markMessages, source: "forward_message")
             self.markMessages.removeAll(keepingCapacity: false)
-            self.mode = ""
+            self.mode = .dialog
             self.popover.dismiss()
             self.tableView.reloadData()
             if self.tableView.numberOfSections > 1 {
@@ -1262,7 +1431,37 @@ extension DialogController {
         nameLabel.frame = CGRect(x: 0, y: 4, width: 200, height: 20)
         view.addSubview(nameLabel)
         
-        setStatusLabel(user: user, status: status)
+        if mode == .dialog {
+            setStatusLabel(user: user, status: status)
+        } else {
+            statusLabel.text = "Важные сообщения"
+            
+            if mode == .attachments {
+                switch media {
+                case .photo:
+                    statusLabel.text = "Сообщения с фотографиями"
+                case .video:
+                    statusLabel.text = "Сообщения с видеозаписями"
+                case .audio:
+                    statusLabel.text = "Сообщения с аудиозаписями"
+                case .doc:
+                    statusLabel.text = "Сообщения с документами"
+                case .link:
+                    statusLabel.text = "Сообщения с внешними ссылками"
+                case .wall:
+                    statusLabel.text = "Сообщения с записями на стене"
+                }
+            }
+            
+            if mode == .search {
+                statusLabel.text = "Поиск сообщений по запросу"
+            }
+            
+            statusLabel.textColor = UIColor.white
+            statusLabel.font = UIFont.boldSystemFont(ofSize: 11)
+            statusLabel.textAlignment = .right
+            statusLabel.frame = CGRect(x: 0, y: 20, width: 200, height: 16)
+        }
         statusLabel.adjustsFontSizeToFitWidth = true
         statusLabel.minimumScaleFactor = 0.4
         
@@ -1356,44 +1555,106 @@ extension DialogController {
                 alertController.addAction(cancelAction)
                 
                 if id > 0 {
-                    let action1 = UIAlertAction(title: "Перейти в профиль собеседника", style: .default) { action in
-                        
-                        self.openProfileController(id: id, name: "")
+                    if let user = users.filter({ $0.uid == self.userID }).first {
+                        let action = UIAlertAction(title: "Страница \(user.firstNameGen)", style: .default) { action in
+                            
+                            self.openProfileController(id: id, name: "")
+                        }
+                        alertController.addAction(action)
                     }
-                    alertController.addAction(action1)
                 } else if id < 0 {
-                    let action1 = UIAlertAction(title: "Перейти на страницу сообщества", style: .default) { action in
+                    let action = UIAlertAction(title: "Страница сообщества", style: .default) { action in
                         
                         self.openProfileController(id: id, name: "")
                     }
-                    alertController.addAction(action1)
+                    alertController.addAction(action)
                 }
                 
-                
-                if mode == "" && id > 0 {
-                    if self.source == .all {
-                        let action2 = UIAlertAction(title: "Показать важные сообщения", style: .default) { action in
-                            
-                            self.source = .important
-                            self.offset = 0
-                            
-                            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
-                            self.getImportantMessages()
-                        }
-                        alertController.addAction(action2)
-                    } else {
-                        let action2 = UIAlertAction(title: "Показать вcе сообщения", style: .default) { action in
-                            
-                            self.source = .all
-                            self.offset = 0
-                            
-                            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
-                            self.getDialog()
-                        }
-                        alertController.addAction(action2)
+                if mode == .dialog && totalCount > 0 {
+                    let action = UIAlertAction(title: "Поиск сообщений", style: .default) { action in
+                        
+                        let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as! DialogController
+                        
+                        controller.userID = self.userID
+                        controller.chatID = self.chatID
+                        controller.users = self.users
+                        controller.mode = .search
+                        
+                        self.navigationController?.pushViewController(controller, animated: true)
                     }
+                    alertController.addAction(action)
                 }
                 
+                if mode == .dialog && totalCount > 0 && id > 0 {
+                    let action = UIAlertAction(title: "Важные сообщения", style: .default) { action in
+                        
+                        let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as! DialogController
+                        
+                        controller.userID = self.userID
+                        controller.chatID = self.chatID
+                        controller.users = self.users
+                        controller.mode = .important
+                        controller.source = .important
+                        
+                        self.navigationController?.pushViewController(controller, animated: true)
+                    }
+                    alertController.addAction(action)
+                }
+                
+                if  (mode == .dialog && totalCount > 0 ) || mode == .attachments {
+                    let action = UIAlertAction(title: "Cообщения с вложениями", style: .default) { action in
+                        
+                        let alertController2 = UIAlertController(title: "Выберите тип вложений:", message: nil, preferredStyle: .actionSheet)
+                        
+                        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                        alertController2.addAction(cancelAction)
+                    
+                        let action1 = UIAlertAction(title: "Фотографии", style: .default) { action in
+                            
+                            self.media = .photo
+                            self.getHistoryAttachments(mediaType: self.media)
+                        }
+                        alertController2.addAction(action1)
+                        
+                        let action2 = UIAlertAction(title: "Видеозаписи", style: .default) { action in
+                            
+                            self.media = .video
+                            self.getHistoryAttachments(mediaType: self.media)
+                        }
+                        alertController2.addAction(action2)
+                        
+                        let action3 = UIAlertAction(title: "Аудиозаписи", style: .default) { action in
+                            
+                            self.media = .audio
+                            self.getHistoryAttachments(mediaType: self.media)
+                        }
+                        alertController2.addAction(action3)
+                        
+                        let action4 = UIAlertAction(title: "Документы", style: .default) { action in
+                            
+                            self.media = .doc
+                            self.getHistoryAttachments(mediaType: self.media)
+                        }
+                        alertController2.addAction(action4)
+                        
+                        let action5 = UIAlertAction(title: "Внешние ссылки", style: .default) { action in
+                            
+                            self.media = .link
+                            self.getHistoryAttachments(mediaType: self.media)
+                        }
+                        alertController2.addAction(action5)
+                        
+                        let action6 = UIAlertAction(title: "Записи на стене", style: .default) { action in
+                            
+                            self.media = .wall
+                            self.getHistoryAttachments(mediaType: self.media)
+                        }
+                        alertController2.addAction(action6)
+                        
+                        self.present(alertController2, animated: true)
+                    }
+                    alertController.addAction(action)
+                }
                 
                 self.present(alertController, animated: true)
             }
@@ -1540,7 +1801,6 @@ extension DialogController {
                 if self.chat.count > 0 {
                     usersController.title = self.chat[0].title
                     usersController.chatAdminID = "\(self.chat[0].adminID)"
-                    print(self.chat[0].adminID)
                 }
                 
                 self.navigationController?.pushViewController(usersController, animated: true)
@@ -1579,7 +1839,6 @@ extension DialogController {
                 OperationQueue.main.addOperation {
                     sButton.setImage(getCacheImage.outputImage, for: .normal)
                     sButton.add(for: .touchUpInside) {
-                        //print("sticker = \(sButton.tag)")
                         self.sendMessage(message: "", attachment: "", fwdMessages: "", stickerID: sButton.tag, controller: self)
                         self.popover.dismiss()
                     }
@@ -1760,7 +2019,6 @@ extension DialogController {
             type = type.replacingOccurrences(of: "_", with: "")
             type = type.replacingOccurrences(of: "-", with: "")
             
-            print(type)
             if type == "wall" {
                 attach.append(attachments)
                 typeOf.append("wall")
@@ -1827,14 +2085,134 @@ extension DialogController {
         }
     }
     
+    func getHistoryAttachments(mediaType: MediaType) {
+        
+        if mode == .dialog {
+            
+            let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as! DialogController
+            
+            controller.userID = userID
+            controller.chatID = chatID
+            controller.media = mediaType
+            controller.users = users
+            controller.mode = .attachments
+            
+            self.navigationController?.pushViewController(controller, animated: true)
+        } else if mode == .attachments {
+            
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            
+            let url = "/method/messages.getHistoryAttachments"
+            let parameters = [
+                "access_token": vkSingleton.shared.accessToken,
+                "peer_id": "\(userID)",
+                "media_type": mediaType.rawValue,
+                "count": "200",
+                "fields": "id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,last_name_gen,online,can_write_private_message,sex",
+                "v": vkSingleton.shared.version
+            ]
+            
+            let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+            getServerDataOperation.completionBlock = {
+                guard let data = getServerDataOperation.data else { return }
+                guard let json = try? JSON(data: data) else { print("json error"); return }
+                //print(json)
+                
+                let messages = json["response"]["items"].compactMap({ HistoryAttachments(json: $0.1) }).removeDuplicates()
+                
+                var messageIDs = messages.map { String($0.messID) }.joined(separator: ",")
+                if messages.count > 100 {
+                    messageIDs = Array(messages.prefix(100)).map { String($0.messID) }.joined(separator: ",")
+                }
+                
+                OperationQueue.main.addOperation {
+                    self.getLastAttachmentsMessages(list: messageIDs)
+                }
+            }
+            OperationQueue().addOperation(getServerDataOperation)
+        }
+    }
+    
+    func getLastAttachmentsMessages(list: String) {
+        
+        dialogs.removeAll(keepingCapacity: false)
+        estimatedHeightCache.removeAll(keepingCapacity: false)
+        totalCount = 0
+        tableView.reloadData()
+        
+        let url = "/method/messages.getById"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "message_ids": list,
+            "extended": "1",
+            "fields": "id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,last_name_gen,online,can_write_private_message,sex",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        getServerDataOperation.completionBlock = {
+            guard let data = getServerDataOperation.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            //print(json)
+            
+            let users = json["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+            self.users.append(contentsOf: users)
+            
+            let groups = json["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
+            if groups.count > 0 {
+                for group in groups {
+                    let newGroup = DialogsUsers(json: JSON.null)
+                    newGroup.uid = "-\(group.gid)"
+                    newGroup.firstName = group.name
+                    newGroup.maxPhotoOrigURL = group.photo200
+                    if group.type == "group" {
+                        if group.isClosed == 0 {
+                            newGroup.firstNameAbl = "Открытая группа"
+                        } else if group.isClosed == 1 {
+                            newGroup.firstNameAbl = "Закрытая группа"
+                        } else {
+                            newGroup.firstNameAbl = "Частная группа"
+                        }
+                    } else if group.type == "page" {
+                        newGroup.firstNameAbl = "Публичная страница"
+                    } else {
+                        newGroup.firstNameAbl = "Мероприятие"
+                    }
+                    self.users.append(newGroup)
+                }
+            }
+            
+            self.dialogs = json["response"]["items"].compactMap { DialogHistory(json: $0.1) }.reversed()
+            self.totalCount = json["response"]["items"]["count"].intValue
+            
+            OperationQueue.main.addOperation {
+                if let user = self.users.filter({ $0.uid == self.userID }).first {
+                    let titleItem = UIBarButtonItem(customView: self.setTitleView(user: user, status: ""))
+                    self.navigationItem.rightBarButtonItem = titleItem
+                    self.title = ""
+                }
+                
+                self.tableView.reloadData()
+                self.tableView.separatorStyle = .none
+                if self.tableView.numberOfSections > 1 {
+                    self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                }
+            
+                ViewControllerUtils().hideActivityIndicator()
+            }
+        }
+        OperationQueue().addOperation(getServerDataOperation)
+    }
+    
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         
         picker.dismiss(animated: true, completion: nil)
     }
     
     @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-// Local variable inserted by Swift 4.2 migrator.
-let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
+        
+        // Local variable inserted by Swift 4.2 migrator.
+        let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
 
         
         if picker == pickerController {
@@ -1911,6 +2289,24 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
         }
         
         picker.dismiss(animated:true, completion: nil)
+    }
+}
+
+extension DialogController: UISearchBarDelegate {
+    
+    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
+        searchBar.endEditing(true)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        searchBar.endEditing(true)
+        
+        if let text = searchBar.text {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            self.searchText = text
+            self.offset = 0
+            self.getSearchMessages()
+        }
     }
 }
 
