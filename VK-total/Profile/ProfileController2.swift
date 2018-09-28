@@ -1434,8 +1434,6 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             }
             
             profileView.infoButton.addTarget(self, action: #selector(self.infoUserTouch(sender:)), for: .touchUpInside)
-            profileView.messageButton.addTarget(self, action: #selector(self.tapMessageButton(sender:)), for: .touchUpInside)
-            profileView.friendButton.addTarget(self, action: #selector(self.addFriendButton(sender:)), for: .touchUpInside)
             profileView.newRecordButton.addTarget(self, action: #selector(self.tapNewRecordButton(sender:)), for: .touchUpInside)
             profileView.postponedWallButton.addTarget(self, action: #selector(self.tapPostponedWallButton(sender:)), for: .touchUpInside)
             

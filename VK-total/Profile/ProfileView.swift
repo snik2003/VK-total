@@ -98,40 +98,54 @@ class ProfileView: UIView {
         messageButton.setTitle("Сообщение", for: .normal)
         
         messageButton.isEnabled = true
-        messageButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        messageButton.backgroundColor = vkSingleton.shared.mainColor
         
         messageButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
+        friendButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
+        
+        friendButton.titleLabel?.textAlignment = .center
+        friendButton.layer.borderColor = UIColor.black.cgColor
+        friendButton.layer.borderWidth = 0.6
+        friendButton.layer.cornerRadius = statusButtonHeight/3
+        friendButton.clipsToBounds = true
+        
+        if profile.canWritePrivateMessage == 0 {
+            messageButton.isEnabled = false
+            messageButton.backgroundColor = UIColor.lightGray
+        }
+        
+        messageButton.add(for: .touchUpInside) {
+            if let controller = self.delegate as? ProfileController2 {
+                controller.tapMessageButton(sender: self.messageButton)
+            }
+        }
         
         if profile.uid == vkSingleton.shared.userID {
-            messageButton.setTitle("Отправить сообщение себе", for: .normal)
+            friendButton.setTitle("Настройки", for: UIControl.State.normal)
+            friendButton.isEnabled = true
+            friendButton.backgroundColor = vkSingleton.shared.mainColor
             
-            let width = UIScreen.main.bounds.width - 4 * leftInsets2
-            messageButton.frame = CGRect(x: 2 * leftInsets2, y: topY + topInsets2, width: width, height: statusButtonHeight)
-        } else {
-            friendButton.titleLabel?.textAlignment = .center
-            friendButton.layer.borderColor = UIColor.black.cgColor
-            friendButton.layer.borderWidth = 0.6
-            friendButton.layer.cornerRadius = statusButtonHeight/3
-            friendButton.clipsToBounds = true
-            
-            if profile.canWritePrivateMessage == 0 {
-                messageButton.isEnabled = false
-                messageButton.backgroundColor = UIColor.lightGray
+            friendButton.add(for: .touchUpInside) {
+                self.friendButton.buttonTouched()
+                self.delegate.openOptionsController()
             }
-            
+        } else {
             updateFriendButton(profile: profile)
             
-            friendButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
-            
-            let width = (UIScreen.main.bounds.width - 2 * leftInsets2 - interInsets2) / 2
-            let friendButtonX = UIScreen.main.bounds.width - leftInsets2 - width
-            
-            messageButton.frame = CGRect(x: leftInsets2, y: topY + topInsets2, width: width, height: statusButtonHeight)
-            friendButton.frame = CGRect(x: friendButtonX, y: topY + topInsets2, width: width, height: statusButtonHeight)
-            
-            self.addSubview(friendButton)
+            friendButton.add(for: .touchUpInside) {
+                if let controller = self.delegate as? ProfileController2 {
+                    controller.addFriendButton(sender: self.friendButton)
+                }
+            }
         }
-    
+        
+        let width = (UIScreen.main.bounds.width - 2 * leftInsets2 - interInsets2) / 2
+        let friendButtonX = UIScreen.main.bounds.width - leftInsets2 - width
+        
+        messageButton.frame = CGRect(x: leftInsets2, y: topY + topInsets2, width: width, height: statusButtonHeight)
+        friendButton.frame = CGRect(x: friendButtonX, y: topY + topInsets2, width: width, height: statusButtonHeight)
+        
+        self.addSubview(friendButton)
         self.addSubview(messageButton)
         
         return topY + statusButtonHeight + 2 * topInsets2
