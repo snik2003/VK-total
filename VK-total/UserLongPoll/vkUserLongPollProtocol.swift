@@ -328,8 +328,10 @@ extension UIViewController: vkUserLongPollProtocol {
                                                 }
                                             }
                                         } else {
-                                            controller.startMessageID = update.elements[1]
-                                            controller.getDialog()
+                                            OperationQueue.main.addOperation {
+                                                controller.startMessageID = update.elements[1]
+                                                controller.getDialog()
+                                            }
                                         }
                                         self.markAsReadMessages(controller: controller)
                                     }
@@ -339,13 +341,14 @@ extension UIViewController: vkUserLongPollProtocol {
                                         if let id = controller.dialogs.last?.id {
                                             controller.startMessageID = id
                                         }
-                                        controller.getDialog()
+                                        OperationQueue.main.addOperation {
+                                            controller.getDialog()
+                                        }
                                     }
                                 } else if update.elements[0] == 6 {
                                     if controller.userID == "\(update.elements[1])" {
                                         for dialog in controller.dialogs {
                                             if dialog.id <= update.elements[2] && dialog.out == 0 {
-                                                print("read")
                                                 dialog.readState = 1
                                             }
                                         }
@@ -361,7 +364,6 @@ extension UIViewController: vkUserLongPollProtocol {
                                     if controller.userID == "\(update.elements[1])" {
                                         for dialog in controller.dialogs {
                                             if dialog.id <= update.elements[2] && dialog.out == 1 {
-                                                print("read")
                                                 dialog.readState = 1
                                             }
                                         }

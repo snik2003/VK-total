@@ -82,7 +82,6 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     let pickerController2 = UIImagePickerController()
     var collectionView: UICollectionView!
     
-    var firstLaunch = true
     var markMessages: [Int] = []
     let deleteButton = UIButton()
     let resendButton = UIButton()
@@ -180,18 +179,6 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         }
     }
 
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        if self.mode == .dialog && !firstLaunch {
-            self.offset = 0
-            self.startMessageID = 0
-            
-            self.getDialog()
-        }
-        firstLaunch = false
-    }
-    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
@@ -235,7 +222,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
             commentView.tabHeight = self.tabHeight
             
-            setCommentFromGroupID(id: 0, controller: self)
+            //setCommentFromGroupID(id: 0, controller: self)
             
             commentView.accessoryImage = UIImage(named: "attachment")
             commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
@@ -1434,7 +1421,7 @@ extension DialogController {
         if mode == .dialog {
             setStatusLabel(user: user, status: status)
         } else {
-            statusLabel.text = "Важные сообщения"
+            statusLabel.text = "«Важные» сообщения"
             
             if mode == .attachments {
                 switch media {
@@ -1586,7 +1573,7 @@ extension DialogController {
                 }
                 
                 if mode == .dialog && totalCount > 0 && id > 0 {
-                    let action = UIAlertAction(title: "Важные сообщения", style: .default) { action in
+                    let action = UIAlertAction(title: "«Важные» сообщения", style: .default) { action in
                         
                         let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as! DialogController
                         
@@ -1623,12 +1610,12 @@ extension DialogController {
                         }
                         alertController2.addAction(action2)
                         
-                        let action3 = UIAlertAction(title: "Аудиозаписи", style: .default) { action in
+                        /*let action3 = UIAlertAction(title: "Аудиозаписи", style: .default) { action in
                             
                             self.media = .audio
                             self.getHistoryAttachments(mediaType: self.media)
                         }
-                        alertController2.addAction(action3)
+                        alertController2.addAction(action3)*/
                         
                         let action4 = UIAlertAction(title: "Документы", style: .default) { action in
                             
@@ -2155,6 +2142,12 @@ extension DialogController {
             guard let json = try? JSON(data: data) else { print("json error"); return }
             //print(json)
             
+            self.dialogs = json["response"]["items"].compactMap { DialogHistory(json: $0.1) }.reversed()
+            self.totalCount = json["response"]["items"]["count"].intValue
+            
+            
+            
+            
             let users = json["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
             self.users.append(contentsOf: users)
             
@@ -2181,9 +2174,6 @@ extension DialogController {
                     self.users.append(newGroup)
                 }
             }
-            
-            self.dialogs = json["response"]["items"].compactMap { DialogHistory(json: $0.1) }.reversed()
-            self.totalCount = json["response"]["items"]["count"].intValue
             
             OperationQueue.main.addOperation {
                 if let user = self.users.filter({ $0.uid == self.userID }).first {
