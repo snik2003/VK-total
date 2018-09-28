@@ -331,6 +331,9 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
             if fc == "А" || fc == "И" || fc == "О" || fc == "Е" || fc == "У" || fc == "Я" || fc == "Ы" || fc == "Ё" || fc == "Э" || fc == "Ю"  {
                 title = "Об \(user.firstNameAbl)"
             }
+            if user.uid == vkSingleton.shared.userID {
+                title = "Обо мне"
+            }
             self.title = title
             
             if user.status == "" {

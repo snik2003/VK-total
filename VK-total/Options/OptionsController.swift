@@ -152,23 +152,23 @@ class OptionsController: UITableViewController {
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
         if section == 0 {
-            return 10
+            return 15
         }
         if section == 1 {
-            return 10
+            return 15
         }
         if section == 4 {
             return 0
         }
         if section == 3 || section == 5 {
-            return 30
+            return 15
         }
-        return 5
+        return 7
     }
     
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == tableView.numberOfSections - 1 {
-            return 10
+            return 15
         }
         return 0
     }

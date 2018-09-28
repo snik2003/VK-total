@@ -37,7 +37,7 @@ class ProfileView: UIView {
         return queue
     }()
     
-    let infoButtonHeight: CGFloat = 22.0
+    let infoButtonHeight: CGFloat = 21.0
     let rightInfoButton: CGFloat = 15.0
     let bottomInfoButton: CGFloat = 13.0
     let leftInsets: CGFloat = 8.0
@@ -405,11 +405,9 @@ class ProfileView: UIView {
         let view = UIView()
         view.layer.cornerRadius = radius
         view.layer.borderColor = UIColor.gray.cgColor
-        view.layer.borderWidth = 1.0
-        
-        view.backgroundColor = UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.8)
-        view.dropShadow(color: UIColor.black, opacity: 0.9, offSet: CGSize(width: -1, height: 1), radius: radius)
-        
+        view.layer.borderWidth = 0 //1.0
+        view.backgroundColor = .clear //UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.8)
+    
         nameLabel.text = "\(profile.firstName) \(profile.lastName)"
         nameLabel.textColor = UIColor.black
         nameLabel.textAlignment = .center
@@ -517,6 +515,8 @@ class ProfileView: UIView {
         
         let topY = UIScreen.main.bounds.width * 0.9 - leftInsets - height
         view.frame = CGRect(x: leftInsets, y: topY, width: width, height: height)
+        let color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
+        view.dropShadow(color: color, opacity: 0.9, offSet: CGSize(width: -2, height: 2), radius: radius)
         self.addSubview(view)
     }
     
@@ -552,7 +552,7 @@ extension UIView {
         layer.shadowRadius = radius
         
         layer.shadowPath = UIBezierPath(rect: self.bounds).cgPath
-        layer.shouldRasterize = true
+        layer.shouldRasterize = false
         layer.rasterizationScale = scale ? UIScreen.main.scale : 1
     }
 }

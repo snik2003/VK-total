@@ -418,7 +418,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         getServerDataOperation.completionBlock = {
             guard let data = getServerDataOperation.data else { return }
             guard let json = try? JSON(data: data) else { print("json error"); return }
-            print(json)
+            //print(json)
             
             self.totalCount = json["response"]["count"].intValue
             
