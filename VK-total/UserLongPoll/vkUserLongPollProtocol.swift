@@ -211,7 +211,7 @@ extension UIViewController: vkUserLongPollProtocol {
             for vc1 in viewControllers {
                 if let vcs = (vc1 as? UINavigationController)?.viewControllers {
                     for vc in vcs {
-                        if let controller = vc as? DialogController {
+                        if let controller = vc as? DialogController, controller.mode == .dialog {
                             var typing = false
                             
                             var delMess = false

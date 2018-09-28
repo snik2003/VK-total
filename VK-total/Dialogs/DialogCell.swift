@@ -85,7 +85,7 @@ class DialogCell: UITableViewCell {
             
             let tapAvatar = UITapGestureRecognizer()
             tapAvatar.add {
-                if self.delegate.mode == "" {
+                if self.delegate.mode != .edit {
                     self.delegate.openProfileController(id: dialog.fromID, name: "")
                 }
             }
@@ -174,7 +174,7 @@ class DialogCell: UITableViewCell {
                     
                     let tap = UITapGestureRecognizer()
                     tap.add {
-                        if self.delegate.mode == "" {
+                        if self.delegate.mode != .edit {
                             let photoViewController = self.delegate.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
                             
                             var newIndex = 0
@@ -277,7 +277,7 @@ class DialogCell: UITableViewCell {
                     
                     let tap = UITapGestureRecognizer()
                     tap.add {
-                        if self.delegate.mode == "" {
+                        if self.delegate.mode != .edit {
                             self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
                         }
                     }
@@ -430,7 +430,7 @@ class DialogCell: UITableViewCell {
             markCheck.on = self.delegate.markMessages.contains(dialog.id)
             markCheck.isEnabled = false
             markCheck.isHidden = !markCheck.on
-            if self.delegate.mode == "action" {
+            if self.delegate.mode == .edit {
                 markCheck.isEnabled = true
                 markCheck.isHidden = false
             }
@@ -751,7 +751,7 @@ class DialogCell: UITableViewCell {
         
         let tap = UITapGestureRecognizer()
         tap.add {
-            if self.delegate.mode == "" {
+            if self.delegate.mode != .edit {
                 self.delegate.openProfileController(id: mess.userID, name: name)
             }
         }
@@ -824,7 +824,7 @@ class DialogCell: UITableViewCell {
                 
                 let tap = UITapGestureRecognizer()
                 tap.add {
-                    if self.delegate.mode == "" {
+                    if self.delegate.mode != .edit {
                         let photoViewController = self.delegate.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
                         
                         var newIndex = 0
@@ -912,7 +912,7 @@ class DialogCell: UITableViewCell {
                 
                 let tap = UITapGestureRecognizer()
                 tap.add {
-                    if self.delegate.mode == "" {
+                    if self.delegate.mode != .edit {
                         self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
                     }
                 }
@@ -1012,7 +1012,7 @@ class DialogCell: UITableViewCell {
         
         let tap = UITapGestureRecognizer()
         tap.add {
-            if self.delegate.mode == "" {
+            if self.delegate.mode != .edit {
                 self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post")
             }
         }
@@ -1118,7 +1118,7 @@ class DialogCell: UITableViewCell {
         view.addSubview(loadButton)
         
         loadButton.add(for: .touchUpInside) {
-            if self.delegate.mode == "" {
+            if self.delegate.mode != .edit {
                 self.delegate.openBrowserControllerNoCheck(url: doc.url)
             }
         }

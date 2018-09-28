@@ -1813,6 +1813,7 @@ extension UIViewController: NotificationCellProtocol {
     }
     
     func openDialogController(userID: String, chatID: String, startID: Int, attachment: String, messIDs: [Int], image: UIImage?) {
+        
         let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as! DialogController
         
         controller.userID = userID
