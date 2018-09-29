@@ -526,7 +526,7 @@ class ProfileView: UIView {
         
         let topY = UIScreen.main.bounds.width * 0.9 - leftInsets - height
         view.frame = CGRect(x: leftInsets, y: topY, width: width, height: height)
-        view.dropShadow(color: color, opacity: 0.9, offSet: CGSize(width: -2, height: 2), radius: radius)
+        view.dropShadow(color: color, opacity: 1, offSet: CGSize(width: 0, height: 0), radius: radius)
         self.addSubview(view)
     }
     
