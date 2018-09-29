@@ -65,7 +65,7 @@ class DialogsController: UITableViewController {
                 }
                 alertController.addAction(cancelAction)
                 
-                let action1 = UIAlertAction(title: "Открыть раздел \"Сообщения\"", style: .destructive){ action in
+                let action1 = UIAlertAction(title: "Открыть раздел «Сообщения»", style: .destructive){ action in
                     
                     self.offset = 0
                     self.dialogs.removeAll(keepingCapacity: false)
@@ -398,9 +398,9 @@ class DialogsController: UITableViewController {
             var name = "данный диалог"
             if user.count > 0 {
                 if dialog.userID > 0 {
-                    name =  "диалог с пользователем \"\(user[0].firstName) \(user[0].lastName)\""
+                    name =  "диалог с пользователем «\(user[0].firstName) \(user[0].lastName)»"
                 } else {
-                    name =  "диалог с сообществом \"\(user[0].firstName)\""
+                    name =  "диалог с сообществом «\(user[0].firstName)»"
                 }
             }
             alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить \(name)? Это действие необратимо.")

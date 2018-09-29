@@ -363,6 +363,22 @@ class DialogCell: UITableViewCell {
                     bubbleHeight += 5 + view.frame.height
                 }
                 
+                if attach.type == "audio" && attach.audio.count > 0 {
+                    attachCount += 1
+                    
+                    let view = configureAudio(audio: attach.audio[0], topY: bubbleHeight + 5)
+                    
+                    if view.frame.width > bubbleWidth {
+                        bubbleWidth = view.frame.width + 10
+                        if dialog.out == 1 {
+                            bubbleX = UIScreen.main.bounds.width - 2 * leftInsets - avatarSize - view.frame.width - 10
+                        }
+                    }
+                    
+                    messView.addSubview(view)
+                    bubbleHeight += 5 + view.frame.height
+                }
+                
                 if attach.type == "link" && attach.link.count > 0 {
                     attachCount += 1
                     
@@ -498,9 +514,9 @@ class DialogCell: UITableViewCell {
                         text = "\(user[0].firstName) \(user[0].lastName) присоединился к беседе"
                     }
                 } else if dialog.action == "chat_create" {
-                    text = "Создана беседа с названием \"\(dialog.actionText)\""
+                    text = "Создана беседа с названием «\(dialog.actionText)»"
                 } else if dialog.action == "chat_title_update" {
-                    text = "Изменено название беседы на \"\(dialog.actionText)\""
+                    text = "Изменено название беседы на «\(dialog.actionText)»"
                 } else if dialog.action == "chat_photo_update" {
                     text = "Обновлена главная фотография беседы"
                 } else if dialog.action == "chat_photo_remove" {
@@ -614,6 +630,11 @@ class DialogCell: UITableViewCell {
                 if attach.type == "doc" && attach.docs.count > 0 {
                     attachCount += 1
                     height += 5 + 2 * leftInsets + 15 + 30 + 20
+                }
+                
+                if attach.type == "audio" && attach.audio.count > 0 {
+                    attachCount += 1
+                    height += 5 + 2 * leftInsets + 15 + 15
                 }
                 
                 if attach.type == "link" && attach.link.count > 0 {
@@ -1005,9 +1026,9 @@ class DialogCell: UITableViewCell {
         
         let height = 3 * leftInsets + 30 + 30
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.black.cgColor
-        view.layer.borderWidth = 1
-        view.layer.cornerRadius = 13
+        view.layer.borderColor = UIColor.gray.cgColor
+        view.layer.borderWidth = 0.6
+        view.layer.cornerRadius = height/4
         view.backgroundColor = UIColor.white
         
         let tap = UITapGestureRecognizer()
@@ -1058,8 +1079,8 @@ class DialogCell: UITableViewCell {
         view.addSubview(giftImage)
         
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.black.cgColor
-        view.layer.borderWidth = 1
+        view.layer.borderColor = UIColor.gray.cgColor
+        view.layer.borderWidth = 0.6
         view.layer.cornerRadius = 13
         view.backgroundColor = UIColor.white
         
@@ -1125,10 +1146,93 @@ class DialogCell: UITableViewCell {
         
         let height = 2 * leftInsets + 15 + 30 + 20
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.black.cgColor
-        view.layer.borderWidth = 1
-        view.layer.cornerRadius = 13
+        view.layer.borderColor = UIColor.gray.cgColor
+        view.layer.borderWidth = 0.6
+        view.layer.cornerRadius = height/4
         view.backgroundColor = UIColor.white
+        
+        return view
+    }
+    
+    func configureAudio(audio: AudioAttach, topY: CGFloat) -> UIView {
+        
+        let view = UIView()
+        view.tag = 200
+        
+        let width: CGFloat = 0.7 * UIScreen.main.bounds.width
+        
+        var selfY: CGFloat = leftInsets
+        
+        let avatar = UIImageView()
+        avatar.image = UIImage(named: "music")
+        avatar.frame = CGRect(x: leftInsets, y: selfY + 2, width: 26, height: 26)
+        view.addSubview(avatar)
+        
+        let titleLabel = UILabel()
+        titleLabel.tag = 200
+        titleLabel.text = audio.artist
+        titleLabel.numberOfLines = 2
+        titleLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
+        titleLabel.adjustsFontSizeToFitWidth = true
+        titleLabel.minimumScaleFactor = 0.6
+        titleLabel.frame = CGRect(x: leftInsets + 30, y: selfY, width: width - 2 * leftInsets - 30, height: 15)
+        view.addSubview(titleLabel)
+        selfY += 15
+        
+        let linkLabel = UILabel()
+        linkLabel.tag = 200
+        linkLabel.text = audio.title
+        linkLabel.font = UIFont(name: "Verdana", size: 12)!
+        linkLabel.adjustsFontSizeToFitWidth = true
+        linkLabel.minimumScaleFactor = 0.6
+        linkLabel.backgroundColor = UIColor.clear
+        linkLabel.numberOfLines = 1
+        
+        linkLabel.frame = CGRect(x: leftInsets + 30, y: selfY, width: width - 2 * leftInsets - 30, height: 15)
+        view.addSubview(linkLabel)
+        
+        let height =  selfY + 15 + leftInsets
+        view.frame = CGRect(x: 5, y: topY, width: width, height: height)
+        view.layer.borderColor = UIColor.gray.cgColor
+        view.layer.borderWidth = 0.6
+        view.layer.cornerRadius = height/4
+        view.backgroundColor = UIColor.white
+        
+        let tap = UITapGestureRecognizer()
+        tap.add {
+            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+            
+            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+            alertController.addAction(cancelAction)
+            
+            let action1 = UIAlertAction(title: "Открыть песню в ITunes", style: .default) { action in
+                
+                ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
+                self.delegate.getITunesInfo(searchString: "\(audio.title) \(audio.artist)", searchType: "song")
+            }
+            alertController.addAction(action1)
+            
+            let action3 = UIAlertAction(title: "Открыть исполнителя в ITunes", style: .default) { action in
+                
+                ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
+                self.delegate.getITunesInfo(searchString: "\(audio.artist)", searchType: "artist")
+            }
+            alertController.addAction(action3)
+            
+            let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
+                
+                let link = "\(audio.artist) «\(audio.title)»"
+                UIPasteboard.general.string = link
+                if let string = UIPasteboard.general.string {
+                    self.delegate.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
+                }
+            }
+            alertController.addAction(action2)
+            
+            self.delegate.present(alertController, animated: true)
+        }
+        view.isUserInteractionEnabled = true
+        view.addGestureRecognizer(tap)
         
         return view
     }

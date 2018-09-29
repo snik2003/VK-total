@@ -1831,7 +1831,7 @@ extension DialogController {
             }
             
             if chat.count > 0 {
-                let action = UIAlertAction(title: "Добавить чат в \"Избранное\"", style: .default){ action in
+                let action = UIAlertAction(title: "Добавить чат в «Избранное»", style: .default){ action in
                     
                     let text = "Групповой чат: \"\(self.chat[0].title)\""
                     let link = "https://vk.com/myownlink999_chat_\(self.chatID)"

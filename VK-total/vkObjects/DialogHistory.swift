@@ -132,6 +132,19 @@ class DialogHistory: Equatable {
                 att.videos.append(video)
             }
             
+            if att.type == "audio" {
+                let audio = AudioAttach(json: JSON.null)
+                audio.id = json["attachments"][index]["audio"]["id"].intValue
+                audio.ownerID = json["attachments"][index]["audio"]["owner_id"].intValue
+                audio.artist = json["attachments"][index]["audio"]["artist"].stringValue
+                audio.title = json["attachments"][index]["audio"]["title"].stringValue
+                audio.duration = json["attachments"][index]["audio"]["duration"].intValue
+                audio.url = json["attachments"][index]["audio"]["url"].intValue
+                audio.albumID = json["attachments"][index]["audio"]["album_id"].intValue
+                audio.accessKey = json["attachments"][index]["audio"]["access_key"].stringValue
+                att.audio.append(audio)
+            }
+            
             if att.type == "sticker" {
                 self.hasSticker = true
                 

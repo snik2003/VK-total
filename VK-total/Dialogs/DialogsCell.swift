@@ -209,9 +209,9 @@ class DialogsCell: UITableViewCell {
                             messLabel.text = "\(user[0].firstName) \(user[0].lastName) присоединился к беседе"
                         }
                     } else if mess.action == "chat_create" {
-                        messLabel.text = "Создана беседа с названием \"\(mess.actionText)\""
+                        messLabel.text = "Создана беседа с названием «\(mess.actionText)»"
                     } else if mess.action == "chat_title_update" {
-                        messLabel.text = "Изменено название беседы на \"\(mess.actionText)\""
+                        messLabel.text = "Изменено название беседы на «\(mess.actionText)»"
                     } else if mess.action == "chat_photo_update" {
                         messLabel.text = "Обновлена главная фотография беседы"
                     } else if mess.action == "chat_photo_remove" {

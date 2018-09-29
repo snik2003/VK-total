@@ -13,6 +13,7 @@ class DialogAttach {
     var type = ""
     var photos: [PhotoAttach] = []
     var videos: [VideoAttach] = []
+    var audio: [AudioAttach] = []
     var stickers: [StickerAttach] = []
     var wall: [WallAttach] = []
     var gift: [GiftAttach] = []
@@ -74,6 +75,28 @@ class VideoAttach {
         self.duration = json["duration"].intValue
         self.photo320 = json["photo_320"].stringValue
         self.isPrivate = json["is_private"].intValue
+        self.accessKey = json["access_key"].stringValue
+    }
+}
+
+class AudioAttach {
+    var id = 0
+    var ownerID = 0
+    var artist = ""
+    var title = ""
+    var duration = 0
+    var url = 0
+    var albumID = 0
+    var accessKey = ""
+    
+    init(json: JSON) {
+        self.id = json["id"].intValue
+        self.ownerID = json["owner_id"].intValue
+        self.artist = json["artist"].stringValue
+        self.title = json["title"].stringValue
+        self.duration = json["duration"].intValue
+        self.url = json["url"].intValue
+        self.albumID = json["album_id"].intValue
         self.accessKey = json["access_key"].stringValue
     }
 }
