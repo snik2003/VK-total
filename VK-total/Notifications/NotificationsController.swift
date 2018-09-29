@@ -239,7 +239,7 @@ class NotificationsController: UITableViewController {
                     typeGroup = "на мероприятие"
                 }
                 
-                let alertController = UIAlertController(title: "Приглашение \(typeGroup):", message: "\"\(not.feedback[0].text)\"", preferredStyle: .actionSheet)
+                let alertController = UIAlertController(title: "Приглашение \(typeGroup):", message: "«\(not.feedback[0].text)»", preferredStyle: .actionSheet)
                 
                 let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
                 alertController.addAction(cancelAction)

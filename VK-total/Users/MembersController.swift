@@ -274,7 +274,7 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
                 alertView.addButton("Отмена, я передумал") {
                     
                 }
-                alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите исключить подписчика \"\(user.firstName) \(user.lastName)\" из сообщества?")
+                alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите исключить подписчика «\(user.firstName) \(user.lastName)» из сообщества?")
                 
             }
             deleteAction.backgroundColor = UIColor.red

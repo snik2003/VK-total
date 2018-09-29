@@ -111,12 +111,12 @@ class NotificationCell: UITableViewCell {
                 }
                 
                 if profile[0].sex == 1 {
-                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласила вас \(typeGroup) \"\(not.feedback[indexPath.row].text)\""
+                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласила вас \(typeGroup) «\(not.feedback[indexPath.row].text)»"
                 } else {
-                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласил вас \(typeGroup) \"\(not.feedback[indexPath.row].text)\""
+                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласил вас \(typeGroup) «\(not.feedback[indexPath.row].text)»"
                 }
                 
-                setColorText(fullString: name, avatarString: "\(profile[0].firstName) \(profile[0].lastName)", postString: "\(typeGroup) \"\(not.feedback[indexPath.row].text)\"", parent: "", feedback: "")
+                setColorText(fullString: name, avatarString: "\(profile[0].firstName) \(profile[0].lastName)", postString: "\(typeGroup) «\(not.feedback[indexPath.row].text)»", parent: "", feedback: "")
             }
         }
         
@@ -525,9 +525,9 @@ class NotificationCell: UITableViewCell {
                 }
                 
                 if profile[0].sex == 1 {
-                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласила вас \(typeGroup) \"\(not.feedback[indexPath.row].text)\""
+                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласила вас \(typeGroup) «\(not.feedback[indexPath.row].text)»"
                 } else {
-                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласил вас \(typeGroup) \"\(not.feedback[indexPath.row].text)\""
+                    name = "\(profile[0].firstName) \(profile[0].lastName) пригласил вас \(typeGroup) «\(not.feedback[indexPath.row].text)»"
                 }
             }
         }

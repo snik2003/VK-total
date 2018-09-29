@@ -709,7 +709,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 }
                 
                 if comment.userLikes == 1 {
-                    let action3 = UIAlertAction(title: "Отменить \"Мне нравится\"", style: .destructive) { action in
+                    let action3 = UIAlertAction(title: "Отменить «Мне нравится»", style: .destructive) { action in
                         
                         self.likeVideoCommentManually(indexPath: indexPath)
                     }
@@ -717,7 +717,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 }
                 
                 if comment.countLikes > 0 {
-                    let action4 = UIAlertAction(title: "Список \"Кому нравится\"", style: .default) { action in
+                    let action4 = UIAlertAction(title: "Список «Кому нравится»", style: .default) { action in
                         
                         let url = "/method/likes.getList"
                         let parameters = [
@@ -1180,7 +1180,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
             alertController.addAction(cancelAction)
             
             if video.canAdd == 1 {
-                let action1 = UIAlertAction(title: "Добавить в \"Мои видеозаписи\"", style: .default) { action in
+                let action1 = UIAlertAction(title: "Добавить в «Мои видеозаписи»", style: .default) { action in
                     
                     let url = "/method/video.add"
                     let parameters = [
@@ -1203,7 +1203,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                         error.errorMsg = json["error"]["error_msg"].stringValue
                         
                         if error.errorCode == 0 {
-                            self.showSuccessMessage(title: "Мои видеозаписи", msg: "\nВидеозапись \"\(video.title)\" успешно добавлена.\n")
+                            self.showSuccessMessage(title: "Мои видеозаписи", msg: "\nВидеозапись «\(video.title)» успешно добавлена.\n")
                         } else {
                             var title = "Ошибка #\(error.errorCode)"
                             var msg = "\n\(error.errorMsg)\n"
@@ -1265,7 +1265,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 }
                 alertController.addAction(action3)
             } else {
-                let action3 = UIAlertAction(title: "Отменить \"Мне нравится\"", style: .destructive) { action in
+                let action3 = UIAlertAction(title: "Отменить «Мне нравится»", style: .destructive) { action in
                     
                     let url = "/method/likes.delete"
                     let parameters = [
@@ -1306,7 +1306,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 alertController.addAction(action3)
             }
             
-            let action4 = UIAlertAction(title: "Удалить из \"Мои видеозаписи\"", style: .destructive) { action in
+            let action4 = UIAlertAction(title: "Удалить из «Мои видеозаписи»", style: .destructive) { action in
                 
                 let url = "/method/video.delete"
                 let parameters = [
@@ -1329,7 +1329,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     error.errorMsg = json["error"]["error_msg"].stringValue
                     
                     if error.errorCode == 0 {
-                        self.showSuccessMessage(title: "Мои видеозаписи", msg: "\nВидеозапись \"\(video.title)\" успешно удалена.\n")
+                        self.showSuccessMessage(title: "Мои видеозаписи", msg: "\nВидеозапись «\(video.title)» успешно удалена.\n")
                     } else {
                         let title = "Ошибка #\(error.errorCode)"
                         let msg = "\n\(error.errorMsg)\n"
@@ -1351,7 +1351,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
             }
             alertController.addAction(action5)
             
-            let action6 = UIAlertAction(title: "Добавить ссылку в \"Избранное\"", style: .default) { action in
+            let action6 = UIAlertAction(title: "Добавить ссылку в «Избранное»", style: .default) { action in
                 
                 let link = "https://vk.com/video\(self.ownerID)_\(self.vid)"
                 self.addLinkToFave(link: link, text: "Видеозапись")

@@ -957,7 +957,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     }
                     
                     if comment.userLikes == 1 {
-                        let action3 = UIAlertAction(title: "Отменить \"Мне нравится\"", style: .destructive) { action in
+                        let action3 = UIAlertAction(title: "Отменить «Мне нравится»", style: .destructive) { action in
                             
                             self.likeCommentManually(indexPath: indexPath)
                         }
@@ -965,7 +965,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     }
                     
                     if comment.countLikes > 0 {
-                        let action4 = UIAlertAction(title: "Список \"Кому нравится\"", style: .default) { action in
+                        let action4 = UIAlertAction(title: "Список «Кому нравится»", style: .default) { action in
                             
                             var likeType = "comment"
                             if self.type == "photo" {
@@ -1620,7 +1620,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
             }
             alertController.addAction(action4)
             
-            let action5 = UIAlertAction(title: "Добавить ссылку в \"Избранное\"", style: .default) { action in
+            let action5 = UIAlertAction(title: "Добавить ссылку в «Избранное»", style: .default) { action in
                 
                 if self.type == "post" {
                     var text = "Запись на стене"
@@ -1968,14 +1968,14 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                         if newRecordController.repostOwnerID > 0 {
                             let users = self.newsProfiles.filter({ $0.uid == newRecordController.repostOwnerID })
                             if users.count > 0 {
-                                newRecordController.repostTitle = "Репост записи со стены пользователя\n\"\(users[0].firstName) \(users[0].lastName)\""
+                                newRecordController.repostTitle = "Репост записи со стены пользователя\n«\(users[0].firstName) \(users[0].lastName)»"
                             }
                         }
                         
                         if newRecordController.repostOwnerID < 0 {
                             let groups = self.newsGroups.filter({ $0.gid == abs(newRecordController.repostOwnerID) })
                             if groups.count > 0 {
-                                newRecordController.repostTitle = "Репост записи со стены сообщества\n\"\(groups[0].name)\""
+                                newRecordController.repostTitle = "Репост записи со стены сообщества\n«\(groups[0].name)»"
                             }
                         }
                         

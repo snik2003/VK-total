@@ -877,7 +877,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             if self.userID != vkSingleton.shared.userID {
                 
                 if user.isFavorite == 1 {
-                    let action1 = UIAlertAction(title: "Удалить \(user.firstNameAcc) из \"Избранное\"", style: .destructive) { action in
+                    let action1 = UIAlertAction(title: "Удалить \(user.firstNameAcc) из «Избранное»", style: .destructive) { action in
                         
                         let url = "/method/fave.removeUser"
                         let parameters = [
@@ -916,7 +916,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                     }
                     alertController.addAction(action1)
                 } else {
-                    let action1 = UIAlertAction(title: "Добавить \(user.firstNameAcc) в \"Избранное\"", style: .default) { action in
+                    let action1 = UIAlertAction(title: "Добавить \(user.firstNameAcc) в «Избранное»", style: .default) { action in
                         
                         let url = "/method/fave.addUser"
                         let parameters = [

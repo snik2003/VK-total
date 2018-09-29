@@ -402,7 +402,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
                     self.search.remove(at: indexPath.row)
                     self.getMusicFromRealm()
                     self.tableView.reloadData()
-                    self.showSuccessMessage(title: "Моя музыка ITunes", msg: "Песня \"\(title)\" успешно добавлена в \"Избранное\".")
+                    self.showSuccessMessage(title: "Моя музыка ITunes", msg: "Песня «\(title)» успешно добавлена в «Избранное».")
                 }
             }
             addAction.backgroundColor = .green
@@ -433,7 +433,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
                 alertView.addButton("Отмена, я передумал") {
                     
                 }
-                alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить песню \"\(song.song)\" из раздела \"Избранное\"?")
+                alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить песню «\(song.song)» из раздела «Избранное»?")
                 
             }
             deleteAction.backgroundColor = .red

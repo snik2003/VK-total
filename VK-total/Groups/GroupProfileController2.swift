@@ -1200,13 +1200,13 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
             }
             
             if group.isFavorite == 0 {
-                let action1 = UIAlertAction(title: "Добавить в \"Избранное\"", style: .default) { action in
+                let action1 = UIAlertAction(title: "Добавить в «Избранное»", style: .default) { action in
                     
                     self.addGroupToFave(group: group)
                 }
                 alertController.addAction(action1)
             } else {
-                let action1 = UIAlertAction(title: "Удалить из \"Избранное\"", style: .destructive) { action in
+                let action1 = UIAlertAction(title: "Удалить из «Избранное»", style: .destructive) { action in
                     
                     self.removeGroupFromFave(group: group)
                 }
@@ -1308,7 +1308,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                     newRecordController.delegate2 = self
                     
                     if self.groupProfile.count > 0 {
-                        newRecordController.repostTitle = "Репост записи со стены сообщества\n\"\(self.groupProfile[0].name)\""
+                        newRecordController.repostTitle = "Репост записи со стены сообщества\n«\(self.groupProfile[0].name)»"
                     }
                     
                     if let image = UIApplication.shared.screenShot {

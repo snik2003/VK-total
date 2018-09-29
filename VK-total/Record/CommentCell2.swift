@@ -551,9 +551,9 @@ class CommentCell2: UITableViewCell {
                 let group = groups.filter({ $0.gid == abs(comment.replyUser) })
                 if group.count > 0 {
                     if sex == 1 {
-                        replyText = "ответила сообществу \"\(group[0].name)\""
+                        replyText = "ответила сообществу «\(group[0].name)»"
                     } else {
-                        replyText = "ответил сообществу \"\(group[0].name)\""
+                        replyText = "ответил сообществу «\(group[0].name)»"
                     }
                 } else {
                     if sex == 1 {

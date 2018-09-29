@@ -194,7 +194,7 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
             }
             alertController.addAction(action4)
         
-            let action5 = UIAlertAction(title: "Добавить ссылку в \"Избранное\"", style: .default) { action in
+            let action5 = UIAlertAction(title: "Добавить ссылку в «Избранное»", style: .default) { action in
                 
                 let link = "https://vk.com/photo\(photo.userID)_\(photo.photoID)"
                 self.addLinkToFave(link: link, text: "Фотография")

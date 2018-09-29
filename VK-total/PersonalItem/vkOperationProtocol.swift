@@ -1430,7 +1430,7 @@ extension UIViewController: VkOperationProtocol {
             error.errorMsg = json["error"]["error_msg"].stringValue
             
             if error.errorCode == 0 {
-               self.showSuccessMessage(title: "Избранные ссылки", msg: "\nСообщество \"\(group.name)\" успешно добавлено в \"Избранное\"\n")
+               self.showSuccessMessage(title: "Избранные ссылки", msg: "\nСообщество «\(group.name)» успешно добавлено в «Избранное»\n")
                 
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1461,7 +1461,7 @@ extension UIViewController: VkOperationProtocol {
             error.errorMsg = json["error"]["error_msg"].stringValue
             
             if error.errorCode == 0 {
-                self.showSuccessMessage(title: "Избранные ссылки", msg: "\nСообщество \"\(group.name)\" успешно удалено из \"Избранное\"\n")
+                self.showSuccessMessage(title: "Избранные ссылки", msg: "\nСообщество «\(group.name)» успешно удалено из «Избранное»\n")
                 
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1493,7 +1493,7 @@ extension UIViewController: VkOperationProtocol {
             error.errorMsg = json["error"]["error_msg"].stringValue
             
             if error.errorCode == 0 {
-                self.showSuccessMessage(title: "Избранные ссылки", msg: "Ссылка \n\"\(link)\"\n успешно добавлена в \"Избранное\"")
+                self.showSuccessMessage(title: "Избранные ссылки", msg: "Ссылка \n«\(link)»\n успешно добавлена в «Избранное»")
                 
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1559,7 +1559,7 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                 controller.userProfile[0].isHiddenFromFeed = 1
-                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от пользователя \"\(name)\" больше не будут показываться в вашей ленте новостей.")
+                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от пользователя «\(name)» больше не будут показываться в вашей ленте новостей.")
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
             }
@@ -1590,7 +1590,7 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                 controller.userProfile[0].isHiddenFromFeed = 0
-                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от пользователя \"\(name)\" теперь будут показываться в вашей ленте новостей.")
+                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от пользователя «\(name)» теперь будут показываться в вашей ленте новостей.")
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
             }
@@ -1621,7 +1621,7 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                 controller.groupProfile[0].isHiddenFromFeed = 1
-                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от сообщества \"\(name)\" больше не будут показываться в вашей ленте новостей.")
+                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от сообщества «\(name)» больше не будут показываться в вашей ленте новостей.")
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
             }
@@ -1652,7 +1652,7 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                 controller.groupProfile[0].isHiddenFromFeed = 0
-                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от сообщества \"\(name)\" теперь будут показываться в вашей ленте новостей.")
+                self.showSuccessMessage(title: "Лента новостей", msg: "Новости от сообщества «\(name)» теперь будут показываться в вашей ленте новостей.")
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
             }
@@ -1684,7 +1684,7 @@ extension UIViewController: VkOperationProtocol {
             error.errorMsg = json["error"]["error_msg"].stringValue
             
             if error.errorCode == 0 {
-                self.showSuccessMessage(title: "Фотографии", msg: "Фотография успешно скопирована в альбом \"Сохраненные фотографии\"")
+                self.showSuccessMessage(title: "Фотографии", msg: "Фотография успешно скопирована в альбом «Сохраненные фотографии»")
                 
             } else {
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -2543,7 +2543,7 @@ extension UIViewController: VkOperationProtocol {
             //print(json)
             
             if error.errorCode == 0 {
-                self.showSuccessMessage(title: "Приглашение в сообщество", msg: "Приглашение успешно выслано пользователю \"\(name)\".")
+                self.showSuccessMessage(title: "Приглашение в сообщество", msg: "Приглашение успешно выслано пользователю «\(name)».")
             } else if error.errorCode == 15 {
                 self.showErrorMessage(title: "Ошибка приглашения", msg: "#15: Пользователь запретил приглашать себя в сообщества.")
             } else if error.errorCode == 103 {

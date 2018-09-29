@@ -151,7 +151,7 @@ class BrowserController: UIViewController, WKNavigationDelegate {
         var alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
         if type == "song" {
-            alertController = UIAlertController(title: "\(artist):  \"\(song)\"", message: nil, preferredStyle: .actionSheet)
+            alertController = UIAlertController(title: "\(artist): «\(song)»", message: nil, preferredStyle: .actionSheet)
         }
         
         if type == "artist" {
@@ -162,7 +162,7 @@ class BrowserController: UIViewController, WKNavigationDelegate {
         alertController.addAction(cancelAction)
         
         if type == "song" {
-            let action2 = UIAlertAction(title: "Сохранить песню в \"Избранное\"", style: .default) { action in
+            let action2 = UIAlertAction(title: "Сохранить песню в «Избранное»", style: .default) { action in
                 self.saveSongToRealm()
             }
             alertController.addAction(action2)
@@ -215,7 +215,7 @@ class BrowserController: UIViewController, WKNavigationDelegate {
             realm.beginWrite()
             realm.add(song, update: true)
             try realm.commitWrite()
-            showSuccessMessage(title: "Моя музыка ITunes", msg: "Песня \"\(self.song)\" успешно записана в \"Избранное\"")
+            showSuccessMessage(title: "Моя музыка ITunes", msg: "Песня «\(self.song)» успешно записана в «Избранное»")
         } catch {
             showErrorMessage(title: "База Данных Realm", msg: "Ошибка: \(error)")
         }

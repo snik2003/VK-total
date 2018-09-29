@@ -635,7 +635,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     }
                     
                     if comment.userLikes == 1 {
-                        let action3 = UIAlertAction(title: "Отменить \"Мне нравится\"", style: .destructive) { action in
+                        let action3 = UIAlertAction(title: "Отменить «Мне нравится»", style: .destructive) { action in
                             
                             self.likeTopicComment(indexPath: indexPath)
                         }
@@ -643,7 +643,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     }
                     
                     if comment.countLikes > 0 {
-                        let action4 = UIAlertAction(title: "Список \"Кому нравится\"", style: .default) { action in
+                        let action4 = UIAlertAction(title: "Список «Кому нравится»", style: .default) { action in
                             
                             let url = "/method/likes.getList"
                             let parameters = [
@@ -868,10 +868,10 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
             }
             alertController.addAction(action5)
             
-            let action6 = UIAlertAction(title: "Добавить ссылку в \"Избранное\"", style: .default) { action in
+            let action6 = UIAlertAction(title: "Добавить ссылку в «Избранное»", style: .default) { action in
                 
                 let link = "https://vk.com/topic-\(self.groupID)_\(self.topicID)"
-                self.addLinkToFave(link: link, text: "Обсуждение в сообществе \"\(self.group[0].name)\":\nтема \"\(self.topics[0].title)\"")
+                self.addLinkToFave(link: link, text: "Обсуждение в сообществе «\(self.group[0].name)»:\nтема «\(self.topics[0].title)»")
             }
             alertController.addAction(action6)
             

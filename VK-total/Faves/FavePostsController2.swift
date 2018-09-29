@@ -673,7 +673,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 
             }
             
-            alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить ссылку \"\(link.url)\" из раздела \"Избранное\"?")
+            alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить ссылку «\(link.url)» из раздела «Избранное»?")
             
         }
         deleteAction.backgroundColor = .red

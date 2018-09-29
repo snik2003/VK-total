@@ -152,7 +152,7 @@ class GroupsController: UITableViewController, UISearchBarDelegate {
                 group = searchGroups[indexPath.row]
             }
 
-            let alter = UIAlertController (title:  "Внимание!",  message:  "Вы действительно хотите удалить сообщество \"\(group.name)\"?",  preferredStyle: .alert)
+            let alter = UIAlertController (title:  "Внимание!",  message:  "Вы действительно хотите удалить сообщество «\(group.name)»?",  preferredStyle: .alert)
             
             let action1 = UIAlertAction(title: "Да", style: .default) { (_) ->
                 Void in
