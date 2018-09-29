@@ -403,9 +403,11 @@ class ProfileView: UIView {
     
     func createInfoView(profile: UserProfileInfo, radius: CGFloat) {
         let view = UIView()
+        let color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
+        
         view.layer.cornerRadius = radius
-        view.layer.borderColor = UIColor.gray.cgColor
-        view.layer.borderWidth = 0 //1.0
+        view.layer.borderColor = color.cgColor
+        view.layer.borderWidth = 0.6
         view.backgroundColor = .clear //UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.8)
     
         nameLabel.text = "\(profile.firstName) \(profile.lastName)"
@@ -515,7 +517,6 @@ class ProfileView: UIView {
         
         let topY = UIScreen.main.bounds.width * 0.9 - leftInsets - height
         view.frame = CGRect(x: leftInsets, y: topY, width: width, height: height)
-        let color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
         view.dropShadow(color: color, opacity: 0.9, offSet: CGSize(width: -2, height: 2), radius: radius)
         self.addSubview(view)
     }
