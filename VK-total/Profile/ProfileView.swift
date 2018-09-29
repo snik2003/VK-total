@@ -403,12 +403,21 @@ class ProfileView: UIView {
     
     func createInfoView(profile: UserProfileInfo, radius: CGFloat) {
         let view = UIView()
-        let color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
+        
+        var color = UIColor(red: 255/255, green: 252/255, blue: 121/255, alpha: 1)
+        if profile.deactivated != "" || profile.blacklisted == 1 || profile.blacklistedByMe == 1 {
+            color = UIColor(red: 255/255, green: 126/255, blue: 121/255, alpha: 1)
+        } else if profile.uid == vkSingleton.shared.userID {
+            //color = UIColor(red: 122/255, green: 129/255, blue: 255/255, alpha: 1)
+            color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
+        } else if profile.friendStatus == 3 {
+            color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
+        }
         
         view.layer.cornerRadius = radius
         view.layer.borderColor = color.cgColor
         view.layer.borderWidth = 0.6
-        view.backgroundColor = .clear //UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.8)
+        view.backgroundColor = .clear
     
         nameLabel.text = "\(profile.firstName) \(profile.lastName)"
         nameLabel.textColor = UIColor.black
@@ -418,9 +427,9 @@ class ProfileView: UIView {
         
         onlineStatusLabel.textAlignment = .center
         onlineStatusLabel.backgroundColor = .clear
-        onlineStatusLabel.font = UIFont(name: "Verdana", size: 12)
         onlineStatusLabel.adjustsFontSizeToFitWidth = true
         onlineStatusLabel.minimumScaleFactor = 0.5
+        onlineStatusLabel.font = UIFont(name: "Verdana", size: 12)
         
         if profile.onlineStatus == 1 {
             onlineStatusLabel.text = " онлайн"
@@ -464,7 +473,7 @@ class ProfileView: UIView {
         ageLabel.textColor = UIColor.black
         ageLabel.textAlignment = .center
         ageLabel.backgroundColor = .clear
-        ageLabel.font = onlineStatusLabel.font
+        ageLabel.font = UIFont(name: "Verdana", size: 12)
         
         
         if profile.deactivated != "" {

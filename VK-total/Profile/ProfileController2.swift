@@ -162,7 +162,11 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             if self.userProfile.count > 0 {
                 let user = self.userProfile[0]
                 if user.blacklisted == 1 {
-                    self.showErrorMessage(title: "Предупреждение", msg: "\nВы находитесь в черном списке \(user.firstNameGen)\n")
+                    if user.sex == 1 {
+                        self.showErrorMessage(title: "Предупреждение", msg: "У \(user.firstNameGen) закрытый профиль, либо Вы находитесь в её черном списке.")
+                    } else {
+                        self.showErrorMessage(title: "Предупреждение", msg: "У \(user.firstNameGen) закрытый профиль, либо Вы находитесь в его черном списке.")
+                    }
                 }
             }
             
