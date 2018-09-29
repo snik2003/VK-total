@@ -456,21 +456,106 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                 }
             }
             
-            OperationQueue.main.addOperation {
-                self.tableView.reloadData()
-                self.tableView.separatorStyle = .none
-                if self.offset == 0 {
-                    if self.tableView.numberOfSections > 1 {
-                        self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
-                    }
-                } else {
-                    if self.tableView.numberOfSections > 0 {
-                        self.tableView.scrollToRow(at: IndexPath(row: newCount+1, section: 1), at: .bottom, animated: false)
+            var userIDs: [String] = [vkSingleton.shared.userID]
+            var groupIDs: [String] = []
+            
+            if let id = Int(self.userID) {
+                if id > 0 {
+                    userIDs.append(self.userID)
+                } else if id < 0 {
+                    groupIDs.append("\(abs(id))")
+                }
+            }
+            
+            for dialog in self.dialogs {
+                for index in 0...9 {
+                    if dialog.attach[index].type == "wall" {
+                        let id = dialog.attach[index].wall[0].fromID
+                        if id > 0 {
+                            userIDs.append("\(id)")
+                        } else {
+                            groupIDs.append("\(abs(id))")
+                        }
                     }
                 }
-                self.offset += self.count
-                ViewControllerUtils().hideActivityIndicator()
+                
+                if dialog.fwdMessage.count > 0 {
+                    for mess in dialog.fwdMessage {
+                        let id = mess.userID
+                        if id > 0 {
+                            userIDs.append("\(id)")
+                        } else {
+                            groupIDs.append("\(abs(id))")
+                        }
+                    }
+                }
             }
+            
+            let userList = userIDs.map { $0 }.removeDuplicates().joined(separator: ", ")
+            var code = "var a = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_ids\":\"\(userList)\",\"fields\":\"id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,last_name_gen,first_name_acc,last_name_acc,online,can_write_private_message,sex\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
+            
+            let groupList = groupIDs.map { $0 }.removeDuplicates().joined(separator: ",")
+            code = "\(code) var b = API.groups.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"group_ids\":\"\(groupList)\",\"fields\":\"activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
+            
+            code = "\(code) return [a,b];"
+            
+            let url2 = "/method/execute"
+            let parameters2 = [
+                "access_token": vkSingleton.shared.accessToken,
+                "code": code,
+                "v": vkSingleton.shared.version
+            ]
+            
+            let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+            getServerDataOperation2.completionBlock = {
+                guard let data = getServerDataOperation2.data else { return }
+                guard let json = try? JSON(data: data) else { print("json error"); return }
+                //print(json)
+                
+                let users = json["response"][0].compactMap { DialogsUsers(json: $0.1) }
+                self.users.append(contentsOf: users)
+                
+                let groups = json["response"][1].compactMap { GroupProfile(json: $0.1) }
+                if groups.count > 0 {
+                    for group in groups {
+                        let newGroup = DialogsUsers(json: JSON.null)
+                        newGroup.uid = "-\(group.gid)"
+                        newGroup.firstName = group.name
+                        newGroup.maxPhotoOrigURL = group.photo200
+                        if group.type == "group" {
+                            if group.isClosed == 0 {
+                                newGroup.firstNameAbl = "Открытая группа"
+                            } else if group.isClosed == 1 {
+                                newGroup.firstNameAbl = "Закрытая группа"
+                            } else {
+                                newGroup.firstNameAbl = "Частная группа"
+                            }
+                        } else if group.type == "page" {
+                            newGroup.firstNameAbl = "Публичная страница"
+                        } else {
+                            newGroup.firstNameAbl = "Мероприятие"
+                        }
+                        self.users.append(newGroup)
+                    }
+                }
+                
+                OperationQueue.main.addOperation {
+                    self.tableView.reloadData()
+                    self.tableView.separatorStyle = .none
+                    if self.offset == 0 {
+                        if self.tableView.numberOfSections > 1 {
+                            self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                        }
+                    } else {
+                        if self.tableView.numberOfSections > 0 {
+                            self.tableView.scrollToRow(at: IndexPath(row: newCount+1, section: 1), at: .bottom, animated: false)
+                        }
+                    }
+                    self.offset += self.count
+                    ViewControllerUtils().hideActivityIndicator()
+                }
+            }
+            OperationQueue().addOperation(getServerDataOperation2)
         }
         OperationQueue().addOperation(getServerDataOperation)
     }
@@ -1610,12 +1695,12 @@ extension DialogController {
                         }
                         alertController2.addAction(action2)
                         
-                        /*let action3 = UIAlertAction(title: "Аудиозаписи", style: .default) { action in
+                        let action3 = UIAlertAction(title: "Аудиозаписи", style: .default) { action in
                             
                             self.media = .audio
                             self.getHistoryAttachments(mediaType: self.media)
                         }
-                        alertController2.addAction(action3)*/
+                        alertController2.addAction(action3)
                         
                         let action4 = UIAlertAction(title: "Документы", style: .default) { action in
                             
@@ -2145,9 +2230,6 @@ extension DialogController {
             self.dialogs = json["response"]["items"].compactMap { DialogHistory(json: $0.1) }.reversed()
             self.totalCount = json["response"]["items"]["count"].intValue
             
-            
-            
-            
             let users = json["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
             self.users.append(contentsOf: users)
             
@@ -2175,21 +2257,106 @@ extension DialogController {
                 }
             }
             
-            OperationQueue.main.addOperation {
-                if let user = self.users.filter({ $0.uid == self.userID }).first {
-                    let titleItem = UIBarButtonItem(customView: self.setTitleView(user: user, status: ""))
-                    self.navigationItem.rightBarButtonItem = titleItem
-                    self.title = ""
+            var userIDs: [String] = [vkSingleton.shared.userID]
+            var groupIDs: [String] = []
+            
+            if let id = Int(self.userID) {
+                if id > 0 {
+                    userIDs.append(self.userID)
+                } else if id < 0 {
+                    groupIDs.append("\(abs(id))")
+                }
+            }
+            
+            for dialog in self.dialogs {
+                for index in 0...9 {
+                    if dialog.attach[index].type == "wall" {
+                        let id = dialog.attach[index].wall[0].fromID
+                        if id > 0 {
+                            userIDs.append("\(id)")
+                        } else {
+                            groupIDs.append("\(abs(id))")
+                        }
+                    }
                 }
                 
-                self.tableView.reloadData()
-                self.tableView.separatorStyle = .none
-                if self.tableView.numberOfSections > 1 {
-                    self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                if dialog.fwdMessage.count > 0 {
+                    for mess in dialog.fwdMessage {
+                        let id = mess.userID
+                        if id > 0 {
+                            userIDs.append("\(id)")
+                        } else {
+                            groupIDs.append("\(abs(id))")
+                        }
+                    }
                 }
-            
-                ViewControllerUtils().hideActivityIndicator()
             }
+            
+            let userList = userIDs.map { $0 }.removeDuplicates().joined(separator: ", ")
+            var code = "var a = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_ids\":\"\(userList)\",\"fields\":\"id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,last_name_gen,first_name_acc,last_name_acc,online,can_write_private_message,sex\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
+            
+            let groupList = groupIDs.map { $0 }.removeDuplicates().joined(separator: ",")
+            code = "\(code) var b = API.groups.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"group_ids\":\"\(groupList)\",\"fields\":\"activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed\",\"v\":\"\(vkSingleton.shared.version)\"});\n "
+            
+            code = "\(code) return [a,b];"
+            
+            let url2 = "/method/execute"
+            let parameters2 = [
+                "access_token": vkSingleton.shared.accessToken,
+                "code": code,
+                "v": vkSingleton.shared.version
+            ]
+            
+            let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+            getServerDataOperation2.completionBlock = {
+                guard let data = getServerDataOperation2.data else { return }
+                guard let json = try? JSON(data: data) else { print("json error"); return }
+                //print(json)
+                
+                let users = json["response"][0].compactMap { DialogsUsers(json: $0.1) }
+                self.users.append(contentsOf: users)
+                
+                let groups = json["response"][1].compactMap { GroupProfile(json: $0.1) }
+                if groups.count > 0 {
+                    for group in groups {
+                        let newGroup = DialogsUsers(json: JSON.null)
+                        newGroup.uid = "-\(group.gid)"
+                        newGroup.firstName = group.name
+                        newGroup.maxPhotoOrigURL = group.photo200
+                        if group.type == "group" {
+                            if group.isClosed == 0 {
+                                newGroup.firstNameAbl = "Открытая группа"
+                            } else if group.isClosed == 1 {
+                                newGroup.firstNameAbl = "Закрытая группа"
+                            } else {
+                                newGroup.firstNameAbl = "Частная группа"
+                            }
+                        } else if group.type == "page" {
+                            newGroup.firstNameAbl = "Публичная страница"
+                        } else {
+                            newGroup.firstNameAbl = "Мероприятие"
+                        }
+                        self.users.append(newGroup)
+                    }
+                }
+                
+                OperationQueue.main.addOperation {
+                    if let user = self.users.filter({ $0.uid == self.userID }).first {
+                        let titleItem = UIBarButtonItem(customView: self.setTitleView(user: user, status: ""))
+                        self.navigationItem.rightBarButtonItem = titleItem
+                        self.title = ""
+                    }
+                    
+                    self.tableView.reloadData()
+                    self.tableView.separatorStyle = .none
+                    if self.tableView.numberOfSections > 1 {
+                        self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                    }
+                
+                    ViewControllerUtils().hideActivityIndicator()
+                }
+            }
+            OperationQueue().addOperation(getServerDataOperation2)
         }
         OperationQueue().addOperation(getServerDataOperation)
     }
