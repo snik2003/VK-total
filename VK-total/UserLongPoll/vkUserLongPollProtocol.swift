@@ -328,16 +328,16 @@ extension UIViewController: vkUserLongPollProtocol {
                                                     controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                                                 }
                                                 AudioServicesPlaySystemSound(1003)
+                                                self.markAsReadMessages(controller: controller)
                                             }
                                         } else {
                                             OperationQueue.main.addOperation {
                                                 controller.startMessageID = update.elements[1]
-                                                ViewControllerUtils().showActivityIndicator(uiView: controller.commentView)
                                                 controller.getDialog()
                                                 AudioServicesPlaySystemSound(1003)
                                             }
                                         }
-                                        self.markAsReadMessages(controller: controller)
+                                        
                                     }
                                 } else if update.elements[0] == 5 {
                                     if controller.userID == "\(update.elements[3])" {
@@ -346,8 +346,9 @@ extension UIViewController: vkUserLongPollProtocol {
                                             controller.startMessageID = id
                                         }
                                         OperationQueue.main.addOperation {
-                                            ViewControllerUtils().showActivityIndicator(uiView: controller.commentView)
                                             controller.getDialog()
+                                            self.showMessageNotification(title: "", text: update.text, userID: update.elements[3], chatID: 0, groupID: 0, startID: -1)
+                                            AudioServicesPlaySystemSound(1003)
                                         }
                                     }
                                 } else if update.elements[0] == 6 {
@@ -465,6 +466,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                         controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                                     }
                                     self.showMessageNotification(title: "", text: mess, userID: userID, chatID: 0, groupID: 0, startID: -1)
+                                    AudioServicesPlaySystemSound(1003)
                                 }
                             }
                             
@@ -481,6 +483,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                 
                                 OperationQueue.main.addOperation {
                                     self.showMessageNotification(title: "", text: mess, userID: userID, chatID: 0, groupID: 0, startID: -1)
+                                    AudioServicesPlaySystemSound(1003)
                                 }
                             }
                         }

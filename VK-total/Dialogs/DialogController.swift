@@ -566,8 +566,6 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         dialogs.removeAll(keepingCapacity: false)
         users.removeAll(keepingCapacity: false)
         estimatedHeightCache.removeAll(keepingCapacity: false)
-        totalCount = 0
-        tableView.reloadData()
         
         let url = "/method/messages.getHistory"
         var parameters = [
