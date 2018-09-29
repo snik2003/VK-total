@@ -9,6 +9,7 @@
 import UIKit
 import SwiftyJSON
 import Alamofire
+import AVFoundation
 import SWRevealViewController
 
 protocol vkGroupLongPollProtocol {
@@ -273,10 +274,15 @@ extension UIViewController: vkGroupLongPollProtocol {
                                                     if controller.tableView.numberOfSections > 0 {
                                                         controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                                                     }
+                                                    AudioServicesPlaySystemSound(1003)
                                                 }
                                             } else {
-                                                controller.startMessageID = update.elements[1]
-                                                controller.getDialog()
+                                                OperationQueue.main.addOperation {
+                                                    controller.startMessageID = update.elements[1]
+                                                    ViewControllerUtils().showActivityIndicator(uiView: controller.commentView)
+                                                    controller.getDialog()
+                                                    AudioServicesPlaySystemSound(1003)
+                                                }
                                             }
                                             self.markAsReadMessages(controller: controller)
                                         }
@@ -286,7 +292,10 @@ extension UIViewController: vkGroupLongPollProtocol {
                                             if let id = controller.dialogs.last?.id {
                                                 controller.startMessageID = id
                                             }
-                                            controller.getDialog()
+                                            OperationQueue.main.addOperation {
+                                                ViewControllerUtils().showActivityIndicator(uiView: controller.commentView)
+                                                controller.getDialog()
+                                            }
                                         }
                                     } else if update.elements[0] == 6 {
                                         if controller.userID == "\(update.elements[1])" {

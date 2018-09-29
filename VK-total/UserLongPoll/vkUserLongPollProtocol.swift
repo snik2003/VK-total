@@ -9,6 +9,7 @@
 import UIKit
 import SwiftyJSON
 import Alamofire
+import AVFoundation
 import SWRevealViewController
 
 protocol vkUserLongPollProtocol {
@@ -326,11 +327,14 @@ extension UIViewController: vkUserLongPollProtocol {
                                                 if controller.tableView.numberOfSections > 0 {
                                                     controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                                                 }
+                                                AudioServicesPlaySystemSound(1003)
                                             }
                                         } else {
                                             OperationQueue.main.addOperation {
                                                 controller.startMessageID = update.elements[1]
+                                                ViewControllerUtils().showActivityIndicator(uiView: controller.commentView)
                                                 controller.getDialog()
+                                                AudioServicesPlaySystemSound(1003)
                                             }
                                         }
                                         self.markAsReadMessages(controller: controller)
@@ -342,6 +346,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                             controller.startMessageID = id
                                         }
                                         OperationQueue.main.addOperation {
+                                            ViewControllerUtils().showActivityIndicator(uiView: controller.commentView)
                                             controller.getDialog()
                                         }
                                     }
