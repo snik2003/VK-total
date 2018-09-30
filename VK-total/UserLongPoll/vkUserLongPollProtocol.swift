@@ -353,13 +353,14 @@ extension UIViewController: vkUserLongPollProtocol {
                                     }
                                 } else if update.elements[0] == 6 {
                                     if controller.userID == "\(update.elements[1])" {
-                                        for dialog in controller.dialogs {
-                                            if dialog.id <= update.elements[2] && dialog.out == 0 {
-                                                dialog.readState = 1
-                                            }
-                                        }
                                         
                                         OperationQueue.main.addOperation {
+                                            for dialog in controller.dialogs {
+                                                if dialog.id <= update.elements[2] && dialog.out == 0 {
+                                                    dialog.readState = 1
+                                                }
+                                            }
+                                            
                                             controller.tableView.reloadData()
                                             if controller.tableView.numberOfSections > 0 {
                                                 controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: true)
@@ -368,13 +369,14 @@ extension UIViewController: vkUserLongPollProtocol {
                                     }
                                 } else if update.elements[0] == 7 {
                                     if controller.userID == "\(update.elements[1])" {
-                                        for dialog in controller.dialogs {
-                                            if dialog.id <= update.elements[2] && dialog.out == 1 {
-                                                dialog.readState = 1
-                                            }
-                                        }
                                         
                                         OperationQueue.main.addOperation {
+                                            for dialog in controller.dialogs {
+                                                if dialog.id <= update.elements[2] && dialog.out == 1 {
+                                                    dialog.readState = 1
+                                                }
+                                            }
+                                            
                                             controller.tableView.reloadData()
                                             if controller.tableView.numberOfSections > 0 {
                                                 controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: true)
