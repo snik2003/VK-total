@@ -8,6 +8,7 @@
 
 import UIKit
 import SwiftyJSON
+import AVFoundation
 
 class ProfileController2: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
@@ -154,6 +155,9 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                         vkSingleton.shared.pushInfo = nil
                         if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
                             appDelegate.tapPushNotification(userInfo, controller: self)
+                            OperationQueue.main.addOperation {
+                                AudioServicesPlaySystemSound(1003)
+                            }
                         }
                     }
                 }
