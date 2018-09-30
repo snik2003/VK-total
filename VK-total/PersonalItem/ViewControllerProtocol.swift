@@ -14,6 +14,7 @@ import Photos
 import Alamofire
 import SwiftMessages
 import Popover
+import AVFoundation
 
 protocol NotificationCellProtocol {
     
@@ -791,6 +792,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showError(title, subTitle: msg)
+            AudioServicesPlaySystemSound(1000)
         }
     }
     
@@ -809,6 +811,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showSuccess(title, subTitle: msg)
+            AudioServicesPlaySystemSound(1001)
         }
     }
     
@@ -827,6 +830,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showInfo(title, subTitle: msg)
+            AudioServicesPlaySystemSound(1001)
         }
     }
     

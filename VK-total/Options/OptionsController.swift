@@ -8,6 +8,7 @@
 
 import UIKit
 import BEMCheckBox
+import AVFoundation
 import LocalAuthentication
 
 class OptionsController: UITableViewController {
@@ -70,6 +71,7 @@ class OptionsController: UITableViewController {
             }
         }
         self.navigationController?.popViewController(animated: true)
+        AudioServicesPlaySystemSound(1001)
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

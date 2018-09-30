@@ -391,7 +391,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                 ViewControllerUtils().hideActivityIndicator()
                 
                 if self.totalCount == 0 {
-                    AudioServicesPlaySystemSound(1000)
+                    self.showErrorMessage(title: "«Важные» сообщения", msg: "В данном диалоге нет сообщений, помеченных как «важные».")
                 } else {
                     AudioServicesPlaySystemSound(1001)
                 }
