@@ -565,9 +565,12 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                     
                     if self.totalCount > 0 && self.offset == 0 {
                         self.showSuccessMessage(title: "Поиск сообщений", msg: "В данном диалоге найдено \(self.totalCount.messageAdder()) по запросу «\(self.searchText)».")
-                    } else {
+                    }
+                    
+                    if self.totalCount == 0 {
                         self.showErrorMessage(title: "Поиск сообщений", msg: "В данном диалоге не найдено сообщений по запросу «\(self.searchText)».")
                     }
+                    
                     self.offset += self.count
                 }
             }
@@ -917,6 +920,10 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             reloadController.addDependency(parseDialogsUsers)
             reloadController.addDependency(parseGroupProfile)
             OperationQueue.main.addOperation(reloadController)
+            
+            OperationQueue.main.addOperation {
+                AudioServicesPlaySystemSound(1003)
+            }
         }
         parseDialog.addDependency(getServerDataOperation)
         opq.addOperation(parseDialog)
