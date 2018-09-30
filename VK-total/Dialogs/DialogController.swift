@@ -10,6 +10,7 @@ import UIKit
 import DCCommentView
 import Popover
 import SwiftyJSON
+import AVFoundation
 
 enum DialogSource {
     case all
@@ -309,15 +310,15 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     func getImportantMessages() {
         
-        dialogs.removeAll(keepingCapacity: false)
         estimatedHeightCache.removeAll(keepingCapacity: false)
+        dialogs.removeAll(keepingCapacity: false)
         totalCount = 0
         tableView.reloadData()
         
         let url = "/method/messages.getImportantMessages"
         let parameters = [
             "access_token": vkSingleton.shared.accessToken,
-            "offset": "\(offset)",
+            "offset": "0",
             "count": "200",
             "peer_id": "\(userID)",
             "fields": "id,first_name,last_name,last_seen,photo_max_orig,photo_max,deactivated,first_name_abl,first_name_gen,last_name_gen,online,can_write_private_message,sex",
@@ -334,6 +335,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             self.totalCount = json["response"]["messages"]["count"].intValue
             
             let dialogs = json["response"]["messages"]["items"].compactMap { DialogHistory(json: $0.1) }
+            self.totalCount = dialogs.count
+            
             for dialog in dialogs.reversed() {
                 if "\(dialog.peerID)" == self.userID {
                     dialog.readState = 1
@@ -380,13 +383,18 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                     self.title = ""
                 }
                 
-                self.offset += 200
                 self.tableView.reloadData()
                 self.tableView.separatorStyle = .none
                 if self.tableView.numberOfSections > 1 {
                     self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                 }
                 ViewControllerUtils().hideActivityIndicator()
+                
+                if self.totalCount == 0 {
+                    AudioServicesPlaySystemSound(1000)
+                } else {
+                    AudioServicesPlaySystemSound(1001)
+                }
             }
         }
         OperationQueue().addOperation(getServerDataOperation)
@@ -551,8 +559,16 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                             self.tableView.scrollToRow(at: IndexPath(row: newCount+1, section: 1), at: .bottom, animated: false)
                         }
                     }
-                    self.offset += self.count
+                    
                     ViewControllerUtils().hideActivityIndicator()
+                    AudioServicesPlaySystemSound(1003)
+                    
+                    if self.totalCount > 0 && self.offset == 0 {
+                        self.showSuccessMessage(title: "Поиск сообщений", msg: "В данном диалоге найдено \(self.totalCount.messageAdder()) по запросу «\(self.searchText)».")
+                    } else {
+                        self.showErrorMessage(title: "Поиск сообщений", msg: "В данном диалоге не найдено сообщений по запросу «\(self.searchText)».")
+                    }
+                    self.offset += self.count
                 }
             }
             OperationQueue().addOperation(getServerDataOperation2)
@@ -982,7 +998,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                     }
                 } else if mode == .important {
                     countButton.add(for: .touchUpInside) {
-                        
+                        self.getImportantMessages()
                     }
                 } else if mode == .search {
                     countButton.add(for: .touchUpInside) {
@@ -2226,7 +2242,7 @@ extension DialogController {
             //print(json)
             
             self.dialogs = json["response"]["items"].compactMap { DialogHistory(json: $0.1) }.reversed()
-            self.totalCount = json["response"]["items"]["count"].intValue
+            self.totalCount = self.dialogs.count
             
             let users = json["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
             self.users.append(contentsOf: users)
@@ -2352,6 +2368,28 @@ extension DialogController {
                     }
                 
                     ViewControllerUtils().hideActivityIndicator()
+                    
+                    var alertText = ""
+                    switch self.media {
+                    case .photo:
+                        alertText = "с фотографиями"
+                    case .video:
+                        alertText = "с видеозаписями"
+                    case .audio:
+                        alertText = "с аудиозаписями"
+                    case .doc:
+                        alertText = "с документами"
+                    case .link:
+                        alertText = "с внешними ссылками"
+                    case .wall:
+                        alertText = "с записями на стене"
+                    }
+                    
+                    if self.totalCount > 0 {
+                        self.showSuccessMessage(title: "Сообщения c вложениями", msg: "В данном диалоге найдено \(self.totalCount.messageAdder()) \(alertText).")
+                    } else {
+                        self.showErrorMessage(title: "Сообщения с вложениями", msg: "В данном диалоге не найдено сообщений \(alertText).")
+                    }
                 }
             }
             OperationQueue().addOperation(getServerDataOperation2)
