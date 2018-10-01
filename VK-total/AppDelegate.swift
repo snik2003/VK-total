@@ -57,7 +57,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), let controllers = currentVC.navigationController?.viewControllers {
             for controller in controllers {
                 if let dc = controller as? DialogController, dc.mode == .dialog {
-                    ViewControllerUtils().showActivityIndicator(uiView: dc.commentView)
                     
                     var code = "var a = API.messages.getHistory({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"offset\":\"0\",\"count\":\"1\",\"user_id\":\"\(dc.userID)\",\"start_message_id\":\"-1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
                     
@@ -84,12 +83,21 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                         
                         let users = json["response"][1].compactMap { DialogsUsers(json: $0.1) }
                         
+                        var currID = 0
+                        if let id = dc.dialogs.last?.id {
+                            currID = id
+                        }
+                        
                         OperationQueue.main.addOperation {
                             if let user = users.first {
                                 dc.setStatusLabel(user: user, status: "")
                             }
-                            dc.startMessageID = startID
-                            dc.getDialog()
+                            
+                            if startID > currID {
+                                ViewControllerUtils().showActivityIndicator(uiView: dc.commentView)
+                                dc.startMessageID = startID
+                                dc.getDialog()
+                            }
                         }
                     }
                     OperationQueue().addOperation(getServerDataOperation)
