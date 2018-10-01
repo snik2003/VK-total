@@ -334,7 +334,6 @@ extension UIViewController: vkUserLongPollProtocol {
                                             OperationQueue.main.addOperation {
                                                 controller.startMessageID = update.elements[1]
                                                 controller.getDialog()
-                                                AudioServicesPlaySystemSound(1003)
                                             }
                                         }
                                         
@@ -348,7 +347,6 @@ extension UIViewController: vkUserLongPollProtocol {
                                         OperationQueue.main.addOperation {
                                             controller.getDialog()
                                             self.showMessageNotification(title: "", text: update.text, userID: update.elements[3], chatID: 0, groupID: 0, startID: -1)
-                                            AudioServicesPlaySystemSound(1003)
                                         }
                                     }
                                 } else if update.elements[0] == 6 {

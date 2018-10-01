@@ -582,6 +582,11 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     func getDialog() {
         let opq = OperationQueue()
         
+        var lastID = 0
+        if let id = dialogs.last?.id {
+            lastID = id
+        }
+        
         dialogs.removeAll(keepingCapacity: false)
         users.removeAll(keepingCapacity: false)
         estimatedHeightCache.removeAll(keepingCapacity: false)
@@ -809,6 +814,11 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                         if parseDialog.unread > 0 {
                             self.markAsReadMessages(controller: self)
                         }
+                        
+                        if let id = self.dialogs.last?.id, id > lastID {
+                            AudioServicesPlaySystemSound(1003)
+                        }
+                        
                         ViewControllerUtils().hideActivityIndicator()
                     }
                 }
