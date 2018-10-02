@@ -57,12 +57,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), let controllers = currentVC.navigationController?.viewControllers {
             for controller in controllers {
                 if let dc = controller as? DialogController, dc.mode == .dialog {
+                    dc.commentView.endEditing(true)
                     
                     var code = "var a = API.messages.getHistory({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"offset\":\"0\",\"count\":\"1\",\"user_id\":\"\(dc.userID)\",\"start_message_id\":\"-1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
                     
-                    code = "\(code) var b = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_id\":\"\(dc.userID)\",\"fields\":\"id,first_name,last_name,maiden_name,domain,sex,relation,bdate,home_town,has_photo,city,country,status,last_seen,online,photo_max_orig,photo_max,photo_id,followers_count,counters,deactivated,education,contacts,connections,site,about,interests,activities,books,games,movies,music,tv,quotes,first_name_abl,first_name_gen,first_name_acc,can_post,can_send_friend_request,can_write_private_message,friend_status,is_favorite,blacklisted,blacklisted_by_me,crop_photo,is_hidden_from_feed,wall_default,personal,relatives\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
-                    
-                    code = "\(code) return [a,b];"
+                    if dc.chatID == "" {
+                        code = "\(code) var b = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_id\":\"\(dc.userID)\",\"fields\":\"id,first_name,last_name,maiden_name,domain,sex,relation,bdate,home_town,has_photo,city,country,status,last_seen,online,photo_max_orig,photo_max,photo_id,followers_count,counters,deactivated,education,contacts,connections,site,about,interests,activities,books,games,movies,music,tv,quotes,first_name_abl,first_name_gen,first_name_acc,can_post,can_send_friend_request,can_write_private_message,friend_status,is_favorite,blacklisted,blacklisted_by_me,crop_photo,is_hidden_from_feed,wall_default,personal,relatives\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
+                        
+                        code = "\(code) return [a,b];"
+                    } else {
+                        code = "\(code) return [a];"
+                    }
                     
                     let url = "/method/execute"
                     let parameters = [
@@ -81,16 +86,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                         let outRead = json["response"][0]["out_read"].intValue
                         let startID = max(inRead,outRead)
                         
-                        let users = json["response"][1].compactMap { DialogsUsers(json: $0.1) }
-                        
                         var currID = 0
                         if let id = dc.dialogs.last?.id {
                             currID = id
                         }
                         
                         OperationQueue.main.addOperation {
-                            if let user = users.first {
-                                dc.setStatusLabel(user: user, status: "")
+                            if dc.chatID == "" {
+                                let users = json["response"][1].compactMap { DialogsUsers(json: $0.1) }
+                                if let user = users.first {
+                                    dc.setStatusLabel(user: user, status: "")
+                                }
                             }
                             
                             if startID > currID {
