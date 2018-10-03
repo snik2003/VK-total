@@ -166,10 +166,14 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             if self.userProfile.count > 0 {
                 let user = self.userProfile[0]
                 if user.blacklisted == 1 {
-                    if user.sex == 1 {
-                        self.showErrorMessage(title: "Предупреждение", msg: "У \(user.firstNameGen) закрытый профиль, либо Вы находитесь в её черном списке.")
+                    if user.canSendFriendRequest == 1 || user.canWritePrivateMessage == 1 {
+                        if user.sex == 1 {
+                            self.showErrorMessage(title: "Это закрытый профиль", msg: "Добавьте \(user.firstNameAcc) в друзья, чтобы смотреть её записи, фотографии и другие материалы.")
+                        } else {
+                            self.showErrorMessage(title: "Это закрытый профиль", msg: "Добавьте \(user.firstNameAcc) в друзья, чтобы смотреть его записи, фотографии и другие материалы.")
+                        }
                     } else {
-                        self.showErrorMessage(title: "Предупреждение", msg: "У \(user.firstNameGen) закрытый профиль, либо Вы находитесь в его черном списке.")
+                        self.showErrorMessage(title: "Предупреждение", msg: "Вы находитесь в черном списке \(user.firstNameGen).")
                     }
                 }
             }
