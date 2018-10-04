@@ -124,18 +124,21 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     
     @IBAction func back(sender: UIBarButtonItem) {
         if webView.canGoBack {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
             webView.goBack()
         }
     }
     
     @IBAction func forward(sender: UIBarButtonItem) {
         if webView.canGoForward {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
             webView.goForward()
         }
     }
     
     @IBAction func reload(sender: UIBarButtonItem) {
         if let url = webView.url {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
             let request = URLRequest(url: url)
             webView.load(request)
         }
