@@ -1473,8 +1473,10 @@ extension DialogController {
             view.addSubview(imageView)
             
             let tap = UITapGestureRecognizer()
-            tap.numberOfTapsRequired = 1
-            tap.addTarget(self, action: #selector(self.tapAvatar))
+            tap.add {
+                imageView.viewTouched()
+                self.tapAvatar()
+            }
             imageView.isUserInteractionEnabled = true
             imageView.addGestureRecognizer(tap)
             
