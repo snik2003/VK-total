@@ -13,7 +13,6 @@ import WebKit
 import DCCommentView
 import SCLAlertView
 import Popover
-import AVFoundation
 
 class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSource, WKNavigationDelegate, DCCommentViewDelegate {
 
@@ -294,7 +293,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapStickerButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
         let width = self.view.bounds.width - 20
@@ -309,7 +308,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapAccessoryButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         self.openNewCommentController(ownerID: ownerID, message: commentView.textView.text!, type: "new_video_comment", title: "Новый комментарий", replyID: 0, replyName: "", comment: nil, controller: self)
     }
     
@@ -345,7 +344,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     @objc func tapFromGroupButton(sender: UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         self.commentView.endEditing(true)
         self.actionFromGroupButton(fromView: commentView.fromGroupButton)
@@ -1173,7 +1172,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
         if let video = self.video.first {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

@@ -8,7 +8,6 @@
 
 import UIKit
 import SwiftyJSON
-import AVFoundation
 
 class ProfileView: UIView {
     
@@ -127,7 +126,7 @@ class ProfileView: UIView {
             friendButton.backgroundColor = vkSingleton.shared.mainColor
             
             friendButton.add(for: .touchUpInside) {
-                self.friendButton.buttonTouched()
+                self.friendButton.buttonTouched(controller: self.delegate)
                 self.delegate.openOptionsController()
             }
         } else {
@@ -683,8 +682,8 @@ extension UIImage {
 }
 
 extension UIButton {
-    func buttonTouched() {
-        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+    func buttonTouched(controller: UIViewController) {
+        controller.playSoundEffect(vkSingleton.shared.buttonSound)
         UIButton.animate(withDuration: 0.2,
                          animations: {
                             self.transform = CGAffineTransform(scaleX: 0.95, y: 0.92)
@@ -699,8 +698,8 @@ extension UIButton {
 }
 
 extension UIView {
-    func viewTouched() {
-        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+    func viewTouched(controller: UIViewController) {
+        controller.playSoundEffect(vkSingleton.shared.buttonSound)
         UIView.animate(withDuration: 0.3,
                          animations: {
                             self.transform = CGAffineTransform(scaleX: 0.97, y: 0.94)

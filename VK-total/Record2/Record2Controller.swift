@@ -130,7 +130,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     @objc func tapFromGroupButton(sender: UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         self.commentView.endEditing(true)
         self.actionFromGroupButton(fromView: commentView.fromGroupButton)
@@ -246,7 +246,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     
     @objc func tapStickerButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self.delegate)
         commentView.endEditing(true)
         
         let width = self.view.bounds.width - 20
@@ -261,7 +261,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     
     @objc func tapAccessoryButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         self.openNewCommentController(ownerID: ownerID, message: commentView.textView.text!, type: "new_record_comment", title: "Новый комментарий", replyID: 0, replyName: "", comment: nil, controller: self)
     }
     
@@ -1595,7 +1595,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
         if let record = self.news.first {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

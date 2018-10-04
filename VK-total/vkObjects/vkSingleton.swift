@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 final class vkSingleton {
     static let shared = vkSingleton()
@@ -35,4 +36,10 @@ final class vkSingleton {
     let appOpenedCountKey = "APP_OPENED_COUNT"
     
     let mainColor = UIColor(red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+    
+    let errorSound: SystemSoundID = 1000
+    let infoSound: SystemSoundID = 1001
+    let dialogSound: SystemSoundID = 1003
+    let buttonSound: SystemSoundID = 1104
+    let linkSound: SystemSoundID = 1211
 }

@@ -9,7 +9,6 @@
 import UIKit
 import WebKit
 import RealmSwift
-import AVFoundation
 
 class BrowserController: UIViewController, WKNavigationDelegate {
 
@@ -124,21 +123,21 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     
     @IBAction func back(sender: UIBarButtonItem) {
         if webView.canGoBack {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             webView.goBack()
         }
     }
     
     @IBAction func forward(sender: UIBarButtonItem) {
         if webView.canGoForward {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             webView.goForward()
         }
     }
     
     @IBAction func reload(sender: UIBarButtonItem) {
         if let url = webView.url {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             let request = URLRequest(url: url)
             webView.load(request)
         }
@@ -152,7 +151,7 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     }
     
     @IBAction func barButtonTouch(sender: UIBarButtonItem) {
-        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+        playSoundEffect(vkSingleton.shared.buttonSound)
         
         var alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         

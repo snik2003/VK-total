@@ -327,7 +327,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                                 if controller.tableView.numberOfSections > 0 {
                                                     controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                                                 }
-                                                AudioServicesPlaySystemSound(1003)
+                                                AudioServicesPlaySystemSound(vkSingleton.shared.dialogSound)
                                                 self.markAsReadMessages(controller: controller)
                                             }
                                         } else {
@@ -466,7 +466,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                         controller.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                                     }
                                     self.showMessageNotification(title: "", text: mess, userID: userID, chatID: 0, groupID: 0, startID: -1)
-                                    AudioServicesPlaySystemSound(1003)
+                                    AudioServicesPlaySystemSound(vkSingleton.shared.dialogSound)
                                 }
                             }
                             
@@ -483,7 +483,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                 
                                 OperationQueue.main.addOperation {
                                     self.showMessageNotification(title: "", text: mess, userID: userID, chatID: 0, groupID: 0, startID: -1)
-                                    AudioServicesPlaySystemSound(1003)
+                                    AudioServicesPlaySystemSound(vkSingleton.shared.dialogSound)
                                 }
                             }
                         }

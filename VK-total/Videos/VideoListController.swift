@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import AVFoundation
 
 class VideoListController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
@@ -398,7 +397,7 @@ class VideoListController: UIViewController, UITableViewDelegate, UITableViewDat
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
-        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+        playSoundEffect(vkSingleton.shared.buttonSound)
         self.openVideoListController(ownerID: ownerID, title: "Поиск", type: "search")
     }
 }

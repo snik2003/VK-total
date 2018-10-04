@@ -123,7 +123,7 @@ class UserInfoTableViewController: UITableViewController, UIImagePickerControlle
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
         if users.count > 0 {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

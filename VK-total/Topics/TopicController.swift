@@ -11,7 +11,6 @@ import SCLAlertView
 import SwiftyJSON
 import DCCommentView
 import Popover
-import AVFoundation
 
 class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate {
 
@@ -114,7 +113,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     @objc func tapFromGroupButton(sender: UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         self.commentView.endEditing(true)
         self.actionFromGroupButton(fromView: commentView.fromGroupButton)
@@ -230,7 +229,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapStickerButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
         let width = self.view.bounds.width - 20
@@ -245,7 +244,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapAccessoryButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         self.openNewCommentController(ownerID: "-\(groupID)", message: commentView.textView.text!, type: "new_topic_comment", title: "Новый комментарий", replyID: 0, replyName: "", comment: nil, controller: self)
     }
     
@@ -854,7 +853,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         if topics.count > 0 {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
