@@ -663,6 +663,7 @@ extension UIViewController: NotificationCellProtocol {
     
     func openBrowserControllerNoCheck(url: String) {
         
+        AudioServicesPlaySystemSound(1211)
         if let url1 = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
             guard URL(string: url1) != nil else {
                 showErrorMessage(title: "Ошибка!", msg: "Некорректная ссылка:\n\(url1)")
@@ -687,6 +688,7 @@ extension UIViewController: NotificationCellProtocol {
     func openBrowserController(url: String) {
         
         let res = checkVKLink(url: url)
+        AudioServicesPlaySystemSound(1211)
         
         switch res {
         case 0:
