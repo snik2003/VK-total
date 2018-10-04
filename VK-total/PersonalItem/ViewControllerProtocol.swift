@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVFoundation
 import SwiftyJSON
 import RealmSwift
 import SCLAlertView
@@ -14,7 +15,6 @@ import Photos
 import Alamofire
 import SwiftMessages
 import Popover
-import AVFoundation
 
 protocol NotificationCellProtocol {
     
@@ -663,7 +663,7 @@ extension UIViewController: NotificationCellProtocol {
     
     func openBrowserControllerNoCheck(url: String) {
         
-        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1211) }
+        playSoundEffect(vkSingleton.shared.linkSound)
         if let url1 = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
             guard URL(string: url1) != nil else {
                 showErrorMessage(title: "Ошибка!", msg: "Некорректная ссылка:\n\(url1)")
@@ -688,7 +688,7 @@ extension UIViewController: NotificationCellProtocol {
     func openBrowserController(url: String) {
         
         let res = checkVKLink(url: url)
-        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1211) }
+        playSoundEffect(vkSingleton.shared.linkSound)
         
         switch res {
         case 0:
@@ -794,7 +794,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showError(title, subTitle: msg)
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1000) }
+            self.playSoundEffect(vkSingleton.shared.errorSound)
         }
     }
     
@@ -813,7 +813,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showSuccess(title, subTitle: msg)
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1001) }
+            self.playSoundEffect(vkSingleton.shared.infoSound)
         }
     }
     
@@ -832,7 +832,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showInfo(title, subTitle: msg)
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1001) }
+            self.playSoundEffect(vkSingleton.shared.infoSound)
         }
     }
     
@@ -1359,51 +1359,68 @@ extension UIViewController: NotificationCellProtocol {
                 //print(iTunesDict)
                 let resultsArray = iTunesDict.object(forKey: "results") as! [Dictionary<String, AnyObject>]
                 
-                if resultsArray.count > 0 {
-                    if let results = resultsArray.first {
-                        var previewURL = ""
-                        var workURL = ""
-                        var songID = 0
-                        var artistID = 0
-                        var artist = ""
-                        var album = ""
-                        var song = ""
-                        var avatarURL = ""
-                        
-                        if searchType == "artist" {
-                            workURL = results["artistLinkUrl"] as! String
-                            previewURL = results["artistLinkUrl"] as! String
-                            artistID = results["artistId"] as! Int
-                            artist = results["artistName"] as! String
-                        } else if searchType == "song" {
-                            workURL = results["trackViewUrl"] as! String
-                            previewURL = results["previewUrl"] as! String
-                            songID = results["trackId"] as! Int
-                            artistID = results["artistId"] as! Int
-                            song = results["trackName"] as! String
-                            artist = results["artistName"] as! String
-                            album = results["collectionName"] as! String
-                            avatarURL = results["artworkUrl100"] as! String
+                if let results = resultsArray.first {
+                    if searchType == "artist" {
+                        if let workURL = results["artistLinkUrl"] as? String,
+                            let previewURL = results["artistLinkUrl"] as? String,
+                            let artistID = results["artistId"] as? Int,
+                            let artist = results["artistName"] as? String {
+                            
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().hideActivityIndicator()
+                                
+                                let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
+                                
+                                browserController.path = "\(workURL)"
+                                
+                                browserController.type = searchType
+                                browserController.artistID = artistID
+                                browserController.artist = artist
+                                browserController.workURL = workURL
+                                browserController.previewURL = previewURL
+                                
+                                self.navigationController?.pushViewController(browserController, animated: true)
+                            }
+                        } else {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().hideActivityIndicator()
+                                self.showErrorMessage(title: "Поиск в ITunes", msg: "Неизвестная ошибка при поиске \(searchString)")
+                            }
                         }
+                    } else if searchType == "song" {
+                        if let workURL = results["trackViewUrl"] as? String,
+                            let previewURL = results["previewUrl"] as? String,
+                            let songID = results["trackId"] as? Int,
+                            let artistID = results["artistId"] as? Int,
+                            let song = results["trackName"] as? String,
+                            let artist = results["artistName"] as? String,
+                            let album = results["collectionName"] as? String,
+                            let avatarURL = results["artworkUrl100"] as? String {
                         
-                        OperationQueue.main.addOperation {
-                            ViewControllerUtils().hideActivityIndicator()
-                            
-                            let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
-                            
-                            browserController.path = "\(workURL)"
-                            
-                            browserController.type = searchType
-                            browserController.songID = songID
-                            browserController.artistID = artistID
-                            browserController.artist = artist
-                            browserController.album = album
-                            browserController.song = song
-                            browserController.previewURL = previewURL
-                            browserController.workURL = workURL
-                            browserController.avatarURL = avatarURL
-                            
-                            self.navigationController?.pushViewController(browserController, animated: true)
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().hideActivityIndicator()
+                                
+                                let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
+                                
+                                browserController.path = "\(workURL)"
+                                
+                                browserController.type = searchType
+                                browserController.songID = songID
+                                browserController.artistID = artistID
+                                browserController.artist = artist
+                                browserController.album = album
+                                browserController.song = song
+                                browserController.previewURL = previewURL
+                                browserController.workURL = workURL
+                                browserController.avatarURL = avatarURL
+                                
+                                self.navigationController?.pushViewController(browserController, animated: true)
+                            }
+                        } else {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().hideActivityIndicator()
+                                self.showErrorMessage(title: "Поиск в ITunes", msg: "Неизвестная ошибка при поиске данного произведения")
+                            }
                         }
                     }
                 } else {
@@ -2039,6 +2056,12 @@ extension UIViewController: NotificationCellProtocol {
         }
         parseGroups.addDependency(getServerDataOperation)
         OperationQueue().addOperation(parseGroups)
+    }
+    
+    func playSoundEffect(_ code: SystemSoundID) {
+        if AppConfig.shared.soundEffectsOn {
+            AudioServicesPlaySystemSound(code)
+        }
     }
 }
 

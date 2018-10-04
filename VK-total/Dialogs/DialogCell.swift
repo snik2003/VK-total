@@ -175,7 +175,7 @@ class DialogCell: UITableViewCell {
                     let tap = UITapGestureRecognizer()
                     tap.add {
                         if self.delegate.mode != .edit {
-                            photo.viewTouched()
+                            photo.viewTouched(controller: self.delegate)
                             
                             let photoViewController = self.delegate.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
                             
@@ -280,7 +280,7 @@ class DialogCell: UITableViewCell {
                     let tap = UITapGestureRecognizer()
                     tap.add {
                         if self.delegate.mode != .edit {
-                            video.viewTouched()
+                            video.viewTouched(controller: self.delegate)
                             self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
                         }
                     }
@@ -1037,7 +1037,7 @@ class DialogCell: UITableViewCell {
         let tap = UITapGestureRecognizer()
         tap.add {
             if self.delegate.mode != .edit {
-                view.viewTouched()
+                view.viewTouched(controller: self.delegate)
                 
                 let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
                 
@@ -1156,7 +1156,7 @@ class DialogCell: UITableViewCell {
         
         loadButton.add(for: .touchUpInside) {
             if self.delegate.mode != .edit {
-                view.viewTouched()
+                view.viewTouched(controller: self.delegate)
                 
                 let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
                 
@@ -1229,7 +1229,7 @@ class DialogCell: UITableViewCell {
         
         let tap = UITapGestureRecognizer()
         tap.add {
-            view.viewTouched()
+            view.viewTouched(controller: self.delegate)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

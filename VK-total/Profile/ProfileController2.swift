@@ -8,7 +8,6 @@
 
 import UIKit
 import SwiftyJSON
-import AVFoundation
 
 class ProfileController2: UIViewController, UITableViewDelegate, UITableViewDataSource {
     
@@ -155,9 +154,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                         vkSingleton.shared.pushInfo = nil
                         if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
                             appDelegate.tapPushNotification(userInfo, controller: self)
-                            OperationQueue.main.addOperation {
-                                AudioServicesPlaySystemSound(1003)
-                            }
+                            self.playSoundEffect(vkSingleton.shared.dialogSound)
                         }
                     }
                 }
@@ -869,7 +866,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     
     @IBAction func barButtonTouch(sender: UIBarButtonItem) {
         if let user = userProfile.first {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
@@ -1102,7 +1099,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     @objc func addFriendButton(sender: UIButton) {
         if userProfile.count > 0 {
             
-            sender.buttonTouched()
+            sender.buttonTouched(controller: self)
             
             let user = userProfile[0]
             
@@ -1458,7 +1455,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     
     @objc func tapMessageButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         let url = "/method/messages.getHistory"
         let parameters = [
@@ -1517,7 +1514,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func tapAllRecordsButton(sender: UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         filterRecords = "all"
         offset = 0
@@ -1528,7 +1525,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @objc func tapOwnerButton(sender: UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         filterRecords = "owner"
         offset = 0

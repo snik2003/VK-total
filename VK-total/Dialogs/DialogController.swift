@@ -393,7 +393,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                 if self.totalCount == 0 {
                     self.showErrorMessage(title: "«Важные» сообщения", msg: "В данном диалоге нет сообщений, помеченных как «важные».")
                 } else {
-                    if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1001) }
+                    self.playSoundEffect(vkSingleton.shared.infoSound)
                 }
             }
         }
@@ -561,7 +561,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                     }
                     
                     ViewControllerUtils().hideActivityIndicator()
-                    AudioServicesPlaySystemSound(1003)
+                    AudioServicesPlaySystemSound(vkSingleton.shared.dialogSound)
                     
                     if self.totalCount > 0 && self.offset == 0 {
                         self.showSuccessMessage(title: "Поиск сообщений", msg: "В данном диалоге найдено \(self.totalCount.messageAdder()) по запросу «\(self.searchText)».")
@@ -816,7 +816,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                         }
                         
                         if let id = self.dialogs.last?.id, id > lastID {
-                            AudioServicesPlaySystemSound(1003)
+                            AudioServicesPlaySystemSound(vkSingleton.shared.dialogSound)
                         }
                         
                         ViewControllerUtils().hideActivityIndicator()
@@ -932,7 +932,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             OperationQueue.main.addOperation(reloadController)
             
             OperationQueue.main.addOperation {
-                AudioServicesPlaySystemSound(1003) 
+                AudioServicesPlaySystemSound(vkSingleton.shared.dialogSound) 
             }
         }
         parseDialog.addDependency(getServerDataOperation)
@@ -1071,7 +1071,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             
             let longPress = UILongPressGestureRecognizer()
             longPress.add {
-                cell.messView.viewTouched()
+                cell.messView.viewTouched(controller: self)
                 self.action1Message(sender: longPress)
             }
             longPress.minimumPressDuration = 0.4
@@ -1474,7 +1474,7 @@ extension DialogController {
             
             let tap = UITapGestureRecognizer()
             tap.add {
-                imageView.viewTouched()
+                imageView.viewTouched(controller: self)
                 self.tapAvatar()
             }
             imageView.isUserInteractionEnabled = true
@@ -1527,7 +1527,7 @@ extension DialogController {
         
         let tap = UITapGestureRecognizer()
         tap.add {
-            imageView.viewTouched()
+            imageView.viewTouched(controller: self)
             self.tapAvatar()
         }
         imageView.isUserInteractionEnabled = true
@@ -2041,7 +2041,7 @@ extension DialogController {
     
     @objc func tapStickerButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
         let width = self.view.bounds.width - 20
@@ -2056,7 +2056,7 @@ extension DialogController {
     
     @objc func tapAccessoryButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
         if attach.count < maxCountAttach {

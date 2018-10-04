@@ -7,7 +7,6 @@
 //
 
 import UIKit
-import AVFoundation
 
 class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
@@ -97,7 +96,7 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
-        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+        playSoundEffect(vkSingleton.shared.buttonSound)
         
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

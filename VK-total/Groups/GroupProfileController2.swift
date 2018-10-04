@@ -10,7 +10,6 @@ import UIKit
 import SwiftyJSON
 import Popover
 import WebKit
-import AVFoundation
 
 class GroupProfileController2: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
@@ -633,7 +632,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     
     @objc func tapMessageButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         let url = "/method/messages.getHistory"
         let parameters = [
@@ -665,7 +664,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     @objc func joinGroup(sender: UIButton) {
         if groupProfile.count > 0 {
             
-            sender.buttonTouched()
+            sender.buttonTouched(controller: self)
             
             let group = groupProfile[0]
             
@@ -913,7 +912,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     
     @objc func tapGroupMessagesButton(sender: UIButton) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         openGroupDialogs()
     }
     
@@ -1176,7 +1175,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
         if groupProfile.count > 0 {
-            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            playSoundEffect(vkSingleton.shared.buttonSound)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

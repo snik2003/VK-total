@@ -1001,7 +1001,7 @@ class GroupDialogCell: UITableViewCell {
         let tap = UITapGestureRecognizer()
         tap.add {
             if self.delegate.mode == "" {
-                view.viewTouched()
+                view.viewTouched(controller: self.delegate)
                 
                 let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
                 
@@ -1120,7 +1120,7 @@ class GroupDialogCell: UITableViewCell {
         
         loadButton.add(for: .touchUpInside) {
             if self.delegate.mode == "" {
-                view.viewTouched()
+                view.viewTouched(controller: self.delegate)
                 
                 let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
                 
@@ -1194,7 +1194,7 @@ class GroupDialogCell: UITableViewCell {
         
         let tap = UITapGestureRecognizer()
         tap.add {
-            view.viewTouched()
+            view.viewTouched(controller: self.delegate)
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

@@ -166,7 +166,7 @@ class NotificationsController: UITableViewController {
     
     @objc func readButtonClick(sender: UIButton!) {
         
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         

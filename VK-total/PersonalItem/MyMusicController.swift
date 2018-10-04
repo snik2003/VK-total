@@ -347,7 +347,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     @objc func tapListenButton(sender: UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         let buttonPosition: CGPoint = sender.convert(CGPoint.zero, to: self.tableView)
         
@@ -538,7 +538,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     @objc func searchITunes(sender: UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         artistTextField.resignFirstResponder()
         albumTextField.resignFirstResponder()
@@ -561,7 +561,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     @objc func clearSearch(sender:UIButton) {
-        sender.buttonTouched()
+        sender.buttonTouched(controller: self)
         
         artistTextField.text = ""
         albumTextField.text = ""
