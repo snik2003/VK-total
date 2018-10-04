@@ -106,8 +106,8 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
 
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
-        if photo.count > 0 {
-            let photo = self.photo[0]
+        if let photo = self.photo.first {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

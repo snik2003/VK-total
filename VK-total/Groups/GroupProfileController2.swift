@@ -10,6 +10,7 @@ import UIKit
 import SwiftyJSON
 import Popover
 import WebKit
+import AVFoundation
 
 class GroupProfileController2: UIViewController, UITableViewDelegate, UITableViewDataSource {
 
@@ -1175,6 +1176,8 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
         if groupProfile.count > 0 {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
             let group = self.groupProfile[0]

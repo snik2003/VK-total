@@ -393,7 +393,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                 if self.totalCount == 0 {
                     self.showErrorMessage(title: "«Важные» сообщения", msg: "В данном диалоге нет сообщений, помеченных как «важные».")
                 } else {
-                    AudioServicesPlaySystemSound(1001)
+                    if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1001) }
                 }
             }
         }
@@ -932,7 +932,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             OperationQueue.main.addOperation(reloadController)
             
             OperationQueue.main.addOperation {
-                AudioServicesPlaySystemSound(1003)
+                AudioServicesPlaySystemSound(1003) 
             }
         }
         parseDialog.addDependency(getServerDataOperation)

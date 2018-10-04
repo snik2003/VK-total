@@ -26,7 +26,9 @@ class OptionsController: UITableViewController {
         "На каждый статус «онлайн», приложение будет сразу выставлять вам статус «оффлайн». Таким образом, ваш статус всегда будет «заходил только что».",
         "Если вы хотите оставаться в статусе «оффлайн» при запуске приложения, выключите этот параметр.",
         "Автоматически помечать сообщения как прочитанные при открытии конкретного диалога.",
-        "Сообщать вашему собеседнику/группе о том, что вы набираете текст."]
+        "Сообщать вашему собеседнику/группе о том, что вы набираете текст.",
+        "Вы можете включить звуковые эффекты при появлении информационных сообщений или нажатии на кнопки."
+    ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,7 +53,7 @@ class OptionsController: UITableViewController {
     }
     
     override func numberOfSections(in tableView: UITableView) -> Int {
-        return 7
+        return 8
     }
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
@@ -71,7 +73,7 @@ class OptionsController: UITableViewController {
             }
         }
         self.navigationController?.popViewController(animated: true)
-        AudioServicesPlaySystemSound(1001)
+        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1001) }
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -148,6 +150,11 @@ class OptionsController: UITableViewController {
             
             return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
         }
+        if indexPath.section == 7 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
+            
+            return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
+        }
         return 0
     }
     
@@ -162,7 +169,7 @@ class OptionsController: UITableViewController {
         if section == 4 {
             return 0
         }
-        if section == 3 || section == 5 {
+        if section == 3 || section == 5 || section == 7 {
             return 15
         }
         return 7
@@ -361,6 +368,18 @@ class OptionsController: UITableViewController {
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
             return cell
+        case 7:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            
+            cell.nameLabel.text = "Звуковые эффекты"
+            cell.descriptionLabel.text = descriptions[index]
+            if cell.descriptionLabel.text != "" {
+                cell.descriptionLabel.isHidden = false
+            }
+            cell.pushSwitch.isOn = AppConfig.shared.soundEffectsOn
+            cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
+            
+            return cell
         default:
             let cell = tableView.dequeueReusableCell(withIdentifier: "customCell", for: indexPath)
             
@@ -401,6 +420,10 @@ class OptionsController: UITableViewController {
             
             if indexPath.section == 6 {
                 AppConfig.shared.showTextEditInDialog = sender.isOn
+            }
+            
+            if indexPath.section == 7 {
+                AppConfig.shared.soundEffectsOn = sender.isOn
             }
         }
     }

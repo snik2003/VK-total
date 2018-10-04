@@ -13,6 +13,7 @@ import WebKit
 import DCCommentView
 import SCLAlertView
 import Popover
+import AVFoundation
 
 class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSource, WKNavigationDelegate, DCCommentViewDelegate {
 
@@ -1171,10 +1172,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
-        if video.count > 0 {
-            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        if let video = self.video.first {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
             
-            let video = self.video[0]
+            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alertController.addAction(cancelAction)

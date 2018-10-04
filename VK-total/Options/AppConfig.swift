@@ -34,6 +34,8 @@ final class AppConfig {
     var passwordOn = true
     var passwordDigits = "0000"
     var touchID = true
+    
+    var soundEffectsOn = true
 }
 
 enum AppConfiguration: String {

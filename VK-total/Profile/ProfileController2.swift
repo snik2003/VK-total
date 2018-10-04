@@ -214,8 +214,6 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 self.saveAccountToRealm()
                 ViewControllerUtils().hideActivityIndicator()
             }
-            
-            
         }
         OperationQueue().addOperation(getServerDataOperation)
     }
@@ -870,8 +868,8 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     }
     
     @IBAction func barButtonTouch(sender: UIBarButtonItem) {
-        if userProfile.count > 0 {
-            let user = userProfile[0]
+        if let user = userProfile.first {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             

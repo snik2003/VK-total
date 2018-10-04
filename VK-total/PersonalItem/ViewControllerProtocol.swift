@@ -663,7 +663,7 @@ extension UIViewController: NotificationCellProtocol {
     
     func openBrowserControllerNoCheck(url: String) {
         
-        AudioServicesPlaySystemSound(1211)
+        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1211) }
         if let url1 = url.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
             guard URL(string: url1) != nil else {
                 showErrorMessage(title: "Ошибка!", msg: "Некорректная ссылка:\n\(url1)")
@@ -688,7 +688,7 @@ extension UIViewController: NotificationCellProtocol {
     func openBrowserController(url: String) {
         
         let res = checkVKLink(url: url)
-        AudioServicesPlaySystemSound(1211)
+        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1211) }
         
         switch res {
         case 0:
@@ -794,7 +794,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showError(title, subTitle: msg)
-            AudioServicesPlaySystemSound(1000)
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1000) }
         }
     }
     
@@ -813,7 +813,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showSuccess(title, subTitle: msg)
-            AudioServicesPlaySystemSound(1001)
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1001) }
         }
     }
     
@@ -832,7 +832,7 @@ extension UIViewController: NotificationCellProtocol {
             
             alert.addButton("OK", action: {})
             alert.showInfo(title, subTitle: msg)
-            AudioServicesPlaySystemSound(1001)
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1001) }
         }
     }
     
@@ -1058,6 +1058,7 @@ extension UIViewController: NotificationCellProtocol {
                 AppConfig.shared.readMessageInDialog = true
                 AppConfig.shared.showTextEditInDialog = true
                 
+                AppConfig.shared.soundEffectsOn = true
             } else {
             
                 AppConfig.shared.pushNotificationsOn = userDefault.bool(forKey: "\(vkSingleton.shared.userID)_pushNotificationsOn")
@@ -1088,6 +1089,7 @@ extension UIViewController: NotificationCellProtocol {
                 
                 AppConfig.shared.showTextEditInDialog = userDefault.bool(forKey: "\(vkSingleton.shared.userID)_showTextEditInDialog")
                 
+                AppConfig.shared.soundEffectsOn = userDefault.bool(forKey: "\(vkSingleton.shared.userID)_soundEffectsOn")
             }
             
             AppConfig.shared.passwordOn = userDefault.bool(forKey: "passwordOn")
@@ -1131,6 +1133,8 @@ extension UIViewController: NotificationCellProtocol {
         userDefault.set(AppConfig.shared.readMessageInDialog, forKey: "\(vkSingleton.shared.userID)_readMessageInDialog")
         
         userDefault.set(AppConfig.shared.showTextEditInDialog, forKey: "\(vkSingleton.shared.userID)_showTextEditInDialog")
+        
+        userDefault.set(AppConfig.shared.soundEffectsOn, forKey: "\(vkSingleton.shared.userID)_soundEffectsOn")
         
         userDefault.setValue("first", forKey: "\(vkSingleton.shared.userID)_firstAppear")
         

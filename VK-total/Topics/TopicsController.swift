@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVFoundation
 
 class TopicsController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
@@ -121,6 +122,8 @@ class TopicsController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         if topics.count > 0 {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)

@@ -11,6 +11,7 @@ import SCLAlertView
 import SwiftyJSON
 import DCCommentView
 import Popover
+import AVFoundation
 
 class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate {
 
@@ -853,6 +854,8 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         if topics.count > 0 {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+            
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)

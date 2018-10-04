@@ -9,6 +9,7 @@
 import UIKit
 import WebKit
 import RealmSwift
+import AVFoundation
 
 class BrowserController: UIViewController, WKNavigationDelegate {
 
@@ -148,6 +149,8 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     }
     
     @IBAction func barButtonTouch(sender: UIBarButtonItem) {
+        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
+        
         var alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
         if type == "song" {

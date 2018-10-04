@@ -684,7 +684,7 @@ extension UIImage {
 
 extension UIButton {
     func buttonTouched() {
-        AudioServicesPlaySystemSound(1104)
+        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
         UIButton.animate(withDuration: 0.2,
                          animations: {
                             self.transform = CGAffineTransform(scaleX: 0.95, y: 0.92)
@@ -701,7 +701,7 @@ extension UIButton {
 
 extension UIView {
     func viewTouched() {
-        AudioServicesPlaySystemSound(1104) 
+        if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
         UIView.animate(withDuration: 0.3,
                          animations: {
                             self.transform = CGAffineTransform(scaleX: 0.97, y: 0.94)

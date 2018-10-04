@@ -1594,8 +1594,8 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
-        if news.count > 0 {
-            let record = news[0]
+        if let record = self.news.first {
+            if AppConfig.shared.soundEffectsOn { AudioServicesPlaySystemSound(1104) }
             
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
