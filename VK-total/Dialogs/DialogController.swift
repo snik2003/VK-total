@@ -1068,8 +1068,13 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             tap.numberOfTapsRequired = 2
             cell.addGestureRecognizer(tap)
             
-            let longPress = UILongPressGestureRecognizer(target: self, action: #selector(self.action1Message(sender:)))
-            longPress.minimumPressDuration = 0.6
+            
+            let longPress = UILongPressGestureRecognizer()
+            longPress.add {
+                cell.messView.viewTouched()
+                self.action1Message(sender: longPress)
+            }
+            longPress.minimumPressDuration = 0.4
             cell.addGestureRecognizer(longPress)
             
             cell.selectionStyle = .none
@@ -1519,8 +1524,10 @@ extension DialogController {
         view.addSubview(imageView)
         
         let tap = UITapGestureRecognizer()
-        tap.numberOfTapsRequired = 1
-        tap.addTarget(self, action: #selector(self.tapAvatar))
+        tap.add {
+            imageView.viewTouched()
+            self.tapAvatar()
+        }
         imageView.isUserInteractionEnabled = true
         imageView.addGestureRecognizer(tap)
         

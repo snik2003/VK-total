@@ -175,6 +175,8 @@ class DialogCell: UITableViewCell {
                     let tap = UITapGestureRecognizer()
                     tap.add {
                         if self.delegate.mode != .edit {
+                            photo.viewTouched()
+                            
                             let photoViewController = self.delegate.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
                             
                             var newIndex = 0
@@ -278,6 +280,7 @@ class DialogCell: UITableViewCell {
                     let tap = UITapGestureRecognizer()
                     tap.add {
                         if self.delegate.mode != .edit {
+                            video.viewTouched()
                             self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
                         }
                     }
@@ -1034,7 +1037,20 @@ class DialogCell: UITableViewCell {
         let tap = UITapGestureRecognizer()
         tap.add {
             if self.delegate.mode != .edit {
-                self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post")
+                view.viewTouched()
+                
+                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                alertController.addAction(cancelAction)
+                
+                let action1 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
+                    
+                    self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post")
+                }
+                alertController.addAction(action1)
+                
+                self.delegate.present(alertController, animated: true)
             }
         }
         tap.numberOfTapsRequired = 1
@@ -1140,7 +1156,20 @@ class DialogCell: UITableViewCell {
         
         loadButton.add(for: .touchUpInside) {
             if self.delegate.mode != .edit {
-                self.delegate.openBrowserControllerNoCheck(url: doc.url)
+                view.viewTouched()
+                
+                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                alertController.addAction(cancelAction)
+                
+                let action1 = UIAlertAction(title: "Открыть документ", style: .default) { action in
+                    
+                    self.delegate.openBrowserControllerNoCheck(url: doc.url)
+                }
+                alertController.addAction(action1)
+                
+                self.delegate.present(alertController, animated: true)
             }
         }
         
@@ -1200,6 +1229,8 @@ class DialogCell: UITableViewCell {
         
         let tap = UITapGestureRecognizer()
         tap.add {
+            view.viewTouched()
+            
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)

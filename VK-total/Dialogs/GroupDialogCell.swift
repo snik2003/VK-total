@@ -1001,7 +1001,20 @@ class GroupDialogCell: UITableViewCell {
         let tap = UITapGestureRecognizer()
         tap.add {
             if self.delegate.mode == "" {
-                self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post")
+                view.viewTouched()
+                
+                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                alertController.addAction(cancelAction)
+                
+                let action1 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
+                    
+                    self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post")
+                }
+                alertController.addAction(action1)
+                
+                self.delegate.present(alertController, animated: true)
             }
         }
         tap.numberOfTapsRequired = 1
@@ -1107,7 +1120,20 @@ class GroupDialogCell: UITableViewCell {
         
         loadButton.add(for: .touchUpInside) {
             if self.delegate.mode == "" {
-                self.delegate.openBrowserControllerNoCheck(url: doc.url)
+                view.viewTouched()
+                
+                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                alertController.addAction(cancelAction)
+                
+                let action1 = UIAlertAction(title: "Открыть документ", style: .default) { action in
+                    
+                    self.delegate.openBrowserControllerNoCheck(url: doc.url)
+                }
+                alertController.addAction(action1)
+                
+                self.delegate.present(alertController, animated: true)
             }
         }
         
@@ -1168,6 +1194,8 @@ class GroupDialogCell: UITableViewCell {
         
         let tap = UITapGestureRecognizer()
         tap.add {
+            view.viewTouched()
+            
             let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)

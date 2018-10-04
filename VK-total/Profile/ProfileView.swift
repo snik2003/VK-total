@@ -8,6 +8,7 @@
 
 import UIKit
 import SwiftyJSON
+import AVFoundation
 
 class ProfileView: UIView {
     
@@ -683,14 +684,34 @@ extension UIImage {
 
 extension UIButton {
     func buttonTouched() {
+        AudioServicesPlaySystemSound(1104)
         UIButton.animate(withDuration: 0.2,
                          animations: {
                             self.transform = CGAffineTransform(scaleX: 0.95, y: 0.92)
         },
                          completion: { finish in
+                            
+                            usleep(100000)
                             UIButton.animate(withDuration: 0.2, animations: {
                                 self.transform = CGAffineTransform.identity
                             })
         })
     }
 }
+
+extension UIView {
+    func viewTouched() {
+        AudioServicesPlaySystemSound(1104) 
+        UIView.animate(withDuration: 0.3,
+                         animations: {
+                            self.transform = CGAffineTransform(scaleX: 0.97, y: 0.94)
+        },
+                         completion: { finish in
+                            usleep(100000)
+                            UIView.animate(withDuration: 0.3, animations: {
+                                self.transform = CGAffineTransform.identity
+                            })
+        })
+    }
+}
+
