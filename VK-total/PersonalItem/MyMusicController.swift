@@ -244,7 +244,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alertController.addAction(cancelAction)
             
-            let action1 = UIAlertAction(title: "Вставить ссылку на страницу ITunes", style: .default){ action in
+            let action1 = UIAlertAction(title: "Вставить ссылку на страницу iTunes", style: .default){ action in
                 
                 if let vc = self.delegate as? NewRecordController {
                     vc.link = song.URL
@@ -276,7 +276,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alertController.addAction(cancelAction)
             
-            let action1 = UIAlertAction(title: "Вставить ссылку на страницу ITunes", style: .default){ action in
+            let action1 = UIAlertAction(title: "Вставить ссылку на страницу iTunes", style: .default){ action in
                 
                 let mention = "\(song.artist) \"\(song.song)\"\n\(song.URL)"
                 if let vc = self.delegate as? NewCommentController {
@@ -305,7 +305,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alertController.addAction(cancelAction)
             
-            let action1 = UIAlertAction(title: "Вставить ссылку на страницу ITunes", style: .default){ action in
+            let action1 = UIAlertAction(title: "Вставить ссылку на страницу iTunes", style: .default){ action in
                 
                 let mention = "\(song.artist) \"\(song.song)\"\n\(song.URL)"
                 if let vc = self.delegate as? AddTopicController {
@@ -402,7 +402,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
                     self.search.remove(at: indexPath.row)
                     self.getMusicFromRealm()
                     self.tableView.reloadData()
-                    self.showSuccessMessage(title: "Моя музыка ITunes", msg: "Песня «\(title)» успешно добавлена в «Избранное».")
+                    self.showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(title)» успешно добавлена в «Избранное».")
                 }
             }
             addAction.backgroundColor = .green
@@ -521,7 +521,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         clearButton.layer.borderWidth = 0.6
         clearButton.layer.cornerRadius = 7
         clearButton.clipsToBounds = true
-        clearButton.setTitle("Поиск в ITunes", for: .normal)
+        clearButton.setTitle("Поиск в iTunes", for: .normal)
         clearButton.setTitleColor(UIColor.white, for: .normal)
         clearButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         clearButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
@@ -556,7 +556,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
                 }
             }
         } else {
-            showInfoMessage(title: "Поиск в ITunes", msg: "Введите хоть что-нибудь для начала поиска")
+            showInfoMessage(title: "Поиск в iTunes", msg: "Введите хоть что-нибудь для начала поиска")
         }
     }
     

@@ -222,14 +222,14 @@ class NewsfeedSearchController: UITableViewController {
                             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
                             alertController.addAction(cancelAction)
                             
-                            let action1 = UIAlertAction(title: "Открыть песню в ITunes", style: .default) { action in
+                            let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
                                 
                                 ViewControllerUtils().showActivityIndicator(uiView: self.view)
                                 self.getITunesInfo(searchString: "\(record.audioTitle[index]) \(record.audioArtist[index])", searchType: "song")
                             }
                             alertController.addAction(action1)
                             
-                            let action3 = UIAlertAction(title: "Открыть исполнителя в ITunes", style: .default) { action in
+                            let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
                                 
                                 ViewControllerUtils().showActivityIndicator(uiView: self.view)
                                 self.getITunesInfo(searchString: "\(record.audioArtist[index])", searchType: "artist")

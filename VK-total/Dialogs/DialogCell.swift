@@ -1236,14 +1236,14 @@ class DialogCell: UITableViewCell {
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alertController.addAction(cancelAction)
             
-            let action1 = UIAlertAction(title: "Открыть песню в ITunes", style: .default) { action in
+            let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
                 
                 ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
                 self.delegate.getITunesInfo(searchString: "\(audio.title) \(audio.artist)", searchType: "song")
             }
             alertController.addAction(action1)
             
-            let action3 = UIAlertAction(title: "Открыть исполнителя в ITunes", style: .default) { action in
+            let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
                 
                 ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
                 self.delegate.getITunesInfo(searchString: "\(audio.artist)", searchType: "artist")

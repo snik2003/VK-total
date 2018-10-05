@@ -220,7 +220,7 @@ class BrowserController: UIViewController, WKNavigationDelegate {
             realm.beginWrite()
             realm.add(song, update: true)
             try realm.commitWrite()
-            showSuccessMessage(title: "Моя музыка ITunes", msg: "Песня «\(self.song)» успешно записана в «Избранное»")
+            showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(self.song)» успешно записана в «Избранное»")
         } catch {
             showErrorMessage(title: "База Данных Realm", msg: "Ошибка: \(error)")
         }

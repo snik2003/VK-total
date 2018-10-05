@@ -1334,115 +1334,98 @@ extension UIViewController: NotificationCellProtocol {
     
     func getITunesInfo(searchString: String, searchType: String) {
         
-        let escapedString = searchString.addingPercentEncoding(withAllowedCharacters: .urlHostAllowed)
-        
         var lang = "us"
         if #available(iOS 11.0, *) {
             lang = NSLinguisticTagger.dominantLanguage(for: searchString)!
         }
+        if lang != "ru" { lang = "us" }
         
-        if (lang != "ru" /*&& lang != "fr" && lang != "de" && lang != "it" && lang != "es" && lang != "pt"*/) {
-            lang = "us"
-        }
         
-        var url = URL(string: "https://itunes.apple.com/search?term=\(escapedString!)&media=music&country=\(lang)")
-        
+        let url = "https://itunes.apple.com/search/"
+        var parameters = [
+            "term": searchString,
+            "media": "music",
+            "country": lang
+        ]
+    
         if searchType == "artist" {
-            url = URL(string: "https://itunes.apple.com/search?term=\(escapedString!)&media=music&entity=musicArtist&country=\(lang)")
+            parameters["entity"] = "musicArtist"
         }
         
-        let task = URLSession.shared.dataTask(with: url!, completionHandler: { (data: Data!, response: URLResponse!, error: Error!) -> Void in
-            if error == nil {
-                
-                let iTunesDict = try! JSONSerialization.jsonObject(with: data, options: .allowFragments) as! NSDictionary
-                
-                //print(iTunesDict)
-                let resultsArray = iTunesDict.object(forKey: "results") as! [Dictionary<String, AnyObject>]
-                
-                if let results = resultsArray.first {
-                    if searchType == "artist" {
-                        if let workURL = results["artistLinkUrl"] as? String,
-                            let previewURL = results["artistLinkUrl"] as? String,
-                            let artistID = results["artistId"] as? Int,
-                            let artist = results["artistName"] as? String {
-                            
-                            OperationQueue.main.addOperation {
-                                ViewControllerUtils().hideActivityIndicator()
-                                
-                                let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
-                                
-                                browserController.path = "\(workURL)"
-                                
-                                browserController.type = searchType
-                                browserController.artistID = artistID
-                                browserController.artist = artist
-                                browserController.workURL = workURL
-                                browserController.previewURL = previewURL
-                                
-                                self.navigationController?.pushViewController(browserController, animated: true)
-                            }
-                        } else {
-                            OperationQueue.main.addOperation {
-                                ViewControllerUtils().hideActivityIndicator()
-                                self.showErrorMessage(title: "Поиск в ITunes", msg: "Неизвестная ошибка при поиске \(searchString)")
-                            }
-                        }
-                    } else if searchType == "song" {
-                        if let workURL = results["trackViewUrl"] as? String,
-                            let previewURL = results["previewUrl"] as? String,
-                            let songID = results["trackId"] as? Int,
-                            let artistID = results["artistId"] as? Int,
-                            let song = results["trackName"] as? String,
-                            let artist = results["artistName"] as? String,
-                            let album = results["collectionName"] as? String,
-                            let avatarURL = results["artworkUrl100"] as? String {
-                        
-                            OperationQueue.main.addOperation {
-                                ViewControllerUtils().hideActivityIndicator()
-                                
-                                let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
-                                
-                                browserController.path = "\(workURL)"
-                                
-                                browserController.type = searchType
-                                browserController.songID = songID
-                                browserController.artistID = artistID
-                                browserController.artist = artist
-                                browserController.album = album
-                                browserController.song = song
-                                browserController.previewURL = previewURL
-                                browserController.workURL = workURL
-                                browserController.avatarURL = avatarURL
-                                
-                                self.navigationController?.pushViewController(browserController, animated: true)
-                            }
-                        } else {
-                            OperationQueue.main.addOperation {
-                                ViewControllerUtils().hideActivityIndicator()
-                                self.showErrorMessage(title: "Поиск в ITunes", msg: "Неизвестная ошибка при поиске данного произведения")
-                            }
-                        }
-                    }
-                } else {
+        let request = GetITunesDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            //print(json)
+            
+            let count = json["resultCount"].intValue
+            if count > 0 {
+                if searchType == "artist" {
+                    
+                    let workURL = json["results"][0]["artistLinkUrl"].stringValue
+                    let previewURL = json["results"][0]["artistLinkUrl"].stringValue
+                    let artistID = json["results"][0]["artistId"].intValue
+                    let artist = json["results"][0]["artistName"].stringValue
+                    
                     OperationQueue.main.addOperation {
                         ViewControllerUtils().hideActivityIndicator()
-                        if searchType == "song" {
-                            self.showErrorMessage(title: "Поиск в ITunes", msg: "В iTunes не найдено данное произведение")
-                        } else {
-                            self.showErrorMessage(title: "Поиск в ITunes", msg: "В iTunes не найден \(searchString)")
-                        }
+                        
+                        let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
+                        
+                        browserController.path = "\(workURL)"
+                        
+                        browserController.type = searchType
+                        browserController.artistID = artistID
+                        browserController.artist = artist
+                        browserController.workURL = workURL
+                        browserController.previewURL = previewURL
+                        
+                        self.navigationController?.pushViewController(browserController, animated: true)
+                    }
+                } else if searchType == "song" {
+                    let workURL = json["results"][0]["trackViewUrl"].stringValue
+                    let previewURL = json["results"][0]["previewUrl"].stringValue
+                    let songID = json["results"][0]["trackId"].intValue
+                    let artistID = json["results"][0]["artistId"].intValue
+                    let song = json["results"][0]["trackName"].stringValue
+                    let artist = json["results"][0]["artistName"].stringValue
+                    let album = json["results"][0]["collectionName"].stringValue
+                    let avatarURL = json["results"][0]["artworkUrl100"].stringValue
+                    
+                    OperationQueue.main.addOperation {
+                        ViewControllerUtils().hideActivityIndicator()
+                        
+                        let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
+                        
+                        browserController.path = "\(workURL)"
+                        
+                        browserController.type = searchType
+                        browserController.songID = songID
+                        browserController.artistID = artistID
+                        browserController.artist = artist
+                        browserController.album = album
+                        browserController.song = song
+                        browserController.previewURL = previewURL
+                        browserController.workURL = workURL
+                        browserController.avatarURL = avatarURL
+                        
+                        self.navigationController?.pushViewController(browserController, animated: true)
                     }
                 }
-                
             } else {
                 OperationQueue.main.addOperation {
                     ViewControllerUtils().hideActivityIndicator()
-                    self.showErrorMessage(title: "Ошибка при поиске в iTunes", msg: "\(error.localizedDescription)")
+                    if searchType == "song" {
+                        self.showErrorMessage(title: "Поиск в iTunes", msg: "В iTunes не найдена песня «\(searchString)»")
+                    } else if searchType == "artist" {
+                        self.showErrorMessage(title: "Поиск в iTunes", msg: "В iTunes не найден исполнитель «\(searchString)»")
+                    } else {
+                        self.showErrorMessage(title: "Поиск в iTunes", msg: "Ошибка поиска в iTunes по  параметрам «\(searchString)»")
+                    }
                 }
             }
-        })
-        
-        task.resume()
+        }
+        OperationQueue().addOperation(request)
     }
     
     func saveGifToDevice(url: URL) {
