@@ -589,8 +589,10 @@ class Newsfeed2Controller: UITableViewController {
                         self.news[index].countLikes += 1
                         self.news[index].userLikes = 1
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath!) as! Newsfeed2Cell
-                            cell.setLikesButton(record: self.news[index])
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? Newsfeed2Cell {
+                                cell.setLikesButton(record: self.news[index])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -626,8 +628,10 @@ class Newsfeed2Controller: UITableViewController {
                         self.news[index].countLikes -= 1
                         self.news[index].userLikes = 0
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath!) as! Newsfeed2Cell
-                            cell.setLikesButton(record: self.news[index])
+                            self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? Newsfeed2Cell {
+                                cell.setLikesButton(record: self.news[index])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")

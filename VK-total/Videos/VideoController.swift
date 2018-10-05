@@ -939,9 +939,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                             self.video[index].countLikes += 1
                             self.video[index].userLikes = 1
                             OperationQueue.main.addOperation {
-                                let cell = self.tableView.cellForRow(at: indexPath) as! VideoCell
-                                
-                                cell.setLikesButton(record: self.video[index])
+                                self.playSoundEffect(vkSingleton.shared.likeSound)
+                                if let cell = self.tableView.cellForRow(at: indexPath) as? VideoCell {
+                                    cell.setLikesButton(record: self.video[index])
+                                }
                             }
                         } else {
                             self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -979,9 +980,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                             self.video[index].countLikes -= 1
                             self.video[index].userLikes = 0
                             OperationQueue.main.addOperation {
-                                let cell = self.tableView.cellForRow(at: indexPath) as! VideoCell
-                                
-                                cell.setLikesButton(record: self.video[index])
+                                self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                                if let cell = self.tableView.cellForRow(at: indexPath) as? VideoCell {
+                                    cell.setLikesButton(record: self.video[index])
+                                }
                             }
                         } else {
                             self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1032,9 +1034,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                                 self.comments[self.comments.count - indexPath.row].userLikes = 1
                                 self.comments[self.comments.count - indexPath.row].canLike = 0
                                 OperationQueue.main.addOperation {
-                                    let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                                    
-                                    cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                                    self.playSoundEffect(vkSingleton.shared.likeSound)
+                                    if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                                        cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                                    }
                                 }
                             } else {
                                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1069,9 +1072,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                                 self.comments[self.comments.count - indexPath.row].userLikes = 0
                                 self.comments[self.comments.count - indexPath.row].canLike = 1
                                 OperationQueue.main.addOperation {
-                                    let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                                    
-                                    cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                                    self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                                    if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                                        cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                                    }
                                 }
                             } else {
                                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1118,9 +1122,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                         self.comments[self.comments.count - indexPath.row].userLikes = 1
                         self.comments[self.comments.count - indexPath.row].canLike = 0
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                            
-                            cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                                cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1155,9 +1160,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                         self.comments[self.comments.count - indexPath.row].userLikes = 0
                         self.comments[self.comments.count - indexPath.row].canLike = 1
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                            
-                            cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                            self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                                cell.setLikesButton(comment: self.comments[self.comments.count - indexPath.row])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1251,6 +1257,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                             self.video[0].countLikes += 1
                             self.video[0].userLikes = 1
                             OperationQueue.main.addOperation {
+                                self.playSoundEffect(vkSingleton.shared.likeSound)
                                 self.tableView.beginUpdates()
                                 self.tableView.reloadRows(at: [IndexPath(row: 4, section: 0), IndexPath(row: 5, section: 0)], with: .none)
                                 self.tableView.endUpdates()
@@ -1291,6 +1298,7 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                             self.video[0].countLikes -= 1
                             self.video[0].userLikes = 0
                             OperationQueue.main.addOperation {
+                                self.playSoundEffect(vkSingleton.shared.unlikeSound)
                                 self.tableView.beginUpdates()
                                 self.tableView.reloadRows(at: [IndexPath(row: 4, section: 0), IndexPath(row: 5, section: 0)], with: .none)
                                 self.tableView.endUpdates()

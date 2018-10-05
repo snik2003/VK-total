@@ -993,8 +993,10 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
                         self.wall[index - 6].countLikes += 1
                         self.wall[index - 6].userLikes = 1
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath!) as! WallRecordCell
-                            cell.setLikesButton(record: self.wall[index - 6])
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? WallRecordCell {
+                                cell.setLikesButton(record: self.wall[index - 6])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")

@@ -42,4 +42,6 @@ final class vkSingleton {
     let dialogSound: SystemSoundID = 1003
     let buttonSound: SystemSoundID = 1104
     let linkSound: SystemSoundID = 1211
+    let likeSound: SystemSoundID = 1004
+    let unlikeSound: SystemSoundID = 1003
 }

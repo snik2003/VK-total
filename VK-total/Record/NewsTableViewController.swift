@@ -697,6 +697,7 @@ class NewsTableViewController: UITableViewController {
                         self.news[index].countLikes += 1
                         self.news[index].userLikes = 1
                         OperationQueue.main.addOperation {
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
                             self.tableView.beginUpdates()
                             self.tableView.reloadRows(at: [indexPath!], with: .automatic)
                             self.tableView.endUpdates()
@@ -735,6 +736,7 @@ class NewsTableViewController: UITableViewController {
                         self.news[index].countLikes -= 1
                         self.news[index].userLikes = 0
                         OperationQueue.main.addOperation {
+                            self.playSoundEffect(vkSingleton.shared.unlikeSound)
                             self.tableView.beginUpdates()
                             self.tableView.reloadRows(at: [indexPath!], with: .automatic)
                             self.tableView.endUpdates()

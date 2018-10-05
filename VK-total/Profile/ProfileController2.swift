@@ -803,8 +803,10 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                         self.wall[index].countLikes += 1
                         self.wall[index].userLikes = 1
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath) as! WallRecordCell2
-                            cell.setLikesButton(record: self.wall[index])
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath) as? WallRecordCell2 {
+                                cell.setLikesButton(record: self.wall[index])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -840,8 +842,10 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                         self.wall[index].countLikes -= 1
                         self.wall[index].userLikes = 0
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath) as! WallRecordCell2
-                            cell.setLikesButton(record: self.wall[index])
+                            self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath) as? WallRecordCell2 {
+                                cell.setLikesButton(record: self.wall[index])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")

@@ -1341,9 +1341,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                         self.news[index].countLikes += 1
                         self.news[index].userLikes = 1
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath!) as! Record2Cell
-                            
-                            cell.setLikesButton(record: self.news[index])
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? Record2Cell {
+                                cell.setLikesButton(record: self.news[index])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1383,9 +1384,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                         self.news[index].countLikes -= 1
                         self.news[index].userLikes = 0
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath!) as! Record2Cell
-                            
-                            cell.setLikesButton(record: self.news[index])
+                            self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? Record2Cell {
+                                cell.setLikesButton(record: self.news[index])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1438,9 +1440,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     self.comments[index].userLikes = 1
                     self.comments[index].canLike = 0
                     OperationQueue.main.addOperation {
-                        let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                        
-                        cell.setLikesButton(comment: self.comments[index])
+                        self.playSoundEffect(vkSingleton.shared.likeSound)
+                        if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                            cell.setLikesButton(comment: self.comments[index])
+                        }
                     }
                 } else {
                     self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1478,9 +1481,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     self.comments[index].userLikes = 0
                     self.comments[index].canLike = 1
                     OperationQueue.main.addOperation {
-                        let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                        
-                        cell.setLikesButton(comment: self.comments[index])
+                        self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                        if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                            cell.setLikesButton(comment: self.comments[index])
+                        }
                     }
                 } else {
                     self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1536,9 +1540,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                             self.comments[index].userLikes = 1
                             self.comments[index].canLike = 0
                             OperationQueue.main.addOperation {
-                                let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                                
-                                cell.setLikesButton(comment: self.comments[index])
+                                self.playSoundEffect(vkSingleton.shared.likeSound)
+                                if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                                    cell.setLikesButton(comment: self.comments[index])
+                                }
                             }
                         } else {
                             self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
@@ -1576,9 +1581,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                             self.comments[index].userLikes = 0
                             self.comments[index].canLike = 1
                             OperationQueue.main.addOperation {
-                                let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                                
-                                cell.setLikesButton(comment: self.comments[index])
+                                self.playSoundEffect(vkSingleton.shared.unlikeSound)
+                                if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                                    cell.setLikesButton(comment: self.comments[index])
+                                }
                             }
                         } else {
                             self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")

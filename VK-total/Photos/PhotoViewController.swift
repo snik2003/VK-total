@@ -458,6 +458,7 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                         self.photo[0].likesCount += 1
                         self.photo[0].userLikesThisPhoto = 1
                         OperationQueue.main.addOperation {
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
                             self.tableView.beginUpdates()
                             self.tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .automatic)
                             self.tableView.endUpdates()
@@ -496,6 +497,7 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                         self.photo[0].likesCount -= 1
                         self.photo[0].userLikesThisPhoto = 0
                         OperationQueue.main.addOperation {
+                            self.playSoundEffect(vkSingleton.shared.unlikeSound)
                             self.tableView.beginUpdates()
                             self.tableView.reloadRows(at: [IndexPath(row: 1, section: 0)], with: .automatic)
                             self.tableView.endUpdates()

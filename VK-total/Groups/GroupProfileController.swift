@@ -559,8 +559,10 @@ class GroupProfileController: UIViewController, UITableViewDelegate, UITableView
                         self.wall[index - 2].countLikes += 1
                         self.wall[index - 2].userLikes = 1
                         OperationQueue.main.addOperation {
-                            let cell = self.tableView.cellForRow(at: indexPath!) as! WallRecordCell
-                            cell.setLikesButton(record: self.wall[index - 2])
+                            self.playSoundEffect(vkSingleton.shared.likeSound)
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? WallRecordCell {
+                                cell.setLikesButton(record: self.wall[index - 2])
+                            }
                         }
                     } else {
                         self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")

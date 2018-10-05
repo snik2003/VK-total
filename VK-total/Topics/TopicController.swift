@@ -756,8 +756,8 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     self.comments[index].userLikes = 1
                     self.comments[index].canLike = 0
                     OperationQueue.main.addOperation {
+                        self.playSoundEffect(vkSingleton.shared.likeSound)
                         if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
-                            
                             cell.setLikesButton(comment: self.comments[index])
                         }
                     }
@@ -793,8 +793,8 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     self.comments[index].userLikes = 0
                     self.comments[index].canLike = 1
                     OperationQueue.main.addOperation {
+                        self.playSoundEffect(vkSingleton.shared.unlikeSound)
                         if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
-                            
                             cell.setLikesButton(comment: self.comments[index])
                         }
                     }
