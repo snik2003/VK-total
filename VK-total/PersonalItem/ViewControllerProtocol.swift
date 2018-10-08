@@ -189,6 +189,7 @@ extension UIViewController: NotificationCellProtocol {
         videoController.title = title
         
         self.navigationController?.pushViewController(videoController, animated: true)
+        self.playSoundEffect(vkSingleton.shared.dialogSound)
     }
     
     func openTopicsController(groupID: String, group: GroupProfile, title: String) {
@@ -255,6 +256,7 @@ extension UIViewController: NotificationCellProtocol {
         photoViewController.delegate = self
         
         self.navigationController?.pushViewController(photoViewController, animated: true)
+        self.playSoundEffect(vkSingleton.shared.dialogSound)
     }
     
     func openPhotoAlbumController(ownerID: String, albumID: String, title: String, controller: PhotosListController!) {
@@ -284,6 +286,7 @@ extension UIViewController: NotificationCellProtocol {
         recordController.delegate = self
         
         self.navigationController?.pushViewController(recordController, animated: true)
+        self.playSoundEffect(vkSingleton.shared.dialogSound)
     }
     
     func openPageController(pageID: Int, groupID: Int) {
@@ -1827,11 +1830,11 @@ extension UIViewController: NotificationCellProtocol {
         var found = false
         if let controllers = self.navigationController?.viewControllers {
             for vc in controllers {
-                if let controller = vc as? DialogController, controller.userID == userID {
+                if let controller = vc as? DialogController,
+                    controller.userID == userID,
+                    controller.mode == .dialog {
+                    
                     found = true
-                    controller.offset = 0
-                    controller.startMessageID = startID
-                    controller.getDialog()
                     self.navigationController?.popToViewController(controller, animated: true)
                     break
                 }

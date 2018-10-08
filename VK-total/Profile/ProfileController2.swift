@@ -154,7 +154,6 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                         vkSingleton.shared.pushInfo = nil
                         if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
                             appDelegate.tapPushNotification(userInfo, controller: self)
-                            self.playSoundEffect(vkSingleton.shared.dialogSound)
                         }
                     }
                 }
@@ -1355,6 +1354,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                     photoViewController.delegate = self
                     
                     self.navigationController?.pushViewController(photoViewController, animated: true)
+                    self.playSoundEffect(vkSingleton.shared.dialogSound)
                 }
             }
         }
