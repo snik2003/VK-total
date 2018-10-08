@@ -492,7 +492,7 @@
 "WrE-P9-ksd.text" = "Title";
 
 /* Class = "UILabel"; text = "Моя музыка ITunes"; ObjectID = "WtD-gu-0dt"; */
-"WtD-gu-0dt.text" = "Моя музыка ITunes";
+"WtD-gu-0dt.text" = "Моя музыка iTunes";
 
 /* Class = "UILabel"; text = "Label"; ObjectID = "XNp-Vy-o3d"; */
 "XNp-Vy-o3d.text" = "Label";
@@ -651,7 +651,7 @@
 "eVp-eg-Lc7.text" = "Label";
 
 /* Class = "UINavigationItem"; title = "Профиль"; ObjectID = "ezJ-pP-0Ur"; */
-"ezJ-pP-0Ur.title" = "Профиль";
+"ezJ-pP-0Ur.title" = "Моя страница";
 
 /* Class = "UILabel"; text = "Label"; ObjectID = "f4w-cG-MyL"; */
 "f4w-cG-MyL.text" = "Label";
@@ -717,7 +717,7 @@
 "hFu-Sg-Bbt.text" = "Label";
 
 /* Class = "UIViewController"; title = "Моя музыка ITunes"; ObjectID = "hJ3-aq-KqP"; */
-"hJ3-aq-KqP.title" = "Моя музыка ITunes";
+"hJ3-aq-KqP.title" = "Моя музыка iTunes";
 
 /* Class = "UILabel"; text = "заходил "; ObjectID = "hPj-bm-jjH"; */
 "hPj-bm-jjH.text" = "заходил ";
@@ -1014,7 +1014,7 @@
 "zgH-EI-W8g.normalTitle" = "0";
 
 /* Class = "UINavigationItem"; title = "Профиль"; ObjectID = "zhq-TI-f7q"; */
-"zhq-TI-f7q.title" = "Профиль";
+"zhq-TI-f7q.title" = "Моя страница";
 
 /* Class = "UILabel"; text = "Label"; ObjectID = "zqg-Wp-UgI"; */
 "zqg-Wp-UgI.text" = "Label";

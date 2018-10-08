@@ -33,6 +33,7 @@ class PhotosListCell: UITableViewCell {
             
             if index < photos.count {
                 photoView[ind] = UIImageView()
+                photoView[ind]?.image = UIImage(named: "error")
                 photoView[ind]?.tag = 200
                 
                 var source = ""

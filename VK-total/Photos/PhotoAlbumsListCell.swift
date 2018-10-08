@@ -29,7 +29,8 @@ class PhotoAlbumsListCell: UITableViewCell {
             
             if index < albums.count {
                 coverImage[ind] = UIImageView()
-        
+                coverImage[ind]?.image = UIImage(named: "error")
+                
                 let getCacheImage = GetCacheImage(url: albums[index].thumbSrc, lifeTime: .userPhotoImage)
                 getCacheImage.completionBlock = {
                     OperationQueue.main.addOperation {

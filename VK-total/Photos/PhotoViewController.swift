@@ -244,7 +244,8 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
 
             if photos.count > 0 {
                 let photo = photos[numPhoto]
-
+                
+                cell.photoImage.image = UIImage(named: "error")
                 cell.scrollView.delegate = cell
                 var url = photo.xxbigPhotoURL
                 if url == "" { url = photo.xbigPhotoURL }
@@ -317,9 +318,15 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                 commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControl.State.selected)
 
                 commentsButton.isEnabled = true
+                likesListButton.isEnabled = false
+                
                 likesButton.isHidden = false
                 commentsButton.isHidden = false
                 likesListButton.isHidden = false
+                
+                if curPhoto.likesCount > 0 {
+                    likesListButton.isEnabled = true
+                }
             }
             
             return cell
@@ -364,10 +371,27 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
         }
         
         if start {
+            if let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 0)) as? PhotoImageCell {
+                cell.photoImage.image = UIImage(named: "nophoto")
+                ViewControllerUtils().showActivityIndicator(uiView: cell)
+            }
+            
+            if let cell = tableView.cellForRow(at: IndexPath(row: 0, section: 1)),
+                let likesButton: UIButton = cell.viewWithTag(1) as? UIButton,
+                let commentsButton: UIButton = cell.viewWithTag(2) as? UIButton,
+                let likesListButton: UIButton = cell.viewWithTag(3) as? UIButton {
+                
+                likesButton.setTitleColor(UIColor.white, for: .normal)
+                
+                likesButton.setTitle("0", for: .normal)
+                commentsButton.setTitle("0", for: .normal)
+                likesListButton.isEnabled = false
+            }
+            
             let currentPhoto = photos[numPhoto]
             
             OperationQueue.main.addOperation {
-                ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+                
             }
             
             var code = "var a = API.photos.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"photos\":\"\(currentPhoto.uid)_\(currentPhoto.pid)_\(currentPhoto.photoAccessKey)\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"

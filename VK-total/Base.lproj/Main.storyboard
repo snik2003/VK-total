@@ -5003,10 +5003,10 @@
             </objects>
             <point key="canvasLocation" x="5396" y="2322"/>
         </scene>
-        <!--Моя музыка ITunes-->
+        <!--Моя музыка iTunes-->
         <scene sceneID="rXB-nA-FH2">
             <objects>
-                <viewController storyboardIdentifier="MyMusicController" title="Моя музыка ITunes" useStoryboardIdentifierAsRestorationIdentifier="YES" id="hJ3-aq-KqP" customClass="MyMusicController" customModule="VK_total" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="MyMusicController" title="Моя музыка iTunes" useStoryboardIdentifierAsRestorationIdentifier="YES" id="hJ3-aq-KqP" customClass="MyMusicController" customModule="VK_total" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="vRf-HI-gvu">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
@@ -6366,11 +6366,11 @@
             </objects>
             <point key="canvasLocation" x="1840" y="784"/>
         </scene>
-        <!--Navigation Controller-->
+        <!--Профиль-->
         <scene sceneID="AGi-5m-aKK">
             <objects>
                 <navigationController automaticallyAdjustsScrollViewInsets="NO" id="GGS-9T-4v3" sceneMemberID="viewController">
-                    <tabBarItem key="tabBarItem" title="" image="profile" landscapeImage="profile" largeContentSizeImage="profile" id="kqx-J7-MYb"/>
+                    <tabBarItem key="tabBarItem" title="Профиль" image="profile" landscapeImage="profile" largeContentSizeImage="profile" id="kqx-J7-MYb"/>
                     <toolbarItems/>
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="j7e-zM-WSA">
                         <rect key="frame" x="0.0" y="20" width="320" height="44"/>
