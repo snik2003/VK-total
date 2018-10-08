@@ -1824,16 +1824,32 @@ extension UIViewController: NotificationCellProtocol {
     
     func openDialogController(userID: String, chatID: String, startID: Int, attachment: String, messIDs: [Int], image: UIImage?) {
         
-        let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as! DialogController
+        var found = false
+        if let controllers = self.navigationController?.viewControllers {
+            for vc in controllers {
+                if let controller = vc as? DialogController, controller.userID == userID {
+                    found = true
+                    controller.offset = 0
+                    controller.startMessageID = startID
+                    controller.getDialog()
+                    self.navigationController?.popToViewController(controller, animated: true)
+                    break
+                }
+            }
+        }
         
-        controller.userID = userID
-        controller.chatID = chatID
-        controller.startMessageID = startID
-        controller.attachments = attachment
-        controller.fwdMessagesID = messIDs
-        controller.attachImage = image
-        
-        self.navigationController?.pushViewController(controller, animated: true)
+        if !found {
+            let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as! DialogController
+            
+            controller.userID = userID
+            controller.chatID = chatID
+            controller.startMessageID = startID
+            controller.attachments = attachment
+            controller.fwdMessagesID = messIDs
+            controller.attachImage = image
+            
+            self.navigationController?.pushViewController(controller, animated: true)
+        }
     }
     
     func openGroupDialogController(userID: String, groupID: String, startID: Int, attachment: String, messIDs: [Int], image: UIImage?) {
