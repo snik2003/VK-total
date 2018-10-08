@@ -94,7 +94,7 @@ class DialogCell: UITableViewCell {
             avatarImage.addGestureRecognizer(tapAvatar)
             
             
-            let rect = getTextSize(text: dialog.body.prepareTextForPublic(), font: messText.font)
+            let rect = getTextSize(text: dialog.body.prepareTextForPublic(), font: messFont)
             
             messText.text = dialog.body
             messText.prepareTextForPublish2(self.delegate)
@@ -103,7 +103,7 @@ class DialogCell: UITableViewCell {
             messView.layer.cornerRadius = 15
             messView.layer.borderColor = UIColor.lightGray.cgColor
             messView.layer.borderWidth = 0.5
-            messText.frame = CGRect(x: 10, y: 0, width: rect.width - 10, height: rect.height)
+            messText.frame = CGRect(x: 10, y: 0, width: rect.width - 20, height: rect.height)
             
             var bubbleHeight: CGFloat = 0
             var bubbleWidth: CGFloat = 0
@@ -115,14 +115,14 @@ class DialogCell: UITableViewCell {
                 bubbleX = 2 * leftInsets + avatarSize
                 messView.backgroundColor = inBackColor
             } else {
-                bubbleX = UIScreen.main.bounds.width - 2 * leftInsets - avatarSize - rect.width - 5
+                bubbleX = UIScreen.main.bounds.width - 2 * leftInsets - avatarSize - rect.width
                 messView.backgroundColor = outBackColor
             }
             
             messView.addSubview(messText)
             
             bubbleHeight = rect.height
-            bubbleWidth = rect.width + 5
+            bubbleWidth = rect.width
             
             var attachCount = 0
             for attach in dialog.attach {
@@ -704,7 +704,7 @@ class DialogCell: UITableViewCell {
         let rect = text.boundingRect(with: size, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         
         let width = Double(rect.size.width + 20)
-        var height = Double(rect.size.height + 20)
+        var height = Double(rect.size.height + 16)
         
         if text == "" {
             height = 0
@@ -1275,42 +1275,82 @@ class DialogCell: UITableViewCell {
         
         let width: CGFloat = 0.7 * UIScreen.main.bounds.width
         
-        let statusLabel = UILabel()
-        statusLabel.tag = 200
-        statusLabel.text = "Ссылка"
-        statusLabel.textAlignment = .right
-        statusLabel.font = UIFont(name: "Verdana", size: 10)!
-        statusLabel.isEnabled = false
-        statusLabel.frame = CGRect(x: leftInsets, y: leftInsets, width: width - 2 * leftInsets, height: 15)
-        view.addSubview(statusLabel)
+        var selfY: CGFloat = leftInsets
         
-        var selfY: CGFloat = leftInsets + 15
+        let avatar = UIImageView()
+        avatar.image = UIImage(named: "link")
+        avatar.frame = CGRect(x: leftInsets, y: selfY + 2, width: 26, height: 26)
+        view.addSubview(avatar)
         
+        let titleLabel = UILabel()
+        titleLabel.tag = 200
+        titleLabel.text = "Внешняя ссылка"
         if link.title != "" {
-            let titleLabel = UILabel()
-            titleLabel.tag = 200
-            titleLabel.text = link.title.prepareTextForPublic()
-            titleLabel.numberOfLines = 2
-            titleLabel.font = UIFont(name: "Verdana", size: 12)!
-            titleLabel.frame = CGRect(x: leftInsets, y: selfY, width: width - 2 * leftInsets, height: 30)
-            view.addSubview(titleLabel)
-            selfY += 30
+            titleLabel.text = link.title
         }
+        titleLabel.numberOfLines = 1
+        titleLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
+        //titleLabel.adjustsFontSizeToFitWidth = true
+        //titleLabel.minimumScaleFactor = 0.6
+        titleLabel.frame = CGRect(x: leftInsets + 30, y: selfY, width: width - 2 * leftInsets - 30, height: 15)
+        view.addSubview(titleLabel)
+        selfY += 15
         
         let linkLabel = UILabel()
         linkLabel.tag = 200
         linkLabel.text = link.url
-        linkLabel.prepareTextForPublish2(self.delegate)
-        linkLabel.font = UIFont(name: "Verdana", size: 11)!
-        linkLabel.backgroundColor = UIColor.clear
+        linkLabel.font = UIFont(name: "Verdana", size: 12)!
+        //linkLabel.adjustsFontSizeToFitWidth = true
+        //linkLabel.minimumScaleFactor = 0.6
+        linkLabel.textColor = linkLabel.tintColor
         linkLabel.numberOfLines = 1
         
-        linkLabel.frame = CGRect(x: leftInsets, y: selfY, width: width - 2 * leftInsets, height: 15)
+        linkLabel.frame = CGRect(x: leftInsets + 30, y: selfY, width: width - 2 * leftInsets - 30, height: 15)
         view.addSubview(linkLabel)
         
         let height =  selfY + 15 + leftInsets
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.backgroundColor = UIColor.clear
+        view.layer.borderColor = UIColor.gray.cgColor
+        view.layer.borderWidth = 0.6
+        view.layer.cornerRadius = height/4
+        view.backgroundColor = UIColor.white
+        
+        let tap = UITapGestureRecognizer()
+        tap.add {
+            view.viewTouched(controller: self.delegate)
+            
+            let alertController = UIAlertController(title: titleLabel.text!, message: linkLabel.text!, preferredStyle: .actionSheet)
+            
+            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+            alertController.addAction(cancelAction)
+            
+            let action1 = UIAlertAction(title: "Перейти по ссылке", style: .default) { action in
+                
+                self.delegate.openBrowserController(url: link.url)
+            }
+            alertController.addAction(action1)
+            
+            let action2 = UIAlertAction(title: "Открыть ссылку в Safari", style: .default) { action in
+                
+                if let url = URL(string: link.url) {
+                    UIApplication.shared.open(url, options: [:])
+                }
+            }
+            alertController.addAction(action2)
+            
+            let action3 = UIAlertAction(title: "Скопировать в буфер обмена", style: .default) { action in
+                
+                UIPasteboard.general.string = link.url
+                if let string = UIPasteboard.general.string {
+                    self.delegate.showInfoMessage(title: "Ссылка скопирована в буфер обмена:\n" , msg: "\(string)")
+                }
+            }
+            alertController.addAction(action3)
+            
+            self.delegate.present(alertController, animated: true)
+        }
+        view.isUserInteractionEnabled = true
+        view.addGestureRecognizer(tap)
         
         return view
     }
