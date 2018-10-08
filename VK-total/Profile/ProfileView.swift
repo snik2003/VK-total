@@ -29,6 +29,7 @@ class ProfileView: UIView {
     var collectionView2: UICollectionView!
     
     var blackImage = UIImageView()
+    var loveImage = UIImageView()
     var favoriteImage = UIImageView()
     
     let queue: OperationQueue = {
@@ -538,14 +539,24 @@ class ProfileView: UIView {
             blackImage.image = UIImage(named: "black-list")
             blackImage.clipsToBounds = true
             blackImage.contentMode = .scaleToFill
-            blackImage.backgroundColor = UIColor(displayP3Red: 146/255, green: 146/255, blue: 146/255, alpha: 1).withAlphaComponent(0.75)
+            blackImage.backgroundColor = UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.75)
             blackImage.frame = CGRect(x: avatarImage.frame.maxX - leftInsets2 - 60, y: topInsets2, width: 60, height: 60)
-            blackImage.layer.cornerRadius = 10
+            
             avatarImage.addSubview(blackImage)
+        }
+            
+        if profile.inLove {
+            loveImage.image = UIImage(named: "heart")
+            loveImage.clipsToBounds = true
+            loveImage.contentMode = .scaleAspectFit
+            
+            loveImage.frame = CGRect(x: 15, y: 15, width: 60, height: 60)
+            avatarImage.addSubview(loveImage)
         } else if profile.isFavorite == 1 {
             favoriteImage.image = UIImage(named: "favorite")
             favoriteImage.clipsToBounds = true
             favoriteImage.contentMode = .scaleToFill
+            
             favoriteImage.frame = CGRect(x: leftInsets2, y: topInsets2, width: 60, height: 60)
             avatarImage.addSubview(favoriteImage)
         }

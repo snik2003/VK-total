@@ -344,9 +344,13 @@ extension UIViewController: vkUserLongPollProtocol {
                                         if let id = controller.dialogs.last?.id {
                                             controller.startMessageID = id
                                         }
+                                        
                                         OperationQueue.main.addOperation {
                                             controller.getDialog()
-                                            self.showMessageNotification(title: "", text: update.text, userID: update.elements[3], chatID: 0, groupID: 0, startID: -1)
+                                            
+                                            if let dialog = controller.dialogs.filter({ $0.id == update.elements[1] }).first, dialog.out == 0 {
+                                                self.showMessageNotification(title: "", text: update.text, userID: update.elements[3], chatID: 0, groupID: 0, startID: -1)
+                                            }
                                         }
                                     }
                                 } else if update.elements[0] == 6 {

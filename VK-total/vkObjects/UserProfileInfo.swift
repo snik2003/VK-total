@@ -196,6 +196,19 @@ class UserProfileInfo {
             }
         }
     }
+    
+    var inLove: Bool {
+        
+        if vkSingleton.shared.userID == "34051891" && uid == "451439315" && friendStatus == 3 {
+            return true
+        }
+        
+        if vkSingleton.shared.userID == "451439315" && uid == "34051891" && friendStatus == 3 {
+            return true
+        }
+        
+        return false
+    }
 }
 
 struct Relatives {
