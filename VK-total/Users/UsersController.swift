@@ -677,6 +677,9 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
             let user = sections[indexPath.section].users[indexPath.row]
             
             cell.textLabel?.text = "\(user.firstName) \(user.lastName)"
+            if type == "friends" && user.inLove {
+                cell.textLabel?.text = "\(user.firstName) \(user.lastName) 💞"
+            }
             
             if user.deactivated != "" {
                 if user.deactivated == "banned" {

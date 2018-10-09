@@ -46,4 +46,17 @@ class Friends : Equatable {
         self.isFriend = json["is_friend"].intValue
         self.role = json["role"].stringValue
     }
+    
+    var inLove: Bool {
+        
+        if vkSingleton.shared.userID == "34051891" && userID == "451439315" && isFriend == 1 {
+            return true
+        }
+        
+        if vkSingleton.shared.userID == "451439315" && userID == "34051891" && isFriend == 1 {
+            return true
+        }
+        
+        return false
+    }
 }

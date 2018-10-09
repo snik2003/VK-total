@@ -41,4 +41,17 @@ class DialogsUsers {
         self.canWritePrivateMessage = json["can_write_private_message"].intValue
         self.sex = json["sex"].intValue
     }
+    
+    var inLove: Bool {
+        
+        if vkSingleton.shared.userID == "34051891" && uid == "451439315" {
+            return true
+        }
+        
+        if vkSingleton.shared.userID == "451439315" && uid == "34051891" {
+            return true
+        }
+        
+        return false
+    }
 }

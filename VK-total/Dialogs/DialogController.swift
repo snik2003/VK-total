@@ -1535,6 +1535,9 @@ extension DialogController {
         
         let nameLabel = UILabel()
         nameLabel.text = "\(user.firstName) \(user.lastName)"
+        if user.inLove {
+            nameLabel.text = "💞 \(user.firstName) \(user.lastName)"
+        }
         nameLabel.font = UIFont.boldSystemFont(ofSize: 15)
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.4
