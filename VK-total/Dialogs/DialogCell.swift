@@ -62,6 +62,7 @@ class DialogCell: UITableViewCell {
             messText.numberOfLines = 0
             
             avatarImage.tag = 200
+            avatarImage.image = UIImage(named: "error")
             let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
             let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImage, indexPath: indexPath, tableView: tableView)
             setImageToRow.addDependency(getCacheImage)

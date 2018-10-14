@@ -63,6 +63,7 @@ class GroupDialogCell: UITableViewCell {
             messText.numberOfLines = 0
             
             avatarImage.tag = 200
+            avatarImage.image = UIImage(named: "error")
             let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
             let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImage, indexPath: indexPath, tableView: tableView)
             setImageToRow.addDependency(getCacheImage)
@@ -104,7 +105,7 @@ class GroupDialogCell: UITableViewCell {
             messView.layer.cornerRadius = 15
             messView.layer.borderColor = UIColor.lightGray.cgColor
             messView.layer.borderWidth = 0.5
-            messText.frame = CGRect(x: 10, y: 0, width: rect.width - 10, height: rect.height)
+            messText.frame = CGRect(x: 10, y: 0, width: rect.width - 20, height: rect.height)
             
             var bubbleHeight: CGFloat = 0
             var bubbleWidth: CGFloat = 0

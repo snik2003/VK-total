@@ -110,6 +110,7 @@ class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDa
         let user = users[indexPath.row]
         
         if user.maxPhotoURL != "" {
+            cell.imageView?.image = UIImage(named: "error")
             let getCacheImage = GetCacheImage(url: user.maxPhotoURL, lifeTime: .userWallImage)
             let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: cell.imageView!, indexPath: indexPath, tableView: tableView)
             setImageToRow.addDependency(getCacheImage)
