@@ -92,6 +92,7 @@ class MembersCell: UITableViewCell {
         self.addSubview(statusLabel)
         
         avatarImage = UIImageView()
+        avatarImage.image = UIImage(named: "error")
         avatarImage.frame = CGRect(x: 10, y: 5, width: 40, height: 40)
         
         let getCacheImage = GetCacheImage(url: user.photoURL, lifeTime: .avatarImage)

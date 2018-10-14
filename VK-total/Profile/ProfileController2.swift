@@ -1814,6 +1814,7 @@ extension ProfileController2: UICollectionViewDelegate, UICollectionViewDataSour
             if url == "" { url = photo.smallPhotoURL }
             
             let imageView = UIImageView()
+            imageView.image = UIImage(named: "error")
             let getCacheImage = GetCacheImage(url: url, lifeTime: .userPhotoImage)
             let setImageToRow = SetImageToRowOfCollectionView(cell: cell, imageView: imageView, indexPath: indexPath, collectionView: collectionView)
             setImageToRow.addDependency(getCacheImage)

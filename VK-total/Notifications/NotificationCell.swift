@@ -404,6 +404,7 @@ class NotificationCell: UITableViewCell {
         
         notLabel.text = name
         
+        avatarImage.image = UIImage(named: "error")
         let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
         let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImage, indexPath: indexPath, tableView: tableView)
         setImageToRow.addDependency(getCacheImage)

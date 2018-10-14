@@ -709,6 +709,7 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 }
             }
             
+            cell.imageView?.image = UIImage(named: "error")
             let getCacheImage = GetCacheImage(url: user.photoURL, lifeTime: .avatarImage)
             let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: cell.imageView!, indexPath: indexPath, tableView: tableView)
             setImageToRow.addDependency(getCacheImage)
