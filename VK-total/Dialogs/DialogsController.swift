@@ -152,65 +152,70 @@ class DialogsController: UITableViewController {
             guard let json = try? JSON(data: data) else { print("json error"); return }
             //print(json)
             
-            var count = json["response"]["count"].intValue
+            var messIDs: [Int] = json["response"]["items"].map { $0.1["last_message_id"].intValue }
+            messIDs = messIDs.filter({ $0 > 0 })
             
-            var messIDs: [Int] = []
-            for index in 0...count-1 {
-                let id = json["response"]["items"][index]["last_message_id"].intValue
+            if messIDs.count > 0 {
+                let startIndex = self.offset
+                let endIndex = min(self.offset + self.count, messIDs.count)
+            
+                messIDs = messIDs.sorted(by: >)
+                let messIDs2 = messIDs[startIndex...endIndex-1]
+                let url2 = "/method/messages.getById"
+                let parameters2 = [
+                    "access_token": vkSingleton.shared.accessToken,
+                    "message_ids": messIDs2.map{ String($0) }.joined(separator: ","),
+                    "extended": "1",
+                    "v": vkSingleton.shared.version
+                ]
+            
+                let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                getServerDataOperation2.completionBlock = {
+                    guard let data2 = getServerDataOperation2.data else { return }
+                    guard let json2 = try? JSON(data: data2) else { print("json error"); return }
+                    //print(json2)
+                    
+                    let dialogs = json2["response"]["items"].compactMap { Message(json: $0.1, class: 2) }
+                    self.dialogs.append(contentsOf: dialogs)
+                    self.dialogs = self.dialogs.removeDuplicates()
+                    self.dialogs.sort(by: { $0.date > $1.date })
+                    
+                    let users = json2["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+                    self.users.append(contentsOf: users)
+                    
+                    let groups = json2["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
+                    for group in groups {
+                        let newGroup = DialogsUsers(json: JSON.null)
+                        newGroup.uid = "-\(group.gid)"
+                        newGroup.firstName = group.name
+                        newGroup.photo100 = group.photo100
+                        self.users.append(newGroup)
+                    }
+                    
+            
                 
-                if id > 0 {
-                    messIDs.append(id)
+                    OperationQueue.main.addOperation {
+                        self.totalCount = messIDs.count
+                        self.offset += self.count
+                        self.tableView.reloadData()
+                        self.tableView.separatorStyle = .none
+                        self.refreshControl?.endRefreshing()
+                        ViewControllerUtils().hideActivityIndicator()
+                    }
+                    
+                    self.setOfflineStatus(dependence: getServerDataOperation2)
                 }
-            }
-            
-            let startIndex = self.offset
-            let endIndex = min(self.offset + self.count, messIDs.count)
-            
-            messIDs = messIDs.sorted(by: >)
-            let messIDs2 = messIDs[startIndex...endIndex-1]
-            let url2 = "/method/messages.getById"
-            let parameters2 = [
-                "access_token": vkSingleton.shared.accessToken,
-                "message_ids": messIDs2.map{ String($0) }.joined(separator: ","),
-                "extended": "1",
-                "v": vkSingleton.shared.version
-            ]
-            
-            let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
-            getServerDataOperation2.completionBlock = {
-                guard let data2 = getServerDataOperation2.data else { return }
-                guard let json2 = try? JSON(data: data2) else { print("json error"); return }
-                //print(json2)
-                
-                let dialogs = json2["response"]["items"].compactMap { Message(json: $0.1, class: 2) }
-                self.dialogs.append(contentsOf: dialogs)
-                self.dialogs = self.dialogs.removeDuplicates()
-                self.dialogs.sort(by: { $0.date > $1.date })
-                
-                let users = json2["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
-                self.users.append(contentsOf: users)
-                
-                let groups = json2["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
-                for group in groups {
-                    let newGroup = DialogsUsers(json: JSON.null)
-                    newGroup.uid = "-\(group.gid)"
-                    newGroup.firstName = group.name
-                    newGroup.photo100 = group.photo100
-                    self.users.append(newGroup)
-                }
-                
+                OperationQueue().addOperation(getServerDataOperation2)
+            } else {
                 OperationQueue.main.addOperation {
-                    self.totalCount = messIDs.count
-                    self.offset += self.count
+                    self.totalCount = 0
                     self.tableView.reloadData()
-                    self.tableView.separatorStyle = .none
                     self.refreshControl?.endRefreshing()
                     ViewControllerUtils().hideActivityIndicator()
                 }
                 
-                self.setOfflineStatus(dependence: getServerDataOperation2)
+                self.setOfflineStatus(dependence: getServerDataOperation)
             }
-            OperationQueue().addOperation(getServerDataOperation2)
         }
         OperationQueue().addOperation(getServerDataOperation)
     }
