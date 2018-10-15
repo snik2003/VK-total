@@ -64,6 +64,7 @@ class GroupDialogsCell: UITableViewCell {
             url = "https://vk.com/images/community_200.png"
         }
         
+        userAvatar.image = UIImage(named: "error")
         var getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
         var setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: userAvatar, indexPath: indexPath, tableView: tableView)
         setImageToRow.addDependency(getCacheImage)
@@ -121,6 +122,7 @@ class GroupDialogsCell: UITableViewCell {
             url = user[0].maxPhotoOrigURL
         }
         
+        fromAvatar.image = UIImage(named: "error")
         getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
         setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: fromAvatar, indexPath: indexPath, tableView: tableView)
         setImageToRow.addDependency(getCacheImage)
