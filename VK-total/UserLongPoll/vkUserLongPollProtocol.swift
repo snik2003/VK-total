@@ -98,7 +98,7 @@ extension UIViewController: vkUserLongPollProtocol {
                         vkUserLongPoll.shared.ts = json["ts"].stringValue
                         vkUserLongPoll.shared.updates = json["updates"].compactMap { Updates(json: $0.1) }
                         
-                        print(json)
+                        //print(json)
                         self.handleUpdates()
                         self.longPoll()
                     } else if failed == 2 && failed == 3 {

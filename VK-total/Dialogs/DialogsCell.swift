@@ -47,7 +47,7 @@ class DialogsCell: UITableViewCell {
         
         if mess.chatID == 0 {
             if user.count > 0 {
-                url = user[0].maxPhotoOrigURL
+                url = user[0].photo100
                 name = "\(user[0].firstName) \(user[0].lastName)"
                 online = user[0].online
                 onlineMobile = user[0].onlineMobile
@@ -69,7 +69,7 @@ class DialogsCell: UITableViewCell {
         OperationQueue().addOperation(getCacheImage)
         OperationQueue.main.addOperation(setImageToRow)
         OperationQueue.main.addOperation {
-            self.userAvatar.layer.cornerRadius = 32
+            self.userAvatar.layer.cornerRadius = self.userAvatarSize/2
             self.userAvatar.clipsToBounds = true
             self.userAvatar.contentMode = .scaleAspectFill
         }
@@ -120,7 +120,7 @@ class DialogsCell: UITableViewCell {
         }
         
         if user.count > 0 {
-            url = user[0].maxPhotoOrigURL
+            url = user[0].photo100
         }
         
         fromAvatar.image = UIImage(named: "error")
@@ -130,7 +130,7 @@ class DialogsCell: UITableViewCell {
         OperationQueue().addOperation(getCacheImage)
         OperationQueue.main.addOperation(setImageToRow)
         OperationQueue.main.addOperation {
-            self.fromAvatar.layer.cornerRadius = 14
+            self.fromAvatar.layer.cornerRadius = self.fromAvatarSize/2
             self.fromAvatar.clipsToBounds = true
             self.fromAvatar.contentMode = .scaleAspectFill
         }

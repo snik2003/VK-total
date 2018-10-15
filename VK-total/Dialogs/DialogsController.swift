@@ -41,48 +41,10 @@ class DialogsController: UITableViewController {
             
             self.tableView.separatorStyle = .none
             self.tableView.register(DialogsCell.self, forCellReuseIdentifier: "dialogCell")
-        }
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        
-        OperationQueue.main.addOperation {
-            self.tableView.separatorStyle = .none
-        }
-        
-        if AppConfig.shared.setOfflineStatus {
-            if isFirstAppear {
-                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
-                    
-                    if self.source == "" {
-                        self.tabBarController?.selectedIndex = 0
-                    } else {
-                        self.navigationController?.popViewController(animated: true)
-                    }
-                }
-                alertController.addAction(cancelAction)
-                
-                let action1 = UIAlertAction(title: "Открыть раздел «Сообщения»", style: .destructive){ action in
-                    
-                    self.offset = 0
-                    self.dialogs.removeAll(keepingCapacity: false)
-                    self.refresh()
-                    self.isFirstAppear = false
-                }
-                alertController.addAction(action1)
-                
-                self.present(alertController, animated: true)
-            } else {
-                
-            }
-        } else {
-            offset = 0
-            dialogs.removeAll(keepingCapacity: false)
-            users.removeAll(keepingCapacity: false)
-            refresh()
+            
+            ViewControllerUtils().showActivityIndicator(uiView: self.view.superview!)
+            self.offset = 0
+            self.refresh()
         }
     }
     
@@ -164,12 +126,96 @@ class DialogsController: UITableViewController {
     
     @objc func pullToRefresh() {
         offset = 0
-        dialogs.removeAll(keepingCapacity: false)
-        users.removeAll(keepingCapacity: false)
         refresh()
     }
     
     func refresh() {
+        isRefresh = true
+        
+        if offset == 0 {
+            dialogs.removeAll(keepingCapacity: false)
+            users.removeAll(keepingCapacity: false)
+        }
+        
+        let url = "/method/messages.searchConversations"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "q": " ",
+            "count": "1000",
+            "extended": "0",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        getServerDataOperation.completionBlock = {
+            guard let data = getServerDataOperation.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            //print(json)
+            
+            var count = json["response"]["count"].intValue
+            
+            var messIDs: [Int] = []
+            for index in 0...count-1 {
+                let id = json["response"]["items"][index]["last_message_id"].intValue
+                
+                if id > 0 {
+                    messIDs.append(id)
+                }
+            }
+            
+            let startIndex = self.offset
+            let endIndex = min(self.offset + self.count, messIDs.count)
+            
+            messIDs = messIDs.sorted(by: >)
+            let messIDs2 = messIDs[startIndex...endIndex-1]
+            let url2 = "/method/messages.getById"
+            let parameters2 = [
+                "access_token": vkSingleton.shared.accessToken,
+                "message_ids": messIDs2.map{ String($0) }.joined(separator: ","),
+                "extended": "1",
+                "v": vkSingleton.shared.version
+            ]
+            
+            let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+            getServerDataOperation2.completionBlock = {
+                guard let data2 = getServerDataOperation2.data else { return }
+                guard let json2 = try? JSON(data: data2) else { print("json error"); return }
+                //print(json2)
+                
+                let dialogs = json2["response"]["items"].compactMap { Message(json: $0.1, class: 2) }
+                self.dialogs.append(contentsOf: dialogs)
+                self.dialogs = self.dialogs.removeDuplicates()
+                self.dialogs.sort(by: { $0.date > $1.date })
+                
+                let users = json2["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+                self.users.append(contentsOf: users)
+                
+                let groups = json2["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
+                for group in groups {
+                    let newGroup = DialogsUsers(json: JSON.null)
+                    newGroup.uid = "-\(group.gid)"
+                    newGroup.firstName = group.name
+                    newGroup.photo100 = group.photo100
+                    self.users.append(newGroup)
+                }
+                
+                OperationQueue.main.addOperation {
+                    self.totalCount = messIDs.count
+                    self.offset += self.count
+                    self.tableView.reloadData()
+                    self.tableView.separatorStyle = .none
+                    self.refreshControl?.endRefreshing()
+                    ViewControllerUtils().hideActivityIndicator()
+                }
+                
+                self.setOfflineStatus(dependence: getServerDataOperation2)
+            }
+            OperationQueue().addOperation(getServerDataOperation2)
+        }
+        OperationQueue().addOperation(getServerDataOperation)
+    }
+    
+    func refresh2() {
         let opq = OperationQueue()
         isRefresh = true
         
@@ -244,6 +290,7 @@ class DialogsController: UITableViewController {
                     groupIDs = "\(groupIDs)\(abs(dialog.userID))"
                 }
             }
+            
             
             let url2 = "/method/groups.getById"
             let parameters2 = [
@@ -323,20 +370,6 @@ class DialogsController: UITableViewController {
         fwdMessagesID.removeAll(keepingCapacity: false)
     }
     
-    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
-        if indexPath.section == tableView.numberOfSections-1 && offset < totalCount {
-            isRefresh = false
-        }
-    }
-    
-    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
-        
-        if isRefresh == false {
-            self.refresh()
-        }
-    }
-    
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         
         return true
@@ -409,5 +442,20 @@ class DialogsController: UITableViewController {
         deleteAction.backgroundColor = UIColor.red
         
         return [deleteAction]
+    }
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        
+        if indexPath.section == tableView.numberOfSections - 1 && offset < totalCount {
+            isRefresh = false
+        }
+    }
+    
+    override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        
+        if isRefresh == false {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view.superview!)
+            refresh()
+        }
     }
 }

@@ -24,6 +24,7 @@ class DialogsUsers {
     var onlineMobile: Int = 0
     var canWritePrivateMessage: Int = 0
     var sex: Int = 0
+    var photo100 = ""
     
     init(json: JSON) {
         self.uid = json["id"].stringValue
@@ -40,6 +41,7 @@ class DialogsUsers {
         self.onlineMobile = json["online_mobile"].intValue
         self.canWritePrivateMessage = json["can_write_private_message"].intValue
         self.sex = json["sex"].intValue
+        self.photo100 = json["photo_100"].stringValue
     }
     
     var inLove: Bool {
