@@ -108,6 +108,15 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     }
                     OperationQueue().addOperation(getServerDataOperation)
                 }
+                
+                if let dc = controller as? DialogsController {
+                    
+                    if let view = dc.view.superview {
+                        ViewControllerUtils().showActivityIndicator(uiView: view)
+                    }
+                    dc.offset = 0
+                    dc.refresh()
+                }
             }
         }
     }
