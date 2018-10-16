@@ -49,6 +49,9 @@ class DialogsCell: UITableViewCell {
             if user.count > 0 {
                 url = user[0].photo100
                 name = "\(user[0].firstName) \(user[0].lastName)"
+                if user[0].inLove {
+                    name = "\(user[0].firstName) \(user[0].lastName) 💞"
+                }
                 online = user[0].online
                 onlineMobile = user[0].onlineMobile
                 platform = user[0].platform
