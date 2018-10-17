@@ -22,6 +22,7 @@ class TopicTitleCell: UITableViewCell {
     
     func configureCell(group: GroupProfile, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
+        avatarImage.image = UIImage(named: "error")
         let getCacheImage = GetCacheImage(url: group.photo100, lifeTime: .avatarImage)
         let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImage, indexPath: indexPath, tableView: tableView)
         setImageToRow.addDependency(getCacheImage)
