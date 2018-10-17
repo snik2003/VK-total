@@ -540,20 +540,7 @@ extension UIViewController: NotificationCellProtocol {
                 }
                 
                 res = 0
-            } /*else if type == "page" {
-                
-                var accs = str1.components(separatedBy: "_")
-                for index in 0...accs.count-1 {
-                    accs[index] = accs[index].replacingOccurrences(of: "[A-Z,a-z,А-Я,а-я]", with: "", options: .regularExpression, range: nil)
-                }
-                if accs.count == 2 {
-                    if let groupID = Int(accs[0]), let pageID = Int(accs[1]) {
-                        openPageController(pageID: pageID, groupID: groupID)
-                    }
-                }
-                
-                res = 0
-            } */else if type == "topic" {
+            } else if type == "topic" {
                 
                 var accs = str1.components(separatedBy: "_")
                 for index in 0...accs.count-1 {
@@ -592,16 +579,9 @@ extension UIViewController: NotificationCellProtocol {
                 }
                 
                 res = 0
-            /*} else if str1.hasPrefix("@") {
-                 var accs = str1.components(separatedBy: "-")
-                 
-                 if accs.count > 0 {
-                 if let ownerID = Int(accs[0].replacingOccurrences(of: "@", with: "")), ownerID > 0 {
-                 openProfileController(id: ownerID, name: "")
-                 }
-                 }
-                 
-                 res = 0*/
+            } else if str1.hasPrefix("@") {
+                
+                res = 5
             } else if str2.count == 1 {
                 let url1 = "/method/utils.resolveScreenName"
                 let parameters1 = [
@@ -717,7 +697,7 @@ extension UIViewController: NotificationCellProtocol {
                 UIApplication.shared.open(validURL, options: [:])
             }
         default:
-            break
+            self.openBrowserControllerNoCheck(url: url)
         }
     }
     
