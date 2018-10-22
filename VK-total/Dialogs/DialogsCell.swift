@@ -149,8 +149,15 @@ class DialogsCell: UITableViewCell {
         messLabel.frame = CGRect(x: 2.5 * leftInsets + userAvatarSize + fromAvatarSize, y: topInsets + 35, width: UIScreen.main.bounds.width - userAvatarSize - fromAvatarSize - 3 * leftInsets, height: fromAvatarSize)
         self.addSubview(messLabel)
         
-        if mess.readState == 0 {
-            self.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+        messLabel.backgroundColor = .clear
+        if mess.out == 0 {
+            if mess.readState == 0 {
+                self.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+            }
+        } else {
+            if mess.readState == 0 {
+                messLabel.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+            }
         }
     }
     
