@@ -420,7 +420,7 @@ class DialogCell: UITableViewCell {
             
             messView.frame = CGRect(x: bubbleX, y: bubbleY, width: bubbleWidth, height: bubbleHeight)
             if !dialog.hasSticker {
-                messView.configureMessageView(out: dialog.out, radius: 12)
+                messView.configureMessageView(out: dialog.out, radius: 12, border: 1)
             }
             self.addSubview(messView)
             
@@ -1404,11 +1404,11 @@ extension Array where Element: Equatable {
 
 extension UIView {
     
-    func configureMessageView(out: Int, radius: CGFloat) {
+    func configureMessageView(out: Int, radius: CGFloat, border: CGFloat) {
         
         if #available(iOS 11.0, *) {
             self.layer.borderColor = UIColor.gray.cgColor
-            self.layer.borderWidth = 1
+            self.layer.borderWidth = border
             self.layer.cornerRadius = radius
             if out == 0 {
                 self.layer.maskedCorners = [.layerMinXMaxYCorner, .layerMaxXMaxYCorner, .layerMaxXMinYCorner]

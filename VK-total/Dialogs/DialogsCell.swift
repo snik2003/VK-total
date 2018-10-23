@@ -17,6 +17,7 @@ class DialogsCell: UITableViewCell {
     var nameLabel = UILabel()
     var dateLabel = UILabel()
     var messLabel = UILabel()
+    var messView = UIView()
     
     let leftInsets: CGFloat = 10.0
     let topInsets: CGFloat = 5.0
@@ -146,17 +147,23 @@ class DialogsCell: UITableViewCell {
         
         updateMessageLabel(mess: mess, users: users)
         
-        messLabel.frame = CGRect(x: 2.5 * leftInsets + userAvatarSize + fromAvatarSize, y: topInsets + 35, width: UIScreen.main.bounds.width - userAvatarSize - fromAvatarSize - 3 * leftInsets, height: fromAvatarSize)
-        self.addSubview(messLabel)
+        messView.frame = CGRect(x: 2.5 * leftInsets + userAvatarSize + fromAvatarSize, y: topInsets + 35, width: UIScreen.main.bounds.width - userAvatarSize - fromAvatarSize - 3 * leftInsets, height: fromAvatarSize)
         
-        messLabel.backgroundColor = .clear
+        messLabel.frame = CGRect(x: leftInsets/2, y: 0, width: messView.bounds.width - leftInsets, height: messView.bounds.height)
+        messView.addSubview(messLabel)
+        
+        self.addSubview(messView)
+        
+        messView.backgroundColor = .clear
+        messView.layer.borderWidth = 0
         if mess.out == 0 {
             if mess.readState == 0 {
                 self.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
             }
         } else {
             if mess.readState == 0 {
-                messLabel.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+                messView.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+                messView.configureMessageView(out: 0, radius: 6, border: 0.2)
             }
         }
     }

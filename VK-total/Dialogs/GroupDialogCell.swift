@@ -121,7 +121,7 @@ class GroupDialogCell: UITableViewCell {
                 messView.backgroundColor = outBackColor
             }
             if !dialog.hasSticker {
-                messView.configureMessageView(out: dialog.out, radius: 12)
+                messView.configureMessageView(out: dialog.out, radius: 12, border: 1)
             }
             messView.addSubview(messText)
             
