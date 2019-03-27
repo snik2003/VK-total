@@ -113,6 +113,12 @@ class DialogsController: UITableViewController {
         }
         alertController.addAction(action3)
         
+        let action5 = UIAlertAction(title: "Произвольный", style: .default){ action in
+            
+            self.getCustomDialogID()
+        }
+        alertController.addAction(action5)
+        
         if self.source == "" {
             let action4 = UIAlertAction(title: "Создать новый чат", style: .destructive) { action in
                 
@@ -140,7 +146,7 @@ class DialogsController: UITableViewController {
         let url = "/method/messages.searchConversations"
         let parameters = [
             "access_token": vkSingleton.shared.accessToken,
-            "q": " ",
+            "q": "",
             "count": "1000",
             "extended": "0",
             "v": vkSingleton.shared.version
@@ -150,7 +156,7 @@ class DialogsController: UITableViewController {
         getServerDataOperation.completionBlock = {
             guard let data = getServerDataOperation.data else { return }
             guard let json = try? JSON(data: data) else { print("json error"); return }
-            //print(json)
+            print(json)
             
             var messIDs: [Int] = json["response"]["items"].map { $0.1["last_message_id"].intValue }
             messIDs = messIDs.filter({ $0 > 0 })
@@ -462,5 +468,83 @@ class DialogsController: UITableViewController {
             ViewControllerUtils().showActivityIndicator(uiView: self.view.superview!)
             refresh()
         }
+    }
+    
+    func getCustomDialogID() {
+        
+        let appearance = SCLAlertView.SCLAppearance(
+            kTitleTop: 12.0,
+            kWindowWidth: UIScreen.main.bounds.width - 40,
+            kTitleFont: UIFont(name: "Verdana", size: 13)!,
+            kTextFont: UIFont(name: "Verdana", size: 12)!,
+            kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
+            showCloseButton: false,
+            showCircularIcon: false
+        )
+        
+        let alert = SCLAlertView(appearance: appearance)
+        
+        let textField = UITextField(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 30))
+        
+        textField.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textField.layer.borderWidth = 1
+        textField.layer.cornerRadius = 5
+        textField.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
+        textField.font = UIFont(name: "Verdana", size: 13)
+        textField.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textField.keyboardType = .numberPad
+        textField.textAlignment = .center
+        textField.text = ""
+        
+        alert.customSubview = textField
+        
+        alert.addButton("Готово", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+            
+            self.view.endEditing(true);
+            if let userID = textField.text {
+                self.openCustomDialog(userID)
+            }
+        }
+        
+        alert.addButton("Отмена", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {}
+        
+        alert.showInfo("Идентификатор пользователя:", subTitle: "")
+    }
+    
+    func openCustomDialog(_ userID: String) {
+        
+        ViewControllerUtils().showActivityIndicator(uiView: self.view.superview!)
+        
+        let url = "/method/messages.getHistory"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "offset": "0",
+            "count": "1",
+            "user_id": "\(userID)",
+            "start_message_id": "-1",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        OperationQueue().addOperation(getServerDataOperation)
+        
+        let parseDialog = ParseDialogHistory()
+        parseDialog.completionBlock = {
+            var startID = parseDialog.inRead
+            if parseDialog.outRead > startID {
+                startID = parseDialog.outRead
+            }
+            OperationQueue.main.addOperation {
+                if startID > 0 {
+                    ViewControllerUtils().hideActivityIndicator()
+                    self.openDialogController(userID: userID, chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                } else {
+                    ViewControllerUtils().hideActivityIndicator()
+                    self.showErrorMessage(title: "", msg: "У Вас отсутствует диалог с этим пользователем (id \(userID))")
+                }
+            }
+        }
+        parseDialog.addDependency(getServerDataOperation)
+        OperationQueue().addOperation(parseDialog)
     }
 }

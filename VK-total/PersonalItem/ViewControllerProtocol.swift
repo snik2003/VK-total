@@ -1611,7 +1611,7 @@ extension UIViewController: NotificationCellProtocol {
         view.configureDropShadow()
         var config = SwiftMessages.defaultConfig
         config.presentationStyle = .top
-        config.presentationContext1 = .viewController(self)
+        config.presentationContext = .viewController(self)
         config.duration = .seconds(seconds: 4)
         config.interactiveHide = true
         
@@ -1798,7 +1798,7 @@ extension UIViewController: NotificationCellProtocol {
         view.configureDropShadow()
         var config = SwiftMessages.defaultConfig
         config.presentationStyle = .top
-        config.presentationContext1 = .viewController(self)
+        config.presentationContext = .viewController(self)
         config.duration = .seconds(seconds: 4)
         config.interactiveHide = true
         
