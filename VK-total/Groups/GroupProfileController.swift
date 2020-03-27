@@ -36,6 +36,10 @@ class GroupProfileController: UIViewController, UITableViewDelegate, UITableView
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         OperationQueue.main.addOperation {
             self.tableView.delegate = self

@@ -31,6 +31,10 @@ class OptionsController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         let barButton = UIBarButtonItem(title: "Готово", style: .done, target: self, action: #selector(self.tapBarButtonItem(sender:)))
         self.navigationItem.rightBarButtonItem = barButton
@@ -64,6 +68,7 @@ class OptionsController: UITableViewController {
             AppConfig.shared.passwordDigits = passDigits
             AppConfig.shared.touchID = touchID
             
+            print("device token = \(vkSingleton.shared.deviceToken)")
             saveAppConfig()
             if AppConfig.shared.pushNotificationsOn {
                 registerDeviceOnPush()
@@ -466,6 +471,7 @@ class OptionsController: UITableViewController {
         let vc = self.storyboard?.instantiateViewController(withIdentifier: "PasswordController") as! PasswordController
         vc.state = "change"
         vc.delegate = self
+        vc.modalPresentationStyle = .fullScreen
         self.present(vc, animated: true, completion: { () -> Void in
             
         })

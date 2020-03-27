@@ -78,6 +78,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         OperationQueue.main.addOperation {
             
@@ -367,7 +371,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                 guard let data = getServerDataOperation.data else { return }
                 
                 guard let json = try? JSON(data: data) else { print("json error"); return }
-                //print(json["response"][2]["items"])
+                //print(json["response"][2])
             
                 let record = json["response"][0]["items"].compactMap { Record(json: $0.1) }
                 let recordProfiles = json["response"][0]["profiles"].compactMap { RecordProfiles(json: $0.1) }
@@ -456,7 +460,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                 guard let data = getServerDataOperation.data else { return }
                 
                 guard let json = try? JSON(data: data) else { print("json error"); return }
-                //print(json)
+                //print(json["response"][2]["items"])
             
                 let photos = json["response"][0].compactMap { Photo(json: $0.1) }
                 

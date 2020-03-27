@@ -35,7 +35,6 @@ class GetServerDataOperation: AsyncOperation {
         self.url = baseUrl + url
         self.parameters = parameters
         request = Alamofire.request(self.url, method: .post, parameters: self.parameters)
-
     }
 }
 

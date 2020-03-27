@@ -27,6 +27,10 @@ class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDa
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         tableView.delegate = self
         tableView.dataSource = self

@@ -29,6 +29,18 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+            let searchField = searchBar.searchTextField
+            searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+            searchField.textColor = .black
+        } else {
+            if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
+                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+                searchField.textColor = .black
+            }
+        }
+        
         OperationQueue.main.addOperation {
             self.tableView.delegate = self
             self.tableView.dataSource = self

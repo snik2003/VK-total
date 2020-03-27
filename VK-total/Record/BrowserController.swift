@@ -40,6 +40,10 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         progress.isHidden = true
         progress.tintColor = vkSingleton.shared.mainColor
         

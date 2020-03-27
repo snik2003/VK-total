@@ -43,7 +43,7 @@ class ParseComments2: Operation {
         guard let getServerDataOperation = dependencies.first as? GetServerDataOperation, let data = getServerDataOperation.data else { return }
         
         guard let json = try? JSON(data: data) else { print("json error"); return }
-        //print(json)
+        //print(json["response"]["items"])
         let commentsData: [Comments] = json["response"]["items"].compactMap { Comments(json: $0.1) }
         let profilesData = json["response"]["profiles"].compactMap { CommentsProfiles(json: $0.1) }
         let groupsData = json["response"]["groups"].compactMap { CommentsGroups(json: $0.1) }

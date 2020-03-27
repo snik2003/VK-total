@@ -17,6 +17,7 @@ class UserProfileInfo {
     var sex: Int = 0
     var domain: String = ""
     var relation: Int = 0
+    var relationPatrnerId: Int = 0
     var birthDate: String = ""
     var homeTown: String = ""
     var hasPhoto: Int = 0
@@ -64,6 +65,12 @@ class UserProfileInfo {
     var firstNameGen: String = "" // Имя в родительном падеже (Чей?)
     var firstNameDat: String = "" // Имя в дательном падеже (Кому?)
     var firstNameAcc: String = "" // Имя в винительном падеже (Кому?)
+    var firstNameIns: String = "" // Имя в творительном падеже (Кому?)
+    var lastNameAbl: String = "" // Фамилия в предложном падеже (О Ком?)
+    var lastNameGen: String = "" // Фамилия в родительном падеже (Чей?)
+    var lastNameDat: String = "" // Фамилия в дательном падеже (Кому?)
+    var lastNameAcc: String = "" // Фамилия в винительном падеже (Кому?)
+    var lastNameIns: String = "" // Фамилия в творительном падеже (Кому?)
     var canSendFriendRequest: Int = 0
     var canWritePrivateMessage: Int = 0
     var canPost: Int = 0
@@ -100,6 +107,7 @@ class UserProfileInfo {
         self.maidenName = json["maiden_name"].stringValue
         self.sex = json["sex"].intValue
         self.relation = json["relation"].intValue
+        self.relationPatrnerId = json["relation_partner"]["id"].intValue
         self.domain = json["domain"].stringValue
         self.birthDate = json["bdate"].stringValue
         self.hasPhoto = json["has_photo"].intValue
@@ -148,6 +156,12 @@ class UserProfileInfo {
         self.firstNameGen = json["first_name_gen"].stringValue
         self.firstNameDat = json["first_name_dat"].stringValue
         self.firstNameAcc = json["first_name_acc"].stringValue
+        self.firstNameIns = json["first_name_ins"].stringValue
+        self.lastNameAbl = json["last_name_abl"].stringValue
+        self.lastNameGen = json["last_name_gen"].stringValue
+        self.lastNameDat = json["last_name_dat"].stringValue
+        self.lastNameAcc = json["last_name_acc"].stringValue
+        self.lastNameIns = json["last_name_ins"].stringValue
         self.canSendFriendRequest = json["can_send_friend_request"].intValue
         self.canWritePrivateMessage = json["can_write_private_message"].intValue
         self.canPost = json["can_post"].intValue

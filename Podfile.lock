@@ -1,23 +1,23 @@
 PODS:
-  - Alamofire (4.8.1)
+  - Alamofire (4.9.1)
   - BEMCheckBox (1.4.1)
   - BTNavigationDropdownMenu (0.5)
   - CMPhotoCropEditor (1.0.1)
   - DCCommentView (0.1.6)
-  - DropDown (2.3.12)
+  - DropDown (2.3.13)
   - FLAnimatedImage (1.0.12)
   - Popover (1.2.2)
-  - Realm (3.13.1):
-    - Realm/Headers (= 3.13.1)
-  - Realm/Headers (3.13.1)
-  - RealmSwift (3.13.1):
-    - Realm (= 3.13.1)
+  - Realm (3.21.0):
+    - Realm/Headers (= 3.21.0)
+  - Realm/Headers (3.21.0)
+  - RealmSwift (3.21.0):
+    - Realm (= 3.21.0)
   - SCLAlertView (0.8)
-  - SmileLock (3.0.6)
-  - SwiftMessages (6.0.2):
-    - SwiftMessages/App (= 6.0.2)
-  - SwiftMessages/App (6.0.2)
-  - SwiftyJSON (4.2.0)
+  - SmileLock (3.0.7)
+  - SwiftMessages (7.0.1):
+    - SwiftMessages/App (= 7.0.1)
+  - SwiftMessages/App (7.0.1)
+  - SwiftyJSON (4.3.0)
   - SWRevealViewController (2.3.0)
 
 DEPENDENCIES:
@@ -37,7 +37,7 @@ DEPENDENCIES:
   - SWRevealViewController (~> 2.3)
 
 SPEC REPOS:
-  https://github.com/CocoaPods/Specs.git:
+  https://github.com/cocoapods/specs.git:
     - Alamofire
     - BEMCheckBox
     - BTNavigationDropdownMenu
@@ -55,22 +55,22 @@ SPEC REPOS:
     - SWRevealViewController
 
 SPEC CHECKSUMS:
-  Alamofire: 16ce2c353fb72865124ddae8a57c5942388f4f11
+  Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
   BEMCheckBox: 5ba6e37ade3d3657b36caecc35c8b75c6c2b1a4e
   BTNavigationDropdownMenu: ba3a26fdb6a56c4721c31df8a0875106c259663a
   CMPhotoCropEditor: 50010afad0ec87be9c49c98a99e65be90f23a249
   DCCommentView: 9b46fc2c78f64a28c72f482e5f7d75574b8ff5a8
-  DropDown: 0bcc278799ec11a3d34ce1aac9367fbbaf5423d9
+  DropDown: 8a2116376c1981888557f72ec2ffc9a5e0e456ec
   FLAnimatedImage: 4a0b56255d9b05f18b6dd7ee06871be5d3b89e31
   Popover: 21e357f86d45c8d9e29a41a4adbca3664d6e511f
-  Realm: 50071da38fe079e0735e47c9f2eae738c68c5996
-  RealmSwift: 8a1e6a02b7a08cd17a31e3115143fb69fe5f3fb9
+  Realm: 38e9dcb19104b58407167d99f70d4995f7c16023
+  RealmSwift: 3183cc1ad48378fbcd634311b22c0e6c44021152
   SCLAlertView: 6a77bb2edfc65e04dbe57725546cb4107a506b85
-  SmileLock: f9d8a44861dbdd1d2e48525577fb5dc0e9c2d314
-  SwiftMessages: 8b3cc68dba2f1c91aac1a74c90b10287aac35371
-  SwiftyJSON: c4bcba26dd9ec7a027fc8eade48e2c911f229e96
+  SmileLock: 46b847b3ad963e3140d083b53f09036a4d210537
+  SwiftMessages: b577dc7043be8b299857ab35bb663dbff6483bd0
+  SwiftyJSON: 6faa0040f8b59dead0ee07436cbf76b73c08fd08
   SWRevealViewController: 6d3fd97f70112fd7cef9de14df4260eacce4c63a
 
 PODFILE CHECKSUM: 504f6fe4167c7da99328e4d00de29b8c9bb85f07
 
-COCOAPODS: 1.5.0
+COCOAPODS: 1.6.1

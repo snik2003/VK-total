@@ -49,7 +49,19 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+            let searchField = searchBar.searchTextField
+            searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+            searchField.textColor = .black
+        } else {
+            if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
+                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+                searchField.textColor = .black
+            }
+        }
+        
         tableView.delegate = self
         tableView.dataSource = self
         

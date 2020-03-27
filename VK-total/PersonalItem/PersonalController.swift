@@ -15,6 +15,10 @@ class PersonalController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
         /*addAAccountButton.isEnabled = false
         addAAccountButton.tintColor = UIColor.clear
         addAAccountButton.target = revealViewController()

@@ -171,8 +171,10 @@ extension UIViewController: VkOperationProtocol {
         
         if AppConfig.shared.pushComment {
             jsonParam["comment"] = ["on"]
+            jsonParam["comment_commented"] = ["on"]
         } else {
             jsonParam["comment"] = ["off"]
+            jsonParam["comment_commented"] = ["off"]
         }
         
         if AppConfig.shared.pushNewFriends {
@@ -189,19 +191,23 @@ extension UIViewController: VkOperationProtocol {
         if AppConfig.shared.pushNots {
             jsonParam["reply"] = ["on"]
             jsonParam["repost"] = ["on"]
+            jsonParam["reminder"] = ["on"]
             jsonParam["new_post"] = ["on"]
             jsonParam["birthday"] = ["on"]
             jsonParam["gift"] = ["on"]
             jsonParam["live"] = ["on"]
             jsonParam["tag_photo"] = ["on"]
+            jsonParam["content_achievements"] = ["on"]
         } else {
             jsonParam["reply"] = ["off"]
             jsonParam["repost"] = ["off"]
+            jsonParam["reminder"] = ["off"]
             jsonParam["new_post"] = ["off"]
             jsonParam["birthday"] = ["off"]
             jsonParam["gift"] = ["off"]
             jsonParam["live"] = ["off"]
             jsonParam["tag_photo"] = ["off"]
+            jsonParam["content_achievements"] = ["off"]
         }
         
         if AppConfig.shared.pushLikes {
@@ -247,6 +253,7 @@ extension UIViewController: VkOperationProtocol {
         jsonParam["sdk_open"] = ["on"]
         jsonParam["app_request"] = ["on"]
         jsonParam["call"] = ["on"]
+        jsonParam["missed_call"] = ["on"]
         jsonParam["money"] = ["on"]
         
         var sandbox = 0
@@ -265,6 +272,7 @@ extension UIViewController: VkOperationProtocol {
             "access_token": vkSingleton.shared.accessToken,
             "v": vkSingleton.shared.version
             ] as [String : Any]
+        print(parameters)
         
         let request = GetServerDataOperation(url: url, parameters: parameters)
         request.completionBlock = {
@@ -2142,7 +2150,7 @@ extension UIViewController: VkOperationProtocol {
             guard let data = request.data else { return }
             
             guard let json = try? JSON(data: data) else { print("json error"); return }
-            print(json)
+            //print(json)
             
             let error = ErrorJson(json: JSON.null)
             error.errorCode = json["error"]["error_code"].intValue
@@ -2183,7 +2191,7 @@ extension UIViewController: VkOperationProtocol {
             guard let data = request.data else { return }
             
             guard let json = try? JSON(data: data) else { print("json error"); return }
-            print(json)
+            //print(json)
             
             let error = ErrorJson(json: JSON.null)
             error.errorCode = json["error"]["error_code"].intValue

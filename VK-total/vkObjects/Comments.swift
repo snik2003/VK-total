@@ -9,7 +9,28 @@
 import Foundation
 import SwiftyJSON
 
-class Comments {
+class Comments: Equatable, Comparable {
+    static func == (lhs: Comments, rhs: Comments) -> Bool {
+        if lhs.id == rhs.id {
+            return true
+        }
+        return false
+    }
+    
+    static public func < (lhs: Comments, rhs: Comments) -> Bool {
+        if lhs.date < rhs.date {
+            return true
+        }
+        return false
+    }
+    
+    static public func > (lhs: Comments, rhs: Comments) -> Bool {
+        if lhs.date > rhs.date {
+            return true
+        }
+        return false
+    }
+    
     var id: Int = 0
     var fromID: Int = 0
     var date: Int = 0

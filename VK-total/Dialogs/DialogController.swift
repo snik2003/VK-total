@@ -113,6 +113,10 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
     
         if UIScreen.main.nativeBounds.height == 2436 {
             self.navHeight = 88

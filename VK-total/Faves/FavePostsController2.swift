@@ -52,6 +52,10 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         if UIScreen.main.nativeBounds.height == 2436 {
             self.navHeight = 88

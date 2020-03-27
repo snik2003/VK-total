@@ -53,6 +53,10 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
     let fieldBackgroundColorDisabled = UIColor.red.withAlphaComponent(0.4)
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         OperationQueue.main.addOperation {
             ViewControllerUtils().showActivityIndicator(uiView: self.view)

@@ -35,6 +35,10 @@ class GroupDialogsController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         if let id = Int(self.groupID) {
             getGroupLongPollServer(groupID: id)
         }

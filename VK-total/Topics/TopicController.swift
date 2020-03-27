@@ -61,6 +61,10 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         OperationQueue.main.addOperation {
             if UIScreen.main.nativeBounds.height == 2436 {
@@ -356,7 +360,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 return 40
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "commentCell") as! CommentCell2
-            
+                
                 let index = comments.count - indexPath.row
                 let height = cell.getRowHeight(comment: comments[index])
                 return height

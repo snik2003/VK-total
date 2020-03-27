@@ -39,6 +39,10 @@ class NewsTableViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         tapGesture1 = UITapGestureRecognizer(target: self, action: #selector(readMoreClick1(sender:)))
         tapGesture2 = UITapGestureRecognizer(target: self, action: #selector(readMoreClick2(sender:)))

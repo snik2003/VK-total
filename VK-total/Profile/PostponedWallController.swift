@@ -24,6 +24,10 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         OperationQueue.main.addOperation {
             if UIScreen.main.nativeBounds.height == 2436 {

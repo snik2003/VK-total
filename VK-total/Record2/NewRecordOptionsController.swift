@@ -27,6 +27,10 @@ class NewRecordOptionsController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         let postButton = UIBarButtonItem(title: "Готово", style: .done, target: self, action: #selector(self.tapPostButton(sender:)))
         self.navigationItem.rightBarButtonItem = postButton

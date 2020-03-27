@@ -46,6 +46,10 @@ class VideoListController: UIViewController, UITableViewDelegate, UITableViewDat
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         OperationQueue.main.addOperation {
             if UIScreen.main.nativeBounds.height == 2436 {
                 self.navHeight = 88
@@ -92,6 +96,17 @@ class VideoListController: UIViewController, UITableViewDelegate, UITableViewDat
     
     func createSearchBar() {
         searchBar = UISearchBar(frame: CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: 54))
+        
+        if #available(iOS 13.0, *) {
+            let searchField = searchBar.searchTextField
+            searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+            searchField.textColor = .black
+        } else {
+            if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
+                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+                searchField.textColor = .black
+            }
+        }
         
         self.view.addSubview(searchBar)
     }

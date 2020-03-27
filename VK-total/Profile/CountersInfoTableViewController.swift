@@ -44,6 +44,10 @@ class CountersInfoTableViewController: UITableViewController, UISearchBarDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         self.refreshControl?.addTarget(self, action: #selector(CountersInfoTableViewController.refresh), for: UIControl.Event.valueChanged)
         self.refreshControl?.tintColor = UIColor.gray
         tableView.addSubview(self.refreshControl!)
@@ -58,6 +62,17 @@ class CountersInfoTableViewController: UITableViewController, UISearchBarDelegat
                 self.searchBar.showsCancelButton = false
                 self.searchBar.returnKeyType = UIReturnKeyType.done
                 self.tableView.tableHeaderView = self.searchBar
+                
+                if #available(iOS 13.0, *) {
+                    let searchField = self.searchBar.searchTextField
+                    searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+                    searchField.textColor = .black
+                } else {
+                    if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
+                        searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+                        searchField.textColor = .black
+                    }
+                }
             }
         
             self.tableView.separatorStyle = .none

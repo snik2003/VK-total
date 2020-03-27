@@ -25,6 +25,10 @@ class AddGroupController: UITableViewController, UISearchBarDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         OperationQueue.main.addOperation {
             self.tableView.separatorStyle = .none
             
@@ -37,6 +41,17 @@ class AddGroupController: UITableViewController, UISearchBarDelegate {
             self.searchBar.returnKeyType = UIReturnKeyType.done
             self.tableView.tableHeaderView = self.searchBar
             self.title = "Найти сообщество"
+            
+            if #available(iOS 13.0, *) {
+                let searchField = self.searchBar.searchTextField
+                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+                searchField.textColor = .black
+            } else {
+                if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
+                    searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
+                    searchField.textColor = .black
+                }
+            }
         }
     }
     

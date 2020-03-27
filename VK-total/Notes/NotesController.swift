@@ -25,6 +25,10 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         OperationQueue.main.addOperation {
             if UIScreen.main.nativeBounds.height == 2436 {
                 self.navHeight = 88

@@ -19,7 +19,7 @@ class ParsePage: Operation {
         
         do {
             let json = try JSON(data: data)
-            print(json)
+            //print(json)
             dataString = String(data: data, encoding: .utf8)!
             outputData = json["response"].compactMap { Page(json: $0.1) }
         } catch let error {

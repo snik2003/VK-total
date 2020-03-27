@@ -43,6 +43,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), !(currentVC is PasswordController) {
                 let vc = currentVC.storyboard?.instantiateViewController(withIdentifier: "PasswordController") as! PasswordController
                 vc.state = "login"
+                vc.modalPresentationStyle = .fullScreen
                 currentVC.present(vc, animated: true)
             }
         }
@@ -147,13 +148,20 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
-        let tokenParts = deviceToken.map { data -> String in
-            return String(format: "%02.2hhx", data)
+        
+        var token = ""
+        
+        if #available(iOS 13, *) {
+            token = deviceToken.reduce("", {$0 + String(format: "%02X", $1)})
+        } else {
+            let tokenParts = deviceToken.map { data -> String in
+                return String(format: "%02.2hhx", data)
+            }
+            token = tokenParts.joined()
         }
         
-        let token = tokenParts.joined()
         vkSingleton.shared.deviceToken = token
-        //print("Device Token: \(token)")
+        print("Device Token: \(token)")
     }
     
     func application(_ application: UIApplication,
@@ -218,7 +226,6 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         UIApplication.shared.applicationIconBadgeNumber = 0
         SwiftMessages.hideAll()
         if let type = (userInfo["data"] as AnyObject).object(forKey: "category") as? String {
-            
             
             if type == "comment" {
                 if let place = (userInfo["data"] as AnyObject).object(forKey: "place") as? String {
@@ -300,6 +307,12 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                     if comp.count > 1, let ownerID = Int(comp[0]), let postID = Int(comp[1]) {
                         controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post")
                     }
+                } else {
+                    controller.tabBarController?.selectedIndex = 1
+                }
+            } else if type == "open_url" {
+                if let url = (userInfo["data"] as AnyObject).object(forKey: "url") as? String {
+                    controller.openBrowserController(url: url)
                 } else {
                     controller.tabBarController?.selectedIndex = 1
                 }

@@ -42,6 +42,10 @@ class ProfileController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
         refreshControl?.tintColor = UIColor.gray
         tableView.addSubview(refreshControl!)

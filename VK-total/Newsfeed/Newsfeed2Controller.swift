@@ -38,6 +38,10 @@ class Newsfeed2Controller: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         let menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
         menuView.cellBackgroundColor = UIColor.white

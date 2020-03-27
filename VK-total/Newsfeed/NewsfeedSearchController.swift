@@ -22,6 +22,10 @@ class NewsfeedSearchController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
 
         OperationQueue.main.addOperation {
             self.tableView.separatorStyle = .none

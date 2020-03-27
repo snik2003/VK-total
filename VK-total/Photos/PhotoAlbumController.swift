@@ -39,6 +39,10 @@ class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         OperationQueue.main.addOperation {
             self.configureTableView()
             

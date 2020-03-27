@@ -26,6 +26,10 @@ class LoginFormController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
+        
         readAppConfig()
     }
     
@@ -103,6 +107,7 @@ class LoginFormController: UIViewController {
                 URLQueryItem(name: "v", value: vkSingleton.shared.version)
             ]
 
+            print("vkAppID = \(vkSingleton.shared.vkAppID[num])")
             let request = URLRequest(url: urlComponents.url!)
             //let userAgent = UAString()
             //request.setValue(userAgent, forHTTPHeaderField: "User-Agent")

@@ -314,7 +314,7 @@ class ProfileView: UIView {
             queue.addOperation(getCacheImage)
         } else if hasCropPhoto == 0 {
             let ids = profile.avatarID.components(separatedBy: "_")
-            if ids.count > 0 {
+            if ids.count > 1 {
                 let ownerID = ids[0]
                 let photoID = ids[1]
                 

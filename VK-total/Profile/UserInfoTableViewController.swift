@@ -27,6 +27,7 @@ struct InfoInProfile {
 class UserInfoTableViewController: UITableViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PECropViewControllerDelegate {
 
     var users = [UserProfileInfo]()
+    var partner = [UserProfileInfo]()
     var relatives = [DialogsUsers]()
     
     var isStatusExists = true
@@ -43,6 +44,8 @@ class UserInfoTableViewController: UITableViewController, UIImagePickerControlle
     
     let pickerController = UIImagePickerController()
     
+    var partnerName = ""
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -52,6 +55,10 @@ class UserInfoTableViewController: UITableViewController, UIImagePickerControlle
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            overrideUserInterfaceStyle = .light
+        }
         
         self.pickerController.delegate = self
         self.tableView.register(RelativeCell.self, forCellReuseIdentifier: "relativeCell")
@@ -92,11 +99,8 @@ class UserInfoTableViewController: UITableViewController, UIImagePickerControlle
                 let parseDialogsUsers = ParseDialogsUsers()
                 parseDialogsUsers.addDependency(getServerDataOperation)
                 parseDialogsUsers.completionBlock = {
-                    OperationQueue.main.addOperation {
-                        self.relatives = parseDialogsUsers.outputData
-                        self.prepareInfo()
-                        self.tableView.reloadData()
-                    }
+                    self.relatives = parseDialogsUsers.outputData
+                    self.prepareInfo()
                 }
                 OperationQueue().addOperation(parseDialogsUsers)
             } else {
@@ -108,12 +112,12 @@ class UserInfoTableViewController: UITableViewController, UIImagePickerControlle
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        if users.count > 0, users[0].uid == vkSingleton.shared.userID {
+        /*if users.count > 0, users[0].uid == vkSingleton.shared.userID {
             OperationQueue.main.addOperation {
                 self.prepareInfo()
                 self.tableView.reloadData()
             }
-        }
+        }*/
     }
     
     override func didReceiveMemoryWarning() {
@@ -312,228 +316,254 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
     
     func prepareInfo() {
         
-        var personal: InfoInProfile
-        
-        countBasicInfoSection = 0
-        countContactInfoSection = 0
-        countPersonalInfoSection = 0
-        countLifePositionSection = 0
-        
-        basicInfoSection.removeAll(keepingCapacity: false)
-        contactInfoSection.removeAll(keepingCapacity: false)
-        personalInfoSection.removeAll(keepingCapacity: false)
-        lifePositionSection.removeAll(keepingCapacity: false)
-        relativesSection.removeAll(keepingCapacity: false)
-        
         if users.count > 0 {
             let user = users[0]
             
-            var title = "О \(user.firstNameAbl)"
-            let fc = user.firstNameAbl.prefix(1)
-            if fc == "А" || fc == "И" || fc == "О" || fc == "Е" || fc == "У" || fc == "Я" || fc == "Ы" || fc == "Ё" || fc == "Э" || fc == "Ю"  {
-                title = "Об \(user.firstNameAbl)"
-            }
-            if user.uid == vkSingleton.shared.userID {
-                title = "Обо мне"
-            }
-            self.title = title
+            let url = "/method/users.get"
+            let parameters = [
+                "user_id": "\(user.relationPatrnerId)",
+                "access_token": vkSingleton.shared.accessToken,
+                "fields": "id, first_name, last_name, sex, first_name_abl, first_name_gen, first_name_acc, first_name_dat, first_name_ins, last_name_abl, last_name_gen, last_name_acc, last_name_dat, last_name_ins",
+                "v": vkSingleton.shared.version
+            ]
             
-            if user.status == "" {
-                isStatusExists = false
-            }
-            
-            // раздел "Основная информация"
-            if user.relation != 0 {
-                countBasicInfoSection += 1
-                personal = InfoInProfile("relation",relationCodeIntoString(code: user.relation, sex: user.sex),"relation")
-                basicInfoSection.append(personal)
-            }
-            
-            if user.birthDate != "" {
-                countBasicInfoSection += 1
+            let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+            getServerDataOperation.completionBlock = {
+                guard let data = getServerDataOperation.data else { return }
                 
-                let dateFormatter = DateFormatter()
-                dateFormatter.locale = NSLocale(localeIdentifier: "ru_RU") as Locale?
-                dateFormatter.dateFormat = "dd.M.yyyy"
-                var date = dateFormatter.date(from: user.birthDate)
-                dateFormatter.dateFormat = "dd MMMM yyyy года"
-                if date == nil {
-                    dateFormatter.dateFormat = "dd.M"
-                    date = dateFormatter.date(from: user.birthDate)
-                    dateFormatter.dateFormat = "dd MMMM"
+                guard let json = try? JSON(data: data) else { print("json error"); return }
+                //print(json)
+                
+                self.partner = json["response"].compactMap { UserProfileInfo(json: $0.1) }
+                
+                var personal: InfoInProfile
+                
+                self.countBasicInfoSection = 0
+                self.countContactInfoSection = 0
+                self.countPersonalInfoSection = 0
+                self.countLifePositionSection = 0
+                
+                self.basicInfoSection.removeAll(keepingCapacity: false)
+                self.contactInfoSection.removeAll(keepingCapacity: false)
+                self.personalInfoSection.removeAll(keepingCapacity: false)
+                self.lifePositionSection.removeAll(keepingCapacity: false)
+                self.relativesSection.removeAll(keepingCapacity: false)
+                
+                var title = "О \(user.firstNameAbl)"
+                let fc = user.firstNameAbl.prefix(1)
+                if fc == "А" || fc == "И" || fc == "О" || fc == "Е" || fc == "У" || fc == "Я" || fc == "Ы" || fc == "Ё" || fc == "Э" || fc == "Ю"  {
+                    title = "Об \(user.firstNameAbl)"
                 }
-                personal = InfoInProfile("birthdate",dateFormatter.string(from: date!),"birthDate")
-                
-                basicInfoSection.append(personal)
-            }
-            
-            if user.homeTown != "" {
-                countBasicInfoSection += 1
-                personal = InfoInProfile("city", user.homeTown, "city")
-                basicInfoSection.append(personal)
-                
-            }
-            
-            if user.universityName != "" {
-                countBasicInfoSection += 1
-                var univerName = user.universityName
-                if user.universityGraduation != 0 {
-                    univerName = "\(univerName) '\(user.universityGraduation)"
+                if user.uid == vkSingleton.shared.userID {
+                    title = "Обо мне"
                 }
-                personal = InfoInProfile("university", univerName, "education")
-                basicInfoSection.append(personal)
+                
+                OperationQueue.main.addOperation {
+                    self.title = title
+                }
+                
+                if user.status == "" {
+                    self.isStatusExists = false
+                }
+                
+                // раздел "Основная информация"
+                if user.relation != 0 {
+                    self.countBasicInfoSection += 1
+                    personal = InfoInProfile("relation",self.relationCodeIntoString(code: user.relation, sex: user.sex, partnerId: user.relationPatrnerId),"relation")
+                    self.basicInfoSection.append(personal)
+                }
+                
+                if user.birthDate != "" {
+                    self.countBasicInfoSection += 1
+                    
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.locale = NSLocale(localeIdentifier: "ru_RU") as Locale?
+                    dateFormatter.dateFormat = "dd.M.yyyy"
+                    var date = dateFormatter.date(from: user.birthDate)
+                    dateFormatter.dateFormat = "dd MMMM yyyy года"
+                    if date == nil {
+                        dateFormatter.dateFormat = "dd.M"
+                        date = dateFormatter.date(from: user.birthDate)
+                        dateFormatter.dateFormat = "dd MMMM"
+                    }
+                    personal = InfoInProfile("birthdate",dateFormatter.string(from: date!),"birthDate")
+                    
+                    self.basicInfoSection.append(personal)
+                }
+                
+                if user.homeTown != "" {
+                    self.countBasicInfoSection += 1
+                    personal = InfoInProfile("city", user.homeTown, "city")
+                    self.basicInfoSection.append(personal)
+                    
+                }
+                
+                if user.universityName != "" {
+                    self.countBasicInfoSection += 1
+                    var univerName = user.universityName
+                    if user.universityGraduation != 0 {
+                        univerName = "\(univerName) '\(user.universityGraduation)"
+                    }
+                    personal = InfoInProfile("university", univerName, "education")
+                    self.basicInfoSection.append(personal)
+                }
+                
+                if user.facultyName != "" {
+                    self.countBasicInfoSection += 1
+                    personal = InfoInProfile("faculty", user.facultyName, "education")
+                    self.basicInfoSection.append(personal)
+                }
+                
+                // раздел "Контакты"
+                if user.mobilePhone != "" {
+                    self.countContactInfoSection += 1
+                    personal = InfoInProfile("phone",user.mobilePhone,"phone")
+                    self.contactInfoSection.append(personal)
+                }
+                
+                if user.site != "" {
+                    self.countContactInfoSection += 1
+                    personal = InfoInProfile("site",user.site,"site")
+                    self.contactInfoSection.append(personal)
+                }
+                
+                self.countContactInfoSection += 1
+                personal = InfoInProfile("id","id\(user.uid)","id")
+                self.contactInfoSection.append(personal)
+                
+                if user.domain != "" && user.domain != "id\(user.uid)"{
+                    self.countContactInfoSection += 1
+                    personal = InfoInProfile("vk",user.domain,"vk")
+                    self.contactInfoSection.append(personal)
+                }
+                
+                if user.skype != "" {
+                    self.countContactInfoSection += 1
+                    personal = InfoInProfile("skype",user.skype,"skype")
+                    self.contactInfoSection.append(personal)
+                }
+                
+                if user.facebook != "" {
+                    self.countContactInfoSection += 1
+                    personal = InfoInProfile("facebook",user.facebook,"facebook")
+                    self.contactInfoSection.append(personal)
+                }
+                
+                if user.twitter != "" {
+                    self.countContactInfoSection += 1
+                    personal = InfoInProfile("twitter",user.twitter,"twitter")
+                    self.contactInfoSection.append(personal)
+                }
+                
+                if user.instagram != "" {
+                    self.countContactInfoSection += 1
+                    personal = InfoInProfile("instagram",user.instagram,"instagram")
+                    self.contactInfoSection.append(personal)
+                }
+                
+                // раздел "Личная информация"
+                if user.about != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("О себе",user.about,"about")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.activities != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Деятельность",user.activities,"activities")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.interests != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Интересы",user.interests,"interests")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.books != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Любимые книги",user.books,"books")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.games != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Любимые игры",user.games,"games")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.movies != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Любимые фильмы",user.movies,"movies")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.music != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Любимая музыка",user.music,"music")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.tv != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Любимые телешоу",user.tv,"tv")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                if user.quotes != "" {
+                    self.countPersonalInfoSection += 1
+                    personal = InfoInProfile("Любимые цитаты",user.quotes,"quotes")
+                    self.personalInfoSection.append(personal)
+                }
+                
+                // раздел "Жизненная позиция"
+                if user.persPolitical != 0 {
+                    self.countLifePositionSection += 1
+                    personal = InfoInProfile("Политические предпочтения",self.politicalToString(code: user.persPolitical),"political")
+                    self.lifePositionSection.append(personal)
+                }
+                
+                if user.persReligion != "" {
+                    self.countLifePositionSection += 1
+                    personal = InfoInProfile("Мировоззрение",user.persReligion,"religion")
+                    self.lifePositionSection.append(personal)
+                }
+                
+                if user.persInspired != "" {
+                    self.countLifePositionSection += 1
+                    personal = InfoInProfile("Источники вдохновения",user.persInspired,"inspired")
+                    self.lifePositionSection.append(personal)
+                }
+                
+                if user.persPeopleMain != 0 {
+                    self.countLifePositionSection += 1
+                    personal = InfoInProfile("Главное в людях",self.peopleMainToString(code: user.persPeopleMain),"people_main")
+                    self.lifePositionSection.append(personal)
+                }
+                
+                if user.persLifeMain != 0 {
+                    self.countLifePositionSection += 1
+                    personal = InfoInProfile("Главное в жизни",self.lifeMainToString(code: user.persLifeMain),"life_main")
+                    self.lifePositionSection.append(personal)
+                }
+                
+                if user.persSmoking != 0 {
+                    self.countLifePositionSection += 1
+                    personal = InfoInProfile("Отношение к курению",self.smokingToString(code: user.persSmoking),"smoking")
+                    self.lifePositionSection.append(personal)
+                }
+                
+                if user.persAlcohol != 0 {
+                    self.countLifePositionSection += 1
+                    personal = InfoInProfile("Отношение к алкоголю",self.smokingToString(code: user.persAlcohol),"alcohol")
+                    self.lifePositionSection.append(personal)
+                }
+                
+                OperationQueue.main.addOperation {
+                    self.tableView.reloadData()
+                }
             }
-            
-            if user.facultyName != "" {
-                countBasicInfoSection += 1
-                personal = InfoInProfile("faculty", user.facultyName, "education")
-                basicInfoSection.append(personal)
-            }
-            
-            // раздел "Контакты"
-            if user.mobilePhone != "" {
-                countContactInfoSection += 1
-                personal = InfoInProfile("phone",user.mobilePhone,"phone")
-                contactInfoSection.append(personal)
-            }
-            
-            if user.site != "" {
-                countContactInfoSection += 1
-                personal = InfoInProfile("site",user.site,"site")
-                contactInfoSection.append(personal)
-            }
-            
-            countContactInfoSection += 1
-            personal = InfoInProfile("id","id\(user.uid)","id")
-            contactInfoSection.append(personal)
-            
-            if user.domain != "" && user.domain != "id\(user.uid)"{
-                countContactInfoSection += 1
-                personal = InfoInProfile("vk",user.domain,"vk")
-                contactInfoSection.append(personal)
-            }
-            
-            if user.skype != "" {
-                countContactInfoSection += 1
-                personal = InfoInProfile("skype",user.skype,"skype")
-                contactInfoSection.append(personal)
-            }
-            
-            if user.facebook != "" {
-                countContactInfoSection += 1
-                personal = InfoInProfile("facebook",user.facebook,"facebook")
-                contactInfoSection.append(personal)
-            }
-            
-            if user.twitter != "" {
-                countContactInfoSection += 1
-                personal = InfoInProfile("twitter",user.twitter,"twitter")
-                contactInfoSection.append(personal)
-            }
-            
-            if user.instagram != "" {
-                countContactInfoSection += 1
-                personal = InfoInProfile("instagram",user.instagram,"instagram")
-                contactInfoSection.append(personal)
-            }
-            
-            // раздел "Личная информация"
-            if user.about != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("О себе",user.about,"about")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.activities != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Деятельность",user.activities,"activities")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.interests != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Интересы",user.interests,"interests")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.books != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Любимые книги",user.books,"books")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.games != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Любимые игры",user.games,"games")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.movies != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Любимые фильмы",user.movies,"movies")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.music != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Любимая музыка",user.music,"music")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.tv != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Любимые телешоу",user.tv,"tv")
-                personalInfoSection.append(personal)
-            }
-            
-            if user.quotes != "" {
-                countPersonalInfoSection += 1
-                personal = InfoInProfile("Любимые цитаты",user.quotes,"quotes")
-                personalInfoSection.append(personal)
-            }
-            
-            // раздел "Жизненная позиция"
-            if user.persPolitical != 0 {
-                countLifePositionSection += 1
-                personal = InfoInProfile("Политические предпочтения",politicalToString(code: user.persPolitical),"political")
-                lifePositionSection.append(personal)
-            }
-            
-            if user.persReligion != "" {
-                countLifePositionSection += 1
-                personal = InfoInProfile("Мировоззрение",user.persReligion,"religion")
-                lifePositionSection.append(personal)
-            }
-            
-            if user.persInspired != "" {
-                countLifePositionSection += 1
-                personal = InfoInProfile("Источники вдохновения",user.persInspired,"inspired")
-                lifePositionSection.append(personal)
-            }
-            
-            if user.persPeopleMain != 0 {
-                countLifePositionSection += 1
-                personal = InfoInProfile("Главное в людях",peopleMainToString(code: user.persPeopleMain),"people_main")
-                lifePositionSection.append(personal)
-            }
-            
-            if user.persLifeMain != 0 {
-                countLifePositionSection += 1
-                personal = InfoInProfile("Главное в жизни",lifeMainToString(code: user.persLifeMain),"life_main")
-                lifePositionSection.append(personal)
-            }
-            
-            if user.persSmoking != 0 {
-                countLifePositionSection += 1
-                personal = InfoInProfile("Отношение к курению",smokingToString(code: user.persSmoking),"smoking")
-                lifePositionSection.append(personal)
-            }
-            
-            if user.persAlcohol != 0 {
-                countLifePositionSection += 1
-                personal = InfoInProfile("Отношение к алкоголю",smokingToString(code: user.persAlcohol),"alcohol")
-                lifePositionSection.append(personal)
-            }
+            OperationQueue().addOperation(getServerDataOperation)
         }
     }
     
@@ -710,6 +740,21 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
                 cell.imageView?.image = UIImage(named: basicInfoSection[indexPath.row].image)
                 cell.textLabel?.numberOfLines = 0
                 cell.textLabel?.text = "\(basicInfoSection[indexPath.row].value)"
+                
+                if (basicInfoSection[indexPath.row].comment == "relation") {
+                    if let partner = self.partner.first, let user = self.users.first, user.relationPatrnerId > 0 {
+                        let tap = UITapGestureRecognizer()
+                        tap.add {
+                            self.openProfileController(id: user.relationPatrnerId, name: "\(partner.firstName) \(partner.lastName)")
+                        }
+                        cell.textLabel?.addGestureRecognizer(tap)
+                        cell.textLabel?.isUserInteractionEnabled = true
+                        
+                        let attributedString = NSMutableAttributedString(string: "\(basicInfoSection[indexPath.row].value)")
+                        attributedString.setColorForText(partnerName, with: cell.textLabel?.tintColor ?? .blue)
+                        cell.textLabel?.attributedText = attributedString
+                    }
+                }
             }
             
             return cell
@@ -777,50 +822,106 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
 }
 
 extension UserInfoTableViewController {
-    func relationCodeIntoString(code: Int, sex: Int) -> String {
-        if code == 1 {
-            if sex == 1 {
-                return "не замужем"
-            } else {
-                return "не женат"
+    func relationCodeIntoString(code: Int, sex: Int, partnerId: Int) -> String {
+        
+        if (partnerId == 0) {
+            if code == 1 {
+                if sex == 1 {
+                    return "не замужем"
+                } else {
+                    return "не женат"
+                }
             }
-        }
-        if code == 2 {
-            if sex == 1 {
-                return "есть друг"
-            } else {
-                return "есть подруга"
+            if code == 2 {
+                if sex == 1 {
+                    return "есть друг"
+                } else {
+                    return "есть подруга"
+                }
             }
-        }
-        if code == 3 {
-            if sex == 1 {
-                return "помолвлена"
-            } else {
-                return "помолвлен"
+            if code == 3 {
+                if sex == 1 {
+                    return "помолвлена"
+                } else {
+                    return "помолвлен"
+                }
             }
-        }
-        if code == 4 {
-            if sex == 1 {
-                return "замужем"
-            } else {
-                return "женат"
+            if code == 4 {
+                if sex == 1 {
+                    return "замужем"
+                } else {
+                    return "женат"
+                }
             }
-        }
-        if code == 5 {
-            return "всё сложно"
-        }
-        if code == 6 {
-            return "в активном поиске"
-        }
-        if code == 7 {
-            if sex == 1 {
-                return "влюблена"
-            } else {
-                return "влюблен"
+            if code == 5 {
+                return "всё сложно"
             }
-        }
-        if code == 8 {
-            return "в гражданском браке"
+            if code == 6 {
+                return "в активном поиске"
+            }
+            if code == 7 {
+                if sex == 1 {
+                    return "влюблена"
+                } else {
+                    return "влюблен"
+                }
+            }
+            if code == 8 {
+                return "в гражданском браке"
+            }
+        } else if let partner = self.partner.first {
+            
+            if code == 1 {
+                if sex == 1 {
+                    return "не замужем"
+                } else {
+                    return "не женат"
+                }
+            }
+            if code == 2 {
+                if sex == 1 {
+                    return "есть друг"
+                } else {
+                    return "есть подруга"
+                }
+            }
+            if code == 3 {
+                if sex == 1 {
+                    partnerName = "\(partner.firstNameIns) \(partner.lastNameIns)"
+                    return "помолвлена c \(partner.firstNameIns) \(partner.lastNameIns)"
+                } else {
+                    partnerName = "\(partner.firstNameIns) \(partner.lastNameIns)"
+                    return "помолвлен c \(partner.firstNameIns) \(partner.lastNameIns)"
+                }
+            }
+            if code == 4 {
+                if sex == 1 {
+                    partnerName = "\(partner.firstNameIns) \(partner.lastNameIns)"
+                    return "замужем за \(partner.firstNameIns) \(partner.lastNameIns)"
+                } else {
+                    partnerName = "\(partner.firstNameDat) \(partner.lastNameDat)"
+                    return "женат на \(partner.firstNameDat) \(partner.lastNameDat)"
+                }
+            }
+            if code == 5 {
+                return "всё сложно"
+            }
+            if code == 6 {
+                return "в активном поиске"
+            }
+            if code == 7 {
+                if sex == 1 {
+                    partnerName = "\(partner.firstNameAcc) \(partner.lastNameAcc)"
+                    return "влюблена в \(partner.firstNameAcc) \(partner.lastNameAcc)"
+                } else {
+                    partnerName = "\(partner.firstNameAcc) \(partner.lastNameAcc)"
+                    return "влюблен в \(partner.firstNameAcc) \(partner.lastNameAcc)"
+                }
+            }
+            if code == 8 {
+                partnerName = "\(partner.firstNameIns) \(partner.lastNameIns)"
+                return "в гражданском браке c \(partner.firstNameIns) \(partner.lastNameIns)"
+            }
         }
         
         return ""
@@ -960,6 +1061,14 @@ extension Collection where Iterator.Element == String {
     }
 }
 
+extension NSMutableAttributedString{
+    func setColorForText(_ textToFind: String, with color: UIColor) {
+        let range = self.mutableString.range(of: textToFind, options: .caseInsensitive)
+        if range.location != NSNotFound {
+            addAttribute(NSAttributedString.Key.foregroundColor, value: color, range: range)
+        }
+    }
+}
 
 // Helper function inserted by Swift 4.2 migrator.
 fileprivate func convertFromUIImagePickerControllerInfoKeyDictionary(_ input: [UIImagePickerController.InfoKey: Any]) -> [String: Any] {

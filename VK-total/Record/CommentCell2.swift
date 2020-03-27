@@ -47,6 +47,8 @@ class CommentCell2: UITableViewCell {
     let commFont = UIFont(name: "Verdana", size: 12)!
     let likeFont = UIFont(name: "Verdana-Bold", size: 12)!
     
+    var leftX: CGFloat = 0
+    
     func configureCountCell(count: Int, total: Int) {
         
         for subview in self.subviews {
@@ -54,6 +56,8 @@ class CommentCell2: UITableViewCell {
                 subview.removeFromSuperview()
             }
         }
+        
+        backgroundColor = .white
         
         countButton.tag = 100
         countButton.setTitle("Показать еще \(count) из \(total) комментариев", for: .normal)
@@ -76,6 +80,14 @@ class CommentCell2: UITableViewCell {
             if subview.tag == 100 {
                 subview.removeFromSuperview()
             }
+        }
+        
+        if (comment.replyComment == 0) {
+            leftX = 0
+            backgroundColor = .white
+        } else {
+            leftX = 0 //30
+            backgroundColor = .white //UIColor(white: 0.95, alpha: 1)
         }
         
         configureAvatar(comment: comment, profiles: profiles, groups: groups, indexPath: indexPath, cell: cell, tableView: tableView)
@@ -110,7 +122,7 @@ class CommentCell2: UITableViewCell {
                 
                     let photoImage = UIImageView()
                     photoImage.tag = 100
-                    let width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight
+                    let width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                     let height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                     
                     let getCacheImage = GetCacheImage(url: comment.attach[index].photoURL, lifeTime: .avatarImage)
@@ -122,7 +134,7 @@ class CommentCell2: UITableViewCell {
                         photoImage.clipsToBounds = true
                     }
                     
-                    photoImage.frame = CGRect(x: 3 * leftInsets + avatarHeight, y: topY + vertInsets, width: width, height: height)
+                    photoImage.frame = CGRect(x: leftX + 3 * leftInsets + avatarHeight, y: topY + vertInsets, width: width, height: height)
                     self.addSubview(photoImage)
                     topY = topY + height + vertInsets
                     
@@ -177,15 +189,15 @@ class CommentCell2: UITableViewCell {
                         photoImage.clipsToBounds = true
                     }
                     
-                    let photoX = 3 * leftInsets + avatarHeight
+                    let photoX = leftX + 3 * leftInsets + avatarHeight
                     var width: CGFloat = 0.0
                     var height: CGFloat = 0.0
-                    if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight {
+                    if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX {
                         
                         width = CGFloat(comment.attach[index].photoWidth)
                         height = CGFloat(comment.attach[index].photoHeight)
                     } else {
-                        width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight
+                        width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                         
                         height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                     }
@@ -241,7 +253,7 @@ class CommentCell2: UITableViewCell {
                         photoImage.clipsToBounds = true
                     }
                     
-                    photoImage.frame = CGRect(x: 3 * leftInsets + avatarHeight, y: topY, width: stickerHeight, height: stickerHeight)
+                    photoImage.frame = CGRect(x: leftX + 3 * leftInsets + avatarHeight, y: topY, width: stickerHeight, height: stickerHeight)
                     self.addSubview(photoImage)
                     topY = topY + stickerHeight
                     
@@ -262,15 +274,15 @@ class CommentCell2: UITableViewCell {
                         photoImage.clipsToBounds = true
                     }
                     
-                    let photoX = 3 * leftInsets + avatarHeight
+                    let photoX = leftX + 3 * leftInsets + avatarHeight
                     var width: CGFloat = 0.0
                     var height: CGFloat = 0.0
-                    if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight {
+                    if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX {
                         
                         width = CGFloat(comment.attach[index].photoWidth)
                         height = CGFloat(comment.attach[index].photoHeight)
                     } else {
-                        width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight
+                        width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                         
                         height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                     }
@@ -361,15 +373,15 @@ class CommentCell2: UITableViewCell {
                         photoImage.clipsToBounds = true
                     }
                     
-                    let photoX = 3 * leftInsets + avatarHeight
+                    let photoX = leftX + 3 * leftInsets + avatarHeight
                     var width: CGFloat = 0.0
                     var height: CGFloat = 0.0
-                    if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight {
+                    if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX {
                         
                         width = CGFloat(comment.attach[index].photoWidth)
                         height = CGFloat(comment.attach[index].photoHeight)
                     } else {
-                        width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight
+                        width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                         
                         height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                     }
@@ -400,12 +412,12 @@ class CommentCell2: UITableViewCell {
                     audioLabel.font = UIFont(name: "Verdana", size: 13)!
                     
                     if comment.attach[index].title != "" {
-                        audioImage.frame = CGRect(x: avatarHeight + 2 * leftInsets, y: topY + topLinkInsets, width: audioImageSize, height: audioImageSize)
+                        audioImage.frame = CGRect(x: leftX + avatarHeight + 2 * leftInsets, y: topY + topLinkInsets, width: audioImageSize, height: audioImageSize)
                         
-                        artistLabel.frame = CGRect (x: avatarHeight + 3 * leftInsets + audioImageSize, y: topY + 4, width: bounds.size.width - 4 * leftInsets - audioImageSize - avatarHeight, height: 16)
+                        artistLabel.frame = CGRect (x: leftX + avatarHeight + 3 * leftInsets + audioImageSize, y: topY + 4, width: bounds.size.width - 4 * leftInsets - audioImageSize - avatarHeight, height: 16)
                         artistLabel.text = comment.attach[index].artist
                         
-                        audioLabel.frame = CGRect (x: avatarHeight + 3 * leftInsets + audioImageSize, y: topY + 20, width: bounds.size.width - 4 * leftInsets - audioImageSize - avatarHeight, height: 16)
+                        audioLabel.frame = CGRect (x: leftX + avatarHeight + 3 * leftInsets + audioImageSize, y: topY + 20, width: bounds.size.width - 4 * leftInsets - audioImageSize - avatarHeight, height: 16)
                         audioLabel.text = comment.attach[index].title
                         audioLabel.textColor = audioLabel.tintColor
                     }
@@ -481,7 +493,7 @@ class CommentCell2: UITableViewCell {
     
     func getCommentLabelSize(text: String, font: UIFont) -> CGSize {
         
-        let maxWidth = UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets
+        let maxWidth = UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets - leftX
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
         let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
@@ -508,7 +520,7 @@ class CommentCell2: UITableViewCell {
         commentLabel.numberOfLines = 0
                 
         let size = getCommentLabelSize(text: comment.text.prepareTextForPublic(), font: commFont)
-        let pointX = avatarHeight + 2 * leftInsets
+        let pointX = avatarHeight + 2 * leftInsets + leftX
         let pointY = topY + vertInsets
             
         commentLabel.frame = CGRect(x: pointX, y: pointY, width: size.width, height: size.height)
@@ -585,7 +597,7 @@ class CommentCell2: UITableViewCell {
         dateLabel.contentMode = .bottom
         dateLabel.isEnabled = false
         
-        dateLabel.frame = CGRect(x: avatarHeight + 2 * leftInsets, y: topY + vertInsets, width: UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets - likesButtonWidth, height: 30)
+        dateLabel.frame = CGRect(x: leftX + avatarHeight + 2 * leftInsets, y: topY + vertInsets, width: UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets - likesButtonWidth, height: 30)
         self.addSubview(dateLabel)
     }
     
@@ -615,7 +627,7 @@ class CommentCell2: UITableViewCell {
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.5
         
-        nameLabel.frame = CGRect(x: avatarHeight + 2 * leftInsets, y: topInsets, width: UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets, height: 22)
+        nameLabel.frame = CGRect(x: leftX + avatarHeight + 2 * leftInsets, y: topInsets, width: UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets, height: 22)
         self.addSubview(nameLabel)
         
         let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
@@ -630,11 +642,17 @@ class CommentCell2: UITableViewCell {
         }
         
         avatarImage.tag = 100
-        avatarImage.frame = CGRect(x: leftInsets, y: topInsets, width: avatarHeight, height: avatarHeight)
+        avatarImage.frame = CGRect(x: leftX + leftInsets, y: topInsets, width: avatarHeight, height: avatarHeight)
         self.addSubview(avatarImage)
     }
     
     func getRowHeight(comment: Comments) -> CGFloat {
+        
+        if (comment.replyComment == 0) {
+            leftX = 0
+        } else {
+            leftX = 0 //30
+        }
         
         let avatarTop = topInsets + avatarHeight + topInsets
         var topY = topInsets + 22
@@ -647,18 +665,18 @@ class CommentCell2: UITableViewCell {
                 if comment.attach[index].type != "" {
                     if comment.attach[index].type == "photo" {
                         
-                        let width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight
+                        let width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                         let height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                         topY = topY + height + vertInsets
                     }
                     
                     if comment.attach[index].type == "video" {
                         var height: CGFloat = 0
-                        if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight {
+                        if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX {
                             
                             height = CGFloat(comment.attach[index].photoHeight)
                         } else {
-                            let width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight
+                            let width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                             
                             height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                         }
@@ -673,12 +691,12 @@ class CommentCell2: UITableViewCell {
                     if comment.attach[index].type == "doc" {
                         var width: CGFloat = 0.0
                         var height: CGFloat = 0.0
-                        if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight {
+                        if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX {
                             
                             width = CGFloat(comment.attach[index].photoWidth)
                             height = CGFloat(comment.attach[index].photoHeight)
                         } else {
-                            width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight
+                            width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                             
                             height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                         }
