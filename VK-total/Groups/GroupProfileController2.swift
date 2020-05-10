@@ -1025,6 +1025,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         let nameLabel = UILabel()
         nameLabel.attributedText = nil
         nameLabel.text = "\(user.firstName) \(user.lastName)"
+        nameLabel.textColor = .black
         if user.online == 1 {
             if user.onlineMobile == 1 {
                 let fullString = "\(user.firstName) \(user.lastName) "
@@ -1049,6 +1050,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if contact.desc != "" {
             let label = UILabel()
             label.text = "\(contact.desc)"
+            label.textColor = .black
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -1060,6 +1062,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if contact.phone != "" {
             let label = UILabel()
             label.text = "\(contact.phone)"
+            label.textColor = .black
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -1071,6 +1074,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if contact.email != "" {
             let label = UILabel()
             label.text = "\(contact.email)"
+            label.textColor = .black
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -1168,7 +1172,9 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
 
         let textView = UILabel(frame: CGRect(x: 10, y: 20, width: width-20, height: height-20))
         textView.text = profile.description
+        
         textView.prepareTextForPublish2(self)
+        textView.backgroundColor = .clear
         textView.font = dFont
         textView.textAlignment = .center
         textView.numberOfLines = 0

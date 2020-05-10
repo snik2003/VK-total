@@ -301,6 +301,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         
         let textView = UITextView(frame: CGRect(x: 10, y: 20, width: width-20, height: height-20))
         textView.text = feedbackText
+        textView.textColor = .black
+        textView.backgroundColor = .clear
         textView.font = feedFont
         textView.textAlignment = .center
         view.addSubview(textView)
@@ -308,7 +310,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         let startPoint = CGPoint(x: UIScreen.main.bounds.width - 34, y: 66)
         
         self.popover = Popover(options: [.type(.down),
-                               .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))])
+                                         .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))])
         self.popover.show(view, point: startPoint)
     }
     

@@ -50,9 +50,9 @@ extension String {
         let textArray = self.components(separatedBy: ["[","]"])
         for arr in textArray {
             if arr.containsIgnoringCase(find: "|") {
-                var arr1 = arr.components(separatedBy: "|")
+                let arr1 = arr.components(separatedBy: "|")
                 if arr1[0].containsIgnoringCase(find: ":") {
-                    var arr2 = arr1[0].components(separatedBy: ":")
+                    let arr2 = arr1[0].components(separatedBy: ":")
                     sid = arr2[0]
                 } else {
                     sid = arr1[0]
@@ -126,7 +126,7 @@ extension UILabel {
             
             let fullString = text
             let attributedString = NSMutableAttributedString(string: fullString)
-            attributedString.setAttributes([NSAttributedString.Key.font: self.font], range: NSRange(location: 0, length: fullString.length))
+            attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: self.font], range: NSRange(location: 0, length: fullString.length))
             
             for match in allMatches1 {
                 let range = (fullString as NSString).range(of: match.getNameFromLink())
@@ -421,7 +421,8 @@ extension UILabel {
                     }
                 }
             }
-            self.text = text
         }
     }
 }
+
+

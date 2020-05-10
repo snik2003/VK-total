@@ -1873,6 +1873,7 @@ extension UIViewController: NotificationCellProtocol {
         
         let titleLabel = UILabel()
         titleLabel.text = "Отправлять комментарии:"
+        titleLabel.textColor = .black
         titleLabel.font = UIFont(name: "Verdana", size: 14)!
         titleLabel.textAlignment = .center
         titleLabel.frame = CGRect(x: 10, y: height, width: width - 20, height: 20)
@@ -1882,6 +1883,7 @@ extension UIViewController: NotificationCellProtocol {
         
         let ownLabel = UILabel()
         ownLabel.text = "от своего имени"
+        ownLabel.textColor = .black
         
         let fullString = "от своего имени"
         let rangeOfColoredString = (fullString as NSString).range(of: "своего имени")
@@ -1976,6 +1978,7 @@ extension UIViewController: NotificationCellProtocol {
                     for group in groups {
                         let ownLabel = UILabel()
                         ownLabel.text = "от \(group.name)"
+                        ownLabel.textColor = .black
                         
                         if let gid = Int(group.gid) {
                             let fullString = "от \(group.name)"
