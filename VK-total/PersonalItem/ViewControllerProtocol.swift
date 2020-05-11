@@ -666,7 +666,7 @@ extension UIViewController: NotificationCellProtocol {
                     config.entersReaderIfAvailable = false
 
                     let browserController = SFSafariViewController(url: url, configuration: config)
-                    browserController.preferredBarTintColor = UIColor(red: 37/255, green: 108/255, blue: 162/255, alpha: 1)
+                    browserController.preferredBarTintColor = UIColor(red: 0, green: 84/255, blue: 147/255, alpha: 1)
                     browserController.preferredControlTintColor = .white
                     if #available(iOS 13.0, *) { browserController.overrideUserInterfaceStyle = .light }
                     self.present(browserController, animated: true)

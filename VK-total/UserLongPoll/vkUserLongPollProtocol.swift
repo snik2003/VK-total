@@ -37,6 +37,7 @@ extension UIViewController: vkUserLongPollProtocol {
                 guard let data = request.data else { return }
                 
                 guard let json = try? JSON(data: data) else { print("json error"); return }
+                //print(json)
                 
                 vkUserLongPoll.shared.server = json["response"]["server"].stringValue
                 vkUserLongPoll.shared.key = json["response"]["key"].stringValue
@@ -92,6 +93,7 @@ extension UIViewController: vkUserLongPollProtocol {
                     return
                 }
                 
+                //print(json)
                 let failed = json["failed"].intValue
                 vkSingleton.shared.errorCode = json["error"]["error_code"].intValue
                 vkSingleton.shared.errorMsg = json["error"]["error_msg"].stringValue

@@ -162,7 +162,7 @@ class DialogsController: UITableViewController {
         getServerDataOperation.completionBlock = {
             guard let data = getServerDataOperation.data else { return }
             guard let json = try? JSON(data: data) else { print("json error"); return }
-            print("url = \(url)\nparameters = \(parameters)\nresponse = \(json)")
+            //print("url = \(url)\nparameters = \(parameters)\nresponse = \(json)")
             
             var messIDs: [Int] = json["response"]["items"].map { $0.1["last_message_id"].intValue }
             messIDs = messIDs.filter({ $0 > 0 })
@@ -185,7 +185,7 @@ class DialogsController: UITableViewController {
                 getServerDataOperation2.completionBlock = {
                     guard let data2 = getServerDataOperation2.data else { return }
                     guard let json2 = try? JSON(data: data2) else { print("json error"); return }
-                    print(json2)
+                    //print(json2)
                     
                     let dialogs = json2["response"]["items"].compactMap { Message(json: $0.1, class: 2) }
                     self.dialogs.append(contentsOf: dialogs)

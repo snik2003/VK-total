@@ -551,7 +551,7 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
             if typeOf.count > 0 || fwdMessagesID.count > 0 {
                 return 100
             }
-            return 20
+            return 40
         }
         return 0
     }
@@ -560,7 +560,7 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
         
         let view = UIView()
         if section == 0 {
-            view.backgroundColor = tableView.backgroundColor
+            view.backgroundColor = .clear
             
             if dialogs.count < totalCount {
                 
@@ -600,8 +600,8 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
             }
             let view = UIView()
             collectionView.removeFromSuperview()
-            view.backgroundColor = tableView.backgroundColor
-            view.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: 20)
+            view.backgroundColor = .clear
+            view.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: 40)
             return view
         }
         let view = UIView()
