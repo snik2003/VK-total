@@ -14,6 +14,7 @@ import SwiftMessages
 import SwiftyJSON
 import Popover
 import SCLAlertView
+import SafariServices
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -207,7 +208,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         
         if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), !(currentVC is PasswordController) {
             
-            if currentVC is UIAlertController {
+            if currentVC is UIAlertController || currentVC is SFSafariViewController {
                 currentVC.dismiss(animated: false) { () -> Void in
                     if let currentVC2 = self.topViewControllerWithRootViewController(rootViewController: self.window?.rootViewController) {
                         self.tapPushNotification(userInfo, controller: currentVC2)
