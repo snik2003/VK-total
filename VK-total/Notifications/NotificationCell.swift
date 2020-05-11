@@ -401,8 +401,7 @@ class NotificationCell: UITableViewCell {
             setColorText(fullString: name, avatarString: "\(userName)", postString: "комментарии", parent: "", feedback: comment)
         }
         
-        
-        notLabel.text = name
+        //notLabel.text = name
         
         avatarImage.image = UIImage(named: "error")
         let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)

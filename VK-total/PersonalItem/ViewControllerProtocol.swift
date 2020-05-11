@@ -15,6 +15,7 @@ import Photos
 import Alamofire
 import SwiftMessages
 import Popover
+import SafariServices
 
 protocol NotificationCellProtocol {
     
@@ -658,11 +659,24 @@ extension UIViewController: NotificationCellProtocol {
                 validURL = "http://\(url1)"
             }
             
-            let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
             
-            browserController.path = "\(validURL)"
-            
-            self.navigationController?.pushViewController(browserController, animated: true)
+            if let url = URL(string: validURL) {
+                if #available(iOS 11.0, *) {
+                    let config = SFSafariViewController.Configuration()
+                    config.entersReaderIfAvailable = false
+
+                    let browserController = SFSafariViewController(url: url, configuration: config)
+                    browserController.preferredBarTintColor = UIColor(red: 37/255, green: 108/255, blue: 162/255, alpha: 1)
+                    browserController.preferredControlTintColor = .white
+                    if #available(iOS 13.0, *) { browserController.overrideUserInterfaceStyle = .light }
+                    self.present(browserController, animated: true)
+                } else {
+                    if let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as? BrowserController {
+                        browserController.path = "\(validURL)"
+                        self.navigationController?.pushViewController(browserController, animated: true)
+                    }
+                }
+            }
         } else {
             showErrorMessage(title: "Ошибка!", msg: "Некорректная ссылка:\n\(url)")
         }
