@@ -317,7 +317,10 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             } else {
                 let photo = photos[indexPath.section]
                 
-                let height = self.tableView.bounds.width * CGFloat(photo.height) / CGFloat(photo.width)
+                var height = self.tableView.bounds.width
+                if photo.height > 0 && photo.width > 0 {
+                    height = self.tableView.bounds.width * CGFloat(photo.height) / CGFloat(photo.width)
+                }
                 estimatedHeightCache[indexPath] = height
                 return height
             }
@@ -364,7 +367,10 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             } else {
                 let photo = photos[indexPath.section]
                 
-                let height = self.tableView.bounds.width * CGFloat(photo.height) / CGFloat(photo.width)
+                var height = self.tableView.bounds.width
+                if photo.height > 0 && photo.width > 0 {
+                    height = self.tableView.bounds.width * CGFloat(photo.height) / CGFloat(photo.width)
+                }
                 estimatedHeightCache[indexPath] = height
                 return height
             }
