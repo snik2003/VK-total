@@ -243,6 +243,7 @@ class WallRecordCell2: UITableViewCell {
         postTextLabel.text = record.text
         postTextLabel.font = textFont
         postTextLabel.numberOfLines = 0
+        postTextLabel.lineBreakMode = .byWordWrapping
         postTextLabel.prepareTextForPublish2(viewController)
         
         repostTextLabel.text = ""
@@ -287,6 +288,7 @@ class WallRecordCell2: UITableViewCell {
                 readMoreButtonTapped2 = true
             }
             repostTextLabel.text = record.repostText
+            repostTextLabel.lineBreakMode = .byWordWrapping
             repostTextLabel.prepareTextForPublish2(viewController)
             
             repostAvatarImageView.isHidden = false
@@ -751,6 +753,7 @@ class WallRecordCell2: UITableViewCell {
         
         linkLabel.frame = CGRect(x: imageWidth + 2 * leftInsets, y: topY + topLinkInsets, width: self.bounds.width - imageWidth - 3 * leftInsets, height: imageHeight)
         
+        linkLabel.lineBreakMode = .byWordWrapping
         linkLabel.prepareTextForPublish2(viewController)
         self.addSubview(linkLabel)
         

@@ -258,6 +258,7 @@ class RecordCell: UITableViewCell {
         datePostLabel.text = record.date.toStringLastTime()
         
         postTextLabel.text = record.text //.prepareTextForPublic()
+        postTextLabel.lineBreakMode = .byWordWrapping
         postTextLabel.prepareTextForPublish2(viewController)
         postTextLabel.font = textFont
         postTextLabel.numberOfLines = 0
@@ -297,6 +298,7 @@ class RecordCell: UITableViewCell {
             
             
             repostTextLabel.text = record.repostText//.prepareTextForPublic()
+            repostTextLabel.lineBreakMode = .byWordWrapping
             repostTextLabel.prepareTextForPublish2(viewController)
             
             repostAvatarImageView.isHidden = false
@@ -749,6 +751,7 @@ class RecordCell: UITableViewCell {
                 
                 linkNameLabel.text = record.linkText[index]
                 linkLabel.text = record.linkURL[index]
+                linkLabel.lineBreakMode = .byWordWrapping
                 linkLabel.prepareTextForPublish2(viewController)
                 linkLabel.font = linkFont
                 linkLabel.sizeToFit()

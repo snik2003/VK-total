@@ -95,10 +95,14 @@ extension String {
 extension UILabel {
     
     func didTapAttributedTextInLabel2(tap: UITapGestureRecognizer, inRange targetRange: NSRange) -> Bool {
+        
+        guard let attributedText = self.attributedText else { return false }
+        
         // Create instances of NSLayoutManager, NSTextContainer and NSTextStorage
         let layoutManager = NSLayoutManager()
         let textContainer = NSTextContainer(size: CGSize.zero)
-        let textStorage = NSTextStorage(attributedString: self.attributedText!)
+        let textStorage = NSTextStorage(attributedString: attributedText)
+        textStorage.addAttribute(NSAttributedString.Key.font, value: self.font, range: NSMakeRange(0, attributedText.length))
         
         // Configure layoutManager and textStorage
         layoutManager.addTextContainer(textContainer)
@@ -110,13 +114,28 @@ extension UILabel {
         textContainer.maximumNumberOfLines = self.numberOfLines
         
         let labelSize = self.bounds.size
-        textContainer.size = labelSize
+        textContainer.size = CGSize(width: self.frame.size.width, height: CGFloat.greatestFiniteMagnitude)
         
         // Find the tapped character location and compare it to the specified range
         let locationOfTouchInLabel = tap.location(in: self)
         let textBoundingBox = layoutManager.usedRect(for: textContainer)
-        let textContainerOffset = CGPoint(x: (labelSize.width - textBoundingBox.size.width) * 0.5 - textBoundingBox.origin.x, y: (labelSize.height - textBoundingBox.size.height) * 0.5 - textBoundingBox.origin.y)
-        let locationOfTouchInTextContainer = CGPoint(x: locationOfTouchInLabel.x - textContainerOffset.x, y: locationOfTouchInLabel.y - textContainerOffset.y)
+        
+        var alignmentOffset: CGFloat!
+        switch self.textAlignment {
+        case .left, .natural, .justified:
+            alignmentOffset = 0.0
+        case .center:
+            alignmentOffset = 0.5
+        case .right:
+            alignmentOffset = 1.0
+        }
+        
+        let textContainerOffset = CGPoint(x: (labelSize.width - textBoundingBox.size.width) * alignmentOffset - textBoundingBox.origin.x,
+                                          y: (labelSize.height - textBoundingBox.size.height) * alignmentOffset - textBoundingBox.origin.y)
+        
+        let locationOfTouchInTextContainer = CGPoint(x: locationOfTouchInLabel.x - textContainerOffset.x,
+                                                     y: locationOfTouchInLabel.y - textContainerOffset.y)
+        
         let indexOfCharacter = layoutManager.characterIndex(for: locationOfTouchInTextContainer, in: textContainer, fractionOfDistanceBetweenInsertionPoints: nil)
         
         return NSLocationInRange(indexOfCharacter, targetRange)
@@ -124,6 +143,7 @@ extension UILabel {
     
     func prepareTextForPublish2(_ delegate: UIViewController) {
         if var text = self.text {
+            self.lineBreakMode = .byWordWrapping
             
             text = text.replacingOccurrences(of: "<br>", with: "\n")
             text = text.replacingOccurrences(of: "&quot;", with: "\"")
@@ -200,17 +220,6 @@ extension UILabel {
                             if match.prefix(5) == "[http" {
                                 if let url = match.getURLFromLink() {
                                     delegate.openBrowserController(url: url)
-                                    /*let alertController = UIAlertController(title: "внутренняя ссылка ВКонтакте:", message: url, preferredStyle: .actionSheet)
-                                    
-                                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                                    alertController.addAction(cancelAction)
-                                    
-                                    let action1 = UIAlertAction(title: "Открыть ссылку", style: .destructive){ action in
-                                       delegate.openBrowserControllerNoCheck(url: url)
-                                    }
-                                    alertController.addAction(action1)
-                                    
-                                    delegate.present(alertController, animated: true)*/
                                 }
                             } else {
                                 delegate.openBrowserController(url: "https://vk.com/\(match.getIdFromLink())")

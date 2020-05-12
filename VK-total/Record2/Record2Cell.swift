@@ -219,6 +219,7 @@ class Record2Cell: UITableViewCell {
         postTextLabel.text = record.text
         postTextLabel.font = textFont
         postTextLabel.numberOfLines = 0
+        postTextLabel.lineBreakMode = .byWordWrapping
         postTextLabel.prepareTextForPublish2(viewController)
         
         repostTextLabel.text = ""
@@ -260,6 +261,7 @@ class Record2Cell: UITableViewCell {
             repostDateLabel.isEnabled = false
             
             repostTextLabel.text = record.repostText
+            repostTextLabel.lineBreakMode = .byWordWrapping
             repostTextLabel.prepareTextForPublish2(viewController)
             
             repostAvatarImageView.isHidden = false
@@ -897,6 +899,7 @@ class Record2Cell: UITableViewCell {
         linkLabel.clipsToBounds = true
         linkLabel.layer.borderColor = linkLabel.tintColor.cgColor
         linkLabel.layer.borderWidth = 0.5
+        linkLabel.lineBreakMode = .byWordWrapping
         linkLabel.prepareTextForPublish2(viewController)
         
         linkLabel.frame = CGRect(x: imageWidth + 2 * leftInsets, y: topY + topLinkInsets, width: self.bounds.width - imageWidth - 3 * leftInsets, height: imageHeight)
