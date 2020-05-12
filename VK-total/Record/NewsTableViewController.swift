@@ -55,6 +55,7 @@ class NewsTableViewController: UITableViewController {
         menuView.selectedCellTextLabelColor = UIColor.red
         menuView.cellTextLabelFont = UIFont.boldSystemFont(ofSize: 15)
         menuView.navigationBarTitleFont = UIFont.boldSystemFont(ofSize: 17)
+        menuView.cellSeparatorColor = UIColor(red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         navigationItem.titleView = menuView
         
         menuView.didSelectItemAtIndexHandler = {[weak self] (indexPath: Int) -> () in

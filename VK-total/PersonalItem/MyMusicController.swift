@@ -29,19 +29,23 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     var isPlaying = false
     var playIndexPath: IndexPath!
     
-    var navHeight: CGFloat = 64
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
     var tabHeight: CGFloat = 49
+    var firstAppear = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         if #available(iOS 13.0, *) {
             overrideUserInterfaceStyle = .light
-        }
-        
-        if UIScreen.main.nativeBounds.height == 2436 {
-            self.navHeight = 88
-            self.tabHeight = 83
         }
         
         OperationQueue.main.addOperation {
@@ -62,6 +66,15 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         }
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+        }
+    }
+    
     @objc func playerDidFinishPlaying(note: NSNotification) {
         if playIndexPath != nil {
             if let cell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {

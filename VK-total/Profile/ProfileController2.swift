@@ -42,8 +42,17 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     let count = 20
     var isRefresh = false
     
-    var navHeight: CGFloat = 64
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
     var tabHeight: CGFloat = 49
+    var firstAppear = true
     
     let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -63,11 +72,6 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         }
         
         OperationQueue.main.addOperation {
-            if UIScreen.main.nativeBounds.height == 2436 {
-                self.navHeight = 88
-                self.tabHeight = 83
-            }
-            
             self.createTableView()
             
             self.barItem.isEnabled = true
@@ -87,6 +91,15 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         refreshExecute()
         if self.userID == vkSingleton.shared.userID {
             StoreReviewHelper.checkAndAskForReview()
+        }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
         }
     }
     

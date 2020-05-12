@@ -37,8 +37,17 @@ enum MediaType: String {
 
 class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
-    var navHeight: CGFloat = 64
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
     var tabHeight: CGFloat = 49
+    var firstAppear = true
     
     var chat: [ChatInfo] = []
     var dialogs: [DialogHistory] = []
@@ -118,11 +127,6 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             overrideUserInterfaceStyle = .light
         }
     
-        if UIScreen.main.nativeBounds.height == 2436 {
-            self.navHeight = 88
-            self.tabHeight = 83
-        }
-        
         self.configureTableView()
         self.tableView.separatorStyle = .none
         
@@ -184,6 +188,23 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         }
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
+            if mode == .search {
+                let bounds = self.view.bounds
+                searchBar.layer.frame = CGRect(x: 0, y: navHeight, width: bounds.width, height: 50)
+                self.view.addSubview(searchBar)
+                tableView.layer.frame = CGRect(x: 0, y: navHeight + 50, width: bounds.width, height: bounds.height - navHeight - 50 - tabHeight)
+                self.view.addSubview(tableView)
+            }
+        }
+    }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         
@@ -238,14 +259,6 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         
         if mode == .attachments || mode == .important {
             tableView.frame = self.view.bounds
-            self.view.addSubview(tableView)
-        }
-        
-        if mode == .search {
-            let bounds = self.view.bounds
-            searchBar.frame = CGRect(x: 0, y: navHeight, width: bounds.width, height: 50)
-            self.view.addSubview(searchBar)
-            tableView.frame = CGRect(x: 0, y: navHeight + 50, width: bounds.width, height: bounds.height - navHeight - 50 - tabHeight)
             self.view.addSubview(tableView)
         }
         

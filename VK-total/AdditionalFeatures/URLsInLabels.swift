@@ -25,6 +25,19 @@ extension String {
         }
     }
     
+    func getURLFromLink() -> String? {
+        
+        var textArray = self.replacingOccurrences(of: "[", with: "")
+        textArray = textArray.replacingOccurrences(of: "]", with: "")
+        if textArray.containsIgnoringCase(find: "|") {
+            if let url = textArray.components(separatedBy: "|").first {
+                return url
+            }
+        }
+        
+        return nil
+    }
+    
     func getNameFromLink() -> String {
         
         var name = ""
@@ -68,7 +81,7 @@ extension String {
         var text = self.replacingOccurrences(of: "<br>", with: "\n")
         text = text.replacingOccurrences(of: "&quot;", with: "\"")
         
-        let regex1 = "\\[[\\w\\:\\-\\_]+\\|[\\s\\w\\|\\.\\,\\!\\@\\-\\<\\>\\\"\\\"\\≪\\≫\\«\\»\\?]+\\]"
+        let regex1 = "\\[.*?\\]" //"\\[[\\w\\:\\-\\_]+\\|[\\s\\w\\|\\.\\,\\!\\@\\-\\<\\>\\\"\\\"\\≪\\≫\\«\\»\\?\\№\\#]+\\]"
         let allMatches1 = text.matches(for: regex1)
         
         for match in allMatches1 {
@@ -116,7 +129,7 @@ extension UILabel {
             text = text.replacingOccurrences(of: "&quot;", with: "\"")
             
             // внутренние ссылки ВК
-            let regex1 = "\\[[\\w\\:\\-\\_]+\\|[\\s\\w\\|\\.\\,\\!\\@\\-\\<\\>\\\"\\\"\\≪\\≫\\«\\»\\?]+\\]"
+            let regex1 = "\\[.*?\\]" //"\\[[\\w\\:\\-\\_]+\\|[\\s\\w\\|\\.\\,\\!\\@\\-\\<\\>\\\"\\\"\\≪\\≫\\«\\»\\?\\№\\#]+\\]"
             let allMatches1 = text.matches(for: regex1)
             var ranges1: [String:NSRange] = [:]
             
@@ -178,16 +191,36 @@ extension UILabel {
                 var isTap = false
                 
                 for match in ranges1.keys {
+                    //print("1: \(match)")
                     if let range = ranges1[match] {
                         if self.didTapAttributedTextInLabel2(tap: tap, inRange: range) {
                             isTap = true
                             delegate.popoverHideAll()
-                            delegate.openBrowserController(url: "https://vk.com/\(match.getIdFromLink())")
+                            
+                            if match.prefix(5) == "[http" {
+                                if let url = match.getURLFromLink() {
+                                    delegate.openBrowserController(url: url)
+                                    /*let alertController = UIAlertController(title: "внутренняя ссылка ВКонтакте:", message: url, preferredStyle: .actionSheet)
+                                    
+                                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                                    alertController.addAction(cancelAction)
+                                    
+                                    let action1 = UIAlertAction(title: "Открыть ссылку", style: .destructive){ action in
+                                       delegate.openBrowserControllerNoCheck(url: url)
+                                    }
+                                    alertController.addAction(action1)
+                                    
+                                    delegate.present(alertController, animated: true)*/
+                                }
+                            } else {
+                                delegate.openBrowserController(url: "https://vk.com/\(match.getIdFromLink())")
+                            }
                         }
                     }
                 }
                 
                 for match in ranges2.keys {
+                    //print("2: \(match)")
                     if let range = ranges2[match] {
                         if self.didTapAttributedTextInLabel2(tap: tap, inRange: range) {
                             isTap = true
@@ -198,6 +231,7 @@ extension UILabel {
                 }
                 
                 for match in ranges3.keys {
+                    //print("3: \(match)")
                     if let range = ranges3[match] {
                         if self.didTapAttributedTextInLabel2(tap: tap, inRange: range) {
                             isTap = true

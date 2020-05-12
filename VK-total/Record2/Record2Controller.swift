@@ -22,8 +22,17 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     var tableView = UITableView()
     var commentView: DCCommentView!
     
-    var navHeight: CGFloat = 64
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
     var tabHeight: CGFloat = 49
+    var firstAppear = true
     
     var ownerID = ""
     var itemID = ""
@@ -85,11 +94,6 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
 
         OperationQueue.main.addOperation {
             
-            if UIScreen.main.nativeBounds.height == 2436 {
-                self.navHeight = 88
-                self.tabHeight = 83
-            }
-            
             self.configureTableView()
             
             let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
@@ -102,6 +106,15 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
         getRecord()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+        }
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     

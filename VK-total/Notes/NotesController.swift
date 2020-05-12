@@ -19,8 +19,17 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     var tableView: UITableView!
     
-    var navHeight: CGFloat = 64
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
     var tabHeight: CGFloat = 49
+    var firstAppear = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,11 +39,6 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
         }
         
         OperationQueue.main.addOperation {
-            if UIScreen.main.nativeBounds.height == 2436 {
-                self.navHeight = 88
-                self.tabHeight = 83
-            }
-            
             self.createTableView()
             
             if self.userID == vkSingleton.shared.userID {
@@ -46,6 +50,15 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
         getNotes()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+        }
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         

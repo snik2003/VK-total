@@ -22,8 +22,17 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
     var likes = [Likes]()
     var reposts = [Likes]()
     
-    var navHeight: CGFloat = 64
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
     var tabHeight: CGFloat = 49
+    var firstAppear = true
     
     let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -36,11 +45,6 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
         
         if #available(iOS 13.0, *) {
             overrideUserInterfaceStyle = .light
-        }
-        
-        if UIScreen.main.nativeBounds.height == 2436 {
-            self.navHeight = 88
-            self.tabHeight = 83
         }
         
         OperationQueue.main.addOperation {
@@ -103,6 +107,15 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
         OperationQueue.main.addOperation(getServerDataOperation)
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+        }
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
 

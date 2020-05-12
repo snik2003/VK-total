@@ -40,19 +40,23 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
     var typeOf: [String] = []
     var isLoad: [Bool] = []
     
-    var navHeight: CGFloat = 64
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
     var tabHeight: CGFloat = 49
+    var firstAppear = true
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         if #available(iOS 13.0, *) {
             overrideUserInterfaceStyle = .light
-        }
-        
-        if UIScreen.main.nativeBounds.height == 2436 {
-            self.navHeight = 88
-            self.tabHeight = 83
         }
         
         configureSetupLabel()
@@ -89,6 +93,15 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
         self.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(self.tapCancelButton(sender:)))
         self.navigationItem.leftBarButtonItem = cancelButton
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+        }
     }
     
     func setAttachments() {
@@ -294,23 +307,23 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
         }
         
         if attach.count > 0 {
-            textView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - kbSize.height - 70 - 100 - setupLabelSize - 44)
-            collectionView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 80)
+            textView.layer.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - kbSize.height - navHeight - 10 - 100 - setupLabelSize - 44)
+            collectionView.layer.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 80)
             
             if replyID != 0 {
-                setupLabel.frame = CGRect(x: 10, y: textView.frame.maxY + 90, width: UIScreen.main.bounds.width-20, height: 20)
+                setupLabel.layer.frame = CGRect(x: 10, y: textView.frame.maxY + 90, width: UIScreen.main.bounds.width-20, height: 20)
             }
             
-            toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 100 + setupLabelSize, width: UIScreen.main.bounds.width, height: 44)
+            toolView.layer.frame = CGRect(x: 0, y: textView.frame.maxY + 100 + setupLabelSize, width: UIScreen.main.bounds.width, height: 44)
         } else {
-            textView.frame = CGRect(x: 10, y: 70, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - kbSize.height - 70 - 20 - setupLabelSize - 44)
-            collectionView.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 0)
+            textView.layer.frame = CGRect(x: 10, y: navHeight + 10, width: UIScreen.main.bounds.width - 20, height: UIScreen.main.bounds.height - kbSize.height - navHeight - 10 - 20 - setupLabelSize - 44)
+            collectionView.layer.frame = CGRect(x: 0, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width, height: 0)
             
             if replyID != 0 {
-                setupLabel.frame = CGRect(x: 10, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width-20, height: 20)
+                setupLabel.layer.frame = CGRect(x: 10, y: textView.frame.maxY + 10, width: UIScreen.main.bounds.width-20, height: 20)
             }
             
-            toolView.frame = CGRect(x: 0, y: textView.frame.maxY + 20 + setupLabelSize, width: UIScreen.main.bounds.width, height: 44)
+            toolView.layer.frame = CGRect(x: 0, y: textView.frame.maxY + 20 + setupLabelSize, width: UIScreen.main.bounds.width, height: 44)
         }
     }
     
