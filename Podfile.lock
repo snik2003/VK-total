@@ -6,7 +6,7 @@ PODS:
   - DCCommentView (0.1.6)
   - DropDown (2.3.13)
   - FLAnimatedImage (1.0.12)
-  - Popover (1.2.2)
+  - Popover (1.3.0)
   - Realm (3.21.0):
     - Realm/Headers (= 3.21.0)
   - Realm/Headers (3.21.0)
@@ -19,6 +19,12 @@ PODS:
   - SwiftMessages/App (7.0.1)
   - SwiftyJSON (4.3.0)
   - SWRevealViewController (2.3.0)
+  - YandexMobileMetrica/Dynamic (3.7.1):
+    - YandexMobileMetrica/Dynamic/Core (= 3.7.1)
+    - YandexMobileMetrica/Dynamic/Crashes (= 3.7.1)
+  - YandexMobileMetrica/Dynamic/Core (3.7.1)
+  - YandexMobileMetrica/Dynamic/Crashes (3.7.1):
+    - YandexMobileMetrica/Dynamic/Core
 
 DEPENDENCIES:
   - Alamofire (~> 4.5)
@@ -35,6 +41,7 @@ DEPENDENCIES:
   - SwiftMessages
   - SwiftyJSON (~> 4.0)
   - SWRevealViewController (~> 2.3)
+  - YandexMobileMetrica/Dynamic (= 3.7.1)
 
 SPEC REPOS:
   https://github.com/cocoapods/specs.git:
@@ -53,6 +60,7 @@ SPEC REPOS:
     - SwiftMessages
     - SwiftyJSON
     - SWRevealViewController
+    - YandexMobileMetrica
 
 SPEC CHECKSUMS:
   Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
@@ -62,7 +70,7 @@ SPEC CHECKSUMS:
   DCCommentView: 9b46fc2c78f64a28c72f482e5f7d75574b8ff5a8
   DropDown: 8a2116376c1981888557f72ec2ffc9a5e0e456ec
   FLAnimatedImage: 4a0b56255d9b05f18b6dd7ee06871be5d3b89e31
-  Popover: 21e357f86d45c8d9e29a41a4adbca3664d6e511f
+  Popover: 10e1d9528f81d9504df984b7b3f491292bc1822d
   Realm: 38e9dcb19104b58407167d99f70d4995f7c16023
   RealmSwift: 3183cc1ad48378fbcd634311b22c0e6c44021152
   SCLAlertView: 6a77bb2edfc65e04dbe57725546cb4107a506b85
@@ -70,7 +78,8 @@ SPEC CHECKSUMS:
   SwiftMessages: b577dc7043be8b299857ab35bb663dbff6483bd0
   SwiftyJSON: 6faa0040f8b59dead0ee07436cbf76b73c08fd08
   SWRevealViewController: 6d3fd97f70112fd7cef9de14df4260eacce4c63a
+  YandexMobileMetrica: 95e93ee5af38520c9e470533dc8df6cf72fa171d
 
-PODFILE CHECKSUM: 504f6fe4167c7da99328e4d00de29b8c9bb85f07
+PODFILE CHECKSUM: f52d20e0b085203f3a1cc845bcb8f7337461cf0f
 
 COCOAPODS: 1.6.1

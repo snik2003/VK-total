@@ -15,6 +15,7 @@ import SwiftyJSON
 import Popover
 import SCLAlertView
 import SafariServices
+import YandexMobileMetrica
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -22,6 +23,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        
+        let configuration = YMMYandexMetricaConfiguration.init(apiKey: "e62996d5-ac3b-4823-80c0-04d1aa5714d4")
+        YMMYandexMetrica.activate(with: configuration!)
         
         registerForPushNotifications()
         application.applicationIconBadgeNumber = 0
