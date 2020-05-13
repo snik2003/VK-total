@@ -78,6 +78,7 @@ class ParseFaves: Operation {
             links = linksData
         } else if source == "users" || source == "banned" {
             guard let json = try? JSON(data: data) else { print("json error"); return }
+            
             let usersData = json["response"]["items"].compactMap { NewsProfiles(json: $0.1) }
             
             users = usersData

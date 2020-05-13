@@ -41,7 +41,7 @@ class FaveUsersCell: UITableViewCell {
         OperationQueue().addOperation(getCacheImage)
         OperationQueue.main.addOperation(setImageToRow)
         OperationQueue.main.addOperation {
-            self.avatarImage.layer.cornerRadius = 19
+            self.avatarImage.layer.cornerRadius = 20
             self.avatarImage.contentMode = .scaleAspectFit
             self.avatarImage.clipsToBounds = true
         }

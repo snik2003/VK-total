@@ -4777,7 +4777,7 @@
                         <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <color key="sectionIndexBackgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <prototypes>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="blue" indentationWidth="10" reuseIdentifier="accountCell" textLabel="tKo-8L-9ie" detailTextLabel="lNl-Um-YW8" imageView="57x-7W-C70" rowHeight="60" style="IBUITableViewCellStyleSubtitle" id="OI6-0T-rwb">
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" reuseIdentifier="accountCell" textLabel="tKo-8L-9ie" detailTextLabel="lNl-Um-YW8" imageView="57x-7W-C70" rowHeight="60" style="IBUITableViewCellStyleSubtitle" id="OI6-0T-rwb">
                                 <rect key="frame" x="0.0" y="28" width="320" height="60"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="OI6-0T-rwb" id="MWF-xz-0Tq">
@@ -4785,17 +4785,17 @@
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Title" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="tKo-8L-9ie">
-                                            <rect key="frame" x="91" y="11.5" width="37.5" height="18.5"/>
+                                            <rect key="frame" x="91" y="12.5" width="35" height="17.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
-                                            <fontDescription key="fontDescription" name="Verdana-Bold" family="Verdana" pointSize="15"/>
+                                            <fontDescription key="fontDescription" name="Verdana-Bold" family="Verdana" pointSize="14"/>
                                             <nil key="textColor"/>
                                             <nil key="highlightedColor"/>
                                         </label>
-                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Subtitle" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" enabled="NO" adjustsFontSizeToFit="NO" id="lNl-Um-YW8">
+                                        <label opaque="NO" multipleTouchEnabled="YES" contentMode="left" insetsLayoutMarginsFromSafeArea="NO" text="Subtitle" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" id="lNl-Um-YW8">
                                             <rect key="frame" x="91" y="32.5" width="43" height="13.5"/>
                                             <autoresizingMask key="autoresizingMask"/>
                                             <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
-                                            <nil key="textColor"/>
+                                            <color key="textColor" red="0.0" green="0.47843137250000001" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                             <nil key="highlightedColor"/>
                                         </label>
                                         <imageView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" image="error" id="57x-7W-C70">
@@ -4804,8 +4804,8 @@
                                         </imageView>
                                     </subviews>
                                 </tableViewCellContentView>
-                                <color key="backgroundColor" red="0.71495121717453003" green="0.92321544885635376" blue="0.62234240770339966" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
-                                <inset key="separatorInset" minX="80" minY="0.0" maxX="10" maxY="0.0"/>
+                                <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                <inset key="separatorInset" minX="90" minY="0.0" maxX="10" maxY="0.0"/>
                             </tableViewCell>
                             <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" reuseIdentifier="serviceCell" rowHeight="30" id="ITh-2T-Ldq">
                                 <rect key="frame" x="0.0" y="88" width="320" height="30"/>
@@ -4814,9 +4814,9 @@
                                     <rect key="frame" x="0.0" y="0.0" width="320" height="30"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
-                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Выберите учетную запись:" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Tg-d2-xhw">
+                                        <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Выберите учетную запись:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="5Tg-d2-xhw">
                                             <rect key="frame" x="10" y="0.0" width="300" height="30"/>
-                                            <fontDescription key="fontDescription" name="Verdana-Bold" family="Verdana" pointSize="12"/>
+                                            <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="12"/>
                                             <nil key="textColor"/>
                                             <nil key="highlightedColor"/>
                                         </label>
@@ -4829,6 +4829,16 @@
                                     <constraint firstItem="5Tg-d2-xhw" firstAttribute="leading" secondItem="ITh-2T-Ldq" secondAttribute="leading" constant="10" id="cLx-i2-DXE"/>
                                     <constraint firstAttribute="trailing" secondItem="5Tg-d2-xhw" secondAttribute="trailing" constant="10" id="lFO-j8-aQe"/>
                                 </constraints>
+                                <inset key="separatorInset" minX="10" minY="0.0" maxX="10" maxY="0.0"/>
+                            </tableViewCell>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="none" indentationWidth="10" reuseIdentifier="addAccountCell" rowHeight="60" id="t23-wM-Wz8">
+                                <rect key="frame" x="0.0" y="118" width="320" height="60"/>
+                                <autoresizingMask key="autoresizingMask"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="t23-wM-Wz8" id="gsB-Qp-yAU">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="60"/>
+                                    <autoresizingMask key="autoresizingMask"/>
+                                </tableViewCellContentView>
+                                <color key="backgroundColor" red="0.93725490199999995" green="0.93725490199999995" blue="0.95686274510000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <inset key="separatorInset" minX="0.0" minY="0.0" maxX="0.0" maxY="0.0"/>
                             </tableViewCell>
                         </prototypes>
@@ -6739,8 +6749,8 @@ riKzAAAAAAAAAgEAAAAAAAAAWQAAAAAAAAAAAAAAAAAAIrU
         <image name="views" width="20" height="20"/>
     </resources>
     <inferredMetricsTieBreakers>
-        <segue reference="Rw9-cd-RZf"/>
+        <segue reference="epF-7y-GEu"/>
         <segue reference="5Qi-5E-xYH"/>
-        <segue reference="1IA-Vi-woA"/>
+        <segue reference="4wv-Nl-Iyj"/>
     </inferredMetricsTieBreakers>
 </document>

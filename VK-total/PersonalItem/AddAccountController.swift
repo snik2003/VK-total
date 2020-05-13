@@ -53,6 +53,11 @@ class AddAccountController: UITableViewController {
         if indexPath.row == 0 {
             return 30
         }
+        
+        if !changeAccount && indexPath.row == accounts.count + 1 {
+            return 100
+        }
+        
         return 60
     }
 
@@ -72,7 +77,7 @@ class AddAccountController: UITableViewController {
                 let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
                 alertController.addAction(cancelAction)
                 
-                let action1 = UIAlertAction(title: "Перейти в «\(account.firstName) \(account.lastName)»", style: .destructive) { action in
+                let action1 = UIAlertAction(title: "\(account.firstName) \(account.lastName) (\(account.screenName))", style: .destructive) { action in
                     
                     vkSingleton.shared.userID = "\(account.userID)"
                     vkSingleton.shared.avatarURL = ""
@@ -102,36 +107,38 @@ class AddAccountController: UITableViewController {
                 present(alertController, animated: true)
             }
             
-        case accounts.count + 1:
-            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-            
-            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-            alertController.addAction(cancelAction)
-            
-            let action1 = UIAlertAction(title: "Добавить учетную запись", style: .destructive) { action in
-                
-                vkSingleton.shared.avatarURL = ""
-                
-                vkUserLongPoll.shared.request.cancel()
-                vkUserLongPoll.shared.firstLaunch = true
-                
-                for id in vkGroupLongPoll.shared.request.keys {
-                    if let request = vkGroupLongPoll.shared.request[id] {
-                        request.cancel()
-                        vkGroupLongPoll.shared.firstLaunch[id] = true
-                    }
-                }
-                
-                self.performSegue(withIdentifier: "addAccountVK", sender: nil)
-            }
-            alertController.addAction(action1)
-            
-            present(alertController, animated: true)
         default:
             break
         }
         
         tableView.deselectRow(at: indexPath, animated: false)
+    }
+    
+    @objc func addAccountButtonAction(sender: UIButton) {
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        let action1 = UIAlertAction(title: "Добавить учетную запись", style: .destructive) { action in
+            
+            vkSingleton.shared.avatarURL = ""
+            
+            vkUserLongPoll.shared.request.cancel()
+            vkUserLongPoll.shared.firstLaunch = true
+            
+            for id in vkGroupLongPoll.shared.request.keys {
+                if let request = vkGroupLongPoll.shared.request[id] {
+                    request.cancel()
+                    vkGroupLongPoll.shared.firstLaunch[id] = true
+                }
+            }
+            
+            self.performSegue(withIdentifier: "addAccountVK", sender: nil)
+        }
+        alertController.addAction(action1)
+        
+        present(alertController, animated: true)
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -145,50 +152,64 @@ class AddAccountController: UITableViewController {
         case 1...accounts.count:
             let cell = tableView.dequeueReusableCell(withIdentifier: "accountCell", for: indexPath)
             
+            for subview in cell.subviews {
+                if subview.tag == 100 { subview.removeFromSuperview() }
+            }
+            
             let account = accounts[indexPath.row - 1]
             
             cell.textLabel?.text = "\(account.firstName) \(account.lastName)"
-            cell.textLabel?.font = UIFont(name: "Verdana", size: 15.0)
+            cell.textLabel?.font = UIFont(name: "Verdana", size: 13.0)
             cell.textLabel?.numberOfLines = 1
             
+            cell.imageView?.isHidden = true
+            
+            cell.detailTextLabel?.textColor = cell.tintColor
+            cell.detailTextLabel?.isEnabled = true
+            cell.detailTextLabel?.text = "https://vk.com/\(account.screenName)"
+            
             if vkSingleton.shared.userID == "\(account.userID)" {
-                cell.detailTextLabel?.textColor = UIColor.red
-                cell.detailTextLabel?.isEnabled = true
-                cell.detailTextLabel?.text = "текущая учетная запись"
-            } else {
-                cell.detailTextLabel?.textColor = UIColor.black
-                cell.detailTextLabel?.isEnabled = false
-                cell.detailTextLabel?.text = account.lastSeen.toStringLastTime()
+                cell.backgroundColor = .lightGray
             }
             
+            let avatarImage = UIImageView()
+            avatarImage.tag = 100
+            avatarImage.frame = CGRect(x: 20, y: 5, width: 50, height: 50)
+            avatarImage.image = UIImage(named: "error")
+            
             let getCacheImage = GetCacheImage(url: account.avatarURL, lifeTime: .avatarImage)
-            let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: cell.imageView!, indexPath: indexPath, tableView: tableView)
+            let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImage, indexPath: indexPath, tableView: tableView)
             setImageToRow.addDependency(getCacheImage)
             OperationQueue().addOperation(getCacheImage)
             OperationQueue.main.addOperation(setImageToRow)
             OperationQueue.main.addOperation {
-                cell.imageView?.layer.cornerRadius = 28
-                cell.imageView?.clipsToBounds = true
+                avatarImage.layer.cornerRadius = 25
+                avatarImage.layer.borderColor = UIColor.gray.cgColor
+                avatarImage.layer.borderWidth = 0.6
+                avatarImage.contentMode = .scaleAspectFit
+                avatarImage.clipsToBounds = true
             }
+            cell.addSubview(avatarImage)
             
             return cell
         case accounts.count + 1:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "accountCell", for: indexPath)
+            let cell = tableView.dequeueReusableCell(withIdentifier: "addAccountCell", for: indexPath)
             
-            cell.textLabel?.text = "Добавить новую \nучетную запись"
-            cell.textLabel?.font = UIFont(name: "Verdana", size: 13.0)
-            cell.textLabel?.numberOfLines = 2
-            cell.textLabel?.textColor = UIColor.darkGray // UIColor(displayP3Red: 71/255, green: 74/255, blue: 85/255, alpha: 1)
-            
-            cell.detailTextLabel?.text = ""
-            
-            OperationQueue.main.addOperation {
-                cell.imageView?.image = UIImage(named: "add-account")
-                cell.imageView?.backgroundColor = UIColor.lightGray// UIColor.white
-                cell.imageView?.layer.cornerRadius = 28
-                cell.imageView?.clipsToBounds = true
-                cell.imageView?.contentMode = .scaleToFill
+            for subview in cell.subviews {
+                if subview.tag == 100 { subview.removeFromSuperview() }
             }
+            
+            let button = UIButton()
+            button.tag = 100
+            button.frame = CGRect(x: 50, y: 33, width: UIScreen.main.bounds.width - 100, height: 34)
+            button.layer.cornerRadius = 6
+            button.clipsToBounds = true
+            button.backgroundColor = UIColor(red: 0, green: 84/255, blue: 147/255, alpha: 1)
+            button.setTitle("Добавить учетную запись", for: .normal)
+            button.setTitleColor(.white, for: .normal)
+            button.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12.0)!
+            button.addTarget(self, action: #selector(addAccountButtonAction(sender:)), for: .touchUpInside)
+            cell.addSubview(button)
             
             return cell
         default:

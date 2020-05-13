@@ -20,7 +20,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     var source = "users"
     
     var selectedMenu = 0
-    let itemsMenu = ["Пользователи", "Записи", "Фотографии", "Видеозаписи", "Сообщества", "Ссылки", "Черный список"]
+    let itemsMenu = ["Пользователи", "Записи на стене", "Фотографии", "Видеозаписи", "Сообщества", "Ссылки", "Черный список"]
     
     var wall = [Wall]()
     var wallProfiles = [WallProfiles]()
