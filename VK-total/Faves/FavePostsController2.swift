@@ -17,10 +17,10 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
     var userID = vkSingleton.shared.userID
-    var source = "post"
+    var source = "users"
     
     var selectedMenu = 0
-    let itemsMenu = ["Избранные посты", "Избранные фотографии", "Избранные видеозаписи", "Избранные пользователи", "Избранные сообщества", "Избранные ссылки", "Черный список"]
+    let itemsMenu = ["Пользователи", "Записи", "Фотографии", "Видеозаписи", "Сообщества", "Ссылки", "Черный список"]
     
     var wall = [Wall]()
     var wallProfiles = [WallProfiles]()
@@ -34,6 +34,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     var faveUsers = [NewsProfiles]()
     
     var faveLinks = [FaveLinks]()
+    var favePages = [FavePages]()
     
     var offset = 0
     let count = 100
@@ -82,25 +83,25 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             self?.selectedMenu = indexPath
             switch indexPath {
             case 0:
-                self?.source = "post"
+                self?.source = "users"
                 self?.offset = 0
                 self?.refresh()
                 self?.estimatedHeightCache.removeAll(keepingCapacity: false)
                 break
             case 1:
-                self?.source = "photo"
+                self?.source = "post"
                 self?.offset = 0
                 self?.refresh()
                 self?.estimatedHeightCache.removeAll(keepingCapacity: false)
                 break
             case 2:
-                self?.source = "video"
+                self?.source = "photo"
                 self?.offset = 0
                 self?.refresh()
                 self?.estimatedHeightCache.removeAll(keepingCapacity: false)
                 break
             case 3:
-                self?.source = "users"
+                self?.source = "video"
                 self?.offset = 0
                 self?.refresh()
                 self?.estimatedHeightCache.removeAll(keepingCapacity: false)
@@ -157,6 +158,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         tableView.register(VideoListCell.self, forCellReuseIdentifier: "videoCell")
         tableView.register(FaveUsersCell.self, forCellReuseIdentifier: "usersCell")
         tableView.register(FaveLinksCell.self, forCellReuseIdentifier: "linksCell")
+        tableView.register(FavePagesCell.self, forCellReuseIdentifier: "pagesCell")
         
         tableView.separatorStyle = .none
         self.view.addSubview(tableView)
@@ -211,7 +213,16 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 "fields": "id, first_name, last_name, photo_max, photo_100",
                 "v": vkSingleton.shared.version
             ]
-        } else if source == "links" || source == "groups" {
+        } else if source == "groups" {
+            url = "/method/fave.getPages"
+            parameters = [
+                "access_token": vkSingleton.shared.accessToken,
+                "offset": "\(offset)",
+                "count": "50",
+                "type": "groups",
+                "v": "5.100"
+            ]
+        } else if source == "links" {
             url = "/method/fave.getLinks"
             parameters = [
                 "access_token": vkSingleton.shared.accessToken,
@@ -289,7 +300,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         case "users":
             return faveUsers.count
         case "groups":
-            return faveLinks.count
+            return favePages.count
         case "links":
             return faveLinks.count
         case "banned":
@@ -332,9 +343,9 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 estimatedHeightCache[indexPath] = height
                 return height
             }
-        } else if source == "users" || source == "banned" {
+        } else if source == "users" || source == "banned" || source == "groups" {
             return 50
-        } else if source == "links" || source == "groups" {
+        } else if source == "links" {
             if let height = estimatedHeightCache[indexPath] {
                 return height
             } else {
@@ -382,9 +393,9 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 estimatedHeightCache[indexPath] = height
                 return height
             }
-        } else if source == "users" || source == "banned" {
+        } else if source == "users" || source == "banned" || source == "groups" {
             return 50
-        } else if source == "links" || source == "groups" {
+        } else if source == "links" {
             if let height = estimatedHeightCache[indexPath] {
                 return height
             } else {
@@ -481,9 +492,9 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             
             return cell
         case "groups":
-            let cell = tableView.dequeueReusableCell(withIdentifier: "linksCell", for: indexPath) as! FaveLinksCell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "pagesCell", for: indexPath) as! FavePagesCell
             
-            cell.configureCell(link: faveLinks[indexPath.row], indexPath: indexPath, cell: cell, tableView: tableView)
+            cell.configureCell(group: favePages[indexPath.row], indexPath: indexPath, cell: cell, tableView: tableView)
             
             cell.selectionStyle = .none
             cell.separatorInset = UIEdgeInsets(top: 0, left: 60, bottom: 0, right: 30)
@@ -642,20 +653,13 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             self.openProfileController(id: user.uid, name: "\(user.firstName) \(user.lastName)")
         
         case "groups":
-            let link = faveLinks[indexPath.row]
-            self.openBrowserController(url: link.url)
+            let link = "https://vk.com/\(favePages[indexPath.row].screenName)"
+            self.openBrowserController(url: link)
             
         case "links":
             let link = faveLinks[indexPath.row]
             self.openBrowserController(url: link.url)
             
-            /*let arr = group.id.components(separatedBy: "_")
-            if arr.count > 2 {
-                if arr[0] == "2", let id = Int("-\(arr[2])") {
-                    
-                    self.openProfileController(id: id, name: "\(group.title)")
-                }
-            }*/
         case "banned":
             let user = faveUsers[indexPath.row]
             self.openProfileController(id: user.uid, name: "\(user.firstName) \(user.lastName)")

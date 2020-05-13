@@ -32,6 +32,8 @@
 		17206A882018A10A009F52E6 /* Newsfeed.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17206A872018A10A009F52E6 /* Newsfeed.swift */; };
 		172C1C60202B4539009F24E1 /* ParseComments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172C1C5F202B4539009F24E1 /* ParseComments.swift */; };
 		172C1C62202B466B009F24E1 /* Comments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172C1C61202B466B009F24E1 /* Comments.swift */; };
+		172C1D63246BCF840026B8C5 /* FavePagesCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172C1D62246BCF840026B8C5 /* FavePagesCell.swift */; };
+		172C1D65246BD27D0026B8C5 /* FavePages.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172C1D64246BD27D0026B8C5 /* FavePages.swift */; };
 		172F3E002041662000CEDF0B /* ViewControllerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172F3DFF2041662000CEDF0B /* ViewControllerProtocol.swift */; };
 		172F3E022041F8AF00CEDF0B /* ParsePushSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 172F3E012041F8AF00CEDF0B /* ParsePushSettings.swift */; };
 		173A4016203443F6004D1F15 /* RecordCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 173A4015203443F6004D1F15 /* RecordCell.swift */; };
@@ -246,6 +248,8 @@
 		17206A872018A10A009F52E6 /* Newsfeed.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Newsfeed.swift; sourceTree = "<group>"; };
 		172C1C5F202B4539009F24E1 /* ParseComments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseComments.swift; sourceTree = "<group>"; };
 		172C1C61202B466B009F24E1 /* Comments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Comments.swift; sourceTree = "<group>"; };
+		172C1D62246BCF840026B8C5 /* FavePagesCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavePagesCell.swift; sourceTree = "<group>"; };
+		172C1D64246BD27D0026B8C5 /* FavePages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavePages.swift; sourceTree = "<group>"; };
 		172F3DFF2041662000CEDF0B /* ViewControllerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerProtocol.swift; sourceTree = "<group>"; };
 		172F3E012041F8AF00CEDF0B /* ParsePushSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParsePushSettings.swift; sourceTree = "<group>"; };
 		173A4015203443F6004D1F15 /* RecordCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordCell.swift; sourceTree = "<group>"; };
@@ -698,6 +702,7 @@
 				17A0522120475251007B1DFF /* FavePhotoCell.swift */,
 				17A0522620480FED007B1DFF /* FaveUsersCell.swift */,
 				17A0522820481F79007B1DFF /* FaveLinksCell.swift */,
+				172C1D62246BCF840026B8C5 /* FavePagesCell.swift */,
 			);
 			path = Faves;
 			sourceTree = "<group>";
@@ -772,6 +777,7 @@
 				17FE444020442CA800CC1F3E /* AccountVK.swift */,
 				179D2EDC204FE135000B4ED6 /* PhotoAlbum.swift */,
 				17A05223204809F3007B1DFF /* FaveLinks.swift */,
+				172C1D64246BD27D0026B8C5 /* FavePages.swift */,
 				17A0522A20483B22007B1DFF /* Videos.swift */,
 				17A475DD20603A5D00EE07BC /* FriendRequest.swift */,
 				1780B3732064F4E20079C55B /* IMusic.swift */,
@@ -1047,6 +1053,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				172C1D63246BCF840026B8C5 /* FavePagesCell.swift in Sources */,
 				179D2EDF204FF70B000B4ED6 /* ParsePhotoAlbums.swift in Sources */,
 				170259BC2026072800E682CD /* SetImageToRow.swift in Sources */,
 				17C0F2F52049CBC30072FA19 /* ProfileController2.swift in Sources */,
@@ -1108,6 +1115,7 @@
 				170259B32024E0F900E682CD /* GroupCountersCell.swift in Sources */,
 				17624A851FEBC4A20028016E /* AppDelegate.swift in Sources */,
 				1787F49B2083552700270C61 /* ParseNotes.swift in Sources */,
+				172C1D65246BD27D0026B8C5 /* FavePages.swift in Sources */,
 				17D44520201720D900339FA1 /* Wall.swift in Sources */,
 				176755B620AAFCAF00E10E6E /* vkGroupLongPoll.swift in Sources */,
 				176D50F420334668007FC775 /* PhotoImageCell.swift in Sources */,
@@ -1404,7 +1412,7 @@
 				CODE_SIGN_ENTITLEMENTS = "VK-total/VK-total.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = WML363H532;
 				INFOPLIST_FILE = "VK-total/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
@@ -1450,7 +1458,7 @@
 				CODE_SIGN_ENTITLEMENTS = "VK-total/VK-total.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 8;
+				CURRENT_PROJECT_VERSION = 9;
 				DEVELOPMENT_TEAM = WML363H532;
 				INFOPLIST_FILE = "VK-total/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;

@@ -59,13 +59,7 @@ class ReloadFavePostsController: Operation {
             
         } else if type == "groups" {
             
-            controller.faveLinks.removeAll(keepingCapacity: false)
-            for link in parseFaves.links {
-                let arr = link.id.components(separatedBy: "_")
-                if arr.count > 2, arr[0] == "2" {
-                    controller.faveLinks.append(link)
-                }
-            }
+            controller.favePages = parseFaves.pages
             controller.tableView.separatorStyle = .singleLine
             
         } else if type == "links" {

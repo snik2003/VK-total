@@ -22,6 +22,7 @@ class ParseFaves: Operation {
     var videos: [Videos] = []
     var users: [NewsProfiles] = []
     var links: [FaveLinks] = []
+    var pages: [FavePages] = []
     
     var nextFrom: String = ""
     
@@ -61,7 +62,14 @@ class ParseFaves: Operation {
             videos = videoData
             profiles2 = profilesData
             groups2 = groupsData
-        } else if source == "links" || source == "groups" {
+        } else if source == "groups" {
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            let pagesData = json["response"]["items"].compactMap { FavePages(json: $0.1) }
+            
+            pages = pagesData
+        } else if source == "links" {
             
             guard let json = try? JSON(data: data) else { print("json error"); return }
             
