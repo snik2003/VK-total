@@ -10,9 +10,12 @@ import UIKit
 
 class FaveUsersCell: UITableViewCell {
 
-    
     var nameLabel: UILabel!
+    var descriptionLabel: UILabel!
     var avatarImage: UIImageView!
+
+    let nameFont = UIFont(name: "Verdana", size: 13)!
+    let descFont = UIFont(name: "Verdana", size: 10)!
     
     func configureCell(user: NewsProfiles, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
      
@@ -25,11 +28,22 @@ class FaveUsersCell: UITableViewCell {
         nameLabel = UILabel()
         nameLabel.tag = 100
         nameLabel.text = "\(user.firstName) \(user.lastName)"
-        nameLabel.font = UIFont(name: "Verdana", size: 14)!
-        nameLabel.frame = CGRect(x: 60, y: 15, width: bounds.size.width - 100, height: 20)
+        nameLabel.font = nameFont
+        nameLabel.numberOfLines = 1
+        nameLabel.frame = CGRect(x: 60, y: 5, width: bounds.size.width - 100, height: 25)
         self.addSubview(nameLabel)
-        nameLabel.adjustsFontSizeToFitWidth = true
-        nameLabel.minimumScaleFactor = 0.5
+        
+        
+        descriptionLabel = UILabel()
+        descriptionLabel.tag = 100
+        descriptionLabel.text = "Пользователь"
+        if user.uid < 0 { descriptionLabel.text = "Сообщество" }
+        descriptionLabel.font = descFont
+        descriptionLabel.numberOfLines = 1
+        descriptionLabel.alpha = 0.6
+        descriptionLabel.frame = CGRect(x: 60, y: 25, width: bounds.size.width - 100, height: 15)
+        self.addSubview(descriptionLabel)
+        
         
         avatarImage = UIImageView()
         avatarImage.tag = 100

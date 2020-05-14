@@ -40,6 +40,8 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     let count = 100
     var isRefresh = false
     
+    var menuView: BTNavigationDropdownMenu!
+    
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
                return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
@@ -68,7 +70,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         }
 
         createTableView()
-        let menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[0], items: itemsMenu)
+        menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[0], items: itemsMenu)
         menuView.cellBackgroundColor = .white
         menuView.cellSelectionColor = .white
         menuView.cellTextLabelAlignment = .center
@@ -139,6 +141,11 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
         }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        menuView.hide()
     }
     
     override func didReceiveMemoryWarning() {
@@ -247,7 +254,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 "count": "200",
                 "extended": "1",
                 "fields": "id, first_name, last_name, photo_100",
-                "v": vkSingleton.shared.version
+                "v": "5.100"
             ]
         }
         

@@ -44,6 +44,7 @@ class GroupProfile {
     var isHiddenFromFeed = 0
     var canMessage: Int = 0
     var contacts: [Contact] = []
+    var ageLimits = 0
     
     init(json: JSON) {
         gid = json["id"].intValue
@@ -79,6 +80,7 @@ class GroupProfile {
         canPost = json["can_post"].intValue
         canMessage = json["can_message"].intValue
         isHiddenFromFeed = json["is_hidden_from_feed"].intValue
+        ageLimits = json["age_limits"].intValue
         
         for index in 0...9 {
             var contact = Contact()

@@ -76,10 +76,25 @@ class ParseFaves: Operation {
             let linksData = json["response"]["items"].compactMap { FaveLinks(json: $0.1) }
             
             links = linksData
-        } else if source == "users" || source == "banned" {
+        } else if source == "users" {
             guard let json = try? JSON(data: data) else { print("json error"); return }
             
             let usersData = json["response"]["items"].compactMap { NewsProfiles(json: $0.1) }
+            
+            users = usersData
+        } else if source == "banned" {
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+                   
+            var usersData = json["response"]["profiles"].compactMap { NewsProfiles(json: $0.1) }
+            
+            let groupsData = json["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
+            for group in groupsData {
+                let user = NewsProfiles(json: JSON.null)
+                user.uid = -1 * group.gid
+                user.photoURL = group.photo200
+                user.firstName = group.name
+                usersData.append(user)
+            }
             
             users = usersData
         }

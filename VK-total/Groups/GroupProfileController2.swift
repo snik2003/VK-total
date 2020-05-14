@@ -22,6 +22,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     var profileView: GroupProfileView!
     
     var groupID = 0
+    var isBanned = false
     
     var groupProfile = [GroupProfile]()
 
@@ -121,8 +122,8 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         let parameters1 = [
             "access_token": vkSingleton.shared.accessToken,
             "group_id": "\(groupID)",
-            "fields": "activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed,can_message,contacts",
-            "v": vkSingleton.shared.version
+            "fields": "activity,counters,cover,description,has_photo,member_status,site,status,members_count,is_favorite,can_post,is_hidden_from_feed,can_message,contacts,age_limits,ban_info",
+            "v": "5.100"
         ]
         
         let getServerDataOperation = GetServerDataOperation(url: url1, parameters: parameters1)
@@ -174,11 +175,35 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         parsePostponedGroupWall.addDependency(getServerDataOperation3)
         opq.addOperation(parsePostponedGroupWall)
         
+        let url4 = "/method/account.getBanned"
+        let parameters4 = [
+            "access_token": vkSingleton.shared.accessToken,
+            "offset": "0",
+            "count": "200",
+            "extended": "1",
+            "fields": "id, first_name, last_name, photo_100",
+            "v": "5.100"
+        ]
+        
+        let getServerDataOperation4 = GetServerDataOperation(url: url4, parameters: parameters4)
+        getServerDataOperation4.completionBlock = {
+            guard let data = getServerDataOperation4.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            //print(json)
+            let bannedGroupsIDs = json["response"]["items"].arrayValue.map({ $0.intValue })
+            if bannedGroupsIDs.contains(-1 * self.groupID) {
+                self.isBanned = true
+            }
+        }
+        opq.addOperation(getServerDataOperation4)
+        
         // обновляем данные на UI
         let reloadTableController = ReloadGroupProfileController2(controller: self)
         reloadTableController.addDependency(parseGroupWall)
         reloadTableController.addDependency(parseGroupProfile)
         reloadTableController.addDependency(parsePostponedGroupWall)
+        reloadTableController.addDependency(getServerDataOperation4)
         OperationQueue.main.addOperation(reloadTableController)
     }
     
@@ -1302,6 +1327,80 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                 }
                 alertController.addAction(action7)
             }
+            
+            if self.isBanned {
+                let action9 = UIAlertAction(title: "Удалить из черного списка", style: .destructive) { action in
+                    
+                    let url = "/method/account.unban"
+                    let parameters = [
+                        "owner_id": "-\(self.groupID)",
+                        "access_token": vkSingleton.shared.accessToken,
+                        "v": vkSingleton.shared.version
+                    ]
+                    
+                    let request = GetServerDataOperation(url: url, parameters: parameters)
+                    request.completionBlock = {
+                        guard let data = request.data else { return }
+                        
+                        guard let json = try? JSON(data: data) else { print("json error"); return }
+                        let result = json["response"].intValue
+                        
+                        if result == 1 {
+                            self.isBanned = false
+                            self.showSuccessMessage(title: "Черный список", msg: "\nСообщество успешно удалено из черного списка.\n")
+                        } else {
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            print("#\(error.errorCode): \(error.errorMsg)")
+                        }
+                    }
+                    OperationQueue().addOperation(request)
+                }
+                alertController.addAction(action9)
+            } else {
+                let action9 = UIAlertAction(title: "Добавить в черный список", style: .destructive) { action in
+                    
+                    let url = "/method/account.ban"
+                    let parameters = [
+                        "owner_id": "-\(self.groupID)",
+                        "access_token": vkSingleton.shared.accessToken,
+                        "v": vkSingleton.shared.version
+                    ]
+                    
+                    let request = GetServerDataOperation(url: url, parameters: parameters)
+                    request.completionBlock = {
+                        guard let data = request.data else { return }
+                        
+                        guard let json = try? JSON(data: data) else { print("json error"); return }
+                        let result = json["response"].intValue
+                        
+                        if result == 1 {
+                            self.isBanned = true
+                            self.showSuccessMessage(title: "Черный список", msg: "\nСообщество успешно добавлено в черный список.\n")
+                        } else {
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            print("#\(error.errorCode): \(error.errorMsg)")
+                        }
+                    }
+                    OperationQueue().addOperation(request)
+                }
+                alertController.addAction(action9)
+            }
+            
+            let action8 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
+                
+                if self.wall.count > 0 {
+                    self.reportOnObject(ownerID: "-\(self.groupID)", itemID: "\(self.wall[0].id)", type: "group")
+                } else {
+                    let title = "Жалоба на сообщество"
+                    let text = "Ваша жалоба на сообщество успешно отправлена."
+                    self.showSuccessMessage(title: title, msg: text)
+                }
+            }
+            alertController.addAction(action8)
             
             present(alertController, animated: true)
         }

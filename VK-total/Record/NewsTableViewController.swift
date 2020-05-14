@@ -31,6 +31,8 @@ class NewsTableViewController: UITableViewController {
     
     var userID = vkSingleton.shared.userID
 
+    var menuView: BTNavigationDropdownMenu!
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -47,7 +49,7 @@ class NewsTableViewController: UITableViewController {
         tapGesture1 = UITapGestureRecognizer(target: self, action: #selector(readMoreClick1(sender:)))
         tapGesture2 = UITapGestureRecognizer(target: self, action: #selector(readMoreClick2(sender:)))
         
-        let menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
+        menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
         menuView.cellBackgroundColor = UIColor.white
         menuView.cellSelectionColor = UIColor.white
         menuView.cellTextLabelAlignment = .center
@@ -103,6 +105,11 @@ class NewsTableViewController: UITableViewController {
         refresh()
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        menuView.hide()
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         

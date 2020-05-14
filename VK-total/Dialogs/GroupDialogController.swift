@@ -1218,7 +1218,7 @@ extension GroupDialogController {
             type = type.replacingOccurrences(of: "_", with: "")
             type = type.replacingOccurrences(of: "-", with: "")
             
-            print(type)
+            //print(type)
             if type == "wall" {
                 attach.append(attachments)
                 typeOf.append("wall")

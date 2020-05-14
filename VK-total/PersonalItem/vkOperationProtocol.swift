@@ -2021,6 +2021,11 @@ extension UIViewController: VkOperationProtocol {
             parameters["post_id"] = itemID
             title = "Жалоба на запись"
             text = "Ваша жалоба на запись успешно отправлена."
+        } else if type == "group" {
+            url = "/method/wall.reportPost"
+            parameters["post_id"] = itemID
+            title = "Жалоба на сообщество"
+            text = "Ваша жалоба на сообщество успешно отправлена."
         } else if type == "post_comment" {
             url = "/method/wall.reportComment"
             parameters["comment_id"] = itemID

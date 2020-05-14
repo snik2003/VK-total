@@ -30,6 +30,8 @@ class Newsfeed2Controller: UITableViewController {
     let count = 100
     var isRefresh = false
     
+    var menuView: BTNavigationDropdownMenu!
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -43,7 +45,7 @@ class Newsfeed2Controller: UITableViewController {
             overrideUserInterfaceStyle = .light
         }
 
-        let menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
+        menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
         menuView.cellBackgroundColor = UIColor.white
         menuView.cellSelectionColor = UIColor.white
         menuView.cellTextLabelAlignment = .center
@@ -104,6 +106,11 @@ class Newsfeed2Controller: UITableViewController {
         refresh()
     }
 
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        menuView.hide()
+    }
+    
     @objc func refreshButtonClick()
     {
         startFrom = ""
