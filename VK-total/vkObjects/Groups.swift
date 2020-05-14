@@ -18,6 +18,7 @@ class Groups {
     var invitedBy: Int = 0
     var isClosed: Int = 0
     var deactivated: String = ""
+    var ageLimits = 0
     
     init(json: JSON) {
         self.gid = json["id"].stringValue
@@ -28,5 +29,6 @@ class Groups {
         self.invitedBy = json["invited_by"].intValue
         self.isClosed = json["is_closed"].intValue
         self.deactivated = json["deactivated"].stringValue
+        self.ageLimits = json["age_limits"].intValue
     }
 }

@@ -2054,7 +2054,6 @@ extension UIViewController: VkOperationProtocol {
         }
         
         let request = GetServerDataOperation(url: url, parameters: parameters)
-        
         request.completionBlock = {
             guard let data = request.data else { return }
             
@@ -2070,7 +2069,6 @@ extension UIViewController: VkOperationProtocol {
                 self.showErrorMessage(title: title, msg: "#\(error.errorCode): \(error.errorMsg)")
             }
         }
-        
         OperationQueue().addOperation(request)
     }
     

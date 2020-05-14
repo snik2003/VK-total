@@ -64,7 +64,7 @@ class GroupsController: UITableViewController, UISearchBarDelegate {
             "user_id": userID,
             "access_token": vkSingleton.shared.accessToken,
             "extended": "1",
-            "fields": "name,cover,members_count",
+            "fields": "name,cover,members_count,age_limits",
             "v": vkSingleton.shared.version
         ]
         
@@ -119,6 +119,23 @@ class GroupsController: UITableViewController, UISearchBarDelegate {
                 }
             }
             
+            var group = groups[indexPath.row]
+            if isSearching {
+                if indexPath.row < searchGroups.count {
+                    group = searchGroups[indexPath.row]
+                }
+            }
+            
+            switch group.ageLimits {
+            case 1:
+                print("age limits: no limits")
+            case 2:
+                print("age limits: 16+")
+            case 3:
+                print("age limits: 18+")
+            default:
+                print("age limits: unknown")
+            }
             self.openProfileController(id: -1 * gid, name: title)
         }
     }

@@ -49,12 +49,102 @@ class ReloadGroupProfileController2: Operation {
             } else {
                 controller.title = "\(group.name.prefix(20))..."
             }
+            
+            switch controller.groupProfile[0].ageLimits {
+            case 2:
+                warning16PlusLimits()
+            case 3:
+                warning18PlusLimits()
+            default:
+                if controller.groupProfile[0].name.contains("16+") {
+                    warning16PlusLimits()
+                } else if controller.groupProfile[0].name.contains("18+") {
+                    warning18PlusLimits()
+                } else {
+                    controller.setProfileView()
+                    controller.tableView.reloadData()
+                    controller.tableView.isHidden = false
+                    ViewControllerUtils().hideActivityIndicator()
+                }
+            }
+        } else {
+            controller.setProfileView()
+            controller.tableView.reloadData()
+            controller.tableView.isHidden = false
+            ViewControllerUtils().hideActivityIndicator()
         }
+    }
+    
+    func warning16PlusLimits() {
+        let alertController = UIAlertController(title: "Внимание!", message: "Данное сообщество имеет возрастное ограничение 16+. Вы подтвержаете, что ваш возраст превышает 16 лет?", preferredStyle: .actionSheet)
         
-        controller.setProfileView()
-        controller.tableView.reloadData()
-        controller.tableView.isHidden = false
-        ViewControllerUtils().hideActivityIndicator()
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+            self.controller.navigationController?.popViewController(animated: true)
+        }
+        alertController.addAction(cancelAction)
+        
+        let action1 = UIAlertAction(title: "Да, мне уже есть 16 лет", style: .default) { action in
+            self.controller.setProfileView()
+            self.controller.tableView.reloadData()
+            self.controller.tableView.isHidden = false
+            ViewControllerUtils().hideActivityIndicator()
+        }
+        alertController.addAction(action1)
+        
+        let action2 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
+            if self.controller.wall.count > 0 {
+                let groupID = self.controller.groupID
+                let itemID = self.controller.wall[0].id
+                if let navC = self.controller.navigationController {
+                    self.controller.navigationController?.popViewController(animated: true)
+                    navC.topViewController?.reportOnObject(ownerID: "-\(groupID)", itemID: "\(itemID)", type: "group")
+                }
+            } else {
+                let title = "Жалоба на сообщество"
+                let text = "Ваша жалоба на сообщество успешно отправлена."
+                self.controller.showSuccessMessage(title: title, msg: text)
+                self.controller.navigationController?.popViewController(animated: true)
+            }
+        }
+        alertController.addAction(action2)
+        
+        controller.present(alertController, animated: true)
+    }
+    
+    func warning18PlusLimits() {
+        let alertController = UIAlertController(title: "Внимание!", message: "Данное сообщество имеет возрастное ограничение 18+. Вы подтвержаете, что ваш возраст превышает 18 лет?", preferredStyle: .actionSheet)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+            self.controller.navigationController?.popViewController(animated: true)
+        }
+        alertController.addAction(cancelAction)
+        
+        let action1 = UIAlertAction(title: "Да, мне уже есть 18 лет", style: .default) { action in
+            self.controller.setProfileView()
+            self.controller.tableView.reloadData()
+            self.controller.tableView.isHidden = false
+            ViewControllerUtils().hideActivityIndicator()
+        }
+        alertController.addAction(action1)
+        
+        let action2 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
+            if self.controller.wall.count > 0 {
+                let groupID = self.controller.groupID
+                let itemID = self.controller.wall[0].id
+                if let navC = self.controller.navigationController {
+                    self.controller.navigationController?.popViewController(animated: true)
+                    navC.topViewController?.reportOnObject(ownerID: "-\(groupID)", itemID: "\(itemID)", type: "group")
+                }
+            } else {
+                let title = "Жалоба на сообщество"
+                let text = "Ваша жалоба на сообщество успешно отправлена."
+                self.controller.showSuccessMessage(title: title, msg: text)
+                self.controller.navigationController?.popViewController(animated: true)
+            }
+        }
+        alertController.addAction(action2)
+        
+        controller.present(alertController, animated: true)
     }
 }
 
