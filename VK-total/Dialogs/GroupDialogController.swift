@@ -194,7 +194,7 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-        commentView.tabHeight = self.tabHeight
+        commentView.tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
         
         if let gid = Int(self.groupID) {
             setCommentFromGroupID(id: gid, controller: self)

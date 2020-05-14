@@ -430,8 +430,6 @@ extension UIViewController: vkUserLongPollProtocol {
                                                 }
                                             }
                                         }
-                                        
-                                        
                                     } else if update.elements[0] == 61 {
                                         if controller.userID == "\(update.elements[1])" {
                                             typing = true
@@ -852,9 +850,9 @@ extension UIViewController: vkUserLongPollProtocol {
                     }
                 }
             }
+            
+            vkUserLongPoll.shared.updates.removeAll(keepingCapacity: false)
         }
-        
-        vkUserLongPoll.shared.updates.removeAll(keepingCapacity: false)
     }
 }
 

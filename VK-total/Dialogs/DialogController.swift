@@ -246,7 +246,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             commentView.sendImage = UIImage(named: "send")
             commentView.stickerImage = UIImage(named: "sticker")
             commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-            commentView.tabHeight = self.tabHeight
+            commentView.tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
             
             //setCommentFromGroupID(id: 0, controller: self)
             
@@ -2147,8 +2147,8 @@ extension DialogController {
     }
     
     func getAttachments() {
-        if attachments != "" {
-            let comp = attachments.components(separatedBy: "_")
+        if self.attachments != "" {
+            let comp = self.attachments.components(separatedBy: "_")
             var type = comp[0].replacingOccurrences(of: "[0-9]", with: "", options: .regularExpression, range: nil)
             type = type.replacingOccurrences(of: "_", with: "")
             type = type.replacingOccurrences(of: "-", with: "")
