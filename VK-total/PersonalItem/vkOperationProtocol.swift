@@ -116,16 +116,11 @@ extension UIViewController: VkOperationProtocol {
         
         let userDefaults = UserDefaults.standard
         
-        var sandbox = 0
-        if Config.appConfiguration == .Debug {
-            sandbox = 1
-        }
-        
         let url = "/method/account.unregisterDevice"
         let parameters = [
             //"token": vkSingleton.shared.deviceToken,
             "device_id": "\(UIDevice.current.identifierForVendor!)",
-            "sandbox": "\(sandbox)",
+            "sandbox": "\(vkSingleton.shared.sandbox)",
             "access_token": vkSingleton.shared.accessToken,
             "v": vkSingleton.shared.version
             ] as [String : Any]
@@ -256,18 +251,13 @@ extension UIViewController: VkOperationProtocol {
         jsonParam["missed_call"] = ["on"]
         jsonParam["money"] = ["on"]
         
-        var sandbox = 0
-        if Config.appConfiguration == .Debug {
-            sandbox = 1
-        }
-        
         let url = "/method/account.registerDevice"
         let parameters = [
             "token": vkSingleton.shared.deviceToken,
             "device_model": UIDevice.current.localizedModel,
             "device_id": "\(UIDevice.current.identifierForVendor!)",
             "system_version": UIDevice.current.systemVersion,
-            "sandbox": "\(sandbox)",
+            "sandbox": "\(vkSingleton.shared.sandbox)",
             "settings": JSON(jsonParam),
             "access_token": vkSingleton.shared.accessToken,
             "v": vkSingleton.shared.version

@@ -143,6 +143,10 @@ class PersonalController: UITableViewController {
             OperationQueue().addOperation(parseDialog)
         }
         
+        if indexPath.section == 1 && indexPath.row == 5 {
+            self.openBrowserControllerNoCheck(url: "https://vk.com/terms")
+        }
+        
         tableView.deselectRow(at: indexPath, animated: false)
     }
 }

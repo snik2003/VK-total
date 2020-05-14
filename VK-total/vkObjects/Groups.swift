@@ -19,6 +19,8 @@ class Groups {
     var isClosed: Int = 0
     var deactivated: String = ""
     var ageLimits = 0
+    var status = ""
+    var desc = ""
     
     init(json: JSON) {
         self.gid = json["id"].stringValue
@@ -30,5 +32,7 @@ class Groups {
         self.isClosed = json["is_closed"].intValue
         self.deactivated = json["deactivated"].stringValue
         self.ageLimits = json["age_limits"].intValue
+        self.status = json["status"].stringValue
+        self.desc = json["description"].stringValue
     }
 }

@@ -182,6 +182,14 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             
             if self.userProfile.count > 0 {
                 let user = self.userProfile[0]
+                
+                if vkSingleton.shared.userID == user.uid {
+                    if let date = user.birthDate.getDateFromString() {
+                        vkSingleton.shared.age = date.age
+                        print("age = \(vkSingleton.shared.age)")
+                    }
+                }
+                
                 if user.blacklisted == 1 {
                     if user.canSendFriendRequest == 1 || user.canWritePrivateMessage == 1 {
                         if user.sex == 1 {

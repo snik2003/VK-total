@@ -89,7 +89,7 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
                 "user_id": userID,
                 "access_token": vkSingleton.shared.accessToken,
                 "extended": "1",
-                "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits",
+                "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits,status,description",
                 "v": vkSingleton.shared.version
             ]
             
@@ -99,7 +99,7 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
                     "access_token": vkSingleton.shared.accessToken,
                     "filter": "groups",
                     "extended": "1",
-                    "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits",
+                    "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits,status,description",
                     "v": vkSingleton.shared.version
                 ]
             }
@@ -110,7 +110,7 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
                     "access_token": vkSingleton.shared.accessToken,
                     "filter": "publics",
                     "extended": "1",
-                    "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits",
+                    "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits,status,description",
                     "v": vkSingleton.shared.version
                 ]
             }
@@ -121,7 +121,7 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
                     "access_token": vkSingleton.shared.accessToken,
                     "filter": "moder",
                     "extended": "1",
-                    "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits",
+                    "fields": "name,cover,members_count,type,is_closed,deactivated,invited_by,age_limits,status,description",
                     "v": vkSingleton.shared.version
                 ]
             }

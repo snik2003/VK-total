@@ -42,6 +42,7 @@ class ReloadGroupProfileController2: Operation {
         controller.groupProfile = parseGroupProfile.outputData
         controller.offset += controller.count
         
+        
         if controller.groupProfile.count > 0 {
             let group = controller.groupProfile[0]
             if group.name.length <= 20 {
@@ -50,15 +51,15 @@ class ReloadGroupProfileController2: Operation {
                 controller.title = "\(group.name.prefix(20))..."
             }
             
-            switch controller.groupProfile[0].ageLimits {
+            switch group.ageLimits {
             case 2:
                 warning16PlusLimits()
             case 3:
                 warning18PlusLimits()
             default:
-                if controller.groupProfile[0].name.contains("16+") {
+                if group.name.contains("16+") || group.status.contains("16+") || group.description.contains("16+") {
                     warning16PlusLimits()
-                } else if controller.groupProfile[0].name.contains("18+") {
+                } else if group.name.contains("18+") || group.status.contains("18+") || group.description.contains("18+") {
                     warning18PlusLimits()
                 } else {
                     controller.setProfileView()
