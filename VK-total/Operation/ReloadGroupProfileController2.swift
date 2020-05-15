@@ -39,11 +39,11 @@ class ReloadGroupProfileController2: Operation {
                 controller.groups.append(group)
             }
         }
+        
         controller.groupProfile = parseGroupProfile.outputData
-        controller.offset += controller.count
-        
-        
-        if controller.groupProfile.count > 0 {
+        if controller.groupProfile.count > 0 && controller.offset == 0 {
+            ViewControllerUtils().hideActivityIndicator()
+            
             let group = controller.groupProfile[0]
             if group.name.length <= 20 {
                 controller.title = group.name
@@ -62,6 +62,7 @@ class ReloadGroupProfileController2: Operation {
                 } else if group.name.contains("18+") || group.status.contains("18+") || group.description.contains("18+") {
                     warning18PlusLimits()
                 } else {
+                    controller.offset += controller.count
                     controller.setProfileView()
                     controller.tableView.reloadData()
                     controller.tableView.isHidden = false
@@ -69,6 +70,7 @@ class ReloadGroupProfileController2: Operation {
                 }
             }
         } else {
+            controller.offset += controller.count
             controller.setProfileView()
             controller.tableView.reloadData()
             controller.tableView.isHidden = false
@@ -85,6 +87,7 @@ class ReloadGroupProfileController2: Operation {
         alertController.addAction(cancelAction)
         
         let action1 = UIAlertAction(title: "Да, мне уже есть 16 лет", style: .default) { action in
+            self.controller.offset += self.controller.count
             self.controller.setProfileView()
             self.controller.tableView.reloadData()
             self.controller.tableView.isHidden = false
@@ -121,6 +124,7 @@ class ReloadGroupProfileController2: Operation {
         alertController.addAction(cancelAction)
         
         let action1 = UIAlertAction(title: "Да, мне уже есть 18 лет", style: .default) { action in
+            self.controller.offset += self.controller.count
             self.controller.setProfileView()
             self.controller.tableView.reloadData()
             self.controller.tableView.isHidden = false

@@ -243,7 +243,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 "access_token": vkSingleton.shared.accessToken,
                 "count": "\(count)",
                 "extended": "1",
-                "fields": "id, first_name, last_name, photo_100",
+                "fields": "id, first_name, last_name, photo_100, screen_name",
                 "v": vkSingleton.shared.version
             ]
         } else if source == "banned" {
@@ -491,7 +491,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         case "users":
             let cell = tableView.dequeueReusableCell(withIdentifier: "usersCell", for: indexPath) as! FaveUsersCell
             
-            cell.configureCell(user: faveUsers[indexPath.row], indexPath: indexPath, cell: cell, tableView: tableView)
+            cell.configureCell(user: faveUsers[indexPath.row], indexPath: indexPath, cell: cell, tableView: tableView, source: source)
             
             cell.selectionStyle = .none
             cell.separatorInset = UIEdgeInsets(top: 0, left: 60, bottom: 0, right: 30)
@@ -521,7 +521,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         case "banned":
             let cell = tableView.dequeueReusableCell(withIdentifier: "usersCell", for: indexPath) as! FaveUsersCell
             
-            cell.configureCell(user: faveUsers[indexPath.row], indexPath: indexPath, cell: cell, tableView: tableView)
+            cell.configureCell(user: faveUsers[indexPath.row], indexPath: indexPath, cell: cell, tableView: tableView, source: source)
             
             cell.selectionStyle = .none
             cell.separatorInset = UIEdgeInsets(top: 0, left: 60, bottom: 0, right: 30)

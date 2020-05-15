@@ -103,7 +103,7 @@ extension UIViewController: vkUserLongPollProtocol {
                         vkUserLongPoll.shared.ts = json["ts"].stringValue
                         vkUserLongPoll.shared.updates = json["updates"].compactMap { Updates(json: $0.1) }
                         
-                        //print(json)
+                        print(json)
                         self.handleUpdates()
                         self.longPoll()
                     } else if failed == 2 && failed == 3 {
@@ -219,6 +219,7 @@ extension UIViewController: vkUserLongPollProtocol {
                     if let vcs = (vc1 as? UINavigationController)?.viewControllers {
                         for vc in vcs {
                             if let controller = vc as? DialogController, controller.mode == .dialog {
+                                
                                 var typing = false
                                 
                                 var delMess = false
@@ -232,6 +233,9 @@ extension UIViewController: vkUserLongPollProtocol {
                                 var spamCount = 0
                                 
                                 for update in vkUserLongPoll.shared.updates {
+                                    
+                                    print("update = \(update)")
+                                    
                                     if update.elements[0] == 8 {
                                         if controller.userID == "\(abs(update.elements[1]))" {
                                             for user in controller.users {

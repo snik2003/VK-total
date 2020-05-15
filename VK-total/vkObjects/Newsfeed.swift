@@ -270,6 +270,7 @@ class NewsProfiles {
     var lastName: String
     var photoURL: String
     var firstNameGen: String
+    var screenName: String
 
     init(json: JSON) {
         self.uid = json["id"].intValue
@@ -277,7 +278,7 @@ class NewsProfiles {
         self.lastName = json["last_name"].stringValue
         self.photoURL = json["photo_100"].stringValue
         self.firstNameGen = json["first_name_gen"].stringValue
-        
+        self.screenName = json["screen_name"].stringValue
     }
 }
 

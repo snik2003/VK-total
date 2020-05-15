@@ -67,44 +67,49 @@ class AddAccountController: UITableViewController {
         case 0:
             break
         case 1...accounts.count:
-            
             let account = accounts[indexPath.row - 1]
             
             if vkSingleton.shared.userID != "\(account.userID)" {
                 
-                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                alertController.addAction(cancelAction)
-                
-                let action1 = UIAlertAction(title: "\(account.firstName) \(account.lastName) (\(account.screenName))", style: .destructive) { action in
+                if let cell = tableView.cellForRow(at: indexPath) {
+                    cell.backgroundColor = UIColor.lightGray
                     
-                    vkSingleton.shared.userID = "\(account.userID)"
-                    vkSingleton.shared.avatarURL = ""
+                    let alertController = VKAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
                     
-                    self.userDefaults.set(vkSingleton.shared.userID, forKey: "vkUserID")
-                    self.readAppConfig()
-                
-                    vkSingleton.shared.accessToken = self.getAccessTokenFromRealm(userID: Int(vkSingleton.shared.userID)!)
-                
-                    vkUserLongPoll.shared.request.cancel()
-                    vkUserLongPoll.shared.firstLaunch = true
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+                        cell.backgroundColor = .clear
+                    }
+                    alertController.addAction(cancelAction)
                     
-                    for id in vkGroupLongPoll.shared.request.keys {
-                        if let request = vkGroupLongPoll.shared.request[id] {
-                            request.cancel()
-                            vkGroupLongPoll.shared.firstLaunch[id] = true
+                    let action1 = UIAlertAction(title: "\(account.firstName) \(account.lastName) \n https://vk.com/\(account.screenName)", style: .default) { action in
+                        
+                        vkSingleton.shared.userID = "\(account.userID)"
+                        vkSingleton.shared.avatarURL = ""
+                        
+                        self.userDefaults.set(vkSingleton.shared.userID, forKey: "vkUserID")
+                        self.readAppConfig()
+                    
+                        vkSingleton.shared.accessToken = self.getAccessTokenFromRealm(userID: Int(vkSingleton.shared.userID)!)
+                    
+                        vkUserLongPoll.shared.request.cancel()
+                        vkUserLongPoll.shared.firstLaunch = true
+                        
+                        for id in vkGroupLongPoll.shared.request.keys {
+                            if let request = vkGroupLongPoll.shared.request[id] {
+                                request.cancel()
+                                vkGroupLongPoll.shared.firstLaunch[id] = true
+                            }
                         }
+                        
+                        let controller = self.storyboard?.instantiateViewController(withIdentifier: "LoginFormController") as! LoginFormController
+                        controller.changeAccount = true
+                        
+                        UIApplication.shared.keyWindow?.rootViewController = controller
                     }
                     
-                    let controller = self.storyboard?.instantiateViewController(withIdentifier: "LoginFormController") as! LoginFormController
-                    controller.changeAccount = true
-                    
-                    UIApplication.shared.keyWindow?.rootViewController = controller
+                    alertController.addAction(action1)
+                    present(alertController, animated: true)
                 }
-                
-                alertController.addAction(action1)
-                present(alertController, animated: true)
             }
             
         default:
@@ -169,7 +174,8 @@ class AddAccountController: UITableViewController {
             cell.detailTextLabel?.text = "https://vk.com/\(account.screenName)"
             
             if vkSingleton.shared.userID == "\(account.userID)" {
-                cell.backgroundColor = .lightGray
+                cell.textLabel?.font = UIFont(name: "Verdana-Bold", size: 13.0)
+                cell.backgroundColor = UIColor.gray.withAlphaComponent(0.9)
             }
             
             let avatarImage = UIImageView()
@@ -201,7 +207,7 @@ class AddAccountController: UITableViewController {
             
             let button = UIButton()
             button.tag = 100
-            button.frame = CGRect(x: 50, y: 33, width: UIScreen.main.bounds.width - 100, height: 34)
+            button.frame = CGRect(x: 50, y: 28, width: UIScreen.main.bounds.width - 100, height: 44)
             button.layer.cornerRadius = 6
             button.clipsToBounds = true
             button.backgroundColor = UIColor(red: 0, green: 84/255, blue: 147/255, alpha: 1)
@@ -245,5 +251,88 @@ class AddAccountController: UITableViewController {
         } catch {
             print(error)
         }
+    }
+}
+
+class VKAlertController : UIAlertController {
+    
+    override init(nibName: String?, bundle: Bundle?) {
+        super.init(nibName: nibName, bundle: bundle)
+    }
+
+    convenience init() {
+        self.init(nibName:nil, bundle:nil)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("NSCoding not supported")
+    }
+}
+
+extension VKAlertController {
+    
+    open override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+
+        let accounts = readAccountsFromRealm()
+        
+        for i in self.actions {
+            let fullString = i.title ?? ""
+            let attributedText = NSMutableAttributedString(string: fullString, attributes: [NSAttributedString.Key.font : UIFont(name: "Verdana", size: 14.0)!])
+
+            for account in accounts {
+                attributedText.addAttributes([NSAttributedString.Key.foregroundColor : UIColor.gray], range: NSRange(fullString.range(of: "https://vk.com/\(account.screenName)") ?? fullString.startIndex..<fullString.startIndex, in: fullString))
+            }
+            
+            guard let label = (i.value(forKey: "__representer") as AnyObject).value(forKey: "label") as? UILabel else { return }
+            label.numberOfLines = 2
+            label.lineBreakMode = .byWordWrapping
+            label.attributedText = attributedText
+        }
+
+    }
+    
+    func readAccountsFromRealm() -> [AccountVK] {
+        do {
+            var config = Realm.Configuration.defaultConfiguration
+            config.deleteRealmIfMigrationNeeded = false
+            config.schemaVersion = 1
+            config.migrationBlock = { migration, oldSchemaVersion in
+                
+                if oldSchemaVersion < 1 {
+                    migration.enumerateObjects(ofType: AccountVK.className()) { oldObject, newObject in
+                        newObject?["userID"] = oldObject?["userID"]
+                        newObject?["firstName"] = oldObject?["firstName"]
+                        newObject?["lastName"] = oldObject?["lastName"]
+                        newObject?["avatarURL"] = oldObject?["avatarURL"]
+                        newObject?["screenName"] = oldObject?["screenName"]
+                        newObject?["lastSeen"] = oldObject?["lastSeen"]
+                        newObject?["token"] = oldObject?["token"]
+                    }
+                }
+            }
+            let realm = try Realm(configuration: config)
+            let accounts = realm.objects(AccountVK.self)
+            
+            return Array(accounts)
+        } catch {
+            print(error)
+        }
+        
+        return []
+    }
+}
+
+extension UIAlertController {
+    open override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+
+        for i in self.actions {
+            let attributedText = NSAttributedString(string: i.title ?? "", attributes: [NSAttributedString.Key.font : UIFont(name: "Verdana", size: 16.0)!])
+
+            guard let label = (i.value(forKey: "__representer") as AnyObject).value(forKey: "label") as? UILabel else { return }
+            label.attributedText = attributedText
+        }
+
     }
 }
