@@ -186,7 +186,6 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 if vkSingleton.shared.userID == user.uid {
                     if let date = user.birthDate.getDateFromString() {
                         vkSingleton.shared.age = date.age
-                        print("age = \(vkSingleton.shared.age)")
                     }
                 }
                 
@@ -1048,71 +1047,91 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 if user.blacklistedByMe == 1 {
                     let action1 = UIAlertAction(title: "Удалить из черного списка", style: .destructive) { action in
                         
-                        let url = "/method/account.unbanUser"
-                        let parameters = [
-                            "user_id": "\(self.userID)",
-                            "access_token": vkSingleton.shared.accessToken,
-                            "v": vkSingleton.shared.version
-                        ]
+                        let alertController = UIAlertController(title: nil, message: "Вы уверены, что хотите удалить \(user.firstNameAcc) из черного списка?", preferredStyle: .actionSheet)
                         
-                        let request = GetServerDataOperation(url: url, parameters: parameters)
-                        request.completionBlock = {
-                            guard let data = request.data else { return }
+                        let cancelAction = UIAlertAction(title: "Нет", style: .cancel)
+                        alertController.addAction(cancelAction)
+                        
+                        let action = UIAlertAction(title: "Да", style: .destructive) { action in
+                            let url = "/method/account.unbanUser"
+                            let parameters = [
+                                "user_id": "\(self.userID)",
+                                "access_token": vkSingleton.shared.accessToken,
+                                "v": vkSingleton.shared.version
+                            ]
                             
-                            guard let json = try? JSON(data: data) else { print("json error"); return }
-                            let result = json["response"].intValue
-                            
-                            if result == 1 {
-                                user.blacklistedByMe = 0
+                            let request = GetServerDataOperation(url: url, parameters: parameters)
+                            request.completionBlock = {
+                                guard let data = request.data else { return }
                                 
-                                var act = "удален"
-                                if user.sex == 1 {
-                                    act = "удалена"
+                                guard let json = try? JSON(data: data) else { print("json error"); return }
+                                let result = json["response"].intValue
+                                
+                                if result == 1 {
+                                    user.blacklistedByMe = 0
+                                    
+                                    var act = "удален"
+                                    if user.sex == 1 {
+                                        act = "удалена"
+                                    }
+                                    self.showSuccessMessage(title: "Черный список", msg: "\n\(user.firstName) \(user.lastName) успешно \(act) из черного списка.\n")
+                                } else {
+                                    let error = ErrorJson(json: JSON.null)
+                                    error.errorCode = json["error"]["error_code"].intValue
+                                    error.errorMsg = json["error"]["error_msg"].stringValue
+                                    print("#\(error.errorCode): \(error.errorMsg)")
                                 }
-                                self.showSuccessMessage(title: "Черный список", msg: "\n\(user.firstName) \(user.lastName) успешно \(act) из черного списка.\n")
-                            } else {
-                                let error = ErrorJson(json: JSON.null)
-                                error.errorCode = json["error"]["error_code"].intValue
-                                error.errorMsg = json["error"]["error_msg"].stringValue
-                                print("#\(error.errorCode): \(error.errorMsg)")
                             }
+                            OperationQueue().addOperation(request)
                         }
-                        OperationQueue().addOperation(request)
+                        alertController.addAction(action)
+                        
+                        self.present(alertController, animated: true)
                     }
                     alertController.addAction(action1)
                 } else {
                     let action1 = UIAlertAction(title: "Добавить в черный список", style: .destructive) { action in
                         
-                        let url = "/method/account.banUser"
-                        let parameters = [
-                            "user_id": "\(self.userID)",
-                            "access_token": vkSingleton.shared.accessToken,
-                            "v": vkSingleton.shared.version
-                        ]
+                        let alertController = UIAlertController(title: nil, message: "Вы уверены, что хотите добавить \(user.firstNameAcc) в черный список?", preferredStyle: .actionSheet)
                         
-                        let request = GetServerDataOperation(url: url, parameters: parameters)
-                        request.completionBlock = {
-                            guard let data = request.data else { return }
+                        let cancelAction = UIAlertAction(title: "Нет", style: .cancel)
+                        alertController.addAction(cancelAction)
+                        
+                        let action = UIAlertAction(title: "Да", style: .destructive) { action in
+                            let url = "/method/account.banUser"
+                            let parameters = [
+                                "user_id": "\(self.userID)",
+                                "access_token": vkSingleton.shared.accessToken,
+                                "v": vkSingleton.shared.version
+                            ]
                             
-                            guard let json = try? JSON(data: data) else { print("json error"); return }
-                            let result = json["response"].intValue
-                            
-                            if result == 1 {
-                                user.blacklistedByMe = 1
+                            let request = GetServerDataOperation(url: url, parameters: parameters)
+                            request.completionBlock = {
+                                guard let data = request.data else { return }
                                 
-                                var act = "добавлен"
-                                if user.sex == 1 {
-                                    act = "добавлена"
+                                guard let json = try? JSON(data: data) else { print("json error"); return }
+                                let result = json["response"].intValue
+                                
+                                if result == 1 {
+                                    user.blacklistedByMe = 1
+                                    
+                                    var act = "добавлен"
+                                    if user.sex == 1 {
+                                        act = "добавлена"
+                                    }
+                                    self.showSuccessMessage(title: "Черный список", msg: "\n\(user.firstName) \(user.lastName) успешно \(act) в черный список.\n")
+                                } else {
+                                    let error = ErrorJson(json: JSON.null)
+                                    error.errorCode = json["error"]["error_code"].intValue
+                                    error.errorMsg = json["error"]["error_msg"].stringValue
+                                    print("#\(error.errorCode): \(error.errorMsg)")
                                 }
-                                self.showSuccessMessage(title: "Черный список", msg: "\n\(user.firstName) \(user.lastName) успешно \(act) в черный список.\n")
-                            } else {
-                                let error = ErrorJson(json: JSON.null)
-                                error.errorCode = json["error"]["error_code"].intValue
-                                error.errorMsg = json["error"]["error_msg"].stringValue
-                                print("#\(error.errorCode): \(error.errorMsg)")
                             }
+                            OperationQueue().addOperation(request)
                         }
-                        OperationQueue().addOperation(request)
+                        alertController.addAction(action)
+                        
+                        self.present(alertController, animated: true)
                     }
                     alertController.addAction(action1)
                 }
@@ -1120,6 +1139,14 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 let action6 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
                     
                     self.reportOnUser(userID: self.userID)
+                }
+                alertController.addAction(action6)
+            }
+            
+            if self.userID == vkSingleton.shared.userID {
+                let action6 = UIAlertAction(title: "Сменить учетную запись", style: .default) { action in
+                    
+                    self.openAddAccountController()
                 }
                 alertController.addAction(action6)
             }

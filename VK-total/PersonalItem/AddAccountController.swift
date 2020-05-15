@@ -175,7 +175,7 @@ class AddAccountController: UITableViewController {
             
             if vkSingleton.shared.userID == "\(account.userID)" {
                 cell.textLabel?.font = UIFont(name: "Verdana-Bold", size: 13.0)
-                cell.backgroundColor = UIColor.gray.withAlphaComponent(0.9)
+                //cell.backgroundColor = UIColor.gray.withAlphaComponent(0.9)
             }
             
             let avatarImage = UIImageView()
@@ -278,10 +278,10 @@ extension VKAlertController {
         
         for i in self.actions {
             let fullString = i.title ?? ""
-            let attributedText = NSMutableAttributedString(string: fullString, attributes: [NSAttributedString.Key.font : UIFont(name: "Verdana", size: 14.0)!])
+            let attributedText = NSMutableAttributedString(string: fullString, attributes: [NSAttributedString.Key.font : UIFont(name: "Verdana", size: 15.0)!])
 
             for account in accounts {
-                attributedText.addAttributes([NSAttributedString.Key.foregroundColor : UIColor.gray], range: NSRange(fullString.range(of: "https://vk.com/\(account.screenName)") ?? fullString.startIndex..<fullString.startIndex, in: fullString))
+                attributedText.addAttributes([NSAttributedString.Key.foregroundColor : UIColor.gray, NSAttributedString.Key.font : UIFont(name: "Verdana", size: 12.0)!], range: NSRange(fullString.range(of: "https://vk.com/\(account.screenName)") ?? fullString.startIndex..<fullString.startIndex, in: fullString))
             }
             
             guard let label = (i.value(forKey: "__representer") as AnyObject).value(forKey: "label") as? UILabel else { return }
