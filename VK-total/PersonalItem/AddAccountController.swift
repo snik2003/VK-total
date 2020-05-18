@@ -120,6 +120,8 @@ class AddAccountController: UITableViewController {
     }
     
     @objc func addAccountButtonAction(sender: UIButton) {
+        sender.buttonTouched(controller: self)
+        
         let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
         let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
@@ -170,13 +172,10 @@ class AddAccountController: UITableViewController {
             cell.imageView?.isHidden = true
             
             cell.detailTextLabel?.textColor = cell.tintColor
+            cell.detailTextLabel?.font = UIFont(name: "Verdana", size: 11.0)
             cell.detailTextLabel?.isEnabled = true
             cell.detailTextLabel?.text = "https://vk.com/\(account.screenName)"
             
-            if vkSingleton.shared.userID == "\(account.userID)" {
-                cell.textLabel?.font = UIFont(name: "Verdana-Bold", size: 13.0)
-                //cell.backgroundColor = UIColor.gray.withAlphaComponent(0.9)
-            }
             
             let avatarImage = UIImageView()
             avatarImage.tag = 100
@@ -190,12 +189,22 @@ class AddAccountController: UITableViewController {
             OperationQueue.main.addOperation(setImageToRow)
             OperationQueue.main.addOperation {
                 avatarImage.layer.cornerRadius = 25
-                avatarImage.layer.borderColor = UIColor.gray.cgColor
-                avatarImage.layer.borderWidth = 0.6
                 avatarImage.contentMode = .scaleAspectFit
                 avatarImage.clipsToBounds = true
+                
+                if vkSingleton.shared.userID == "\(account.userID)" {
+                    avatarImage.layer.borderColor = UIColor.black.cgColor
+                    avatarImage.layer.borderWidth = 1.0
+                } else {
+                    avatarImage.layer.borderColor = UIColor.gray.cgColor
+                    avatarImage.layer.borderWidth = 0.6
+                }
             }
             cell.addSubview(avatarImage)
+            
+            if vkSingleton.shared.userID == "\(account.userID)" {
+                cell.textLabel?.font = UIFont(name: "Verdana-Bold", size: 13.0)
+            }
             
             return cell
         case accounts.count + 1:

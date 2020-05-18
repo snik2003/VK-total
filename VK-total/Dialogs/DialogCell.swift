@@ -69,7 +69,7 @@ class DialogCell: UITableViewCell {
             OperationQueue().addOperation(getCacheImage)
             OperationQueue.main.addOperation(setImageToRow)
             OperationQueue.main.addOperation {
-                self.avatarImage.layer.cornerRadius = 19
+                self.avatarImage.layer.cornerRadius = self.avatarSize/2
                 self.avatarImage.clipsToBounds = true
                 self.avatarImage.contentMode = .scaleAspectFill
                 self.avatarImage.layer.borderColor = UIColor.lightGray.cgColor

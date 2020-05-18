@@ -28,7 +28,6 @@ final class vkSingleton {
     
     var deviceToken = "" // "604a50395f505b94a0b8a15ae198d34d6cbb0b034387154701ddeabb0a873058"
     var deviceRegisterOnPush = false
-    let sandbox = 0
     
     var errorCode = 0
     var errorMsg = ""
