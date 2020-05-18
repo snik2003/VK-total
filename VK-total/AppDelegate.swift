@@ -24,8 +24,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        let configuration = YMMYandexMetricaConfiguration.init(apiKey: "e62996d5-ac3b-4823-80c0-04d1aa5714d4")
-        YMMYandexMetrica.activate(with: configuration!)
+        #if DEBUG
+            let configuration = YMMYandexMetricaConfiguration.init(apiKey: "7f7648a4-5c2f-4b87-9951-7ccdd7de2469")
+            YMMYandexMetrica.activate(with: configuration!)
+        #else
+            let configuration = YMMYandexMetricaConfiguration.init(apiKey: "e62996d5-ac3b-4823-80c0-04d1aa5714d4")
+            YMMYandexMetrica.activate(with: configuration!)
+        #endif
         
         registerForPushNotifications()
         application.applicationIconBadgeNumber = 0
