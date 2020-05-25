@@ -10,7 +10,7 @@ import UIKit
 import SwiftyJSON
 import DropDown
 
-class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
+class ChangeProfileInfoController: InnerViewController, UITextFieldDelegate {
     
     @IBOutlet weak var scrollView: UIScrollView!
     
@@ -48,16 +48,45 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
                           "показывать дату рождения",
                           "показывать только день и месяц"]
     
-    let textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-    let fieldBackgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
-    let fieldBackgroundColorDisabled = UIColor.red.withAlphaComponent(0.4)
+    var textColor = UIColor.black
+    var fieldBackgroundColor = vkSingleton.shared.backColor
+    var dropBackgroundColor = vkSingleton.shared.backColor
+    var shadowColor = UIColor.darkGray
+    var fieldBackgroundColorDisabled = UIColor.red.withAlphaComponent(0.4)
+    var selectedBackgroundColor = vkSingleton.shared.mainColor
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
+            textColor = .label
+            fieldBackgroundColorDisabled = .separator
+            
+            if AppConfig.shared.autoMode {
+                if self.traitCollection.userInterfaceStyle == .dark {
+                    selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    dropBackgroundColor = UIColor(red: 67/255, green: 67/255, blue: 67/255, alpha: 1)
+                    shadowColor = .lightGray
+                    textColor = .white
+                } else {
+                    selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    dropBackgroundColor = UIColor(red: 233/255, green: 238/255, blue: 255/255, alpha: 1)
+                    shadowColor = .darkGray
+                    textColor = .black
+                }
+            } else if AppConfig.shared.darkMode {
+                selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                dropBackgroundColor = UIColor(red: 67/255, green: 67/255, blue: 67/255, alpha: 1)
+                shadowColor = .lightGray
+                textColor = .white
+            } else {
+                selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                dropBackgroundColor = UIColor(red: 233/255, green: 238/255, blue: 255/255, alpha: 1)
+                shadowColor = .darkGray
+                textColor = .black
+            }
         }
-
+        
         OperationQueue.main.addOperation {
             ViewControllerUtils().showActivityIndicator(uiView: self.view)
             
@@ -76,27 +105,27 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
             self.bdateVisLabel.textColor = self.textColor
             
             self.maidenField.backgroundColor = self.fieldBackgroundColor
-            self.maidenField.layer.cornerRadius = 5
+            self.maidenField.layer.cornerRadius = 4
             self.maidenField.layer.borderColor = self.textColor.cgColor
             self.maidenField.layer.borderWidth = 0.8
             
             self.screenNameField.backgroundColor = self.fieldBackgroundColor
-            self.screenNameField.layer.cornerRadius = 5
+            self.screenNameField.layer.cornerRadius = 4
             self.screenNameField.layer.borderColor = self.textColor.cgColor
             self.screenNameField.layer.borderWidth = 0.8
             
             self.homeTownField.backgroundColor = self.fieldBackgroundColor
-            self.homeTownField.layer.cornerRadius = 5
+            self.homeTownField.layer.cornerRadius = 4
             self.homeTownField.layer.borderColor = self.textColor.cgColor
             self.homeTownField.layer.borderWidth = 0.8
             
             self.bdateField.backgroundColor = self.fieldBackgroundColor
-            self.bdateField.layer.cornerRadius = 5
+            self.bdateField.layer.cornerRadius = 4
             self.bdateField.layer.borderColor = self.textColor.cgColor
             self.bdateField.layer.borderWidth = 0.8
             
             self.sexLabel.backgroundColor = self.fieldBackgroundColor
-            self.sexLabel.layer.cornerRadius = 5
+            self.sexLabel.layer.cornerRadius = 4
             self.sexLabel.layer.borderColor = self.textColor.cgColor
             self.sexLabel.layer.borderWidth = 0.8
             
@@ -106,11 +135,13 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
             self.sexDrop.anchorView = self.sexLabel
             self.sexDrop.dataSource = self.sexPicker
             
-            self.sexDrop.textColor = UIColor.black
+            self.sexDrop.textColor = self.textColor
             self.sexDrop.textFont = UIFont(name: "Verdana", size: 12)!
-            self.sexDrop.backgroundColor = UIColor.white
-            self.sexDrop.selectionBackgroundColor = self.textColor.withAlphaComponent(0.6)
+            self.sexDrop.selectedTextColor = self.textColor
+            self.sexDrop.backgroundColor = self.dropBackgroundColor
+            self.sexDrop.selectionBackgroundColor = self.selectedBackgroundColor
             self.sexDrop.cellHeight = 30
+            self.sexDrop.shadowColor = self.shadowColor
             
             self.sexDrop.selectionAction = { [unowned self] (index: Int, item: String) in
                 self.profile[0].sex = index
@@ -129,7 +160,7 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
             }
             
             self.relationLabel.backgroundColor = self.fieldBackgroundColor
-            self.relationLabel.layer.cornerRadius = 5
+            self.relationLabel.layer.cornerRadius = 4
             self.relationLabel.layer.borderColor = self.textColor.cgColor
             self.relationLabel.layer.borderWidth = 0.8
             
@@ -139,11 +170,14 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
             self.relationDrop.anchorView = self.relationLabel
             self.relationDrop.dataSource = self.relationPicker
             
-            self.relationDrop.textColor = UIColor.black
+            self.relationDrop.textColor = self.textColor
             self.relationDrop.textFont = UIFont(name: "Verdana", size: 12)!
-            self.relationDrop.backgroundColor = UIColor.white
-            self.relationDrop.selectionBackgroundColor = self.textColor.withAlphaComponent(0.6)
+            self.relationDrop.selectedTextColor = self.textColor
+            self.relationDrop.backgroundColor = self.dropBackgroundColor
+            self.relationDrop.selectionBackgroundColor = self.selectedBackgroundColor
+            self.relationDrop.shadowColor = self.shadowColor
             self.relationDrop.cellHeight = 30
+            
             
             self.relationDrop.selectionAction = { [unowned self] (index: Int, item: String) in
                 self.profile[0].relation = index
@@ -152,7 +186,7 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
             }
             
             self.bdateVisLabel.backgroundColor = self.fieldBackgroundColor
-            self.bdateVisLabel.layer.cornerRadius = 5
+            self.bdateVisLabel.layer.cornerRadius = 4
             self.bdateVisLabel.layer.borderColor = self.textColor.cgColor
             self.bdateVisLabel.layer.borderWidth = 0.8
             
@@ -162,10 +196,12 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
             self.bdateDrop.anchorView = self.bdateVisLabel
             self.bdateDrop.dataSource = self.bdateVisPicker
             
-            self.bdateDrop.textColor = UIColor.black
+            self.bdateDrop.textColor = self.textColor
             self.bdateDrop.textFont = UIFont(name: "Verdana", size: 12)!
-            self.bdateDrop.backgroundColor = UIColor.white
-            self.bdateDrop.selectionBackgroundColor = self.textColor.withAlphaComponent(0.6)
+            self.bdateDrop.selectedTextColor = self.textColor
+            self.bdateDrop.backgroundColor = self.dropBackgroundColor
+            self.bdateDrop.selectionBackgroundColor = self.selectedBackgroundColor
+            self.bdateDrop.shadowColor = self.shadowColor
             self.bdateDrop.cellHeight = 30
             
             self.bdateDrop.selectionAction = { [unowned self] (index: Int, item: String) in
@@ -220,10 +256,6 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
         self.scrollView?.contentInset = contentInsets
         self.scrollView?.scrollIndicatorInsets = contentInsets
         
-    }
-    
-    @objc func hideKeyboard() {
-        self.view.endEditing(true)
     }
     
     override func didReceiveMemoryWarning() {
@@ -395,7 +427,7 @@ class ChangeProfileInfoController: UIViewController, UITextFieldDelegate {
             let datePickerView:UIDatePicker = UIDatePicker()
             datePickerView.datePickerMode = .date
             datePickerView.locale = NSLocale(localeIdentifier: "ru_RU") as Locale?
-            datePickerView.backgroundColor = UIColor.white //textColor.withAlphaComponent(0.6)
+            datePickerView.backgroundColor = vkSingleton.shared.backColor
             datePickerView.setValue(textColor, forKeyPath: "textColor")
             
             let dateFormatter2 = DateFormatter()

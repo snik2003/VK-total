@@ -8,7 +8,7 @@
 
 import UIKit
 
-class PostponedWallController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class PostponedWallController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
     var tableView: UITableView!
     
@@ -34,10 +34,6 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.createTableView()
             self.tableView.separatorStyle = .none
@@ -60,6 +56,7 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
     
     func createTableView() {
         tableView = UITableView()
+        tableView.backgroundColor = vkSingleton.shared.backColor
         tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
         
         tableView.delegate = self
@@ -79,24 +76,12 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
         return 1
     }
     
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        if let height = estimatedHeightCache[indexPath] {
-            return height
-        } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
-            
-            let height = cell.getRowHeight(record: wall[indexPath.section])
-            estimatedHeightCache[indexPath] = height
-            return height
-        }
-    }
-    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+            cell.delegate = self
             
             let height = cell.getRowHeight(record: wall[indexPath.section])
             estimatedHeightCache[indexPath] = height
@@ -117,14 +102,24 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }
@@ -132,11 +127,15 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell", for: indexPath) as! WallRecordCell2
+        cell.delegate = self
         
-        cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
+        
+        tableView.beginUpdates()
+        tableView.endUpdates()
         
         return cell
     }
@@ -145,7 +144,7 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
         
         let record = wall[indexPath.section]
         
-        self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+        self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
     }
     
     @IBAction func readMoreButtonTap1(sender: UIButton) {
@@ -154,6 +153,8 @@ class PostponedWallController: UIViewController, UITableViewDelegate, UITableVie
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore1 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 

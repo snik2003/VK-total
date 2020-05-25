@@ -14,8 +14,9 @@ import DCCommentView
 import SCLAlertView
 import Popover
 
-class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSource, WKNavigationDelegate, DCCommentViewDelegate {
+class VideoController: InnerViewController, UITableViewDelegate, UITableViewDataSource, WKNavigationDelegate, DCCommentViewDelegate {
 
+    var scrollToComment = false
     var vid = ""
     var ownerID = ""
     var offset = 0
@@ -61,7 +62,8 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     fileprivate var popover: Popover!
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.up),
-        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))
+        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+        .color(vkSingleton.shared.backColor)
     ]
 
     let product1 = [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108, 109, 110,
@@ -82,10 +84,6 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.configureTableView()
             
@@ -202,6 +200,8 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     func configureStickerView(sView: UIView, product: [Int], numProd: Int, width: CGFloat) {
         
+        sView.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in sView.subviews {
             if subview is UIButton {
                 subview.removeFromSuperview()
@@ -268,9 +268,9 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     menuButton.layer.borderWidth = 1
                     
                     if index == numProd {
-                        menuButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5)
+                        menuButton.backgroundColor = vkSingleton.shared.mainColor.withAlphaComponent(0.5)
                         menuButton.layer.cornerRadius = 10
-                        menuButton.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+                        menuButton.layer.borderColor = vkSingleton.shared.mainColor.cgColor
                         menuButton.layer.borderWidth = 1
                     }
                     
@@ -313,10 +313,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
         sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 20
+        let width = self.view.bounds.width - 40
         let height = width + 70
         let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        
+        stickerView.backgroundColor = vkSingleton.shared.backColor
         configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
         
         self.popover = Popover(options: self.popoverOptions)
@@ -330,24 +330,36 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     func configureTableView() {
-        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds)
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        
+        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
-        commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        commentView.textView.backgroundColor = .clear
+        commentView.textView.textColor = .black
+        commentView.textView.tintColor = vkSingleton.shared.mainColor
+        commentView.tintColor = vkSingleton.shared.mainColor
+        
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            } else if AppConfig.shared.darkMode {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            }
+        }
         
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
         commentView.tabHeight = self.tabHeight
         
-        if vkSingleton.shared.commentFromGroup > 0 && vkSingleton.shared.commentFromGroup == abs(Int(self.ownerID)!) {
-            setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
-        } else {
-            setCommentFromGroupID(id: 0, controller: self)
-        }
-        
+        setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
+        //setCommentFromGroupID(id: 0, controller: self)
         
         commentView.accessoryImage = UIImage(named: "attachment")
-        commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
         commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
         
         tableView.delegate = self
@@ -473,7 +485,12 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewHeader
     }
@@ -588,12 +605,12 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 
                 for index in 0...9 {
                     if action == "show_photo_\(index)" {
-                        self.openWallRecord(ownerID: comment.attach[index].ownerID, postID: comment.attach[index].id, accessKey: comment.attach[index].accessKey, type: "photo")
+                        self.openWallRecord(ownerID: comment.attach[index].ownerID, postID: comment.attach[index].id, accessKey: comment.attach[index].accessKey, type: "photo", scrollToComment: false)
                     }
                     
                     if action == "show_video_\(index)" {
                         
-                        self.openVideoController(ownerID: "\(comment.attach[index].ownerID)", vid: "\(comment.attach[index].id)", accessKey: comment.attach[index].accessKey, title: "Видеозапись")
+                        self.openVideoController(ownerID: "\(comment.attach[index].ownerID)", vid: "\(comment.attach[index].id)", accessKey: comment.attach[index].accessKey, title: "Видеозапись", scrollToComment: false)
                     }
                     
                     if action == "save_gif_\(index)" {
@@ -778,6 +795,14 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     
                     let action5 = UIAlertAction(title: "Удалить", style: .destructive) { action in
                         
+                        var titleColor = UIColor.black
+                        var backColor = UIColor.white
+                        
+                        if #available(iOS 13.0, *) {
+                            titleColor = .label
+                            backColor = vkSingleton.shared.backColor
+                        }
+                        
                         let appearance = SCLAlertView.SCLAppearance(
                             kTitleTop: 32.0,
                             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -785,7 +810,10 @@ class VideoController: UIViewController, UITableViewDelegate, UITableViewDataSou
                             kTextFont: UIFont(name: "Verdana", size: 13)!,
                             kButtonFont: UIFont(name: "Verdana", size: 14)!,
                             showCloseButton: false,
-                            showCircularIcon: true
+                            showCircularIcon: true,
+                            circleBackgroundColor: backColor,
+                            contentViewColor: backColor,
+                            titleColor: titleColor
                         )
                         let alertView = SCLAlertView(appearance: appearance)
                         

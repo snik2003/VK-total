@@ -22,6 +22,8 @@ class PhotosListCell: UITableViewCell {
     
     func configureCell(photos: [Photos], indexPath: IndexPath) {
         
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in self.subviews {
             if subview.tag == 200 {
                 subview.removeFromSuperview()
@@ -77,8 +79,8 @@ class PhotosListCell: UITableViewCell {
                 if source != "" && source != "change_avatar" {
                     markCheck[ind] = BEMCheckBox()
                     markCheck[ind]?.tag = 200
-                    markCheck[ind]?.onTintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-                    markCheck[ind]?.onCheckColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                    markCheck[ind]?.onTintColor = vkSingleton.shared.mainColor
+                    markCheck[ind]?.onCheckColor = vkSingleton.shared.mainColor
                     markCheck[ind]?.lineWidth = 2
                     
                     markCheck[ind]?.isEnabled = false

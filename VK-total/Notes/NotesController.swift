@@ -8,7 +8,7 @@
 
 import UIKit
 
-class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class NotesController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
     var userID = ""
     var offset = 0
@@ -33,10 +33,6 @@ class NotesController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         OperationQueue.main.addOperation {
             self.createTableView()

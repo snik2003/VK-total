@@ -7,13 +7,15 @@
 //
 
 import UIKit
+import AVFoundation
 import SwiftyJSON
 import Popover
 import WebKit
 
-class GroupProfileController2: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class GroupProfileController2: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
     @IBOutlet weak var tableView: UITableView!
+    let refreshControl = UIRefreshControl()
     var collectionView: UICollectionView!
     var webview: WKWebView!
     
@@ -62,18 +64,17 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     var popover: Popover!
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.down),
-        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))
+        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+        .color(vkSingleton.shared.backColor)
     ]
     
     var barButton: UIBarButtonItem!
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
             self.navigationItem.rightBarButtonItem = self.barButton
@@ -81,6 +82,15 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
             self.tableView.delegate = self
             self.tableView.dataSource = self
             self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+            
+            self.refreshControl.attributedTitle = NSAttributedString(string: "Обновляем данные")
+            self.refreshControl.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
+            if #available(iOS 13.0, *) {
+                self.refreshControl.tintColor = .secondaryLabel
+            } else {
+                self.refreshControl.tintColor = .gray
+            }
+            self.tableView.addSubview(self.refreshControl)
             
             self.tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "wallRecordCell2")
             self.tableView.separatorStyle = .none
@@ -108,6 +118,11 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         
+    }
+    
+    @objc func pullToRefresh() {
+        offset = 0
+        refresh()
     }
     
     @objc func refresh() {
@@ -216,26 +231,13 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         return 1
     }
     
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        if let height = estimatedHeightCache[indexPath] {
-            return height
-        } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
-                
-            let height = cell.getRowHeight(record: wall[indexPath.section])
-            estimatedHeightCache[indexPath] = height
-            return height
-        }
-    }
-    
-    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
-                
+            cell.delegate = self
+            
             let height = cell.getRowHeight(record: wall[indexPath.section])
             estimatedHeightCache[indexPath] = height
             return height
@@ -254,22 +256,33 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2", for: indexPath) as! WallRecordCell2
-            
-        cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        cell.delegate = self
+        
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
@@ -287,6 +300,9 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
             }
         }
             
+        tableView.beginUpdates()
+        tableView.endUpdates()
+        
         return cell
     }
     
@@ -319,12 +335,12 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                         
                         if action == "show_record" {
                             
-                            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_repost_record" {
                             
-                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_owner" {
@@ -368,43 +384,14 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                             
                             if action == "show_video_\(index)" {
                                 
-                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись")
+                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
                                 
                             }
                             
                             if action == "show_music_\(index)" {
                                 
-                                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                                
-                                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                                alertController.addAction(cancelAction)
-                                
-                                let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                                    
-                                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                    self.getITunesInfo(searchString: "\(record.audioTitle[index]) \(record.audioArtist[index])", searchType: "song")
-                                }
-                                alertController.addAction(action1)
-                                
-                                let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                                    
-                                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                    self.getITunesInfo(searchString: "\(record.audioArtist[index])", searchType: "artist")
-                                }
-                                alertController.addAction(action3)
-                                
-                                let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                                    
-                                    let link = "\(record.audioArtist[index]). \(record.audioTitle[index])"
-                                    UIPasteboard.general.string = link
-                                    if let string = UIPasteboard.general.string {
-                                        self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                                    }
-                                }
-                                alertController.addAction(action2)
-                                
-                                self.present(alertController, animated: true)
-                                
+                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
                             }
                         }
                         
@@ -423,6 +410,8 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore1 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 
@@ -440,6 +429,8 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore2 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 
@@ -457,7 +448,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if let index = indexPath?.section {
             let record = wall[index]
             
-            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     
@@ -466,6 +457,8 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         let indexPath = self.tableView.indexPathForRow(at: position)
         
         if let cell = tableView.cellForRow(at: indexPath!) as? WallRecordCell2, let label = sender.view as? UILabel {
+            cell.delegate = self
+            
             let num = label.tag
             
             if cell.poll.answerID == 0 {
@@ -919,7 +912,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                 collectionView.delegate = self
                 collectionView.dataSource = self
                 collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "counterCell")
-                collectionView.backgroundColor = UIColor.white
+                collectionView.backgroundColor = vkSingleton.shared.backColor
                 collectionView.showsVerticalScrollIndicator = false
                 collectionView.showsHorizontalScrollIndicator = true
                 profileView.addSubview(collectionView)
@@ -1027,8 +1020,9 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
     func contactView(user: DialogsUsers, contact: Contact, topY: CGFloat) -> UIView {
     
         let view = UIView()
+        view.backgroundColor = vkSingleton.shared.backColor
         
-        let width = UIScreen.main.bounds.width - 2 * 10
+        let width = UIScreen.main.bounds.width - 40
         var height: CGFloat = 0
         
         let getCacheImage = GetCacheImage(url: user.maxPhotoOrigURL, lifeTime: .avatarImage)
@@ -1063,7 +1057,12 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         let nameLabel = UILabel()
         nameLabel.attributedText = nil
         nameLabel.text = "\(user.firstName) \(user.lastName)"
-        nameLabel.textColor = .black
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+        } else {
+            nameLabel.textColor = .black
+        }
+        
         if user.online == 1 {
             if user.onlineMobile == 1 {
                 let fullString = "\(user.firstName) \(user.lastName) "
@@ -1073,7 +1072,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                 let rangeOfColoredString = (fullString as NSString).range(of: "●")
                 let attributedString = NSMutableAttributedString(string: fullString)
                 
-                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: nameLabel.tintColor /*UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)*/], range: rangeOfColoredString)
+                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: nameLabel.tintColor], range: rangeOfColoredString)
                 
                 nameLabel.attributedText = attributedString
             }
@@ -1081,18 +1080,23 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         nameLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.5
-        nameLabel.frame = CGRect(x: 60, y: 5 + startX, width: width - 100, height: 15)
+        nameLabel.frame = CGRect(x: 60, y: 5 + startX, width: width - 120, height: 15)
         view.addSubview(nameLabel)
         height += 20 + startX
         
         if contact.desc != "" {
             let label = UILabel()
             label.text = "\(contact.desc)"
-            label.textColor = .black
+            if #available(iOS 13.0, *) {
+                label.textColor = .secondaryLabel
+            } else {
+                label.textColor = .black
+                label.alpha = 0.6
+            }
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
-            label.frame = CGRect(x: 60, y: height, width: width - 100, height: 15)
+            label.frame = CGRect(x: 60, y: height, width: width - 120, height: 15)
             view.addSubview(label)
             height += 15
         }
@@ -1100,11 +1104,16 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if contact.phone != "" {
             let label = UILabel()
             label.text = "\(contact.phone)"
-            label.textColor = .black
+            if #available(iOS 13.0, *) {
+                label.textColor = .secondaryLabel
+            } else {
+                label.textColor = .black
+                label.alpha = 0.6
+            }
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
-            label.frame = CGRect(x: 60, y: height, width: width - 100, height: 15)
+            label.frame = CGRect(x: 60, y: height, width: width - 120, height: 15)
             view.addSubview(label)
             height += 15
         }
@@ -1112,11 +1121,16 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if contact.email != "" {
             let label = UILabel()
             label.text = "\(contact.email)"
-            label.textColor = .black
+            if #available(iOS 13.0, *) {
+                label.textColor = .secondaryLabel
+            } else {
+                label.textColor = .black
+                label.alpha = 0.6
+            }
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
-            label.frame = CGRect(x: 60, y: height, width: width - 100, height: 15)
+            label.frame = CGRect(x: 60, y: height, width: width - 120, height: 15)
             view.addSubview(label)
             height += 15
         }
@@ -1124,7 +1138,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
         if height < 50 {
             height = 50
         }
-        view.frame = CGRect(x: 20, y: topY, width: width-40, height: height)
+        view.frame = CGRect(x: 20, y: topY, width: width - 60, height: height)
         
         let tap = UITapGestureRecognizer()
         tap.numberOfTapsRequired = 1
@@ -1179,7 +1193,7 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
                 
                 
                 height += 10
-                contactsView.frame = CGRect(x: 0, y: 0, width: width, height: height)
+                contactsView.frame = CGRect(x: 0, y: 0, width: width - 20, height: height)
                 let startPoint = CGPoint(x: UIScreen.main.bounds.width - 30, y: 70)
                 
                 self.popover = Popover(options: self.popoverOptions)
@@ -1206,10 +1220,15 @@ class GroupProfileController2: UIViewController, UITableViewDelegate, UITableVie
             height = maxHeight
         }
 
-        let descView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-
-        let textView = UILabel(frame: CGRect(x: 10, y: 20, width: width-20, height: height-20))
+        let descView = UIView(frame: CGRect(x: 0, y: 0, width: width - 20, height: height))
+        descView.backgroundColor = vkSingleton.shared.backColor
+        
+        let textView = UILabel(frame: CGRect(x: 10, y: 20, width: width - 40, height: height - 20))
         textView.text = profile.description
+        
+        if #available(iOS 13.0, *) {
+            textView.textColor = .label
+        }
         
         textView.prepareTextForPublish2(self)
         textView.backgroundColor = .clear
@@ -1509,6 +1528,7 @@ extension GroupProfileController2: UICollectionViewDelegate, UICollectionViewDat
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "counterCell", for: indexPath)
+        cell.backgroundColor = .clear
         
         for subview in cell.subviews {
             if subview is UILabel {
@@ -1533,6 +1553,12 @@ extension GroupProfileController2: UICollectionViewDelegate, UICollectionViewDat
         
         countLabel.frame = CGRect(x: 0, y: 10, width: cell.bounds.width, height: 24)
         nameLabel.frame = CGRect(x: 0, y: 36, width: cell.bounds.width, height: 14)
+        
+        
+        if #available(iOS 13.0, *) {
+            countLabel.textColor = .label
+            nameLabel.textColor = .secondaryLabel
+        }
         
         cell.addSubview(countLabel)
         cell.addSubview(nameLabel)

@@ -59,12 +59,17 @@ class ProfileView: UIView {
                 friendButton.setTitle("Добавить в друзья", for: UIControl.State.normal)
                 friendButton.setTitle("Добавить в друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = true
-                friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                friendButton.backgroundColor = vkSingleton.shared.mainColor
             } else {
                 friendButton.setTitle("Вы не друзья", for: UIControl.State.normal)
                 friendButton.setTitle("Вы не друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = false
-                friendButton.backgroundColor = UIColor.lightGray
+                
+                if #available(iOS 13.0, *) {
+                    friendButton.backgroundColor = .separator
+                } else {
+                    friendButton.backgroundColor = .lightGray
+                }
             }
         }
         
@@ -72,28 +77,36 @@ class ProfileView: UIView {
             friendButton.setTitle("Вы подписаны", for: UIControl.State.normal)
             friendButton.setTitle("Вы подписаны", for: UIControl.State.disabled)
             friendButton.isEnabled = true
-            friendButton.backgroundColor = UIColor.lightGray
+            if #available(iOS 13.0, *) {
+                friendButton.backgroundColor = .separator
+            } else {
+                friendButton.backgroundColor = .lightGray
+            }
         }
         
         if profile.friendStatus == 2 {
             friendButton.setTitle("Подписан на вас", for: UIControl.State.normal)
             friendButton.setTitle("Подписан на вас", for: UIControl.State.disabled)
             friendButton.isEnabled = true
-            friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            friendButton.backgroundColor = vkSingleton.shared.mainColor
         }
         
         if profile.friendStatus == 3 {
             friendButton.setTitle("У Вас в друзьях", for: UIControl.State.normal)
             friendButton.setTitle("У Вас в друзьях", for: UIControl.State.disabled)
             friendButton.isEnabled = true
-            friendButton.backgroundColor = UIColor.lightGray
+            if #available(iOS 13.0, *) {
+                friendButton.backgroundColor = .separator
+            } else {
+                friendButton.backgroundColor = .lightGray
+            }
         }
     }
     
     func setStatusButtons(_ profile: UserProfileInfo, _ topY: CGFloat) -> CGFloat {
         
         messageButton.layer.borderColor = UIColor.black.cgColor
-        messageButton.layer.borderWidth = 0.6
+        messageButton.layer.borderWidth = 0.5
         messageButton.layer.cornerRadius = statusButtonHeight/3
         messageButton.clipsToBounds = true
         messageButton.setTitle("Сообщение", for: .normal)
@@ -106,13 +119,17 @@ class ProfileView: UIView {
         
         friendButton.titleLabel?.textAlignment = .center
         friendButton.layer.borderColor = UIColor.black.cgColor
-        friendButton.layer.borderWidth = 0.6
+        friendButton.layer.borderWidth = 0.5
         friendButton.layer.cornerRadius = statusButtonHeight/3
         friendButton.clipsToBounds = true
         
         if profile.canWritePrivateMessage == 0 {
             messageButton.isEnabled = false
-            messageButton.backgroundColor = UIColor.lightGray
+            if #available(iOS 13.0, *) {
+                messageButton.backgroundColor = .separator
+            } else {
+                messageButton.backgroundColor = .lightGray
+            }
         }
         
         messageButton.add(for: .touchUpInside) {
@@ -166,35 +183,61 @@ class ProfileView: UIView {
     
     func updateOwnerButtons() {
         if allRecordsButton.isSelected {
-            allRecordsButton.setTitleColor(UIColor.white, for: .selected)
-            allRecordsButton.layer.borderColor = UIColor.black.cgColor
+            if #available(iOS 13.0, *) {
+                allRecordsButton.setTitleColor(.label, for: .selected)
+                allRecordsButton.layer.borderColor = UIColor.label.cgColor
+            } else {
+                allRecordsButton.setTitleColor(UIColor.white, for: .selected)
+                allRecordsButton.layer.borderColor = UIColor.black.cgColor
+            }
+            
             allRecordsButton.layer.cornerRadius = 5
             allRecordsButton.clipsToBounds = true
-            allRecordsButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-            allRecordsButton.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            allRecordsButton.backgroundColor = vkSingleton.shared.mainColor
+            allRecordsButton.tintColor = vkSingleton.shared.mainColor
             
             ownerButton.isSelected = false
             ownerButton.setTitleColor(UIColor.black, for: .normal)
-            ownerButton.clipsToBounds = true
-            ownerButton.backgroundColor = UIColor.lightGray
-            ownerButton.tintColor = UIColor.lightGray
+            
             ownerButton.layer.cornerRadius = 5
+            ownerButton.clipsToBounds = true
+            
+            if #available(iOS 13.0, *) {
+                ownerButton.backgroundColor = .separator
+                ownerButton.tintColor = .separator
+            } else {
+                ownerButton.backgroundColor = .lightGray
+                ownerButton.tintColor = .lightGray
+            }
         }
         
         if ownerButton.isSelected {
-            ownerButton.setTitleColor(UIColor.white, for: .selected)
-            ownerButton.layer.borderColor = UIColor.black.cgColor
+            if #available(iOS 13.0, *) {
+                ownerButton.setTitleColor(.label, for: .selected)
+                ownerButton.layer.borderColor = UIColor.label.cgColor
+            } else {
+                ownerButton.setTitleColor(UIColor.white, for: .selected)
+                ownerButton.layer.borderColor = UIColor.black.cgColor
+            }
+            
             ownerButton.clipsToBounds = true
-            ownerButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-            ownerButton.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            ownerButton.backgroundColor = vkSingleton.shared.mainColor
+            ownerButton.tintColor = vkSingleton.shared.mainColor
             ownerButton.layer.cornerRadius = 5
             
             allRecordsButton.isSelected = false
             allRecordsButton.setTitleColor(UIColor.black, for: .normal)
+            
             allRecordsButton.clipsToBounds = true
-            allRecordsButton.backgroundColor = UIColor.lightGray
-            allRecordsButton.tintColor = UIColor.lightGray
             allRecordsButton.layer.cornerRadius = 5
+            
+            if #available(iOS 13.0, *) {
+                allRecordsButton.backgroundColor = .separator
+                allRecordsButton.tintColor = .separator
+            } else {
+                allRecordsButton.backgroundColor = UIColor.lightGray
+                allRecordsButton.tintColor = UIColor.lightGray
+            }
         }
     }
     
@@ -236,7 +279,11 @@ class ProfileView: UIView {
         if profile.canPost == 1 {
             let separator = UIView()
             separator.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: 5)
-            separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+            if #available(iOS 13.0, *) {
+                separator.backgroundColor = .separator
+            } else {
+                separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+            }
             self.addSubview(separator)
             
             topY += 5
@@ -260,8 +307,11 @@ class ProfileView: UIView {
         
         if postponed > 0 {
             let separator = UIView()
-            separator.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: 5)
-            separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+            if #available(iOS 13.0, *) {
+                separator.backgroundColor = .separator
+            } else {
+                separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+            }
             self.addSubview(separator)
             
             topY += 5
@@ -406,10 +456,9 @@ class ProfileView: UIView {
         let view = UIView()
         
         var color = UIColor(red: 255/255, green: 252/255, blue: 121/255, alpha: 1)
-        if profile.deactivated != "" || profile.blacklisted == 1 || profile.blacklistedByMe == 1 {
+        if profile.deactivated != "" || profile.blacklisted == 1 || profile.blacklistedByMe == 1 || (profile.isClosed == 1 && profile.canAccessClosed == 0) {
             color = UIColor(red: 255/255, green: 126/255, blue: 121/255, alpha: 1)
         } else if profile.uid == vkSingleton.shared.userID {
-            //color = UIColor(red: 122/255, green: 129/255, blue: 255/255, alpha: 1)
             color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
         } else if profile.friendStatus == 3 {
             color = UIColor(red: 207/255, green: 244/255, blue: 207/255, alpha: 1)
@@ -434,7 +483,7 @@ class ProfileView: UIView {
         
         if profile.onlineStatus == 1 {
             onlineStatusLabel.text = " онлайн"
-            onlineStatusLabel.textColor = UIColor.blue
+            onlineStatusLabel.textColor = onlineStatusLabel.tintColor
         } else {
             onlineStatusLabel.textColor = UIColor.black
             onlineStatusLabel.text = " заходил " + profile.lastSeen.toStringLastTime()
@@ -535,11 +584,12 @@ class ProfileView: UIView {
         blackImage.removeFromSuperview()
         favoriteImage.removeFromSuperview()
         
-        if profile.blacklisted == 1 {
+        if profile.blacklisted == 1 || (profile.isClosed == 1 && profile.canAccessClosed == 0){
+            
             blackImage.image = UIImage(named: "black-list")
             blackImage.clipsToBounds = true
             blackImage.contentMode = .scaleToFill
-            blackImage.backgroundColor = UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.75)
+            //blackImage.backgroundColor = UIColor(red: 146/255, green: 146/255, blue: 146/255, alpha: 0.75)
             blackImage.frame = CGRect(x: avatarImage.frame.maxX - leftInsets2 - 60, y: topInsets2, width: 60, height: 60)
             
             avatarImage.addSubview(blackImage)

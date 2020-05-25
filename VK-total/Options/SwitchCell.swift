@@ -36,3 +36,11 @@ class SwitchCell: UITableViewCell {
         return height + 45
     }
 }
+
+extension UISwitch {
+    open override func layoutSubviews() {
+        super.layoutSubviews()
+        
+        
+    }
+}

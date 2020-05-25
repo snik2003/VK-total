@@ -10,7 +10,7 @@ import UIKit
 import WebKit
 import RealmSwift
 
-class BrowserController: UIViewController, WKNavigationDelegate {
+class BrowserController: InnerViewController, WKNavigationDelegate {
 
     var webView: WKWebView!
     @IBOutlet weak var backButton: UIBarButtonItem!
@@ -48,10 +48,6 @@ class BrowserController: UIViewController, WKNavigationDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         progress.isHidden = true
         progress.tintColor = vkSingleton.shared.mainColor
@@ -93,6 +89,10 @@ class BrowserController: UIViewController, WKNavigationDelegate {
         if firstAppear {
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
+            let frameRect = CGRect(x: 0, y: navHeight + 50, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight - 50 - 44)
+            
+            webView.frame = frameRect
         }
     }
     

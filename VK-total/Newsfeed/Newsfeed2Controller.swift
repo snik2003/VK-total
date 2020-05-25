@@ -7,11 +7,12 @@
 //
 
 import UIKit
+import AVFoundation
 import Alamofire
 import SwiftyJSON
 import BTNavigationDropdownMenu
 
-class Newsfeed2Controller: UITableViewController {
+class Newsfeed2Controller: InnerTableViewController {
 
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
@@ -38,22 +39,37 @@ class Newsfeed2Controller: UITableViewController {
         return queue
     }()
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
-        menuView.cellBackgroundColor = UIColor.white
-        menuView.cellSelectionColor = UIColor.white
+        menuView.cellBackgroundColor = vkSingleton.shared.backColor
+        menuView.cellSelectionColor = vkSingleton.shared.backColor
+        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
+        menuView.cellSeparatorColor = vkSingleton.shared.separatorColor
+        
+        if #available(iOS 13.0, *) {
+            if !AppConfig.shared.autoMode {
+                if AppConfig.shared.darkMode {
+                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                } else {
+                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                }
+            }
+        }
+        
         menuView.cellTextLabelAlignment = .center
-        menuView.cellTextLabelColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-        menuView.selectedCellTextLabelColor = UIColor.red
+        menuView.selectedCellTextLabelColor = .systemRed
         menuView.cellTextLabelFont = UIFont.boldSystemFont(ofSize: 15)
         menuView.navigationBarTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        menuView.cellSeparatorColor = UIColor(red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         navigationItem.titleView = menuView
         
         menuView.didSelectItemAtIndexHandler = {[weak self] (indexPath: Int) -> () in
@@ -100,7 +116,11 @@ class Newsfeed2Controller: UITableViewController {
         }
         
         self.refreshControl?.addTarget(self, action: #selector(self.refreshButtonClick), for: UIControl.Event.valueChanged)
-        refreshControl?.tintColor = UIColor.gray
+        if #available(iOS 13.0, *) {
+            self.refreshControl?.tintColor = .secondaryLabel
+        } else {
+            self.refreshControl?.tintColor = .gray
+        }
         tableView.addSubview(refreshControl!)
         
         refresh()
@@ -197,25 +217,13 @@ class Newsfeed2Controller: UITableViewController {
         return 1
     }
     
-    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        if let height = estimatedHeightCache[indexPath] {
-            return height
-        } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Newsfeed2Cell
-            
-            let height = cell.getRowHeight(record: news[indexPath.section])
-            estimatedHeightCache[indexPath] = height
-            return height
-        }
-    }
-    
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Newsfeed2Cell
+            cell.delegate = self
             
             let height = cell.getRowHeight(record: news[indexPath.section])
             estimatedHeightCache[indexPath] = height
@@ -226,22 +234,47 @@ class Newsfeed2Controller: UITableViewController {
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
         if section == 0 {
-            return 15
+            return 10
         }
         return 0
     }
     
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 15
+        return 10
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        
+        return viewHeader
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let viewFooter = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        return viewFooter
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell", for: indexPath) as! Newsfeed2Cell
-
-        cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        cell.delegate = self
+        
+        estimatedHeightCache[indexPath] = cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.repostsButton.addTarget(self, action: #selector(self.tapRepostButton(sender:)), for: .touchUpInside)
+        cell.commentsButton.addTarget(self, action: #selector(self.tapCommentsButton(sender:)), for: .touchUpInside)
         
         if cell.poll != nil {
             for aLabel in cell.answerLabels {
@@ -251,6 +284,9 @@ class Newsfeed2Controller: UITableViewController {
                 aLabel.isUserInteractionEnabled = true
             }
         }
+        
+        tableView.beginUpdates()
+        tableView.endUpdates()
         
         return cell
     }
@@ -262,6 +298,7 @@ class Newsfeed2Controller: UITableViewController {
             if news[indexPath.section].readMore1 == 1 {
                 news[indexPath.section].readMore1 = 0
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Newsfeed2Cell
+                cell.delegate = self
                 
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: news[indexPath.section])
                 
@@ -279,6 +316,7 @@ class Newsfeed2Controller: UITableViewController {
             if news[indexPath.section].readMore2 == 1 {
                 news[indexPath.section].readMore2 = 0
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Newsfeed2Cell
+                cell.delegate = self
                 
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: news[indexPath.section])
                 
@@ -317,12 +355,12 @@ class Newsfeed2Controller: UITableViewController {
                         
                         if action == "show_record" {
                             
-                            self.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_repost_record" {
                             
-                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_owner" {
@@ -364,43 +402,14 @@ class Newsfeed2Controller: UITableViewController {
                             
                             if action == "show_video_\(index)" {
                                 
-                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись")
+                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
                                 
                             }
                             
                             if action == "show_music_\(index)" {
                                 
-                                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                                
-                                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                                alertController.addAction(cancelAction)
-                                
-                                let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                                    
-                                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                    self.getITunesInfo(searchString: "\(record.audioTitle[index]) \(record.audioArtist[index])", searchType: "song")
-                                }
-                                alertController.addAction(action1)
-                                
-                                let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                                    
-                                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                    self.getITunesInfo(searchString: "\(record.audioArtist[index])", searchType: "artist")
-                                }
-                                alertController.addAction(action3)
-                                
-                                let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                                    
-                                    let link = "\(record.audioArtist[index]). \(record.audioTitle[index])"
-                                    UIPasteboard.general.string = link
-                                    if let string = UIPasteboard.general.string {
-                                        self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                                    }
-                                }
-                                alertController.addAction(action2)
-                                
-                                self.present(alertController, animated: true)
-                                
+                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
                             }
                         }
                         
@@ -435,7 +444,7 @@ class Newsfeed2Controller: UITableViewController {
         if let index = indexPath?.section {
             let record = news[index]
             
-            self.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post")
+            self.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     
@@ -444,6 +453,8 @@ class Newsfeed2Controller: UITableViewController {
         let indexPath = self.tableView.indexPathForRow(at: position)
         
         if let cell = tableView.cellForRow(at: indexPath!) as? Newsfeed2Cell, let label = sender.view as? UILabel {
+            cell.delegate = self
+            
             let num = label.tag
             
             if cell.poll.answerID == 0 {

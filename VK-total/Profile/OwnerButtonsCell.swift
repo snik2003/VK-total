@@ -61,7 +61,7 @@ class OwnerButtonsCell: UITableViewCell {
             allRecordsButton.layer.borderColor = UIColor.black.cgColor
             allRecordsButton.clipsToBounds = true
             allRecordsButton.tintColor = UIColor.lightGray
-            allRecordsButton.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            allRecordsButton.tintColor = vkSingleton.shared.mainColor
             
             ownerButton.isSelected = false
             ownerButton.setTitleColor(UIColor.black, for: .normal)
@@ -74,7 +74,7 @@ class OwnerButtonsCell: UITableViewCell {
             ownerButton.setTitleColor(UIColor.white, for: .selected)
             ownerButton.layer.borderColor = UIColor.black.cgColor
             ownerButton.clipsToBounds = true
-            ownerButton.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            ownerButton.tintColor = vkSingleton.shared.mainColor
             
             allRecordsButton.isSelected = false
             allRecordsButton.setTitleColor(UIColor.black, for: .normal)

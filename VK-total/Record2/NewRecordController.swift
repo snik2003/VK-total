@@ -10,7 +10,7 @@ import UIKit
 import SCLAlertView
 import Photos
 
-class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextViewDelegate {
+class NewRecordController: InnerViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextViewDelegate {
 
     var type = "new"
     var ownerID = ""
@@ -72,10 +72,6 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         OperationQueue.main.addOperation {
             self.pickerController.delegate = self
             self.textView.delegate = self
@@ -89,7 +85,7 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
             self.collectionView.delegate = self
             self.collectionView.dataSource = self
             self.collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
-            self.collectionView.backgroundColor = UIColor.white
+            self.collectionView.backgroundColor = vkSingleton.shared.backColor
             self.collectionView.showsVerticalScrollIndicator = false
             self.collectionView.showsHorizontalScrollIndicator = true
             self.view.addSubview(self.collectionView)
@@ -100,7 +96,7 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
             if self.type == "edit_message" {
                 self.textView.placeholder = "Введите текст сообщения..."
             }
-            self.textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+            self.textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             self.textView.layer.borderWidth = 1.0
             self.textView.layer.cornerRadius = 5
             self.textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
@@ -317,6 +313,10 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
             selectPhotoButton.isHidden = true
             selectVideoButton.isHidden = true
         }
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -564,6 +564,14 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
     @IBAction func tapAddLink(sender: UIButton) {
         
         if link == "" {
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            if #available(iOS 13.0, *) {
+                titleColor = .label
+                backColor = vkSingleton.shared.backColor
+            }
+            
             let appearance = SCLAlertView.SCLAppearance(
                 kTitleTop: 32.0,
                 kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -571,7 +579,10 @@ class NewRecordController: UIViewController, UIImagePickerControllerDelegate, UI
                 kTextFont: UIFont(name: "Verdana", size: 12)!,
                 kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
                 showCloseButton: false,
-                showCircularIcon: true
+                showCircularIcon: true,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
             )
             
             let alert = SCLAlertView(appearance: appearance)
@@ -846,21 +857,21 @@ extension NewRecordController: UICollectionViewDelegate, UICollectionViewDataSou
                         if typeOf[index] == "wall" {
                             let action1 = UIAlertAction(title: "Открыть запись", style: .destructive) { action in
                                 
-                                self.openWallRecord(ownerID: self.repostOwnerID, postID: self.repostItemID, accessKey: "", type: "post")
+                                self.openWallRecord(ownerID: self.repostOwnerID, postID: self.repostItemID, accessKey: "", type: "post", scrollToComment: false)
                                 deleteView.removeFromSuperview()
                             }
                             alertController.addAction(action1)
                         } else if typeOf[index] == "photo" {
                             let action1 = UIAlertAction(title: "Открыть фотографию", style: .destructive) { action in
                                 
-                                self.openWallRecord(ownerID: self.repostOwnerID, postID: self.repostItemID, accessKey: self.repostAccessKey, type: "photo")
+                                self.openWallRecord(ownerID: self.repostOwnerID, postID: self.repostItemID, accessKey: self.repostAccessKey, type: "photo", scrollToComment: false)
                                 deleteView.removeFromSuperview()
                             }
                             alertController.addAction(action1)
                         } else if typeOf[index] == "video" {
                             let action1 = UIAlertAction(title: "Открыть видеозапись", style: .destructive) { action in
                                 
-                                self.openVideoController(ownerID: "\(self.repostOwnerID)", vid: "\(self.repostItemID)", accessKey: self.repostAccessKey, title: "Видеозапись")
+                                self.openVideoController(ownerID: "\(self.repostOwnerID)", vid: "\(self.repostItemID)", accessKey: self.repostAccessKey, title: "Видеозапись", scrollToComment: false)
                                 deleteView.removeFromSuperview()
                             }
                             alertController.addAction(action1)
@@ -893,7 +904,7 @@ extension NewRecordController: UICollectionViewDelegate, UICollectionViewDataSou
             
             let imageView = UIImageView()
             imageView.image = photo
-            imageView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+            imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             imageView.layer.borderWidth = 1.0
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true

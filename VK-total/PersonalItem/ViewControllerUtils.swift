@@ -29,7 +29,21 @@ class ViewControllerUtils {
         ViewControllerUtils.activityIndicator.frame = CGRect(x: 0, y: 0, width: 40, height: 40);
         ViewControllerUtils.activityIndicator.style = UIActivityIndicatorView.Style.whiteLarge
         //ViewControllerUtils.activityIndicator.color = UIColor.black
-        ViewControllerUtils.activityIndicator.center = CGPoint(x: ViewControllerUtils.loadingView.frame.size.width / 2, y: ViewControllerUtils.loadingView.frame.size.height / 2);
+        ViewControllerUtils.activityIndicator.center = CGPoint(x: ViewControllerUtils.loadingView.frame.size.width / 2,
+                                                               y: ViewControllerUtils.loadingView.frame.size.height / 2);
+        
+        if #available(iOS 13.0, *) {
+            ViewControllerUtils.container.layer.borderColor = UIColor.label.cgColor
+            ViewControllerUtils.container.layer.borderWidth = 0.5
+            
+            if AppConfig.shared.autoMode && ViewControllerUtils.loadingView.traitCollection.userInterfaceStyle == .dark {
+                ViewControllerUtils.loadingView.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+                ViewControllerUtils.activityIndicator.color = UIColor.white
+            } else if AppConfig.shared.darkMode {
+                ViewControllerUtils.loadingView.backgroundColor = UIColor.black.withAlphaComponent(0.6)
+                ViewControllerUtils.activityIndicator.color = UIColor.white
+            }
+        }
         
         ViewControllerUtils.loadingView.addSubview(ViewControllerUtils.activityIndicator)
         ViewControllerUtils.container.addSubview(ViewControllerUtils.loadingView)

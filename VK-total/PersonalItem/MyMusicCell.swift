@@ -22,6 +22,8 @@ class MyMusicCell: UITableViewCell {
     
     func configureCell(song: IMusic, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
+        self.backgroundColor = .clear
+        
         for subview in self.subviews {
             if subview is UIImageView || subview is UILabel || subview is UIButton {
                 subview.removeFromSuperview()
@@ -37,7 +39,7 @@ class MyMusicCell: UITableViewCell {
             OperationQueue.main.addOperation {
                 self.avatarImage.clipsToBounds = true
                 self.avatarImage.contentMode = .scaleAspectFit
-                self.avatarImage.layer.cornerRadius = 14.0
+                self.avatarImage.layer.cornerRadius = 20.0
             }
         } else {
             avatarImage.image = UIImage(named: "music")
@@ -50,13 +52,17 @@ class MyMusicCell: UITableViewCell {
                 
         artistLabel.frame = CGRect (x: 2 * leftInsets + avatarSize, y: 9, width: bounds.size.width - 4 * leftInsets - avatarSize - listenButtonSize, height: 16)
         artistLabel.text = song.artist
-                
+        
+        if #available(iOS 13.0, *) {
+            artistLabel.textColor = .label
+        }
+        
         songLabel.frame = CGRect (x: 2 * leftInsets + avatarSize, y: 25, width: bounds.size.width - 4 * leftInsets - avatarSize - listenButtonSize, height: 16)
         songLabel.textColor = songLabel.tintColor
         songLabel.text = song.song
         
         listenButton.setImage(UIImage(named: "listen-music"), for: .normal)
-        listenButton.imageView?.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
         listenButton.frame = CGRect(x: bounds.size.width - leftInsets - listenButtonSize, y: 2 * topInsets, width: listenButtonSize, height: listenButtonSize)
         
         self.addSubview(avatarImage)

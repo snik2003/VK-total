@@ -10,7 +10,7 @@ import UIKit
 import SCLAlertView
 import Photos
 
-class NewCommentController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextViewDelegate {
+class NewCommentController: InnerViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextViewDelegate {
     
     var type = "new"
     var ownerID = ""
@@ -55,10 +55,6 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         configureSetupLabel()
         
         pickerController.delegate = self
@@ -73,7 +69,7 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
-        collectionView.backgroundColor = UIColor.white
+        collectionView.backgroundColor = vkSingleton.shared.backColor
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = true
         self.view.addSubview(collectionView)
@@ -81,7 +77,7 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
         
         textView.text = message
         textView.placeholder = "Введите текст комментария..."
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1.0
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
@@ -93,6 +89,10 @@ class NewCommentController: UIViewController, UIImagePickerControllerDelegate, U
         self.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(self.tapCancelButton(sender:)))
         self.navigationItem.leftBarButtonItem = cancelButton
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
     }
     
     override func viewDidLayoutSubviews() {
@@ -618,7 +618,7 @@ extension NewCommentController: UICollectionViewDelegate, UICollectionViewDataSo
         
         let imageView = UIImageView()
         imageView.image = photo
-        imageView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         imageView.layer.borderWidth = 1.0
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true

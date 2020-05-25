@@ -10,7 +10,7 @@ import UIKit
 import SCLAlertView
 import Photos
 
-class AddTopicController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextViewDelegate {
+class AddTopicController: InnerViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, UITextViewDelegate {
     
     var ownerID = ""
     var message = ""
@@ -53,10 +53,6 @@ class AddTopicController: UIViewController, UIImagePickerControllerDelegate, UIN
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         pickerController.delegate = self
         textView.delegate = self
         
@@ -69,19 +65,19 @@ class AddTopicController: UIViewController, UIImagePickerControllerDelegate, UIN
         collectionView.delegate = self
         collectionView.dataSource = self
         collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
-        collectionView.backgroundColor = UIColor.white
+        collectionView.backgroundColor = vkSingleton.shared.backColor
         collectionView.showsVerticalScrollIndicator = false
         collectionView.showsHorizontalScrollIndicator = true
         self.view.addSubview(collectionView)
         
         titleView.placeholder = "Название темы для обсуждения..."
-        titleView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        titleView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         titleView.layer.borderWidth = 1.0
         titleView.layer.cornerRadius = 5
         titleView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         
         textView.placeholder = "Текст первого сообщения в обсуждении..."
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1.0
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
@@ -93,6 +89,10 @@ class AddTopicController: UIViewController, UIImagePickerControllerDelegate, UIN
         self.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(self.tapCancelButton(sender:)))
         self.navigationItem.leftBarButtonItem = cancelButton
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
     }
     
     override func viewDidLayoutSubviews() {
@@ -499,7 +499,7 @@ extension AddTopicController: UICollectionViewDelegate, UICollectionViewDataSour
         
         let imageView = UIImageView()
         imageView.image = photo
-        imageView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         imageView.layer.borderWidth = 1.0
         imageView.contentMode = .scaleAspectFill
         imageView.clipsToBounds = true

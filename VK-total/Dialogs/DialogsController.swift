@@ -10,7 +10,7 @@ import UIKit
 import SCLAlertView
 import SwiftyJSON
 
-class DialogsController: UITableViewController {
+class DialogsController: InnerTableViewController {
 
     var isFirstAppear = true
     var isRefresh = false
@@ -31,13 +31,12 @@ class DialogsController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            isModalInPresentation = true
-            overrideUserInterfaceStyle = .light
-        }
-
         self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: .valueChanged)
-        refreshControl?.tintColor = UIColor.gray
+        if #available(iOS 13.0, *) {
+            self.refreshControl?.tintColor = .secondaryLabel
+        } else {
+            self.refreshControl?.tintColor = .gray
+        }
         tableView.addSubview(refreshControl!)
         
         OperationQueue.main.addOperation {
@@ -52,7 +51,7 @@ class DialogsController: UITableViewController {
             self.refresh()
         }
     }
-    
+
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         
@@ -363,6 +362,29 @@ class DialogsController: UITableViewController {
         return 6
     }
     
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        
+        return viewHeader
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let viewFooter = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        return viewFooter
+    }
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell", for: indexPath) as! DialogsCell
         
@@ -397,6 +419,14 @@ class DialogsController: UITableViewController {
         let deleteAction = UITableViewRowAction(style: .normal, title: "Удалить диалог") { (rowAction, indexPath) in
             let dialog = self.dialogs[indexPath.section]
             
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            if #available(iOS 13.0, *) {
+                titleColor = .label
+                backColor = vkSingleton.shared.backColor
+            }
+            
             let appearance = SCLAlertView.SCLAppearance(
                 kTitleTop: 32.0,
                 kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -404,7 +434,10 @@ class DialogsController: UITableViewController {
                 kTextFont: UIFont(name: "Verdana", size: 13)!,
                 kButtonFont: UIFont(name: "Verdana", size: 14)!,
                 showCloseButton: false,
-                showCircularIcon: true
+                showCircularIcon: true,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
             )
             let alertView = SCLAlertView(appearance: appearance)
             
@@ -478,6 +511,14 @@ class DialogsController: UITableViewController {
     
     func getCustomDialogID() {
         
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -485,26 +526,29 @@ class DialogsController: UITableViewController {
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
-            showCircularIcon: false
+            showCircularIcon: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textField = UITextField(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 30))
         
-        textField.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textField.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textField.layer.borderWidth = 1
         textField.layer.cornerRadius = 5
         textField.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textField.font = UIFont(name: "Verdana", size: 13)
-        textField.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textField.textColor = vkSingleton.shared.mainColor
         textField.keyboardType = .numberPad
         textField.textAlignment = .center
         textField.text = ""
         
         alert.customSubview = textField
         
-        alert.addButton("Готово", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Готово", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
             self.view.endEditing(true);
             if let userID = textField.text {
@@ -512,7 +556,7 @@ class DialogsController: UITableViewController {
             }
         }
         
-        alert.addButton("Отмена", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {}
+        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {}
         
         alert.showInfo("Идентификатор пользователя:", subTitle: "")
     }

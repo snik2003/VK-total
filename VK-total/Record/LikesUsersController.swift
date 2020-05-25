@@ -8,7 +8,7 @@
 
 import UIKit
 
-class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class LikesUsersController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
     
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var segmentedControl: UISegmentedControl!
@@ -28,14 +28,15 @@ class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         tableView.delegate = self
         tableView.dataSource = self
         
         segmentedControl.selectedSegmentIndex = 0
+        if #available(iOS 13, *) {} else {
+            segmentedControl.tintColor = vkSingleton.shared.mainColor
+            segmentedControl.backgroundColor = vkSingleton.shared.backColor
+        }
+        
         for like in likes {
             users.append(like)
         }
@@ -56,11 +57,6 @@ class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDa
                 users.append(like)
             }
         case 1:
-            self.title = "Поделились"
-            for repost in reposts {
-                users.append(repost)
-            }
-        case 2:
             self.title = "Оценили друзья"
             for like in likes {
                 if like.friendStatus == 3 {
@@ -96,14 +92,24 @@ class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDa
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
         
-        viewHeader.backgroundColor = UIColor.white
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = .white
+        }
+        
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
         
-        viewFooter.backgroundColor = UIColor.white
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = .white
+        }
+        
         return viewFooter
     }
     
@@ -136,10 +142,7 @@ class LikesUsersController: UIViewController, UITableViewDelegate, UITableViewDa
                 let fullString = "\(user.firstName) \(user.lastName) ●"
                 let rangeOfColoredString = (fullString as NSString).range(of: "●")
                 let attributedString = NSMutableAttributedString(string: fullString)
-                
-                if let color = cell.textLabel?.tintColor {
-                    attributedString.setAttributes([NSAttributedString.Key.foregroundColor:  color], range: rangeOfColoredString)
-                }
+                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: cell.textLabel?.tintColor], range: rangeOfColoredString)
                 cell.textLabel?.attributedText = attributedString
             }
         }
@@ -197,7 +200,11 @@ extension UILabel {
         
         let range2 = NSMakeRange(textString.length-1, attachmentStr.length);
         
-        mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: self.tintColor], range: range2)
+        if #available(iOS 13.0, *) {
+            mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.link], range: range2)
+        } else {
+            mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: self.tintColor], range: range2)
+        }
         
         self.attributedText = mutableAttributedString
     }
@@ -223,8 +230,11 @@ extension UILabel {
         
         if online == 1 {
             let range2 = NSMakeRange(0, attachmentStr.length);
-            
-            mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.blue], range: range2)
+            if #available(iOS 13.0, *) {
+                mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.link], range: range2)
+            } else {
+                mutableAttributedString.setAttributes([NSAttributedString.Key.foregroundColor: self.tintColor], range: range2)
+            }
         }
         
         let textString = NSAttributedString(string: text, attributes: [.font: self.font])

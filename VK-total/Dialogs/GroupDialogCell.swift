@@ -29,10 +29,6 @@ class GroupDialogCell: UITableViewCell {
     let dateFont = UIFont(name: "Verdana", size: 10)!
     let actFont = UIFont(name: "Verdana", size: 11)!
     
-    let inBackColor = UIColor(displayP3Red: 244/255, green: 223/255, blue: 200/255, alpha: 1)
-    let outBackColor = UIColor(displayP3Red: 200/255, green: 200/255, blue: 238/255, alpha: 1)
-    let actionColor = UIColor.lightGray
-    
     func configureCell(dialog: DialogHistory, users: [DialogsUsers], indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
         for subview in self.subviews {
@@ -99,7 +95,7 @@ class GroupDialogCell: UITableViewCell {
             let rect = getTextSize(text: dialog.body.prepareTextForPublic(), font: messText.font)
             
             messText.text = dialog.body
-            messText.prepareTextForPublish2(self.delegate)
+            messText.prepareTextForPublish2(self.delegate, color: .black)
             
             messView.tag = 200
             messView.layer.cornerRadius = 15
@@ -115,10 +111,10 @@ class GroupDialogCell: UITableViewCell {
             
             if dialog.out == 0 {
                 bubbleX = 2 * leftInsets + avatarSize
-                messView.backgroundColor = inBackColor
+                messView.backgroundColor = vkSingleton.shared.inBackColor
             } else {
                 bubbleX = UIScreen.main.bounds.width - 2 * leftInsets - avatarSize - rect.width - 5
-                messView.backgroundColor = outBackColor
+                messView.backgroundColor = vkSingleton.shared.outBackColor
             }
             if !dialog.hasSticker {
                 messView.configureMessageView(out: dialog.out, radius: 12, border: 1)
@@ -266,8 +262,13 @@ class GroupDialogCell: UITableViewCell {
                     durationLabel.font = UIFont(name: "Verdana-Bold", size: 8.0)!
                     durationLabel.textAlignment = .center
                     durationLabel.contentMode = .center
-                    durationLabel.textColor = UIColor.black
-                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    if #available(iOS 13.0, *) {
+                        durationLabel.textColor = .label
+                        durationLabel.backgroundColor = .secondarySystemBackground
+                    } else {
+                        durationLabel.textColor = UIColor.black
+                        durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    }
                     durationLabel.layer.cornerRadius = 6
                     durationLabel.clipsToBounds = true
                     if let length = durationLabel.text?.length, length > 5 {
@@ -282,7 +283,7 @@ class GroupDialogCell: UITableViewCell {
                     let tap = UITapGestureRecognizer()
                     tap.add {
                         if self.delegate.mode == "" {
-                            self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
+                            self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись", scrollToComment: false)
                         }
                     }
                     tap.numberOfTapsRequired = 1
@@ -428,8 +429,8 @@ class GroupDialogCell: UITableViewCell {
             
             let markCheck = BEMCheckBox()
             markCheck.tag = 200
-            markCheck.onTintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-            markCheck.onCheckColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            markCheck.onTintColor = vkSingleton.shared.mainColor
+            markCheck.onCheckColor = vkSingleton.shared.mainColor
             markCheck.lineWidth = 2
             markCheck.on = self.delegate.markMessages.contains(dialog.id)
             markCheck.isEnabled = false
@@ -537,9 +538,9 @@ class GroupDialogCell: UITableViewCell {
         }
         
         if dialog.readState == 0 {
-            self.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+            self.backgroundColor = vkSingleton.shared.unreadColor
         } else {
-            self.backgroundColor = tableView.backgroundColor
+            self.backgroundColor = .clear
         }
     }
     
@@ -770,7 +771,7 @@ class GroupDialogCell: UITableViewCell {
         let fwdBodyLabel = UILabel()
         fwdBodyLabel.tag = 200
         fwdBodyLabel.text = mess.body
-        fwdBodyLabel.prepareTextForPublish2(self.delegate)
+        fwdBodyLabel.prepareTextForPublish2(self.delegate, color: .black)
         fwdBodyLabel.font = fwdmFont
         fwdBodyLabel.backgroundColor = UIColor.clear
         fwdBodyLabel.numberOfLines = 0
@@ -902,7 +903,7 @@ class GroupDialogCell: UITableViewCell {
                 let tap = UITapGestureRecognizer()
                 tap.add {
                     if self.delegate.mode == "" {
-                        self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
+                        self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись", scrollToComment: false)
                     }
                 }
                 tap.numberOfTapsRequired = 1
@@ -1011,7 +1012,7 @@ class GroupDialogCell: UITableViewCell {
                 
                 let action1 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
                     
-                    self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post")
+                    self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post", scrollToComment: false)
                 }
                 alertController.addAction(action1)
                 
@@ -1176,7 +1177,7 @@ class GroupDialogCell: UITableViewCell {
         let linkLabel = UILabel()
         linkLabel.tag = 200
         linkLabel.text = audio.title
-        linkLabel.prepareTextForPublish2(self.delegate)
+        linkLabel.prepareTextForPublish2(self.delegate, color: .black)
         linkLabel.font = UIFont(name: "Verdana", size: 12)!
         linkLabel.adjustsFontSizeToFitWidth = true
         linkLabel.minimumScaleFactor = 0.6
@@ -1197,36 +1198,8 @@ class GroupDialogCell: UITableViewCell {
         tap.add {
             view.viewTouched(controller: self.delegate)
             
-            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-            
-            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-            alertController.addAction(cancelAction)
-            
-            let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                
-                ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-                self.delegate.getITunesInfo(searchString: "\(audio.title) \(audio.artist)", searchType: "song")
-            }
-            alertController.addAction(action1)
-            
-            let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                
-                ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-                self.delegate.getITunesInfo(searchString: "\(audio.artist)", searchType: "artist")
-            }
-            alertController.addAction(action3)
-            
-            let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                
-                let link = "\(audio.artist) «\(audio.title)»"
-                UIPasteboard.general.string = link
-                if let string = UIPasteboard.general.string {
-                    self.delegate.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                }
-            }
-            alertController.addAction(action2)
-            
-            self.delegate.present(alertController, animated: true)
+            ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
+            self.delegate.getITunesInfo2(artist: audio.artist, title: audio.title, controller: self.delegate)
         }
         view.isUserInteractionEnabled = true
         view.addGestureRecognizer(tap)

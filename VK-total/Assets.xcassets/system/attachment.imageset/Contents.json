@@ -1,24 +1,24 @@
 {
   "images" : [
     {
+      "filename" : "attach-attachment-clip-paperclip-pin-collate-include-4-13823.png",
       "idiom" : "universal",
-      "filename" : "65597.png",
       "scale" : "1x"
     },
     {
+      "filename" : "attach-attachment-clip-paperclip-pin-collate-include-4-13824.png",
       "idiom" : "universal",
-      "filename" : "65597-1.png",
       "scale" : "2x"
     },
     {
+      "filename" : "attach-attachment-clip-paperclip-pin-collate-include-4-13825.png",
       "idiom" : "universal",
-      "filename" : "65597-2.png",
       "scale" : "3x"
     }
   ],
   "info" : {
-    "version" : 1,
-    "author" : "xcode"
+    "author" : "xcode",
+    "version" : 1
   },
   "properties" : {
     "template-rendering-intent" : "template"

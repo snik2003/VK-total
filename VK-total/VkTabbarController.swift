@@ -14,10 +14,6 @@ class VkTabbarController: UITabBarController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-    
         var code = "var a = API.account.getCounters({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"filter\":\"friends,messages\",\"v\": \"\(vkSingleton.shared.version)\"});\n"
         
         code = "\(code) var b = API.notifications.get({\"count\":\"100\",\"start_time\":\"\(Date().timeIntervalSince1970 - 15552000)\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"v\": \"\(vkSingleton.shared.version)\"});\n"
@@ -101,6 +97,57 @@ class VkTabbarController: UITabBarController {
         OperationQueue().addOperation(getServerDataOperation)
     }
 
+    override func viewDidLayoutSubviews() {
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode {
+                self.tabBar.barTintColor = vkSingleton.shared.mainColor.resolvedColor(with: traitCollection)
+                
+                self.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
+                self.navigationController?.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
+                self.tabBarController?.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
+            } else if AppConfig.shared.darkMode {
+                self.tabBar.barTintColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                
+                self.overrideUserInterfaceStyle = .dark
+                self.navigationController?.overrideUserInterfaceStyle = .dark
+                self.tabBarController?.overrideUserInterfaceStyle = .dark
+            } else {
+                self.tabBar.barTintColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                
+                self.overrideUserInterfaceStyle = .light
+                self.navigationController?.overrideUserInterfaceStyle = .light
+                self.tabBarController?.overrideUserInterfaceStyle = .light
+            }
+        }
+        
+        super.viewDidLayoutSubviews()
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode {
+                self.tabBar.barTintColor = vkSingleton.shared.mainColor.resolvedColor(with: traitCollection)
+                
+                self.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
+                self.navigationController?.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
+            } else if AppConfig.shared.darkMode {
+                self.tabBar.barTintColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                
+                self.overrideUserInterfaceStyle = .dark
+                self.navigationController?.overrideUserInterfaceStyle = .dark
+            } else {
+                self.tabBar.barTintColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                
+                self.overrideUserInterfaceStyle = .light
+                self.navigationController?.overrideUserInterfaceStyle = .light
+            }
+        }
+        
+        self.viewDidLayoutSubviews()
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }

@@ -829,7 +829,7 @@ extension UIViewController: vkUserLongPollProtocol {
                                                 if controller.userProfile[0].deactivated == "" {
                                                     if controller.userProfile[0].onlineStatus == 1 {
                                                         controller.profileView.onlineStatusLabel.text = " онлайн"
-                                                        controller.profileView.onlineStatusLabel.textColor = UIColor.blue
+                                                        controller.profileView.onlineStatusLabel.textColor = controller.profileView.onlineStatusLabel.tintColor
                                                     } else {
                                                         controller.profileView.onlineStatusLabel.textColor = UIColor.black
                                                         controller.profileView.onlineStatusLabel.text = " заходил " + controller.userProfile[0].lastSeen.toStringLastTime()

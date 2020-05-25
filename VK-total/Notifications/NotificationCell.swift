@@ -52,6 +52,8 @@ class NotificationCell: UITableViewCell {
         self.not = not
         self.indexPath = indexPath
         
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         let subviews = self.subviews
         for subview in subviews {
             if subview is UIImageView || subview is UILabel || subview is UIButton {
@@ -414,7 +416,21 @@ class NotificationCell: UITableViewCell {
             avatarImage.clipsToBounds = true
             smallImage.image = UIImage(named: smallName)
             smallImage.layer.cornerRadius = 15
-            smallImage.layer.borderColor = UIColor.white.cgColor
+            if #available(iOS 13.0, *) {
+                if AppConfig.shared.autoMode {
+                    if self.traitCollection.userInterfaceStyle == .dark {
+                        smallImage.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                    } else {
+                        smallImage.layer.borderColor = UIColor.white.cgColor
+                    }
+                } else if AppConfig.shared.darkMode {
+                    smallImage.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                } else {
+                    smallImage.layer.borderColor = UIColor.white.cgColor
+                }
+            } else {
+                smallImage.layer.borderColor = UIColor.white.cgColor
+            }
             smallImage.layer.borderWidth = 3.0
             smallImage.clipsToBounds = true
         }
@@ -439,7 +455,7 @@ class NotificationCell: UITableViewCell {
             leaveButton.layer.borderWidth = 0.5
             leaveButton.layer.cornerRadius = 10
             leaveButton.clipsToBounds = true
-            leaveButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            leaveButton.backgroundColor = vkSingleton.shared.mainColor
             leaveButton.isEnabled = true
             
             var leaveButtonY: CGFloat = 2 * topInsets +  notLabelSize.height
@@ -780,10 +796,10 @@ class NotificationCell: UITableViewCell {
                 } else if not.type == "comment_video" || not.type == "reply_comment_video" || not.type == "like_video" || not.type == "like_comment_video" || not.type == "copy_video" || not.type == "mention_comment_video" {
                     //print("tap video")
                     
-                    if not.type == "reply_comment_video" || not.type == "like_comment_video" {
-                        self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].typeID)", accessKey: "", title: "Видеозапись")
+                    if not.type == "comment_video" || not.type == "reply_comment_video" || not.type == "like_comment_video" {
+                        self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].typeID)", accessKey: "", title: "Видеозапись", scrollToComment: true)
                     } else {
-                        self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].id)", accessKey: "", title: "Видеозапись")
+                        self.delegate.openVideoController(ownerID: "\(not.parent[0].ownerID)", vid: "\(not.parent[0].id)", accessKey: "", title: "Видеозапись", scrollToComment: false)
                     }
                     
                 } else if not.type == "comment_photo" || not.type == "reply_comment_photo" || not.type == "like_photo" || not.type == "like_comment_photo" || not.type == "copy_photo" || not.type == "mention_comment_photo" {
@@ -808,12 +824,14 @@ class NotificationCell: UITableViewCell {
                     
                     self.delegate.openProfileController(id: -1 * not.feedback[indexPath.row].id, name: name)
                 } else if not.type == "mention" || not.type == "wall" || not.type == "wall_publish" {
-                        self.delegate.openWallRecord(ownerID: not.feedback[indexPath.row].toID, postID: not.feedback[indexPath.row].id, accessKey: "", type: "post")
+                    self.delegate.openWallRecord(ownerID: not.feedback[indexPath.row].toID, postID: not.feedback[indexPath.row].id, accessKey: "", type: "post", scrollToComment: false)
                 } else if not.type == "like_comment" || not.type == "reply_comment"{
-                        self.delegate.openWallRecord(ownerID: not.parent[0].fromID, postID: not.parent[0].typeID, accessKey: "", type: "post")
+                        self.delegate.openWallRecord(ownerID: not.parent[0].fromID, postID: not.parent[0].typeID, accessKey: "", type: "post", scrollToComment: true)
                         
+                } else if not.type == "comment_post" {
+                    self.delegate.openWallRecord(ownerID: not.parent[0].toID, postID: not.parent[0].id, accessKey: "", type: "post", scrollToComment: true)
                 } else {
-                    self.delegate.openWallRecord(ownerID: not.parent[0].toID, postID: not.parent[0].id, accessKey: "", type: "post")
+                    self.delegate.openWallRecord(ownerID: not.parent[0].toID, postID: not.parent[0].id, accessKey: "", type: "post", scrollToComment: false)
                 }
             }
         }

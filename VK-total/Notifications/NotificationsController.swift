@@ -9,7 +9,7 @@
 import UIKit
 import SwiftyJSON
 
-class NotificationsController: UITableViewController {
+class NotificationsController: InnerTableViewController {
 
     var notifications = [Notifications]()
     var groupInvites = [Groups]()
@@ -24,12 +24,12 @@ class NotificationsController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         self.refreshControl?.addTarget(self, action: #selector(self.updateNotifications), for: UIControl.Event.valueChanged)
-        refreshControl?.tintColor = UIColor.black
+        if #available(iOS 13.0, *) {
+            self.refreshControl?.tintColor = .secondaryLabel
+        } else {
+            self.refreshControl?.tintColor = .gray
+        }
         tableView.addSubview(refreshControl!)
         
         self.refreshControl?.beginRefreshing()
@@ -108,10 +108,22 @@ class NotificationsController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let view = UIView()
-        view.backgroundColor = UIColor.lightText
+        
+        if #available(iOS 13.0, *) {
+            view.backgroundColor = .separator
+        } else {
+            view.backgroundColor = UIColor.lightText
+        }
+        
         if section == 0 && newNots > 0 {
             
             let label = UILabel()
+            if #available(iOS 13.0, *) {
+                label.textColor = .label
+                label.backgroundColor = .separator
+            } else {
+                label.textColor = .black
+            }
             label.text = "Непросмотренные уведомления (\(newNots))"
             label.textAlignment = .center
             label.contentMode = .center

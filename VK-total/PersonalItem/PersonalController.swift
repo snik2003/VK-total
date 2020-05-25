@@ -9,16 +9,13 @@
 import UIKit
 //import SWRevealViewController
 
-class PersonalController: UITableViewController {
+class PersonalController: InnerTableViewController {
 
     @IBOutlet weak var addAAccountButton: UIBarButtonItem!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         /*addAAccountButton.isEnabled = false
         addAAccountButton.tintColor = UIColor.clear
         addAAccountButton.target = revealViewController()
@@ -32,6 +29,50 @@ class PersonalController: UITableViewController {
         super.didReceiveMemoryWarning()
     }
 
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        
+        return 10
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        
+        if section == 1 { return 10 }
+        return 0
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        let label = UILabel()
+        label.font = UIFont(name: "Verdana-Bold", size: 14)!
+        label.frame = CGRect(x: 10, y: 2, width: tableView.frame.width - 20, height: 16)
+        label.textAlignment = .right
+        label.text = "Личное"
+        if section == 1 { label.text = "Служебное" }
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+            label.textColor = .label
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+            label.textColor = .black
+        }
+        
+        //viewHeader.addSubview(label)
+        return viewHeader
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let viewFooter = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        return viewFooter
+    }
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         
         // show friends list

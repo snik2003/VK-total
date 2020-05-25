@@ -9,7 +9,7 @@
 import UIKit
 import CMPhotoCropEditor
 
-class PhotosListController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class PhotosListController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
     var delegate: UIViewController!
     
@@ -42,10 +42,6 @@ class PhotosListController: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.configureTableView()
             
@@ -56,6 +52,12 @@ class PhotosListController: UIViewController, UITableViewDelegate, UITableViewDa
             }
             
             self.tableView.separatorStyle = .none
+            
+            if #available(iOS 13, *) {} else {
+                self.segmentedControl.tintColor = vkSingleton.shared.mainColor
+                self.segmentedControl.backgroundColor = vkSingleton.shared.backColor
+            }
+            
             ViewControllerUtils().showActivityIndicator(uiView: self.view.superview!)
         }
         
@@ -69,6 +71,8 @@ class PhotosListController: UIViewController, UITableViewDelegate, UITableViewDa
     }
     
     func configureTableView() {
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -359,6 +363,7 @@ class PhotosListController: UIViewController, UITableViewDelegate, UITableViewDa
                 
                 if let vc = self.delegate as? UserInfoTableViewController {
                     let controller = PECropViewController()
+                    controller.view.backgroundColor = vkSingleton.shared.backColor
                     controller.delegate = vc
                     controller.image = cell.photoView[0]!.image!
                     controller.keepingCropAspectRatio = true
@@ -405,6 +410,7 @@ class PhotosListController: UIViewController, UITableViewDelegate, UITableViewDa
                 
                 if let vc = self.delegate as? UserInfoTableViewController {
                     let controller = PECropViewController()
+                    controller.view.backgroundColor = vkSingleton.shared.backColor
                     controller.delegate = vc
                     controller.image = cell.photoView[1]!.image!
                     controller.keepingCropAspectRatio = true
@@ -451,6 +457,7 @@ class PhotosListController: UIViewController, UITableViewDelegate, UITableViewDa
             
                 if let vc = self.delegate as? UserInfoTableViewController {
                     let controller = PECropViewController()
+                    controller.view.backgroundColor = vkSingleton.shared.backColor
                     controller.delegate = vc
                     controller.image = cell.photoView[2]!.image!
                     controller.keepingCropAspectRatio = true

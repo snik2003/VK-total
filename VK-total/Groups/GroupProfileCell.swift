@@ -274,7 +274,7 @@ class GroupProfileCell: UITableViewCell {
         activityLabel.isHidden = false
         
         var title = "Вы администратор"
-        var titleColor = UIColor.black
+        var titleColor = UIColor.white
         var backColor = UIColor.lightGray
         
         if profile.isAdmin == 0 {
@@ -283,8 +283,6 @@ class GroupProfileCell: UITableViewCell {
                 if profile.type == "group" {
                     title = "Вы участник"
                 }
-                titleColor = UIColor.black
-                backColor = UIColor.lightGray
             } else {
                 title = "Подписаться"
                 if profile.type == "group" {
@@ -293,8 +291,7 @@ class GroupProfileCell: UITableViewCell {
                         title = "Присоединиться"
                     }
                 }
-                backColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-                titleColor = UIColor.white
+                backColor = vkSingleton.shared.mainColor
             }
         }
         

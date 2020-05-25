@@ -8,19 +8,12 @@
 
 import UIKit
 
-class StartViewController: UIViewController {
+class StartViewController: InnerViewController {
 
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -28,7 +21,7 @@ class StartViewController: UIViewController {
         
         performSegue(withIdentifier: "goLoginForm", sender: self)
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         

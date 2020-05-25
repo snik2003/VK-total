@@ -11,7 +11,7 @@ import Alamofire
 import SCLAlertView
 import BEMCheckBox
 
-class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+class UsersController: InnerViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
@@ -51,10 +51,9 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
         super.viewDidLoad()
         
         if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-            searchField.textColor = .black
+            searchField.backgroundColor = .separator
+            searchField.textColor = .label
         } else {
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
                 searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
@@ -71,6 +70,7 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
             self.searchBar.searchBarStyle = UISearchBar.Style.minimal
             self.searchBar.showsCancelButton = false
             self.searchBar.sizeToFit()
+            self.searchBar.backgroundColor = vkSingleton.shared.backColor
             self.searchBar.placeholder = ""
             
             self.tableView.separatorStyle = .none
@@ -85,6 +85,11 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 self.tableView.allowsMultipleSelection = true
             } else {
                 self.tableView.allowsMultipleSelection = false
+            }
+            
+            if #available(iOS 13, *) {} else {
+                self.segmentedControl.tintColor = vkSingleton.shared.mainColor
+                self.segmentedControl.backgroundColor = vkSingleton.shared.backColor
             }
         }
         
@@ -479,33 +484,53 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
         return 50
     }
     
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        
-        if type == "friends" || type == "commonFriends" {
-            return sections[section].letter
-        }
-        return ""
-    }
-    
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
         if type == "friends" || type == "commonFriends" {
-            return 16
+            return 18
         }
-        return 0
+        return 0.01
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == tableView.numberOfSections - 1 {
-            return 10
+            return 18
         }
         return 0.01
+    }
+    
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        
+        if type == "friends" || type == "commonFriends" {
+            let label = UILabel()
+            label.font = UIFont(name: "Verdana-Bold", size: 14)!
+            label.frame = CGRect(x: 10, y: 1, width: tableView.frame.width - 20, height: 16)
+            label.textAlignment = .right
+            label.text = sections[section].letter
+            
+            if #available(iOS 13.0, *) {
+                label.textColor = .label
+            } else {
+                label.textColor = .black
+            }
+            
+            viewHeader.addSubview(label)
+        }
+        
+        return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
         
-        viewFooter.backgroundColor = UIColor.white
+        viewFooter.backgroundColor = vkSingleton.shared.backColor
         return viewFooter
     }
     
@@ -700,15 +725,19 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 if user.deactivated == "deleted" {
                     cell.detailTextLabel?.text = "страница удалена"
                 }
-                cell.detailTextLabel?.textColor = UIColor.black
-                cell.detailTextLabel?.isEnabled = false
+                if #available(iOS 13.0, *) {
+                    cell.detailTextLabel?.textColor = .secondaryLabel
+                } else {
+                    cell.detailTextLabel?.textColor = UIColor.black
+                    cell.detailTextLabel?.isEnabled = false
+                }
             } else {
                 if user.onlineStatus == 1 {
                     cell.detailTextLabel?.text = "онлайн"
                     if user.onlineMobile == 1 {
                         cell.detailTextLabel?.text = "онлайн (моб.)"
                     }
-                    cell.detailTextLabel?.textColor = UIColor.blue
+                    cell.detailTextLabel?.textColor = cell.detailTextLabel?.tintColor
                     cell.detailTextLabel?.isEnabled = true
                 } else {
                     if user.sex == 1 {
@@ -716,8 +745,12 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     } else {
                         cell.detailTextLabel?.text = "заходил \(user.lastSeen.toStringLastTime())"
                     }
-                    cell.detailTextLabel?.textColor = UIColor.black
-                    cell.detailTextLabel?.isEnabled = false
+                    if #available(iOS 13.0, *) {
+                        cell.detailTextLabel?.textColor = .secondaryLabel
+                    } else {
+                        cell.detailTextLabel?.textColor = UIColor.black
+                        cell.detailTextLabel?.isEnabled = false
+                    }
                 }
             }
             
@@ -728,7 +761,7 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
             OperationQueue().addOperation(getCacheImage)
             OperationQueue.main.addOperation(setImageToRow)
             OperationQueue.main.addOperation {
-                cell.imageView?.layer.cornerRadius = 24.0
+                cell.imageView?.layer.cornerRadius = 25.0
                 cell.imageView?.clipsToBounds = true
             }
             
@@ -754,8 +787,8 @@ class UsersController: UIViewController, UITableViewDelegate, UITableViewDataSou
             if self.source == "create_chat" {
                 let markCheck = BEMCheckBox()
                 markCheck.tag = 200
-                markCheck.onTintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-                markCheck.onCheckColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                markCheck.onTintColor = vkSingleton.shared.mainColor
+                markCheck.onCheckColor = vkSingleton.shared.mainColor
                 markCheck.lineWidth = 2
                 markCheck.isEnabled = false
                 if let id = Int(user.userID) {

@@ -11,6 +11,7 @@ import WebKit
 
 class VideoCell: UITableViewCell {
     
+    var record: Videos!
     var viewsButton = UIButton()
     var repostsButton = UIButton()
     var commentsButton = UIButton()
@@ -77,6 +78,10 @@ class VideoCell: UITableViewCell {
     
     func configureCell(record: Videos, profiles: [NewsProfiles], groups: [NewsGroups], likes: [Likes], indexPath: IndexPath, tableView: UITableView, cell: UITableViewCell, viewController: UIViewController) {
         
+        self.record = record
+        
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in self.subviews {
             if subview is UIImageView || subview is UILabel || subview is UIButton {
                 subview.removeFromSuperview()
@@ -106,8 +111,18 @@ class VideoCell: UITableViewCell {
         queue.addOperation(getCacheImage)
         OperationQueue.main.addOperation(setImageToRow)
         OperationQueue.main.addOperation {
-            self.avatarImageView.layer.cornerRadius = 29
+            self.avatarImageView.layer.cornerRadius = 30
             self.avatarImageView.clipsToBounds = true
+        }
+        
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+            datePostLabel.textColor = .secondaryLabel
+            durationLabel.textColor = .secondaryLabel
+            viewsLabel.textColor = .secondaryLabel
+            titleLabel.textColor = .label
+            descriptionLabel.textColor = .secondaryLabel
+            infoLikesLabel.textColor = .secondaryLabel
         }
         
         nameLabel.text = name
@@ -130,6 +145,10 @@ class VideoCell: UITableViewCell {
         let width = UIScreen.main.bounds.width - 2 * leftInsets
         let height = width * CGFloat(240) / CGFloat(320)
         webView.frame = CGRect(x: leftInsets, y: topY, width: width, height: height)
+        webView.backgroundColor = vkSingleton.shared.backColor
+        webView.layer.backgroundColor = vkSingleton.shared.backColor.cgColor
+        webView.layer.cornerRadius = 4
+        webView.clipsToBounds = true
         
         self.addSubview(webView)
         
@@ -184,10 +203,17 @@ class VideoCell: UITableViewCell {
         configureInfoPanel(record, likes, topY, indexPath, cell, tableView)
         topY = topY + infoPanelHeight
         
+        var titleColor = UIColor.darkGray
+        var tintColor = UIColor.darkGray
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .secondaryLabel
+            tintColor = .secondaryLabel
+        }
+        
         likesButton.frame = CGRect(x: leftInsets, y: topY, width: likesButtonWight, height: likesButtonHeight)
         likesButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
         likesButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
-        
         
         setLikesButton(record: record)
         
@@ -200,25 +226,26 @@ class VideoCell: UITableViewCell {
         repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
         repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
         repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
-        repostsButton.imageView?.tintColor = UIColor.black
-        repostsButton.setTitleColor(UIColor.black, for: .normal)
+        repostsButton.imageView?.tintColor = tintColor
+        repostsButton.setTitleColor(titleColor, for: .normal)
         if record.userReposted == 1 {
-            repostsButton.setTitleColor(UIColor.purple, for: .normal)
-            repostsButton.imageView?.tintColor = UIColor.purple
+            repostsButton.setTitleColor(.systemPurple, for: .normal)
+            repostsButton.imageView?.tintColor = .systemPurple
         }
         
         self.addSubview(repostsButton)
         
-        commentsButton.frame = CGRect(x: (bounds.size.width - likesButtonWight) / 2.0, y: topY, width: likesButtonWight, height: likesButtonHeight)
-         commentsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-         commentsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
-         commentsButton.setImage(UIImage(named: "message2"), for: .normal)
-         commentsButton.setTitleColor(UIColor.init(red: 124/255, green: 172/255, blue: 238/255, alpha: 1), for: .normal)
+        commentsButton.frame = CGRect(x: (UIScreen.main.bounds.size.width - likesButtonWight) / 2.0, y: topY, width: likesButtonWight, height: likesButtonHeight)
+        commentsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+        commentsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+        commentsButton.setImage(UIImage(named: "message2"), for: .normal)
+        commentsButton.setTitleColor(commentsButton.tintColor, for: .normal)
+        commentsButton.imageView?.tintColor = commentsButton.tintColor
          
-         commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
-         commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
+        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
+        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
          
-         self.addSubview(commentsButton)
+        self.addSubview(commentsButton)
     }
     
     func configureInfoPanel(_ record: Videos, _ likes: [Likes], _ topY: CGFloat, _ indexPath: IndexPath, _ cell: UITableViewCell, _ tableView: UITableView) {
@@ -351,6 +378,20 @@ class VideoCell: UITableViewCell {
             infoAvatar1.clipsToBounds = true
             infoAvatar1.contentMode = .scaleAspectFit
             
+            if #available(iOS 13.0, *) {
+                if AppConfig.shared.autoMode {
+                    if self.traitCollection.userInterfaceStyle == .dark {
+                        infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                    } else {
+                        infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                    }
+                } else if AppConfig.shared.darkMode {
+                    infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                } else {
+                    infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                }
+            }
+            
             self.addSubview(infoAvatar1)
             self.addSubview(infoLikesLabel)
         }
@@ -373,6 +414,24 @@ class VideoCell: UITableViewCell {
             infoAvatar2.layer.borderWidth = 1.5
             infoAvatar2.clipsToBounds = true
             infoAvatar2.contentMode = .scaleAspectFit
+            
+            if #available(iOS 13.0, *) {
+                if AppConfig.shared.autoMode {
+                    if self.traitCollection.userInterfaceStyle == .dark {
+                        infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                        infoAvatar2.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                    } else {
+                        infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                        infoAvatar2.layer.borderColor = UIColor.white.cgColor
+                    }
+                } else if AppConfig.shared.darkMode {
+                    infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                    infoAvatar2.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                } else {
+                    infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                    infoAvatar2.layer.borderColor = UIColor.white.cgColor
+                }
+            }
             
             self.addSubview(infoAvatar1)
             self.addSubview(infoAvatar2)
@@ -406,6 +465,28 @@ class VideoCell: UITableViewCell {
             infoAvatar3.clipsToBounds = true
             infoAvatar3.contentMode = .scaleAspectFit
             
+            if #available(iOS 13.0, *) {
+                if AppConfig.shared.autoMode {
+                    if self.traitCollection.userInterfaceStyle == .dark {
+                        infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                        infoAvatar2.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                        infoAvatar3.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                    } else {
+                        infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                        infoAvatar2.layer.borderColor = UIColor.white.cgColor
+                        infoAvatar3.layer.borderColor = UIColor.white.cgColor
+                    }
+                } else if AppConfig.shared.darkMode {
+                    infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                    infoAvatar2.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                    infoAvatar3.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                } else {
+                    infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                    infoAvatar2.layer.borderColor = UIColor.white.cgColor
+                    infoAvatar3.layer.borderColor = UIColor.white.cgColor
+                }
+            }
+            
             self.addSubview(infoAvatar1)
             self.addSubview(infoAvatar2)
             self.addSubview(infoAvatar3)
@@ -417,13 +498,22 @@ class VideoCell: UITableViewCell {
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
-        if record.userLikes == 1 {
-            likesButton.setTitleColor(UIColor.purple, for: .normal)
-            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor:  UIColor.purple), for: .normal)
-        } else {
-            likesButton.setTitleColor(UIColor.darkGray, for: .normal)
-            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor:  UIColor.darkGray), for: .normal)
+        var titleColor = UIColor.darkGray
+        var tintColor = UIColor.darkGray
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .secondaryLabel
+            tintColor = .secondaryLabel
         }
+        
+        if record.userLikes == 1 {
+            titleColor = .systemPurple
+            tintColor = .systemPurple
+        }
+        
+        likesButton.setTitleColor(titleColor, for: .normal)
+        likesButton.tintColor = tintColor
+        likesButton.setImage(UIImage(named: "filled-like2"), for: .normal)
     }
     
     func avatarImageViewFrame() {
@@ -504,8 +594,10 @@ class VideoCell: UITableViewCell {
             res = "show_owner"
         }
         
-        if touch.y >= infoLikesLabel.frame.minY && touch.y < infoLikesLabel.frame.maxY {
-            res = "show_info_likes"
+        if let record = self.record, record.countLikes > 0 {
+            if touch.y >= infoLikesLabel.frame.minY && touch.y < infoLikesLabel.frame.maxY {
+                res = "show_info_likes"
+            }
         }
         
         return res

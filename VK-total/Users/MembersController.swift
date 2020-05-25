@@ -10,7 +10,7 @@ import UIKit
 import SCLAlertView
 import SwiftyJSON
 
-class MembersController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+class MembersController: InnerViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
     var groupID = 0
     var filters = ""
@@ -44,10 +44,6 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         OperationQueue.main.addOperation {
             self.createSearchBar()
             self.createTableView()
@@ -58,8 +54,6 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
             self.searchBar.showsCancelButton = false
             self.searchBar.sizeToFit()
             self.searchBar.placeholder = ""
-            
-            self.tableView.separatorStyle = .none
         }
         
         refresh()
@@ -84,8 +78,8 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
         
         if #available(iOS 13.0, *) {
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-            searchField.textColor = .black
+            searchField.backgroundColor = .separator
+            searchField.textColor = .label
         } else {
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
                 searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
@@ -98,12 +92,15 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
     
     func createTableView() {
         tableView = UITableView()
+        tableView.backgroundColor = vkSingleton.shared.backColor
         tableView.frame = CGRect(x: 0, y: searchBar.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - tabHeight - searchBar.frame.maxY)
         
         tableView.delegate = self
         tableView.dataSource = self
         
         tableView.register(MembersCell.self, forCellReuseIdentifier: "memberCell")
+        
+        tableView.separatorStyle = .none
         
         self.view.addSubview(tableView)
     }
@@ -162,10 +159,27 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
         return 0.01
     }
     
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = .white
+        }
+        
+        return viewHeader
+    }
+    
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
         
-        viewFooter.backgroundColor = UIColor.white
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = .white
+        }
+        
         return viewFooter
     }
     
@@ -258,6 +272,14 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
             let deleteAction = UITableViewRowAction(style: .normal, title: "Исключить") { (rowAction, indexPath) in
                 let user = self.users[indexPath.row]
                 
+                var titleColor = UIColor.black
+                var backColor = UIColor.white
+                
+                if #available(iOS 13.0, *) {
+                    titleColor = .label
+                    backColor = vkSingleton.shared.backColor
+                }
+                
                 let appearance = SCLAlertView.SCLAppearance(
                     kTitleTop: 32.0,
                     kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -265,7 +287,10 @@ class MembersController: UIViewController, UITableViewDelegate, UITableViewDataS
                     kTextFont: UIFont(name: "Verdana", size: 13)!,
                     kButtonFont: UIFont(name: "Verdana", size: 14)!,
                     showCloseButton: false,
-                    showCircularIcon: true
+                    showCircularIcon: true,
+                    circleBackgroundColor: backColor,
+                    contentViewColor: backColor,
+                    titleColor: titleColor
                 )
                 let alertView = SCLAlertView(appearance: appearance)
                 

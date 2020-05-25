@@ -12,7 +12,7 @@ import UIKit
 import SCLAlertView
 import SwiftyJSON
 
-class GroupDialogsController: UITableViewController {
+class GroupDialogsController: InnerTableViewController {
     
     var isFirstAppear = true
     var isRefresh = false
@@ -35,16 +35,16 @@ class GroupDialogsController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         if let id = Int(self.groupID) {
             getGroupLongPollServer(groupID: id)
         }
         
         self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: .valueChanged)
-        refreshControl?.tintColor = UIColor.gray
+        if #available(iOS 13.0, *) {
+            self.refreshControl?.tintColor = .secondaryLabel
+        } else {
+            self.refreshControl?.tintColor = .gray
+        }
         tableView.addSubview(refreshControl!)
         
         OperationQueue.main.addOperation {
@@ -188,6 +188,29 @@ class GroupDialogsController: UITableViewController {
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         
         return 6
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        
+        return viewHeader
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let viewFooter = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        return viewFooter
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {

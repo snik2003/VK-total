@@ -67,6 +67,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), let controllers = currentVC.navigationController?.viewControllers {
             for controller in controllers {
+                
                 if let dc = controller as? DialogController, dc.mode == .dialog {
                     dc.commentView.endEditing(true)
                     
@@ -248,7 +249,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                         
                         if comp.count > 1, let ownerID = Int(comp[0]), let postID = Int(comp[1]) {
                             
-                            controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post")
+                            controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post", scrollToComment: true)
                         }
                     } else if placeType == "photo" {
                         let digits = place.replacingOccurrences(of: "[A-Z,a-z,А-Я,а-я]", with: "", options: .regularExpression, range: nil)
@@ -256,7 +257,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                         
                         if comp.count > 1, let ownerID = Int(comp[0]), let postID = Int(comp[1]) {
                             
-                            controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "photo")
+                            controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "photo", scrollToComment: true)
                         }
                     } else if placeType == "video" {
                         let digits = place.replacingOccurrences(of: "[A-Z,a-z,А-Я,а-я]", with: "", options: .regularExpression, range: nil)
@@ -266,7 +267,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                             let ownerID = comp[0]
                             let videoID = comp[1]
                             
-                            controller.openVideoController(ownerID: ownerID, vid: videoID, accessKey: "", title: "Видеозапись")
+                            controller.openVideoController(ownerID: ownerID, vid: videoID, accessKey: "", title: "Видеозапись", scrollToComment: true)
                         }
                     } else {
                         controller.tabBarController?.selectedIndex = 1
@@ -276,19 +277,26 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 }
             } else if type == "like" {
                 if let userID = (userInfo["data"] as AnyObject).object(forKey: "owner_id") as? String, let itemID = (userInfo["data"] as AnyObject).object(forKey: "item_id") as? String, let likeType = (userInfo["data"] as AnyObject).object(forKey: "like_type") as? String {
-                    if likeType == "post" || likeType == "comment"{
+                    if likeType == "post" {
                         if let ownerID = Int(userID), let postID = Int(itemID) {
                             
-                            controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post")
+                            controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post", scrollToComment: false)
+                        }
+                    } else if likeType == "comment" {
+                        if let ownerID = Int(userID), let postID = Int(itemID) {
+                            
+                            controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post", scrollToComment: true)
                         }
                     } else if likeType == "photo" || likeType == "photo_comment" {
                         if let ownerID = Int(userID), let photoID = Int(itemID) {
                             
-                            controller.openWallRecord(ownerID: ownerID, postID: photoID, accessKey: "", type: "photo")
+                            controller.openWallRecord(ownerID: ownerID, postID: photoID, accessKey: "", type: "photo", scrollToComment: true)
                         }
-                    } else if likeType == "video" || likeType == "video_comment"{
-                        controller.openVideoController(ownerID: userID, vid: itemID, accessKey: "", title: "Видеозапись")
-                    } else if likeType == "topic_comment"{
+                    } else if likeType == "video" {
+                        controller.openVideoController(ownerID: userID, vid: itemID, accessKey: "", title: "Видеозапись", scrollToComment: false)
+                    } else if likeType == "video_comment" {
+                            controller.openVideoController(ownerID: userID, vid: itemID, accessKey: "", title: "Видеозапись", scrollToComment: true)
+                    } else if likeType == "topic_comment" {
                         controller.openTopicController(groupID: userID, topicID: itemID, title: "", delegate: controller)
                     } else {
                         controller.tabBarController?.selectedIndex = 1
@@ -315,7 +323,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                     let comp = digits.components(separatedBy: "_")
                     
                     if comp.count > 1, let ownerID = Int(comp[0]), let postID = Int(comp[1]) {
-                        controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post")
+                        controller.openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post", scrollToComment: false)
                     }
                 } else {
                     controller.tabBarController?.selectedIndex = 1

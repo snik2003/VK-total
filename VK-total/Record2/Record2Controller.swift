@@ -15,9 +15,10 @@ import Photos
 import Popover
 import CMPhotoCropEditor
 
-class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, PECropViewControllerDelegate {
+class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, PECropViewControllerDelegate {
     
     var delegate: UIViewController!
+    var scrollToComment = false
     
     var tableView = UITableView()
     var commentView: DCCommentView!
@@ -67,7 +68,8 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     var popover: Popover!
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.up),
-        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))
+        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+        .color(vkSingleton.shared.backColor)
     ]
     
     let product1 = [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108, 109, 110,
@@ -85,13 +87,11 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             
             self.configureTableView()
@@ -121,11 +121,29 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     func configureTableView() {
-        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds)
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        
+        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
-        commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        commentView.textView.backgroundColor = .clear
+        commentView.textView.textColor = .black
+        commentView.textView.tintColor = vkSingleton.shared.mainColor
+        commentView.tintColor = vkSingleton.shared.mainColor
+        
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            } else if AppConfig.shared.darkMode {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            }
+        }
         
         commentView.sendImage = UIImage(named: "send")
+        
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
         commentView.tabHeight = self.tabHeight
@@ -133,7 +151,6 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
         setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
         
         commentView.accessoryImage = UIImage(named: "attachment")
-        commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
         commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
         
         tableView.delegate = self
@@ -154,6 +171,8 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     }
     
     func configureStickerView(sView: UIView, product: [Int], numProd: Int, width: CGFloat) {
+        
+        sView.backgroundColor = vkSingleton.shared.backColor
         
         for subview in sView.subviews {
             if subview is UIButton {
@@ -221,9 +240,9 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     menuButton.layer.borderWidth = 1
                     
                     if index == numProd {
-                        menuButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5)
+                        menuButton.backgroundColor = vkSingleton.shared.mainColor.withAlphaComponent(0.5)
                         menuButton.layer.cornerRadius = 10
-                        menuButton.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+                        menuButton.layer.borderColor = vkSingleton.shared.mainColor.cgColor
                         menuButton.layer.borderWidth = 1
                     }
                     
@@ -266,10 +285,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
         sender.buttonTouched(controller: self.delegate)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 20
+        let width = self.view.bounds.width - 40
         let height = width + 70
         let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        
+        stickerView.backgroundColor = vkSingleton.shared.backColor
         configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
         
         self.popover = Popover(options: self.popoverOptions)
@@ -429,6 +448,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     if self.news.count > 0 {
                         if self.news[0].canComment == 0 {
                             self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
+                            self.tableView.backgroundColor = vkSingleton.shared.backColor
                             self.view.addSubview(self.tableView)
                             self.commentView.removeFromSuperview()
                         } else {
@@ -440,6 +460,11 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     self.tableView.reloadData()
                     self.tableView.separatorStyle = .singleLine
                     ViewControllerUtils().hideActivityIndicator()
+                    
+                    if self.scrollToComment && self.comments.count > 0 {
+                        self.tableView.scrollToRow(at: IndexPath(row: 1, section: 1), at: .bottom, animated: true)
+                        self.scrollToComment = false
+                    }
                 }
             }
             queue.addOperation(getServerDataOperation)
@@ -568,6 +593,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     if self.news.count > 0 {
                         if self.news[0].canComment == 0 {
                             self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
+                            self.tableView.backgroundColor = vkSingleton.shared.backColor
                             self.view.addSubview(self.tableView)
                             self.commentView.removeFromSuperview()
                         } else {
@@ -611,6 +637,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                 return height
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Record2Cell
+                cell.delegate = self
                 
                 let height = cell.getRowHeight(record: news[indexPath.row])
                 rowHeightCache[indexPath] = height
@@ -648,14 +675,24 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }
@@ -664,8 +701,9 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
         
         if indexPath.section == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell", for: indexPath) as! Record2Cell
+            cell.delegate = self
             
-            cell.configureCell(record: news[indexPath.row], profiles: newsProfiles, groups: newsGroups, likes: likes, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+            rowHeightCache[indexPath] = cell.configureCell(record: news[indexPath.row], profiles: newsProfiles, groups: newsGroups, likes: likes, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             
             
             if news[indexPath.row].postType != "postpone" {
@@ -683,6 +721,9 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
             }
             
             cell.selectionStyle = .none
+            
+            tableView.beginUpdates()
+            tableView.endUpdates()
             
             return cell
         } else {
@@ -754,7 +795,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                         let action = cell.getActionOnClickPosition(touch: cell.position, record: record)
                         
                         if action == "show_repost_record" {
-                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_owner" {
@@ -797,7 +838,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                             
                             if action == "show_video_\(index)" {
                                 
-                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись")
+                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
                             }
                             
                             if action == "show_gif_\(index)" {
@@ -827,36 +868,8 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                             
                             if action == "show_music_\(index)" {
                                 
-                                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                                
-                                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                                alertController.addAction(cancelAction)
-                                
-                                let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                                    
-                                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                    self.getITunesInfo(searchString: "\(record.audioTitle[index]) \(record.audioArtist[index])", searchType: "song")
-                                }
-                                alertController.addAction(action1)
-                                
-                                let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                                    
-                                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                    self.getITunesInfo(searchString: "\(record.audioArtist[index])", searchType: "artist")
-                                }
-                                alertController.addAction(action3)
-                                
-                                let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                                    
-                                    let link = "\(record.audioArtist[index]). \(record.audioTitle[index])"
-                                    UIPasteboard.general.string = link
-                                    if let string = UIPasteboard.general.string {
-                                        self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                                    }
-                                }
-                                alertController.addAction(action2)
-                                
-                                self.present(alertController, animated: true)
+                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
                             }
                         }
                         
@@ -866,8 +879,6 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                         
                         if action == "show_info_likes" {
                             let likesController = self.storyboard?.instantiateViewController(withIdentifier: "LikesUsersController") as! LikesUsersController
-                            
-                            
                             likesController.likes = likes
                             likesController.reposts = reposts
                             likesController.title = "Оценили"
@@ -1036,6 +1047,14 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     if "\(comment.fromID)" == vkSingleton.shared.userID || self.ownerID == vkSingleton.shared.userID || (comment.fromID < 0 && vkSingleton.shared.adminGroupID.contains(abs(comment.fromID))) {
                         let action5 = UIAlertAction(title: "Удалить", style: .destructive) { action in
                             
+                            var titleColor = UIColor.black
+                            var backColor = UIColor.white
+                            
+                            if #available(iOS 13.0, *) {
+                                titleColor = .label
+                                backColor = vkSingleton.shared.backColor
+                            }
+                            
                             let appearance = SCLAlertView.SCLAppearance(
                                 kTitleTop: 32.0,
                                 kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1043,7 +1062,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                                 kTextFont: UIFont(name: "Verdana", size: 13)!,
                                 kButtonFont: UIFont(name: "Verdana", size: 14)!,
                                 showCloseButton: false,
-                                showCircularIcon: true
+                                showCircularIcon: true,
+                                circleBackgroundColor: backColor,
+                                contentViewColor: backColor,
+                                titleColor: titleColor
                             )
                             let alertView = SCLAlertView(appearance: appearance)
                             
@@ -1754,6 +1776,14 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
             if record.postType == "postpone" && delegate is PostponedWallController {
                 let action6 = UIAlertAction(title: "Опубликовать запись", style: .default) { action in
                     
+                    var titleColor = UIColor.black
+                    var backColor = UIColor.white
+                    
+                    if #available(iOS 13.0, *) {
+                        titleColor = .label
+                        backColor = vkSingleton.shared.backColor
+                    }
+                    
                     let appearance = SCLAlertView.SCLAppearance(
                         kTitleTop: 32.0,
                         kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1761,7 +1791,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                         kTextFont: UIFont(name: "Verdana", size: 13)!,
                         kButtonFont: UIFont(name: "Verdana", size: 14)!,
                         showCloseButton: false,
-                        showCircularIcon: true
+                        showCircularIcon: true,
+                        circleBackgroundColor: backColor,
+                        contentViewColor: backColor,
+                        titleColor: titleColor
                     )
                     let alertView = SCLAlertView(appearance: appearance)
                     
@@ -1788,6 +1821,14 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
             if record.canDelete == 1 && (delegate is ProfileController2 || delegate is GroupProfileController2 || delegate is PostponedWallController) {
                 let action3 = UIAlertAction(title: "Удалить запись", style: .destructive) { action in
                  
+                    var titleColor = UIColor.black
+                    var backColor = UIColor.white
+                    
+                    if #available(iOS 13.0, *) {
+                        titleColor = .label
+                        backColor = vkSingleton.shared.backColor
+                    }
+                    
                     let appearance = SCLAlertView.SCLAppearance(
                         kTitleTop: 32.0,
                         kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1795,7 +1836,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                         kTextFont: UIFont(name: "Verdana", size: 13)!,
                         kButtonFont: UIFont(name: "Verdana", size: 14)!,
                         showCloseButton: false,
-                        showCircularIcon: true
+                        showCircularIcon: true,
+                        circleBackgroundColor: backColor,
+                        contentViewColor: backColor,
+                        titleColor: titleColor
                     )
                     let alertView = SCLAlertView(appearance: appearance)
                     
@@ -1884,6 +1928,7 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                     getCacheImage.completionBlock = {
                         OperationQueue.main.addOperation {
                             let controller = PECropViewController()
+                            controller.view.backgroundColor = vkSingleton.shared.backColor
                             controller.delegate = self
                             controller.image = getCacheImage.outputImage
                             controller.keepingCropAspectRatio = true
@@ -1901,6 +1946,14 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                 if photo.userID == vkSingleton.shared.userID && (delegate is ProfileController2 || delegate is GroupProfileController2 || delegate is PhotoViewController || delegate is PhotoAlbumController) {
                     let action7 = UIAlertAction(title: "Удалить фотографию", style: .destructive) { action in
                         
+                        var titleColor = UIColor.black
+                        var backColor = UIColor.white
+                        
+                        if #available(iOS 13.0, *) {
+                            titleColor = .label
+                            backColor = vkSingleton.shared.backColor
+                        }
+                        
                         let appearance = SCLAlertView.SCLAppearance(
                             kTitleTop: 32.0,
                             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1908,7 +1961,10 @@ class Record2Controller: UIViewController, UITableViewDelegate, UITableViewDataS
                             kTextFont: UIFont(name: "Verdana", size: 13)!,
                             kButtonFont: UIFont(name: "Verdana", size: 14)!,
                             showCloseButton: false,
-                            showCircularIcon: true
+                            showCircularIcon: true,
+                            circleBackgroundColor: backColor,
+                            contentViewColor: backColor,
+                            titleColor: titleColor
                         )
                         let alertView = SCLAlertView(appearance: appearance)
                         

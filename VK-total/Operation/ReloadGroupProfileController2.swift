@@ -66,6 +66,7 @@ class ReloadGroupProfileController2: Operation {
                     controller.setProfileView()
                     controller.tableView.reloadData()
                     controller.tableView.isHidden = false
+                    controller.refreshControl.endRefreshing()
                     ViewControllerUtils().hideActivityIndicator()
                 }
             }
@@ -74,6 +75,7 @@ class ReloadGroupProfileController2: Operation {
             controller.setProfileView()
             controller.tableView.reloadData()
             controller.tableView.isHidden = false
+            controller.refreshControl.endRefreshing()
             ViewControllerUtils().hideActivityIndicator()
         }
     }

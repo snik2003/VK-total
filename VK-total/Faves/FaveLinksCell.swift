@@ -37,6 +37,8 @@ class FaveLinksCell: UITableViewCell {
     
     func configureCell(link: FaveLinks, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in subviews {
             if subview.tag == 100 {
                 subview.removeFromSuperview()
@@ -86,12 +88,17 @@ class FaveLinksCell: UITableViewCell {
         descriptionLabel.frame = CGRect(x: 60, y: 5 + nameLabelSize.height, width: descriptionLabelSize.width, height: descriptionLabelSize.height)
         self.addSubview(descriptionLabel)
         
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+            descriptionLabel.textColor = .secondaryLabel
+        }
+        
         urlLabel = UILabel()
         urlLabel.tag = 100
         urlLabel.text = link.url
         urlLabel.font = descFont
         urlLabel.numberOfLines = 0
-        urlLabel.textColor = UIColor.blue
+        urlLabel.textColor = urlLabel.tintColor
         urlLabel.numberOfLines = 0
         
         let urlLabelSize = getTextSize(text: urlLabel.text!, font: descriptionLabel.font)

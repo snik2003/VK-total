@@ -99,6 +99,8 @@ class UserProfileInfo {
     var persSmoking = 0
     var persAlcohol = 0
     var relatives: [Relatives] = []
+    var isClosed = 0
+    var canAccessClosed = 0
     
     init(json: JSON) {
         self.uid = json["id"].stringValue
@@ -181,6 +183,8 @@ class UserProfileInfo {
         self.photoHeight = json["crop_photo"]["photo"]["height"].intValue
         self.isHiddenFromFeed = json["is_hidden_from_feed"].intValue
         self.wallDefault = json["wall_default"].stringValue
+        self.isClosed = json["is_closed"].intValue
+        self.canAccessClosed = json["can_access_closed"].intValue
         
         self.cropPhotoURL = json["crop_photo"]["photo"]["photo_1280"].stringValue
         if self.cropPhotoURL == "" {

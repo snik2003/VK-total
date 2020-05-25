@@ -9,7 +9,7 @@
 import UIKit
 import Alamofire
 
-class CountersInfoTableViewController: UITableViewController, UISearchBarDelegate {
+class CountersInfoTableViewController: InnerTableViewController, UISearchBarDelegate {
     var userID = vkSingleton.shared.userID
     var typeData = ""
     
@@ -44,12 +44,12 @@ class CountersInfoTableViewController: UITableViewController, UISearchBarDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         self.refreshControl?.addTarget(self, action: #selector(CountersInfoTableViewController.refresh), for: UIControl.Event.valueChanged)
-        self.refreshControl?.tintColor = UIColor.gray
+        if #available(iOS 13.0, *) {
+            self.refreshControl?.tintColor = .secondaryLabel
+        } else {
+            self.refreshControl?.tintColor = .gray
+        }
         tableView.addSubview(self.refreshControl!)
 
         OperationQueue.main.addOperation {
@@ -61,12 +61,13 @@ class CountersInfoTableViewController: UITableViewController, UISearchBarDelegat
                 self.searchBar.placeholder = ""
                 self.searchBar.showsCancelButton = false
                 self.searchBar.returnKeyType = UIReturnKeyType.done
+                self.searchBar.backgroundColor = vkSingleton.shared.backColor
                 self.tableView.tableHeaderView = self.searchBar
                 
                 if #available(iOS 13.0, *) {
                     let searchField = self.searchBar.searchTextField
-                    searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                    searchField.textColor = .black
+                    searchField.backgroundColor = UIColor.separator
+                    searchField.textColor = .label
                 } else {
                     if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
                         searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)

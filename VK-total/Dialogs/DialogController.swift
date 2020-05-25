@@ -35,7 +35,7 @@ enum MediaType: String {
     case wall = "wall"
 }
 
-class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class DialogController: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
@@ -101,8 +101,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     fileprivate var popover: Popover!
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.up),
-        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))
-        //.color(UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5))
+        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+        .color(vkSingleton.shared.backColor)
     ]
     
     let product1 = [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108, 109, 110,
@@ -120,13 +120,11 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-    
         self.configureTableView()
         self.tableView.separatorStyle = .none
         
@@ -237,22 +235,39 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     func configureTableView() {
         
-        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds)
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        
+        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         
         if mode == .dialog {
             commentView.delegate = self
-            commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            commentView.textView.backgroundColor = .clear
+            commentView.textView.textColor = .black
+            commentView.textView.tintColor = vkSingleton.shared.mainColor
+            commentView.tintColor = vkSingleton.shared.mainColor
+            
+            if #available(iOS 13.0, *) {
+                if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
+                    commentView.textView.textColor = .label
+                    commentView.textView.tintColor = .label
+                    commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+                } else if AppConfig.shared.darkMode {
+                    commentView.textView.textColor = .label
+                    commentView.textView.tintColor = .label
+                    commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+                }
+            }
             
             commentView.sendImage = UIImage(named: "send")
             commentView.stickerImage = UIImage(named: "sticker")
             commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
             commentView.tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
             
-            //setCommentFromGroupID(id: 0, controller: self)
-            
             commentView.accessoryImage = UIImage(named: "attachment")
-            commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
             commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
+            
+            commentView.fromGroupImage = UIImage(named: "mic")
+            commentView.fromGroupButton.addTarget(self, action: #selector(self.tapMicButton(sender:)), for: .touchUpInside)
             
             self.view.addSubview(commentView)
         }
@@ -291,6 +306,10 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         }
     }
     
+    @objc func tapMicButton(sender: UIButton) {
+        
+    }
+    
     func didShowCommentView() {
         //self.startTyping(controller: self)
     }
@@ -301,7 +320,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     func showFeedbackView() {
         
-        let maxWidth = UIScreen.main.bounds.width - 4 * 10
+        let maxWidth = UIScreen.main.bounds.width - 60
         let feedFont = UIFont(name: "Verdana", size: 13)!
         
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
@@ -320,10 +339,15 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
         textView.textAlignment = .center
         view.addSubview(textView)
         
+        if #available(iOS 13.0, *) {
+            textView.textColor = .label
+        }
+        
         let startPoint = CGPoint(x: UIScreen.main.bounds.width - 34, y: 66)
         
         self.popover = Popover(options: [.type(.down),
-                                         .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))])
+                                         .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+                                         .color(vkSingleton.shared.backColor)])
         self.popover.show(view, point: startPoint)
     }
     
@@ -1057,7 +1081,8 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
             if typeOf.count > 0 || fwdMessagesID.count > 0 {
                 let view = UIView()
                 collectionView.frame = CGRect(x: 0, y: 10, width: self.view.bounds.width, height: 80)
-                view.backgroundColor = tableView.backgroundColor
+                collectionView.backgroundColor = .clear
+                view.backgroundColor = vkSingleton.shared.backColor
                 view.addSubview(collectionView)
                 view.frame = CGRect(x: 0, y: 0, width: self.view.bounds.width, height: 100)
                 return view
@@ -1363,7 +1388,7 @@ class DialogController: UIViewController, UITableViewDelegate, UITableViewDataSo
                                              .arrowSize(CGSize(width: 0, height: 0)),
                                              .showBlackOverlay(false),
                                              .dismissOnBlackOverlayTap(false),
-                                             .color(UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1))])
+                                             .color(vkSingleton.shared.backColor)])
             self.popover.show(actionView, point: startPoint)
             self.tableView.reloadData()
             if self.tableView.numberOfSections > 1 {
@@ -1561,7 +1586,7 @@ extension DialogController {
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.4
         nameLabel.textAlignment = .right
-        nameLabel.textColor = UIColor.white
+        nameLabel.textColor = .white
         nameLabel.frame = CGRect(x: 0, y: 4, width: 200, height: 20)
         view.addSubview(nameLabel)
         
@@ -1615,7 +1640,7 @@ extension DialogController {
                         if user.onlineMobile == 1 {
                             statusLabel.text = "онлайн (моб.)"
                         }
-                        statusLabel.textColor = UIColor(displayP3Red: 0/255, green: 250/255, blue: 146/255, alpha: 1) //UIColor(displayP3Red: 255/255, green: 47/255, blue: 146/255, alpha: 1)
+                        statusLabel.textColor = UIColor(displayP3Red: 0/255, green: 250/255, blue: 146/255, alpha: 1)
                         statusLabel.font = UIFont.boldSystemFont(ofSize: 12)
                     } else {
                         if user.sex == 1 {
@@ -1955,6 +1980,8 @@ extension DialogController {
     
     func configureStickerView(sView: UIView, product: [Int], numProd: Int, width: CGFloat) {
         
+        sView.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in sView.subviews {
             if subview is UIButton {
                 subview.removeFromSuperview()
@@ -2021,9 +2048,9 @@ extension DialogController {
                     menuButton.layer.borderWidth = 1
                     
                     if index == numProd {
-                        menuButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5)
+                        menuButton.backgroundColor = vkSingleton.shared.mainColor
                         menuButton.layer.cornerRadius = 10
-                        menuButton.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+                        menuButton.layer.borderColor = vkSingleton.shared.mainColor.cgColor
                         menuButton.layer.borderWidth = 1
                     }
                     
@@ -2066,12 +2093,12 @@ extension DialogController {
         sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 20
+        let width = self.view.bounds.width - 40
         let height = width + 70
         let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        
+        stickerView.backgroundColor = vkSingleton.shared.backColor
         configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
-        
+
         self.popover = Popover(options: self.popoverOptions)
         self.popover.show(stickerView, fromView: self.commentView.stickerButton)
     }
@@ -2658,7 +2685,7 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
             
             let imageView = UIImageView()
             imageView.image = photo
-            imageView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+            imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             imageView.layer.borderWidth = 1.0
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
@@ -2710,14 +2737,18 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
                 loadLabel.textAlignment = .center
                 loadLabel.contentMode = .center
                 loadLabel.text = "Загрузка..."
-                loadLabel.textColor = UIColor.white
+                if #available(iOS 13.0, *) {
+                    loadLabel.textColor = .label
+                } else {
+                    loadLabel.textColor = UIColor.white
+                }
                 loadLabel.frame = CGRect(x: 0, y: 0, width: width, height: height)
                 cell.addSubview(loadLabel)
             }
         } else {
             let imageView = UIImageView()
             imageView.image = UIImage(named: "message")
-            imageView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+            imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             imageView.layer.borderWidth = 1.0
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
@@ -2732,7 +2763,11 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
             countLabel.text = "вложено\n\(fwdMessagesID.count.messageAdder())"
             countLabel.font = UIFont(name: "Verdana-Bold", size: 12)
             countLabel.backgroundColor = UIColor.clear
-            countLabel.textColor = UIColor.black
+            if #available(iOS 13.0, *) {
+                countLabel.textColor = .label
+            } else {
+                countLabel.textColor = UIColor.white
+            }
             countLabel.textAlignment = .center
             countLabel.adjustsFontSizeToFitWidth = true
             countLabel.minimumScaleFactor = 0.5

@@ -41,8 +41,6 @@ struct StoreReviewHelper {
         if #available(iOS 10.3, *) {
             SKStoreReviewController.requestReview()
             StoreReviewHelper.incrementAppOpenedCount()
-        } else {
-            
         }
     }
 }

@@ -9,7 +9,7 @@
 import UIKit
 import SmileLock
 
-class PasswordController: UIViewController {
+class PasswordController: InnerViewController {
 
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var passwordStackView: UIStackView!
@@ -21,16 +21,12 @@ class PasswordController: UIViewController {
     
     let kPasswordDigit = 4
     let tintColor = UIColor.white
-    let viewColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+    let viewColor = vkSingleton.shared.mainColor
     var state = "login"
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         passwordContainerView = PasswordContainerView.create(in: passwordStackView, digit: kPasswordDigit)
         passwordContainerView.delegate = self
         

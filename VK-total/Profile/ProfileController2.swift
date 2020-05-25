@@ -7,9 +7,10 @@
 //
 
 import UIKit
+import AVFoundation
 import SwiftyJSON
 
-class ProfileController2: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewDataSource {
     
     @IBOutlet weak var barItem: UIBarButtonItem!
     
@@ -60,29 +61,26 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         return queue
     }()
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         OperationQueue.main.addOperation {
             self.createTableView()
             
             self.barItem.isEnabled = true
-            self.barItem.tintColor = UIColor.white
             //self.barItem.addBadge(number: 22)
             
             self.tableView.separatorStyle = .none
             
             self.refreshControl.attributedTitle = NSAttributedString(string: "Обновляем данные")
             self.refreshControl.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
-            self.refreshControl.tintColor = UIColor.gray
+            if #available(iOS 13.0, *) {
+                self.refreshControl.tintColor = .secondaryLabel
+            } else {
+                self.refreshControl.tintColor = .gray
+            }
             self.tableView.addSubview(self.refreshControl)
             
             ViewControllerUtils().showActivityIndicator(uiView: self.view)
@@ -117,6 +115,9 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         tableView = UITableView()
         tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
     
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+        
         tableView.delegate = self
         tableView.dataSource = self
     
@@ -135,7 +136,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         isRefresh = true
         estimatedHeightCache.removeAll(keepingCapacity: false)
      
-        var code = "var a = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_id\":\"\(userID)\",\"fields\":\"id,first_name,last_name,maiden_name,domain,sex,relation,bdate,home_town,has_photo,city,country,status,last_seen,online,photo_max_orig,photo_max,photo_id,followers_count,counters,deactivated,education,contacts,connections,site,about,interests,activities,books,games,movies,music,tv,quotes,first_name_abl,first_name_gen,first_name_acc,can_post,can_send_friend_request,can_write_private_message,friend_status,is_favorite,blacklisted,blacklisted_by_me,crop_photo,is_hidden_from_feed,wall_default,personal,relatives\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
+        var code = "var a = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_id\":\"\(userID)\",\"fields\":\"id,first_name,last_name,maiden_name,domain,sex,relation,bdate,home_town,has_photo,city,country,status,last_seen,online,photo_max_orig,photo_max,photo_id,followers_count,counters,deactivated,education,contacts,connections,site,about,interests,activities,books,games,movies,music,tv,quotes,first_name_abl,first_name_gen,first_name_acc,can_post,can_send_friend_request,can_write_private_message,friend_status,is_favorite,blacklisted,blacklisted_by_me,crop_photo,is_hidden_from_feed,wall_default,personal,relatives,is_closed,can_access_closed\",\"v\":\"5.89\"});\n"
         
         code = "\(code) var b = API.photos.getAll({\"owner_id\":\"\(userID)\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"extended\":1,\"count\":100,\"photo_sizes\":0,\"skip_hidden\":0,\"v\": \"\(vkSingleton.shared.version)\"});\n"
         
@@ -189,15 +190,19 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                     }
                 }
                 
+                
                 if user.blacklisted == 1 {
-                    if user.canSendFriendRequest == 1 || user.canWritePrivateMessage == 1 {
+                    self.showErrorMessage(title: "Предупреждение", msg: "Вы находитесь в черном списке \(user.firstNameGen).")
+                }
+                else if user.isClosed == 1 && user.canAccessClosed == 0 {
+                    if user.canSendFriendRequest == 1 {
                         if user.sex == 1 {
                             self.showErrorMessage(title: "Это закрытый профиль", msg: "Добавьте \(user.firstNameAcc) в друзья, чтобы смотреть её записи, фотографии и другие материалы.")
                         } else {
                             self.showErrorMessage(title: "Это закрытый профиль", msg: "Добавьте \(user.firstNameAcc) в друзья, чтобы смотреть его записи, фотографии и другие материалы.")
                         }
                     } else {
-                        self.showErrorMessage(title: "Предупреждение", msg: "Вы находитесь в черном списке \(user.firstNameGen).")
+                        self.showErrorMessage(title: "Это закрытый профиль", msg: "Добавление в друзья ограничено пользователем.")
                     }
                 }
             }
@@ -400,7 +405,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 OperationQueue.main.addOperation {
                     if self.userProfile[0].onlineStatus == 1 {
                         self.profileView.onlineStatusLabel.text = " онлайн"
-                        self.profileView.onlineStatusLabel.textColor = UIColor.blue
+                        self.profileView.onlineStatusLabel.textColor = self.profileView.onlineStatusLabel.tintColor
                     } else {
                         if self.userProfile[0].deactivated == "" {
                             self.profileView.onlineStatusLabel.textColor = UIColor.black //UIColor.white
@@ -438,25 +443,13 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         return 1
     }
     
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        if let height = estimatedHeightCache[indexPath] {
-            return height
-        } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
-                
-            let height = cell.getRowHeight(record: wall[indexPath.section])
-            estimatedHeightCache[indexPath] = height
-            return height
-        }
-    }
-    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
-                
+            cell.delegate = self
+            
             let height = cell.getRowHeight(record: wall[indexPath.section])
             estimatedHeightCache[indexPath] = height
             return height
@@ -480,14 +473,24 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }
@@ -495,8 +498,9 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell", for: indexPath) as! WallRecordCell2
+        cell.delegate = self
         
-        cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
@@ -513,6 +517,9 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 aLabel.isUserInteractionEnabled = true
             }
         }
+        
+        tableView.beginUpdates()
+        tableView.endUpdates()
         
         return cell
     }
@@ -543,12 +550,12 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
             
             if action == "show_record" {
                 
-                self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
             }
             
             if action == "show_repost_record" {
                 
-                self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
             }
             
             if action == "show_owner" {
@@ -592,43 +599,14 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 
                 if action == "show_video_\(index)" {
                     
-                    self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись")
+                    self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
                     
                 }
                 
                 if action == "show_music_\(index)" {
                     
-                    let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                    
-                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                    alertController.addAction(cancelAction)
-                    
-                    let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                        
-                        ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                        self.getITunesInfo(searchString: "\(record.audioTitle[index]) \(record.audioArtist[index])", searchType: "song")
-                    }
-                    alertController.addAction(action1)
-                    
-                    let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                        
-                        ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                        self.getITunesInfo(searchString: "\(record.audioArtist[index])", searchType: "artist")
-                    }
-                    alertController.addAction(action3)
-                    
-                    let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                        
-                        let link = "\(record.audioArtist[index]). \(record.audioTitle[index])"
-                        UIPasteboard.general.string = link
-                        if let string = UIPasteboard.general.string {
-                            self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                        }
-                    }
-                    alertController.addAction(action2)
-                    
-                    self.present(alertController, animated: true)
-                    
+                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                    self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
                 }
             }
             
@@ -644,6 +622,8 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore1 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 
@@ -660,6 +640,8 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore2 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
             
@@ -675,6 +657,8 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         let indexPath = self.tableView.indexPathForRow(at: position)
         
         if let cell = tableView.cellForRow(at: indexPath!) as? WallRecordCell2, let label = sender.view as? UILabel {
+            cell.delegate = self
+            
             let num = label.tag
             
             if cell.poll.answerID == 0 {
@@ -891,7 +875,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             let record = wall[indexPath.section]
             
-            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     
@@ -1420,11 +1404,11 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
         if userProfile.count > 0 {
             profileView = ProfileView()
             profileView.delegate = self
-            profileView.backgroundColor = UIColor.white
+            profileView.backgroundColor = vkSingleton.shared.backColor
             
             var height: CGFloat = profileView.configureCell(profile: userProfile[0])
             
-            if userProfile[0].deactivated == "" {
+            if userProfile[0].deactivated == "" && userProfile[0].canAccessClosed == 1 {
                 if getCountCountersSection() > 0 {
                     let layout1: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
                     layout1.scrollDirection = .horizontal
@@ -1436,7 +1420,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                     self.profileView.collectionView1.delegate = self
                     self.profileView.collectionView1.dataSource = self
                     self.profileView.collectionView1.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "counterCell")
-                    self.profileView.collectionView1.backgroundColor = UIColor.white
+                    self.profileView.collectionView1.backgroundColor = vkSingleton.shared.backColor
                     self.profileView.collectionView1.showsVerticalScrollIndicator = false
                     self.profileView.collectionView1.showsHorizontalScrollIndicator = true
                     profileView.addSubview(self.profileView.collectionView1)
@@ -1448,7 +1432,11 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                     let photosCountLabel = UILabel()
                     photosCountLabel.text = "\(userProfile[0].photosCount) фото"
                     photosCountLabel.font = UIFont(name: "Verdana", size: 13)
-                    photosCountLabel.textColor = UIColor.lightGray
+                    if #available(iOS 13.0, *) {
+                        photosCountLabel.textColor = .label
+                    } else {
+                        photosCountLabel.textColor = .lightGray
+                    }
                     photosCountLabel.contentMode = .center
                     photosCountLabel.textAlignment = .left
                     photosCountLabel.frame = CGRect(x: 10, y: height, width: UIScreen.main.bounds.width - 60, height: 25)
@@ -1459,7 +1447,11 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                         let photosDiscCountLabel = UILabel()
                         photosDiscCountLabel.text = "▸"
                         photosDiscCountLabel.font = UIFont(name: "Verdana", size: 20)
-                        photosDiscCountLabel.textColor = UIColor.lightGray
+                        if #available(iOS 13.0, *) {
+                            photosDiscCountLabel.textColor = .label
+                        } else {
+                            photosDiscCountLabel.textColor = .lightGray
+                        }
                         photosDiscCountLabel.contentMode = .center
                         photosDiscCountLabel.textAlignment = .right
                         photosDiscCountLabel.frame = CGRect(x: UIScreen.main.bounds.width - 40, y: height, width: 30, height: 25)
@@ -1478,7 +1470,7 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                     self.profileView.collectionView2.delegate = self
                     self.profileView.collectionView2.dataSource = self
                     self.profileView.collectionView2.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
-                    self.profileView.collectionView2.backgroundColor = UIColor.white
+                    self.profileView.collectionView2.backgroundColor = vkSingleton.shared.backColor
                     self.profileView.collectionView2.showsVerticalScrollIndicator = false
                     self.profileView.collectionView2.showsHorizontalScrollIndicator = true
                     profileView.addSubview(self.profileView.collectionView2)
@@ -1487,9 +1479,13 @@ class ProfileController2: UIViewController, UITableViewDelegate, UITableViewData
                 }
                 
                 let separator1 = UIView()
-                 separator1.frame = CGRect(x: 0, y: height + 5, width: UIScreen.main.bounds.width, height: 5)
-                 separator1.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-                 profileView.addSubview(separator1)
+                separator1.frame = CGRect(x: 0, y: height + 5, width: UIScreen.main.bounds.width, height: 5)
+                if #available(iOS 13.0, *) {
+                    separator1.backgroundColor = .separator
+                } else {
+                    separator1.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+                }
+                profileView.addSubview(separator1)
                 
                 let tap = UITapGestureRecognizer()
                 tap.addTarget(self, action: #selector(self.tapAvatarImage))
@@ -1822,6 +1818,7 @@ extension ProfileController2: UICollectionViewDelegate, UICollectionViewDataSour
         
         if collectionView.tag == 2 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "counterCell", for: indexPath)
+            cell.backgroundColor = vkSingleton.shared.backColor
             
             let subviews = cell.subviews
             for subview in subviews {
@@ -1835,11 +1832,23 @@ extension ProfileController2: UICollectionViewDelegate, UICollectionViewDataSour
             
             countLabel.font = UIFont(name: "Verdana-Bold", size: 20)
             nameLabel.font = UIFont(name: "Verdana", size: 11)
+            if #available(iOS 13.0, *) {
+                if self.overrideUserInterfaceStyle == .dark {
+                    countLabel.font = UIFont(name: "Verdana-Bold", size: 18)
+                    nameLabel.font = UIFont(name: "Verdana", size: 10)
+                }
+            }
             nameLabel.adjustsFontSizeToFitWidth = true
             nameLabel.minimumScaleFactor = 0.8
             
-            nameLabel.isEnabled = false
-            
+            if #available(iOS 13.0, *) {
+                countLabel.textColor = .label
+                nameLabel.textColor = .secondaryLabel
+            } else {
+                countLabel.textColor = .black
+                nameLabel.textColor = .black
+                nameLabel.isEnabled = false
+            }
             countLabel.text = countersSection[indexPath.section].value
             nameLabel.text = countersSection[indexPath.section].image
             
@@ -1855,6 +1864,7 @@ extension ProfileController2: UICollectionViewDelegate, UICollectionViewDataSour
             return cell
         } else {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "photoCell", for: indexPath)
+            cell.backgroundColor = vkSingleton.shared.backColor
             
             let subviews = cell.subviews
             for subview in subviews {

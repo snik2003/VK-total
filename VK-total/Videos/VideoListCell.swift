@@ -24,6 +24,8 @@ class VideoListCell: UITableViewCell {
     
     func configureCell(video: Videos, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
      
+        self.backgroundColor = .clear
+        
         let subviews = self.subviews
         for subview in subviews {
             if subview is UIImageView || subview is UILabel || subview is BEMCheckBox {
@@ -41,6 +43,8 @@ class VideoListCell: UITableViewCell {
         OperationQueue.main.addOperation {
             self.videoImage.contentMode = .scaleAspectFit
             self.videoImage.clipsToBounds = true
+            self.videoImage.layer.cornerRadius = 4
+            
         }
         
         let width = UIScreen.main.bounds.width * 0.5
@@ -62,8 +66,13 @@ class VideoListCell: UITableViewCell {
         durationLabel.font = UIFont(name: "Verdana-Bold", size: 10.0)!
         durationLabel.textAlignment = .center
         durationLabel.contentMode = .center
-        durationLabel.textColor = UIColor.black
-        durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+        if #available(iOS 13.0, *) {
+            durationLabel.textColor = .label
+            durationLabel.backgroundColor = .secondarySystemBackground
+        } else {
+            durationLabel.textColor = .black
+            durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+        }
         durationLabel.layer.cornerRadius = 5
         durationLabel.clipsToBounds = true
         if let length = durationLabel.text?.length, length > 5 {
@@ -74,10 +83,14 @@ class VideoListCell: UITableViewCell {
         videoImage.addSubview(durationLabel)
         
         titleLabel = UILabel()
+        if #available(iOS 13.0, *) {
+            titleLabel.textColor = .label
+        } else {
+            titleLabel.textColor = .black
+        }
         titleLabel.text = video.title
         titleLabel.prepareTextForPublish2(self.delegate)
         titleLabel.font = UIFont(name: "Verdana", size: 13)!
-        titleLabel.textColor = UIColor.black
         titleLabel.textAlignment = .center
         titleLabel.contentMode = .center
         titleLabel.numberOfLines = 0
@@ -94,10 +107,14 @@ class VideoListCell: UITableViewCell {
         
         if video.description != "" {
             descriptionLabel = UILabel()
+            if #available(iOS 13.0, *) {
+                descriptionLabel.textColor = .secondaryLabel
+            } else {
+                descriptionLabel.textColor = .lightGray
+            }
             descriptionLabel.text = video.description
             descriptionLabel.prepareTextForPublish2(self.delegate)
             descriptionLabel.font = UIFont(name: "Verdana", size: 12)!
-            descriptionLabel.textColor = UIColor.lightGray
             descriptionLabel.textAlignment = .left
             descriptionLabel.contentMode = .center
             descriptionLabel.numberOfLines = 0
@@ -111,8 +128,8 @@ class VideoListCell: UITableViewCell {
         if let vc = delegate as? VideoListController, vc.source != "" {
             markCheck = BEMCheckBox()
             markCheck.tag = 200
-            markCheck.onTintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-            markCheck.onCheckColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            markCheck.onTintColor = vkSingleton.shared.mainColor
+            markCheck.onCheckColor = vkSingleton.shared.mainColor
             markCheck.lineWidth = 2
             
             markCheck.isEnabled = false

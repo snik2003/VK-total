@@ -10,7 +10,7 @@ import UIKit
 import Alamofire
 import SwiftyJSON
 
-class GroupProfileController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class GroupProfileController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
     @IBOutlet weak var tableView: UITableView!
     
@@ -37,10 +37,6 @@ class GroupProfileController: UIViewController, UITableViewDelegate, UITableView
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.tableView.delegate = self
             self.tableView.dataSource = self
@@ -278,12 +274,12 @@ class GroupProfileController: UIViewController, UITableViewDelegate, UITableView
                         
                         if action == "show_record" {
                             
-                            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_repost_record" {
                             
-                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_owner" {
@@ -524,7 +520,7 @@ class GroupProfileController: UIViewController, UITableViewDelegate, UITableView
         if let index = indexPath?.section, index > 1 {
             let record = wall[index - 2]
             
-            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     

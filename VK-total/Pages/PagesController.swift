@@ -9,7 +9,7 @@
 import UIKit
 import SwiftyJSON
 
-class PagesController: UIViewController {
+class PagesController: InnerViewController {
 
     var pageID = 0
     var groupID = 0
@@ -19,10 +19,6 @@ class PagesController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         getPage()
     }
 

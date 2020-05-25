@@ -31,6 +31,8 @@ class TopicCell: UITableViewCell {
     
     func configureCell(topic: Topic, group: [GroupProfile], profiles: [WallProfiles], indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
+        self.backgroundColor = .clear
+        
         for subview in self.subviews {
             if subview is UILabel || subview is UIImageView {
                 subview.removeFromSuperview()
@@ -66,7 +68,6 @@ class TopicCell: UITableViewCell {
         avatarImage.frame = CGRect(x: leftInsets, y: topInsets, width: avatarHeight, height: avatarHeight)
         self.addSubview(avatarImage)
         
-        
         nameLabel.text = name
         if topic.isFixed == 1 {
             nameLabel.text = "📌 \(name)"
@@ -75,6 +76,15 @@ class TopicCell: UITableViewCell {
         nameLabel.font = UIFont(name: "Verdana-Bold", size: 13)!
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.3
+        
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+            titleLabel.textColor = .label
+            createdLabel.textColor = .secondaryLabel
+            updatedLabel.textColor = .secondaryLabel
+            commentLabel.textColor = .label
+            countLabel.textColor = .secondaryLabel
+        }
         
         nameLabel.frame = CGRect(x: 2 * leftInsets + avatarHeight, y: 5, width: bounds.width - 3 * leftInsets - avatarHeight, height: 20)
         self.addSubview(nameLabel)
@@ -104,7 +114,7 @@ class TopicCell: UITableViewCell {
         titleLabel.font = titleFont
         titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .center
-        titleLabel.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        titleLabel.textColor = vkSingleton.shared.mainColor
         let titleLabelSize = getTextSize(text: topic.title.prepareTextForPublic(), font: titleFont)
         
         titleLabel.frame = CGRect(x: leftInsets, y: topY, width: titleLabelSize.width, height: titleLabelSize.height)
@@ -136,7 +146,7 @@ class TopicCell: UITableViewCell {
         
         countLabel.text = "Комментариев: \(topic.commentsCount)"
         countLabel.textAlignment = .right
-        countLabel.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        countLabel.textColor = vkSingleton.shared.mainColor
         countLabel.font = countFont
         countLabel.numberOfLines = 1
         

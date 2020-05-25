@@ -9,8 +9,11 @@
 import UIKit
 import FLAnimatedImage
 import SwiftMessages
+import SwiftyJSON
 
 class WallRecordCell2: UITableViewCell {
+    
+    var delegate: UIViewController!
     
     var repostsButton = UIButton()
     var commentsButton = UIButton()
@@ -138,7 +141,9 @@ class WallRecordCell2: UITableViewCell {
         readMoreButtonFrame()
     }
     
-    func configureCell(record: Wall, profiles: [WallProfiles], groups: [WallGroups], indexPath: IndexPath, tableView: UITableView, cell: UITableViewCell, viewController: UIViewController) {
+    func configureCell(record: Wall, profiles: [WallProfiles], groups: [WallGroups], indexPath: IndexPath, tableView: UITableView, cell: UITableViewCell, viewController: UIViewController) -> CGFloat {
+        
+        self.backgroundColor = vkSingleton.shared.backColor
         
         for subview in self.subviews {
             if subview.tag == 100 {
@@ -196,6 +201,9 @@ class WallRecordCell2: UITableViewCell {
         }
         
         nameLabel.text = name
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+        }
         nameLabel.font = UIFont(name: "Verdana-Bold", size: 15)!
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.5
@@ -205,7 +213,7 @@ class WallRecordCell2: UITableViewCell {
             onlyFriendsLabel.numberOfLines = 1
             onlyFriendsLabel.textAlignment = .right
             onlyFriendsLabel.font = UIFont(name: "Verdana", size: 12)!
-            onlyFriendsLabel.textColor = UIColor.red
+            onlyFriendsLabel.textColor = .systemRed
             onlyFriendsLabel.isEnabled = true
             onlyFriendsLabel.frame = CGRect(x: 2 * leftInsets + avatarImageSize, y: 5, width: self.bounds.width - 3 * leftInsets - avatarImageSize, height: 15)
             self.addSubview(onlyFriendsLabel)
@@ -219,7 +227,11 @@ class WallRecordCell2: UITableViewCell {
         datePostLabel.numberOfLines = 1
         datePostLabel.contentMode = .center
         datePostLabel.font = UIFont(name: "Verdana", size: 12)!
-        datePostLabel.isEnabled = false
+        if #available(iOS 13.0, *) {
+            datePostLabel.textColor = .secondaryLabel
+        } else {
+            datePostLabel.isEnabled = false
+        }
         
         readMoreButton.isHidden = true
         repostReadMoreButton.isHidden = true
@@ -275,6 +287,13 @@ class WallRecordCell2: UITableViewCell {
                 self.repostAvatarImageView.clipsToBounds = true
             }
             
+            if #available(iOS 13.0, *) {
+                repostNameLabel.textColor = .label
+                repostDateLabel.textColor = .secondaryLabel
+            } else {
+                repostDateLabel.isEnabled = false
+            }
+            
             repostNameLabel.text = name
             repostDateLabel.text = record.repostDate.toStringLastTime()
             repostNameLabel.adjustsFontSizeToFitWidth = true
@@ -282,7 +301,6 @@ class WallRecordCell2: UITableViewCell {
             
             repostNameLabel.font = UIFont(name: "Verdana-Bold", size: 15)!
             repostDateLabel.font = UIFont(name: "Verdana", size: 12)!
-            repostDateLabel.isEnabled = false
             
             if record.readMore2 == 0 {
                 readMoreButtonTapped2 = true
@@ -320,6 +338,35 @@ class WallRecordCell2: UITableViewCell {
         if record.repostOwnerID != 0 {
             topY = topY + repostAvatarImageSize + verticalSpacingElements + repostTextLabel.frame.height + repostReadMoreButton.frame.height + 1 + 2 * verticalSpacingElements
         }
+        
+        var photos: [Photos] = []
+        let maxWidth = UIScreen.main.bounds.width - 20
+        for index in 0...9 {
+            if record.mediaType[index] == "photo" {
+                let photo = Photos(json: JSON.null)
+                photo.width = record.photoWidth[index]
+                photo.height = record.photoHeight[index]
+                photo.xxbigPhotoURL = record.photoURL[index]
+                photo.xbigPhotoURL = record.photoURL[index]
+                photo.bigPhotoURL = record.photoURL[index]
+                photo.smallPhotoURL = record.photoURL[index]
+                photo.pid = "\(record.photoID[index])"
+                photo.uid = "\(record.photoOwnerID[index])"
+                photo.createdTime = record.date
+                photos.append(photo)
+            }
+        }
+        
+        let aView = AttachmentsView()
+        aView.backgroundColor = .clear
+        aView.tag = 100
+        aView.delegate = self.delegate
+        aView.photos = photos
+        let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: false)
+        aView.frame = CGRect(x: 10, y: topY, width: maxWidth, height: aHeight)
+        self.addSubview(aView)
+        
+        topY += aHeight
         
         topY = setImageView(0, topY, record, cell, indexPath, imageView1, tableView)
         topY = setImageView(1, topY, record, cell, indexPath, imageView2, tableView)
@@ -377,23 +424,30 @@ class WallRecordCell2: UITableViewCell {
             likesButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
             likesButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
             
-            
             setLikesButton(record: record)
             
             self.addSubview(likesButton)
+            
+            var titleColor = UIColor.darkGray
+            var tintColor = UIColor.darkGray
+            
+            if #available(iOS 13.0, *) {
+                titleColor = .secondaryLabel
+                tintColor = .secondaryLabel
+            }
             
             repostsButton.frame = CGRect(x: likesButton.frame.maxX, y: topY, width: repotsButtonWidth, height: likesButtonHeight)
             repostsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
             repostsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
             
-            repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
-            repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
+            repostsButton.setTitle("\(record.countReposts)", for: .normal)
+            repostsButton.setTitle("\(record.countReposts)", for: .selected)
             repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
-            repostsButton.imageView?.tintColor = UIColor.black
-            repostsButton.setTitleColor(UIColor.black, for: .normal)
+            repostsButton.imageView?.tintColor = tintColor
+            repostsButton.setTitleColor(titleColor, for: .normal)
             if record.userPeposted == 1 {
-                repostsButton.setTitleColor(UIColor.purple, for: .normal)
-                repostsButton.imageView?.tintColor = UIColor.purple
+                repostsButton.setTitleColor(.systemPurple, for: .normal)
+                repostsButton.imageView?.tintColor = .systemPurple
             }
             
             self.addSubview(repostsButton)
@@ -405,8 +459,9 @@ class WallRecordCell2: UITableViewCell {
             viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.normal)
             viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.selected)
             viewsButton.setImage(UIImage(named: "views"), for: .normal)
-            viewsButton.setTitleColor(UIColor.darkGray, for: .normal)
-            viewsButton.isEnabled = false
+            viewsButton.setTitleColor(titleColor, for: .normal)
+            viewsButton.imageView?.tintColor = tintColor
+            viewsButton.isUserInteractionEnabled = false
             
             self.addSubview(viewsButton)
             
@@ -415,27 +470,39 @@ class WallRecordCell2: UITableViewCell {
             commentsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
             commentsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
             commentsButton.setImage(UIImage(named: "message2"), for: .normal)
-            commentsButton.setTitleColor(UIColor.init(red: 124/255, green: 172/255, blue: 238/255, alpha: 1), for: .normal)
+            commentsButton.setTitle("\(record.countComments)", for: .normal)
+            commentsButton.setTitle("\(record.countComments)", for: .selected)
             
-            commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
-            commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
+            commentsButton.setTitleColor(commentsButton.tintColor.withAlphaComponent(0.8), for: .normal)
+            commentsButton.imageView?.tintColor = commentsButton.tintColor.withAlphaComponent(0.8) //UIColor(red: 124/255, green: 172/255, blue: 238/255, alpha: 1)
             
             self.addSubview(commentsButton)
         }
+        
+        return topY + likesButtonHeight
     }
     
     func configurePoll(_ poll: Poll, topY: CGFloat) -> CGFloat {
         
         let view = UIView()
+        view.backgroundColor = .clear
         view.tag = 100
         var viewY: CGFloat = 5
+        
+        var textColor = UIColor.black
+        var textColor2 = UIColor.darkGray
+        
+        if #available(iOS 13.0, *) {
+            textColor = .label
+            textColor2 = .secondaryLabel
+        }
         
         let qLabel = UILabel()
         qLabel.font = qLabelFont
         qLabel.text = "Опрос: \(poll.question)"
         qLabel.textAlignment = .center
-        qLabel.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-        qLabel.textColor = UIColor.white
+        qLabel.backgroundColor = vkSingleton.shared.mainColor
+        qLabel.textColor = .white
         qLabel.numberOfLines = 0
         
         let qLabelSize = getPollLabelSize(text: "Опрос: \(poll.question)", font: qLabelFont)
@@ -446,7 +513,7 @@ class WallRecordCell2: UITableViewCell {
             let anonLabel = UILabel()
             anonLabel.text = "Анонимный опрос"
             anonLabel.textAlignment = .right
-            anonLabel.isEnabled = false
+            anonLabel.textColor = textColor2
             anonLabel.font = UIFont(name: "Verdana", size: 10)!
             anonLabel.frame = CGRect(x: 2 * leftInsets, y: viewY + qLabelSize.height + 5, width: bounds.width - 4 * leftInsets, height: 15)
             view.addSubview(anonLabel)
@@ -458,7 +525,7 @@ class WallRecordCell2: UITableViewCell {
             let aLabel = UILabel()
             aLabel.font = aLabelFont
             aLabel.text = "\(index+1). \(poll.answers[index].text)"
-            aLabel.textColor = UIColor.black
+            aLabel.textColor = textColor
             aLabel.numberOfLines = 0
             aLabel.tag = index
             
@@ -471,7 +538,7 @@ class WallRecordCell2: UITableViewCell {
             let rLabel = UILabel()
             rLabel.text = ""
             rLabel.textAlignment = .right
-            rLabel.textColor = UIColor.clear
+            rLabel.textColor = .clear
             rLabel.font = UIFont(name: "Verdana-Bold", size: 10)!
             rLabel.frame = CGRect(x: 5, y: viewY + 5, width: aLabelSize.width, height: 15)
             view.addSubview(rLabel)
@@ -484,7 +551,11 @@ class WallRecordCell2: UITableViewCell {
         
         totalLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
         totalLabel.textAlignment = .right
-        totalLabel.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        if #available(iOS 13.0, *) {
+            totalLabel.textColor = .secondaryLabel
+        } else {
+            totalLabel.textColor = vkSingleton.shared.mainColor
+        }
         totalLabel.isEnabled = true
         totalLabel.numberOfLines = 1
         
@@ -493,7 +564,7 @@ class WallRecordCell2: UITableViewCell {
         viewY += 20
         
         view.frame = CGRect(x: 5, y: topY, width: bounds.width - 10, height: viewY)
-        view.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        view.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         view.layer.borderWidth = 1.0
         self.addSubview(view)
         
@@ -506,14 +577,27 @@ class WallRecordCell2: UITableViewCell {
         if answerLabels.count > 0 {
             for index in 0...answerLabels.count-1 {
                 if self.poll.answerID != 0 {
-                    answerLabels[index].backgroundColor = UIColor.lightGray.withAlphaComponent(0.6)
+                    answerLabels[index].backgroundColor = vkSingleton.shared.mainColor.withAlphaComponent(0.4)
+                    
                     if self.poll.answerID == self.poll.answers[index].id {
                         answerLabels[index].backgroundColor = UIColor.purple.withAlphaComponent(0.75)
                         answerLabels[index].textColor = UIColor.white
+                        answerLabels[index].isEnabled = true
+                    } else {
+                        if #available(iOS 13.0, *) {
+                            answerLabels[index].textColor = .label
+                        } else {
+                            answerLabels[index].textColor = .black
+                            answerLabels[index].isEnabled = false
+                        }
                     }
                 } else {
-                    answerLabels[index].backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5)
-                    answerLabels[index].textColor = UIColor.black
+                    answerLabels[index].backgroundColor = vkSingleton.shared.mainColor.withAlphaComponent(0.8)
+                    if #available(iOS 13.0, *) {
+                        answerLabels[index].textColor = .label
+                    } else {
+                        answerLabels[index].textColor = .black
+                    }
                 }
             }
         }
@@ -523,7 +607,11 @@ class WallRecordCell2: UITableViewCell {
                 rateLabels[index].text = "\(self.poll.answers[index].votes.rateAdder()) (\(self.poll.answers[index].rate) %)"
                 
                 if self.poll.answerID != 0 {
-                    rateLabels[index].textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                    if #available(iOS 13.0, *) {
+                        rateLabels[index].textColor = .secondaryLabel
+                    } else {
+                        rateLabels[index].textColor = vkSingleton.shared.mainColor
+                    }
                 } else {
                     rateLabels[index].textColor = UIColor.clear
                 }
@@ -537,13 +625,22 @@ class WallRecordCell2: UITableViewCell {
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
-        if record.userLikes == 1 {
-            likesButton.setTitleColor(UIColor.purple, for: .normal)
-            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor:  UIColor.purple), for: .normal)
-        } else {
-            likesButton.setTitleColor(UIColor.darkGray, for: .normal)
-            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor:  UIColor.darkGray), for: .normal)
+        var titleColor = UIColor.darkGray
+        var tintColor = UIColor.darkGray
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .secondaryLabel
+            tintColor = .secondaryLabel
         }
+        
+        if record.userLikes == 1 {
+            titleColor = .systemPurple
+            tintColor = .systemPurple
+        }
+        
+        likesButton.setTitleColor(titleColor, for: .normal)
+        likesButton.tintColor = tintColor
+        likesButton.setImage(UIImage(named: "filled-like2"), for: .normal)
     }
     
     func setImageView(_ index: Int, _ topY: CGFloat, _ record: Wall, _ cell: UITableViewCell, _ indexPath: IndexPath, _ imageView: UIImageView, _ tableView: UITableView) -> CGFloat {
@@ -567,18 +664,19 @@ class WallRecordCell2: UITableViewCell {
         imageView.contentMode = .scaleAspectFill
         
         imageView.frame = CGRect(x: 5.0, y: topY, width: imageWidth, height: 0.0)
+        imageView.backgroundColor = vkSingleton.shared.backColor
         imageView.image = nil
         
         self.addSubview(imageView)
         
-        if record.mediaType[index] == "photo" || record.mediaType[index] == "doc" {
+        if record.mediaType[index] == "doc" {
             if record.photoWidth[index] != 0 {
-                imageWidth = UIScreen.main.bounds.width - 10.0
+                imageWidth = UIScreen.main.bounds.width - 20.0
                 imageHeight = imageWidth * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
             }
             
             if imageHeight > 4 {
-                imageView.frame = CGRect(x: 5.0, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
+                imageView.frame = CGRect(x: 10.0, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
                 
                 let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
                 let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: imageView, indexPath: indexPath, tableView: tableView)
@@ -589,7 +687,7 @@ class WallRecordCell2: UITableViewCell {
                     imageView.clipsToBounds = true
                 }
                 
-                if record.mediaType[index] == "doc" && record.photoText[index] == "gif" {
+                if record.photoText[index] == "gif" {
                     let gifImage = UIImageView()
                     gifImage.image = UIImage(named: "gif")
                     gifImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
@@ -631,12 +729,12 @@ class WallRecordCell2: UITableViewCell {
         
         if record.mediaType[index] == "video" {
             if record.photoURL[index] != "" {
-                imageWidth = UIScreen.main.bounds.width - 10.0
+                imageWidth = UIScreen.main.bounds.width - 20.0
                 imageHeight = imageWidth * 240.0 / 320.0
             }
             
             if imageHeight > 4 {
-                imageView.frame = CGRect(x: 5.0, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
+                imageView.frame = CGRect(x: 10, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
                 
                 let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
                 let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: imageView, indexPath: indexPath, tableView: tableView)
@@ -647,7 +745,7 @@ class WallRecordCell2: UITableViewCell {
                     imageView.clipsToBounds = true
                     imageView.layer.borderColor = UIColor.black.cgColor
                     imageView.layer.borderWidth = 1.0
-                    imageView.layer.cornerRadius = 10.0
+                    imageView.layer.cornerRadius = 4.0
                 }
                 
                 let videoImage = UIImageView()
@@ -661,8 +759,13 @@ class WallRecordCell2: UITableViewCell {
                 durationLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                 durationLabel.textAlignment = .center
                 durationLabel.contentMode = .center
-                durationLabel.textColor = UIColor.black
-                durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                if #available(iOS 13.0, *) {
+                    durationLabel.textColor = .label
+                    durationLabel.backgroundColor = .secondarySystemBackground
+                } else {
+                    durationLabel.textColor = UIColor.black
+                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                }
                 durationLabel.layer.cornerRadius = 10
                 durationLabel.clipsToBounds = true
                 if let length = durationLabel.text?.length, length > 5 {
@@ -1014,13 +1117,35 @@ class WallRecordCell2: UITableViewCell {
             height = height + verticalSpacingElements + textHeight2 + verticalSpacingElements
         }
         
+        var photos: [Photos] = []
+        let maxWidth = UIScreen.main.bounds.width - 20
+        for index in 0...9 {
+            if record.mediaType[index] == "photo" {
+                let photo = Photos(json: JSON.null)
+                photo.width = record.photoWidth[index]
+                photo.height = record.photoHeight[index]
+                photo.xxbigPhotoURL = record.photoURL[index]
+                photo.xbigPhotoURL = record.photoURL[index]
+                photo.bigPhotoURL = record.photoURL[index]
+                photo.smallPhotoURL = record.photoURL[index]
+                photo.pid = "\(record.photoID[index])"
+                photo.uid = "\(record.photoOwnerID[index])"
+                photo.createdTime = record.date
+                photos.append(photo)
+            }
+        }
+        
+        let aView = AttachmentsView()
+        aView.photos = photos
+        let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: true)
+        height += aHeight
         
         var imageWidth = [CGFloat] (repeating: 0, count: 10)
         var imageHeight = [CGFloat] (repeating: 0, count: 10)
         for index in 0...9 {
-            if record.mediaType[index] == "photo" || record.mediaType[index] == "doc" {
+            if record.mediaType[index] == "doc" {
                 if record.photoWidth[index] != 0 {
-                    imageWidth[index] = UIScreen.main.bounds.width - 10
+                    imageWidth[index] = UIScreen.main.bounds.width - 20
                     imageHeight[index] = imageWidth[index] * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
                     
                     if imageHeight[index] > 0 {
@@ -1031,7 +1156,7 @@ class WallRecordCell2: UITableViewCell {
             
             if record.mediaType[index] == "video" {
                 if record.photoURL[index] != "" {
-                    imageWidth[index] = UIScreen.main.bounds.width - 10
+                    imageWidth[index] = UIScreen.main.bounds.width - 20
                     imageHeight[index] = imageWidth[index] * 240.0 / 320.0
                     
                     if imageHeight[index] > 0 {

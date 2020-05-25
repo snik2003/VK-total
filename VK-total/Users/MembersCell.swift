@@ -16,6 +16,8 @@ class MembersCell: UITableViewCell {
     
     func configureCell(user: Friends, filter: String, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in self.subviews {
             if subview is UIImageView || subview is UILabel {
                 subview.removeFromSuperview()
@@ -24,6 +26,11 @@ class MembersCell: UITableViewCell {
         
         nameLabel = UILabel()
         nameLabel.text = "\(user.firstName) \(user.lastName)"
+        
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+        }
+        
         if user.onlineStatus == 1 && filter == "managers" {
             if user.onlineMobile == 1 {
                 let fullString = "\(user.firstName) \(user.lastName) "
@@ -33,7 +40,7 @@ class MembersCell: UITableViewCell {
                 let rangeOfColoredString = (fullString as NSString).range(of: "●")
                 let attributedString = NSMutableAttributedString(string: fullString)
                 
-                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: nameLabel.tintColor /*UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)*/], range: rangeOfColoredString)
+                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: nameLabel.tintColor], range: rangeOfColoredString)
                 
                 nameLabel.attributedText = attributedString
             }
@@ -44,6 +51,13 @@ class MembersCell: UITableViewCell {
         self.addSubview(nameLabel)
         
         statusLabel = UILabel()
+        statusLabel.isUserInteractionEnabled = false
+        
+        if #available(iOS 13.0, *) {
+            statusLabel.textColor = .secondaryLabel
+        } else {
+            statusLabel.textColor = UIColor.black.withAlphaComponent(0.6)
+        }
         
         if filter == "managers" {
             if user.role == "moderator" {
@@ -55,8 +69,7 @@ class MembersCell: UITableViewCell {
             } else {
                 statusLabel.text = "администратор"
             }
-            statusLabel.textColor = UIColor.blue
-            statusLabel.isEnabled = true
+            statusLabel.textColor = statusLabel.tintColor
         } else {
             if user.deactivated != "" {
                 if user.deactivated == "banned" {
@@ -65,24 +78,19 @@ class MembersCell: UITableViewCell {
                 if user.deactivated == "deleted" {
                     statusLabel.text = "страница удалена"
                 }
-                statusLabel.textColor = UIColor.black
-                statusLabel.isEnabled = false
             } else {
                 if user.onlineStatus == 1 {
                     statusLabel.text = "онлайн"
                     if user.onlineMobile == 1 {
                         statusLabel.text = "онлайн (моб.)"
                     }
-                    statusLabel.textColor = UIColor.blue
-                    statusLabel.isEnabled = true
+                    statusLabel.textColor = statusLabel.tintColor
                 } else {
                     if user.sex == 1 {
                         statusLabel.text = "заходила \(user.lastSeen.toStringLastTime())"
                     } else {
                         statusLabel.text = "заходил \(user.lastSeen.toStringLastTime())"
                     }
-                    statusLabel.textColor = UIColor.black
-                    statusLabel.isEnabled = false
                 }
             }
         }
@@ -101,7 +109,7 @@ class MembersCell: UITableViewCell {
         OperationQueue().addOperation(getCacheImage)
         OperationQueue.main.addOperation(setImageToRow)
         OperationQueue.main.addOperation {
-            self.avatarImage.layer.cornerRadius = 19
+            self.avatarImage.layer.cornerRadius = 20
             self.avatarImage.contentMode = .scaleAspectFit
             self.avatarImage.clipsToBounds = true
         }

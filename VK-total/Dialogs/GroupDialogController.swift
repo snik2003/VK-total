@@ -7,11 +7,12 @@
 //
 
 import UIKit
+import AVFoundation
 import DCCommentView
 import Popover
 import SwiftyJSON
 
-class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class GroupDialogController: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
     var chat: [ChatInfo] = []
     var dialogs: [DialogHistory] = []
@@ -68,13 +69,11 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
     let deleteButton = UIButton()
     let resendButton = UIButton()
     
-    let feedbackText = "Друзья!\n\nЗдесь Вы можете оставить свой отзыв:\n\nзадать любой вопрос по функционалу приложения, сообщить об обнаруженной ошибке или внести предложение по усовершенствованию приложения.\n\nМы будем рады любому отзыву и обязательно ответим Вам.\n\nЖдём ваших отзывов! 😊"
-    
     fileprivate var popover: Popover!
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.up),
-        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))
-        //.color(UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5))
+        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+        .color(vkSingleton.shared.backColor)
     ]
     
     let product1 = [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108, 109, 110,
@@ -92,12 +91,10 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
     let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         if let id = Int(self.groupID) {
             getGroupLongPollServer(groupID: id)
@@ -187,9 +184,25 @@ class GroupDialogController: UIViewController, UITableViewDelegate, UITableViewD
     }
     
     func configureTableView() {
-        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds)
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
-        commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        commentView.textView.backgroundColor = .clear
+        commentView.textView.textColor = .black
+        commentView.textView.tintColor = vkSingleton.shared.mainColor
+        commentView.tintColor = vkSingleton.shared.mainColor
+        
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            } else if AppConfig.shared.darkMode {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            }
+        }
         
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
@@ -1022,6 +1035,8 @@ extension GroupDialogController {
     
     func configureStickerView(sView: UIView, product: [Int], numProd: Int, width: CGFloat) {
         
+        sView.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in sView.subviews {
             if subview is UIButton {
                 subview.removeFromSuperview()
@@ -1088,9 +1103,9 @@ extension GroupDialogController {
                     menuButton.layer.borderWidth = 1
                     
                     if index == numProd {
-                        menuButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5)
+                        menuButton.backgroundColor = vkSingleton.shared.mainColor
                         menuButton.layer.cornerRadius = 10
-                        menuButton.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+                        menuButton.layer.borderColor = vkSingleton.shared.mainColor.cgColor
                         menuButton.layer.borderWidth = 1
                     }
                     
@@ -1132,10 +1147,10 @@ extension GroupDialogController {
         
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 20
+        let width = self.view.bounds.width - 40
         let height = width + 70
         let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        
+        stickerView.backgroundColor = vkSingleton.shared.backColor
         configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
         
         self.popover = Popover(options: self.popoverOptions)
@@ -1479,7 +1494,7 @@ extension GroupDialogController: UICollectionViewDelegate, UICollectionViewDataS
             
             let imageView = UIImageView()
             imageView.image = photo
-            imageView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+            imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             imageView.layer.borderWidth = 1.0
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
@@ -1538,7 +1553,7 @@ extension GroupDialogController: UICollectionViewDelegate, UICollectionViewDataS
         } else {
             let imageView = UIImageView()
             imageView.image = UIImage(named: "message")
-            imageView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+            imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             imageView.layer.borderWidth = 1.0
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true

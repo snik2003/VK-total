@@ -11,7 +11,7 @@ import RealmSwift
 import SCLAlertView
 import AVFoundation
 
-class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
     var delegate: UIViewController!
     
@@ -44,10 +44,6 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         OperationQueue.main.addOperation {
             ViewControllerUtils().showActivityIndicator(uiView: self.view)
             self.configureTableView()
@@ -64,6 +60,10 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             self.tableView.separatorStyle = .singleLine
             ViewControllerUtils().hideActivityIndicator()
         }
+        
+        let tap = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
+        tap.cancelsTouchesInView = false
+        self.view.addGestureRecognizer(tap)
     }
 
     override func viewDidLayoutSubviews() {
@@ -75,10 +75,10 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         }
     }
     
-    @objc func playerDidFinishPlaying(note: NSNotification) {
+    @objc override func playerDidFinishPlaying(note: NSNotification) {
         if playIndexPath != nil {
             if let cell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {
-                cell.listenButton.imageView?.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                cell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
             }
         }
     }
@@ -90,6 +90,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
 
     func configureTableView() {
         tableView = UITableView()
+        tableView.backgroundColor = vkSingleton.shared.backColor
         
         tableView.delegate = self
         tableView.dataSource = self
@@ -153,7 +154,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             let realm = try Realm(configuration: config)
             
             realm.beginWrite()
-            realm.add(music, update: true)
+            realm.add(music, update: .all)
             try realm.commitWrite()
             return true
         } catch {
@@ -178,23 +179,23 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         if section == 0 {
             if search.count > 0 {
-                return 20
+                return 18
             }
             return 0
         }
-        return 20
+        return 18
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == 1 {
-            return 20
+            return 18
         }
         return 0
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         
         let titleLabel = UILabel()
         if section == 0 {
@@ -204,9 +205,14 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         } else {
             titleLabel.text = "Избранное"
         }
-        titleLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
-        titleLabel.textColor = UIColor.black
-        titleLabel.frame = CGRect(x: 10, y: 0, width: UIScreen.main.bounds.width - 20, height: 20)
+        titleLabel.font = UIFont(name: "Verdana-Bold", size: 14)!
+        titleLabel.textColor = .black
+        titleLabel.frame = CGRect(x: 10, y: 0, width: UIScreen.main.bounds.width - 20, height: 16)
+        
+        if #available(iOS 13.0, *) {
+            titleLabel.textColor = .label
+        }
+        
         viewHeader.addSubview(titleLabel)
         
         return viewHeader
@@ -214,7 +220,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         
         return viewFooter
     }
@@ -346,7 +352,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         } else {
             if playIndexPath != nil {
                 if let oldCell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {
-                    oldCell.listenButton.imageView?.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                    oldCell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
                 }
                 player.removeAllItems()
                 isPlaying = false
@@ -380,14 +386,14 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             
             if playIndexPath != nil, playIndexPath != indexPath {
                 if let oldCell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {
-                    oldCell.listenButton.imageView?.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                    oldCell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
                 }
                 player.removeAllItems()
                 isPlaying = false
             }
             
             if isPlaying {
-                cell.listenButton.imageView?.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                cell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
                 
                 player.removeAllItems()
                 isPlaying = false
@@ -398,6 +404,7 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
                     player.removeAllItems()
                     player.insert(AVPlayerItem(url: url), after: nil)
                     player.play()
+                    self.showAudioPlayOnScreen(artist: song.artist, title: song.song, player: player)
                     
                     isPlaying = true
                     playIndexPath = indexPath
@@ -429,6 +436,14 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
             let deleteAction = UITableViewRowAction(style: .normal, title: "Удалить") { (rowAction, indexPath) in
                 let song = self.music[indexPath.row]
                 
+                var titleColor = UIColor.black
+                var backColor = UIColor.white
+                
+                if #available(iOS 13.0, *) {
+                    titleColor = .label
+                    backColor = vkSingleton.shared.backColor
+                }
+                
                 let appearance = SCLAlertView.SCLAppearance(
                     kTitleTop: 32.0,
                     kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -436,7 +451,10 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
                     kTextFont: UIFont(name: "Verdana", size: 13)!,
                     kButtonFont: UIFont(name: "Verdana", size: 14)!,
                     showCloseButton: false,
-                    showCircularIcon: true
+                    showCircularIcon: true,
+                    circleBackgroundColor: backColor,
+                    contentViewColor: backColor,
+                    titleColor: titleColor
                 )
                 let alertView = SCLAlertView(appearance: appearance)
                 
@@ -465,20 +483,20 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         var topY: CGFloat = 10.0
 
         artistTextField = UITextField()
-        artistTextField.layer.sublayerTransform = CATransform3DMakeTranslation(5, 0, 0)
+        artistTextField.layer.sublayerTransform = CATransform3DMakeTranslation(4, 0, 0)
         artistTextField.placeholder = "Исполнитель:"
         artistTextField.clearButtonMode = .whileEditing
         artistTextField.textColor = artistTextField.tintColor
         artistTextField.layer.borderColor = UIColor.black.cgColor
         artistTextField.layer.borderWidth = 1
-        artistTextField.layer.cornerRadius = 5
+        artistTextField.layer.cornerRadius = 4
         artistTextField.contentMode = .center
-        artistTextField.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        artistTextField.backgroundColor = vkSingleton.shared.separatorColor
         artistTextField.font = UIFont(name: "Verdana", size: 12)!
         artistTextField.text = ""
-        artistTextField.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width - 80, height: 22)
+        artistTextField.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width - 80, height: 25)
         searchView.addSubview(artistTextField)
-        topY += 22
+        topY += 25
         
         topY += 10
         
@@ -491,12 +509,12 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         albumTextField.layer.borderWidth = 1
         albumTextField.layer.cornerRadius = 5
         albumTextField.contentMode = .center
-        albumTextField.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        albumTextField.backgroundColor = vkSingleton.shared.separatorColor
         albumTextField.font = UIFont(name: "Verdana", size: 12)!
         albumTextField.text = ""
-        albumTextField.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width - 80, height: 22)
+        albumTextField.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width - 80, height: 25)
         searchView.addSubview(albumTextField)
-        topY += 22
+        topY += 25
         
         topY += 10
         
@@ -509,12 +527,12 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         songTextField.layer.borderWidth = 1
         songTextField.layer.cornerRadius = 5
         songTextField.contentMode = .center
-        songTextField.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        songTextField.backgroundColor = vkSingleton.shared.separatorColor
         songTextField.font = UIFont(name: "Verdana", size: 12)!
         songTextField.text = ""
-        songTextField.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width - 80, height: 22)
+        songTextField.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width - 80, height: 25)
         searchView.addSubview(songTextField)
-        topY += 22
+        topY += 25
         
         topY += 15
         
@@ -525,11 +543,11 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         searchButton.clipsToBounds = true
         searchButton.setTitle("Очистить поиск", for: .normal)
         searchButton.setTitleColor(UIColor.white, for: .normal)
-        searchButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        searchButton.backgroundColor = vkSingleton.shared.mainColor
         searchButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 11)!
         searchButton.titleLabel?.adjustsFontSizeToFitWidth = true
         searchButton.titleLabel?.minimumScaleFactor = 0.5
-        searchButton.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width/2-45, height: 21)
+        searchButton.frame = CGRect(x: 40, y: topY, width: UIScreen.main.bounds.width/2-45, height: 25)
         searchView.addSubview(searchButton)
         searchButton.addTarget(self, action: #selector(self.clearSearch(sender:)), for: .touchUpInside)
         
@@ -540,16 +558,26 @@ class MyMusicController: UIViewController, UITableViewDelegate, UITableViewDataS
         clearButton.clipsToBounds = true
         clearButton.setTitle("Поиск в iTunes", for: .normal)
         clearButton.setTitleColor(UIColor.white, for: .normal)
-        clearButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        clearButton.backgroundColor = vkSingleton.shared.mainColor
         clearButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
         clearButton.titleLabel?.adjustsFontSizeToFitWidth = true
         clearButton.titleLabel?.minimumScaleFactor = 0.5
-        clearButton.frame = CGRect(x: UIScreen.main.bounds.width/2+5, y: topY, width: UIScreen.main.bounds.width/2-45, height: 21)
+        clearButton.frame = CGRect(x: UIScreen.main.bounds.width/2+5, y: topY, width: UIScreen.main.bounds.width/2-45, height: 25)
         searchView.addSubview(clearButton)
         clearButton.addTarget(self, action: #selector(self.searchITunes(sender:)), for: .touchUpInside)
-        topY += 21
+        topY += 25
         
-        //searchView.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            artistTextField.textColor = .label
+            albumTextField.textColor = .label
+            songTextField.textColor = .label
+            
+            artistTextField.layer.borderColor = UIColor.secondaryLabel.cgColor
+            albumTextField.layer.borderColor = UIColor.secondaryLabel.cgColor
+            songTextField.layer.borderColor = UIColor.secondaryLabel.cgColor
+        }
+        
         searchView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: topY + 10)
         tableView.tableHeaderView = searchView
     }

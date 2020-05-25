@@ -8,7 +8,7 @@
 
 import UIKit
 
-class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+class GroupsListController: InnerViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
     @IBOutlet weak var searchBar: UISearchBar!
     @IBOutlet weak var tableView: UITableView!
@@ -30,10 +30,9 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
         super.viewDidLoad()
         
         if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-            searchField.textColor = .black
+            searchField.backgroundColor = .separator
+            searchField.textColor = .label
         } else {
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
                 searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
@@ -52,6 +51,7 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
             self.searchBar.sizeToFit()
             self.searchBar.placeholder = ""
             self.searchBar.showsCancelButton = false
+            self.searchBar.backgroundColor = vkSingleton.shared.backColor
             
             if self.userID == vkSingleton.shared.userID && self.type == "" && self.source == "" {
                 
@@ -196,6 +196,29 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
         return 0.01
     }
     
+    func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        
+        return viewHeader
+    }
+    
+    func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let viewFooter = UIView()
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
+        return viewFooter
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "groupsCell", for: indexPath)
         
@@ -231,7 +254,7 @@ class GroupsListController: UIViewController, UITableViewDelegate, UITableViewDa
         OperationQueue().addOperation(getCacheImage)
         OperationQueue.main.addOperation(setImageToRow)
         OperationQueue.main.addOperation {
-            cell.imageView?.layer.cornerRadius = 24.0
+            cell.imageView?.layer.cornerRadius = 25.0
             cell.imageView?.clipsToBounds = true
         }
         

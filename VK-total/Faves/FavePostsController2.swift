@@ -7,12 +7,13 @@
 //
 
 import UIKit
+import AVFoundation
 import Alamofire
 import SwiftyJSON
 import BTNavigationDropdownMenu
 import SCLAlertView
 
-class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class FavePostsController2: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
@@ -62,23 +63,38 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     
     var tableView: UITableView!
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         createTableView()
         menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[0], items: itemsMenu)
-        menuView.cellBackgroundColor = .white
-        menuView.cellSelectionColor = .white
+        menuView.cellBackgroundColor = vkSingleton.shared.backColor
+        menuView.cellSelectionColor = vkSingleton.shared.backColor
+        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
+        menuView.cellSeparatorColor = vkSingleton.shared.separatorColor
+        
+        if #available(iOS 13.0, *) {
+            if !AppConfig.shared.autoMode {
+                if AppConfig.shared.darkMode {
+                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                } else {
+                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                }
+            }
+        }
+        
         menuView.cellTextLabelAlignment = .center
-        menuView.cellTextLabelColor = UIColor(red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-        menuView.selectedCellTextLabelColor = .red
+        menuView.selectedCellTextLabelColor = .systemRed
         menuView.cellTextLabelFont = UIFont.boldSystemFont(ofSize: 15)
         menuView.navigationBarTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        menuView.cellSeparatorColor = UIColor(red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
         navigationItem.titleView = menuView
         
         menuView.didSelectItemAtIndexHandler = {[weak self] (indexPath: Int) -> () in
@@ -155,6 +171,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     
     func createTableView() {
         tableView = UITableView()
+        tableView.backgroundColor = vkSingleton.shared.backColor
         tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
         
         tableView.delegate = self
@@ -317,56 +334,6 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         }
     }
     
-    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        if source == "post" {
-            if let height = estimatedHeightCache[indexPath] {
-                return height
-            } else {
-                let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
-                
-                let height = cell.getRowHeight(record: wall[indexPath.section])
-                estimatedHeightCache[indexPath] = height
-                return height
-            }
-        } else if source == "photo" {
-            if let height = estimatedHeightCache[indexPath] {
-                return height
-            } else {
-                let photo = photos[indexPath.section]
-                
-                var height = self.tableView.bounds.width
-                if photo.height > 0 && photo.width > 0 {
-                    height = self.tableView.bounds.width * CGFloat(photo.height) / CGFloat(photo.width)
-                }
-                estimatedHeightCache[indexPath] = height
-                return height
-            }
-        } else if source == "video" {
-            if let height = estimatedHeightCache[indexPath] {
-                return height
-            } else {
-                let height = (UIScreen.main.bounds.width * 0.5) * CGFloat(240) / CGFloat(320)
-                estimatedHeightCache[indexPath] = height
-                return height
-            }
-        } else if source == "users" || source == "banned" || source == "groups" {
-            return 50
-        } else if source == "links" {
-            if let height = estimatedHeightCache[indexPath] {
-                return height
-            } else {
-                let cell = tableView.dequeueReusableCell(withIdentifier: "linksCell") as! FaveLinksCell
-                
-                let height = cell.getRowHeight(link: faveLinks[indexPath.row])
-                estimatedHeightCache[indexPath] = height
-                return height
-            }
-        }
-        
-        return UITableView.automaticDimension
-    }
-    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         if source == "post" {
@@ -374,6 +341,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 return height
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
+                cell.delegate = self
                 
                 let height = cell.getRowHeight(record: wall[indexPath.section])
                 estimatedHeightCache[indexPath] = height
@@ -419,26 +387,35 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
         if section == 0 {
-            return 15
+            return 8
         }
         return 0
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 15
+        return 8
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
         
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         return viewFooter
     }
     
@@ -447,8 +424,9 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         switch source {
         case "post":
             let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell", for: indexPath) as! WallRecordCell2
+            cell.delegate = self
             
-            cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+            estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             
             cell.repostsButton.addTarget(self, action: #selector(self.tapRepostButton(sender:)), for: .touchUpInside)
             cell.likesButton.addTarget(self, action: #selector(self.likePost(sender:)), for: .touchUpInside)
@@ -467,6 +445,9 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
             }
             
             cell.selectionStyle = .none
+            
+            tableView.beginUpdates()
+            tableView.endUpdates()
             
             return cell
         case "photo":
@@ -547,12 +528,12 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 
                 if action == "show_record" {
                     
-                    self.openWallRecord(ownerID: record.fromID, postID: record.id, accessKey: "", type: "post")
+                    self.openWallRecord(ownerID: record.fromID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                 }
                 
                 if action == "show_repost_record" {
                     
-                    self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                    self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                 }
                 
                 if action == "show_owner" {
@@ -594,42 +575,13 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                     
                     if action == "show_video_\(index)" {
                         
-                        self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись")
+                        self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
                     }
                     
                     if action == "show_music_\(index)" {
                         
-                        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                        
-                        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                        alertController.addAction(cancelAction)
-                        
-                        let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                            
-                            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                            self.getITunesInfo(searchString: "\(record.audioTitle[index]) \(record.audioArtist[index])", searchType: "song")
-                        }
-                        alertController.addAction(action1)
-                        
-                        let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                            
-                            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                            self.getITunesInfo(searchString: "\(record.audioArtist[index])", searchType: "artist")
-                        }
-                        alertController.addAction(action3)
-                        
-                        let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                            
-                            let link = "\(record.audioArtist[index]). \(record.audioTitle[index])"
-                            UIPasteboard.general.string = link
-                            if let string = UIPasteboard.general.string {
-                                self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                            }
-                        }
-                        alertController.addAction(action2)
-                        
-                        self.present(alertController, animated: true)
-                        
+                        ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                        self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
                     }
                 }
                 
@@ -653,7 +605,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         case "video":
             let video = videos[indexPath.row]
             
-            self.openVideoController(ownerID: "\(video.ownerID)", vid: "\(video.id)", accessKey: video.accessKey, title: "Видеозапись")
+            self.openVideoController(ownerID: "\(video.ownerID)", vid: "\(video.id)", accessKey: video.accessKey, title: "Видеозапись", scrollToComment: false)
             
         case "users":
             let user = faveUsers[indexPath.row]
@@ -689,6 +641,14 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         let deleteAction = UITableViewRowAction(style: .normal, title: "Удалить") { (rowAction, indexPath) in
             let link = self.faveLinks[indexPath.row]
             
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            if #available(iOS 13.0, *) {
+                titleColor = .label
+                backColor = vkSingleton.shared.backColor
+            }
+            
             let appearance = SCLAlertView.SCLAppearance(
                 kTitleTop: 32.0,
                 kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -696,7 +656,10 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
                 kTextFont: UIFont(name: "Verdana", size: 13)!,
                 kButtonFont: UIFont(name: "Verdana", size: 14)!,
                 showCloseButton: false,
-                showCircularIcon: true
+                showCircularIcon: true,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
             )
             let alertView = SCLAlertView(appearance: appearance)
             
@@ -739,7 +702,7 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         if let index = indexPath?.section {
             let record = wall[index]
             
-            self.openWallRecord(ownerID: record.fromID, postID: record.id, accessKey: "", type: "post")
+            self.openWallRecord(ownerID: record.fromID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     
@@ -1035,6 +998,8 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore1 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 
@@ -1051,6 +1016,8 @@ class FavePostsController2: UIViewController, UITableViewDelegate, UITableViewDa
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore2 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 

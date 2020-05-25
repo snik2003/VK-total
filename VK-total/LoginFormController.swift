@@ -11,7 +11,7 @@ import Alamofire
 import SwiftyJSON
 import WebKit
 
-class LoginFormController: UIViewController {
+class LoginFormController: InnerViewController {
 
     @IBOutlet weak var scrollView: UIScrollView!
     
@@ -25,10 +25,6 @@ class LoginFormController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         readAppConfig()
     }
@@ -78,7 +74,6 @@ class LoginFormController: UIViewController {
         exitAccount = false
         changeAccount = false
     }
-
     
     func vkAutorize() {
         webview = WKWebView(frame: self.view.frame)

@@ -10,7 +10,7 @@ import UIKit
 import BEMCheckBox
 import LocalAuthentication
 
-class OptionsController: UITableViewController {
+class OptionsController: InnerTableViewController {
 
     var passwordOn = AppConfig.shared.passwordOn
     var passDigits = AppConfig.shared.passwordDigits
@@ -26,16 +26,13 @@ class OptionsController: UITableViewController {
         "Если вы хотите оставаться в статусе «оффлайн» при запуске приложения, выключите этот параметр.",
         "Автоматически помечать сообщения как прочитанные при открытии конкретного диалога.",
         "Сообщать вашему собеседнику/группе о том, что вы набираете текст.",
-        "Вы можете включить звуковые эффекты при появлении информационных сообщений или нажатии на кнопки."
+        "Вы можете включить звуковые эффекты при появлении информационных сообщений или нажатии на кнопки.",
+        "При активации опции автоматического переключения темы, приложение будет использовать цветовую тему системы. Для ручного управления цветовой темой отключите опцию автопереключения.\n\nДля изменения цветовой темы перезапустите приложение после сохранения настроек."
     ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         let barButton = UIBarButtonItem(title: "Готово", style: .done, target: self, action: #selector(self.tapBarButtonItem(sender:)))
         self.navigationItem.rightBarButtonItem = barButton
         //self.navigationItem.hidesBackButton = true
@@ -50,12 +47,15 @@ class OptionsController: UITableViewController {
         
         readAppConfig()
     }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         
     }
     
     override func numberOfSections(in tableView: UITableView) -> Int {
+        
+        if #available(iOS 13.0, *) { return 9 }
         return 8
     }
     
@@ -90,6 +90,12 @@ class OptionsController: UITableViewController {
         if section == 1 {
             if AppConfig.shared.pushNotificationsOn {
                 return 9
+            }
+            return 1
+        }
+        if section == 8 {
+            if !AppConfig.shared.autoMode {
+                return 2
             }
             return 1
         }
@@ -159,31 +165,55 @@ class OptionsController: UITableViewController {
             
             return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
         }
+        if indexPath.section == 8 {
+            if indexPath.row == 0 {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
+                
+                return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
+            }
+            return 50
+        }
         return 0
     }
     
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
         if section == 0 {
-            return 15
+            return 10
         }
         if section == 1 {
-            return 15
+            return 10
         }
         if section == 4 {
             return 0
         }
-        if section == 3 || section == 5 || section == 7 {
-            return 15
+        if section == 3 || section == 5 || section == 7 || section == 8 {
+            return 10
         }
         return 7
     }
     
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == tableView.numberOfSections - 1 {
-            return 15
+            return 10
         }
         return 0
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let viewHeader = UIView()
+        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
+        
+        return viewHeader
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        let viewFooter = UIView()
+        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
+        
+        return viewFooter
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -384,6 +414,36 @@ class OptionsController: UITableViewController {
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
             return cell
+        case 8:
+            switch indexPath.row {
+            case 0:
+                let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+                
+                cell.nameLabel.text = "Автопереключение темы"
+                cell.descriptionLabel.text = descriptions[index]
+                
+                if cell.descriptionLabel.text != "" {
+                    cell.descriptionLabel.isHidden = false
+                }
+                
+                cell.pushSwitch.isOn = AppConfig.shared.autoMode
+                cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
+                
+                return cell
+            case 1:
+                let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                
+                cell.simpleCheck.on = AppConfig.shared.darkMode
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.nameLabel.text = "Тёмная тема"
+                cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                return cell
+            default:
+                let cell = tableView.dequeueReusableCell(withIdentifier: "customCell", for: indexPath)
+                
+                return cell
+            }
         default:
             let cell = tableView.dequeueReusableCell(withIdentifier: "customCell", for: indexPath)
             
@@ -429,6 +489,16 @@ class OptionsController: UITableViewController {
             if indexPath.section == 7 {
                 AppConfig.shared.soundEffectsOn = sender.isOn
             }
+            
+            if indexPath.section == 8 {
+                AppConfig.shared.autoMode = sender.isOn
+                tableView.reloadData()
+                if AppConfig.shared.autoMode {
+                    tableView.scrollToRow(at: IndexPath(row: 0, section: 8), at: .bottom, animated: true)
+                } else {
+                    tableView.scrollToRow(at: IndexPath(row: 1, section: 8), at: .bottom, animated: true)
+                }
+            }
         }
     }
 
@@ -463,6 +533,20 @@ class OptionsController: UITableViewController {
                 }
             }
             
+            if indexPath.section == 8 {
+                AppConfig.shared.darkMode = sender.on
+                
+                /*if #available(iOS 13.0, *) {
+                    if AppConfig.shared.darkMode {
+                        self.overrideUserInterfaceStyle = .dark
+                    } else {
+                        self.overrideUserInterfaceStyle = .light
+                    }
+                    self.view.layoutSubviews()
+                    self.tabBarController?.tabBar.layoutSubviews()
+                }*/
+            }
+            
             tableView.reloadData()
         }
     }
@@ -472,9 +556,7 @@ class OptionsController: UITableViewController {
         vc.state = "change"
         vc.delegate = self
         vc.modalPresentationStyle = .fullScreen
-        self.present(vc, animated: true, completion: { () -> Void in
-            
-        })
+        self.present(vc, animated: true)
     }
     
     func touchAuthenticationAvailable() -> Bool {

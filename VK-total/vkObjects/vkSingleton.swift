@@ -36,7 +36,23 @@ final class vkSingleton {
     
     let appOpenedCountKey = "APP_OPENED_COUNT"
     
-    let mainColor = UIColor(red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+    var mainColor = UIColor(named: "appMainColor")!
+    var backColor = UIColor(named: "appMainBackColor")!
+    var separatorColor = UIColor(named: "appSeparatorColor")!
+    
+    var inBackColor = UIColor(named: "messageInColor")!
+    var outBackColor = UIColor(named: "messageOutColor")!
+    var unreadColor = UIColor(named: "messageUnreadColor")!
+    
+    var actionColor: UIColor {
+        var color = UIColor.lightGray
+        
+        if #available(iOS 13.0, *) {
+            color = .secondaryLabel
+        }
+        
+        return color
+    }
     
     let errorSound: SystemSoundID = 1000
     let infoSound: SystemSoundID = 1001

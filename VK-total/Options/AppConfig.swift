@@ -36,6 +36,9 @@ final class AppConfig {
     var touchID = true
     
     var soundEffectsOn = true
+    
+    var darkMode = false //true
+    var autoMode = true
 }
 
 enum AppConfiguration: String {

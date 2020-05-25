@@ -9,7 +9,7 @@
 import UIKit
 import CMPhotoCropEditor
 
-class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDataSource {
+class PhotoAlbumController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
     
     var delegate: UIViewController!
     var source = ""
@@ -39,10 +39,6 @@ class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         OperationQueue.main.addOperation {
             self.configureTableView()
             
@@ -65,6 +61,8 @@ class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDa
     }
     
     func configureTableView() {
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -120,7 +118,12 @@ class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDa
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }
@@ -300,6 +303,7 @@ class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDa
                     
                     if let vc = self.delegate as? UserInfoTableViewController {
                         let controller = PECropViewController()
+                        controller.view.backgroundColor = vkSingleton.shared.backColor
                         controller.delegate = vc
                         controller.image = cell.photoView[0]!.image!
                         controller.keepingCropAspectRatio = true
@@ -355,6 +359,7 @@ class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDa
                     
                     if let vc = self.delegate as? UserInfoTableViewController {
                         let controller = PECropViewController()
+                        controller.view.backgroundColor = vkSingleton.shared.backColor
                         controller.delegate = vc
                         controller.image = cell.photoView[1]!.image!
                         controller.keepingCropAspectRatio = true
@@ -407,6 +412,7 @@ class PhotoAlbumController: UIViewController, UITableViewDelegate, UITableViewDa
                     
                     if let vc = self.delegate as? UserInfoTableViewController {
                         let controller = PECropViewController()
+                        controller.view.backgroundColor = vkSingleton.shared.backColor
                         controller.delegate = vc
                         controller.image = cell.photoView[2]!.image!
                         controller.keepingCropAspectRatio = true

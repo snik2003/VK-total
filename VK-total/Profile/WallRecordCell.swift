@@ -563,8 +563,13 @@ class WallRecordCell: UITableViewCell {
                 durationLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                 durationLabel.textAlignment = .center
                 durationLabel.contentMode = .center
-                durationLabel.textColor = UIColor.black
-                durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                if #available(iOS 13.0, *) {
+                    durationLabel.textColor = .label
+                    durationLabel.backgroundColor = .secondarySystemBackground
+                } else {
+                    durationLabel.textColor = UIColor.black
+                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                }
                 durationLabel.layer.cornerRadius = 10
                 durationLabel.clipsToBounds = true
                 if let length = durationLabel.text?.length, length > 5 {

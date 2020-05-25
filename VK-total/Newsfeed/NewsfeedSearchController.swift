@@ -7,9 +7,10 @@
 //
 
 import UIKit
+import AVFoundation
 import SwiftyJSON
 
-class NewsfeedSearchController: UITableViewController {
+class NewsfeedSearchController: InnerTableViewController {
 
     var ownerID = ""
     var searchText = ""
@@ -20,13 +21,11 @@ class NewsfeedSearchController: UITableViewController {
     
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.tableView.separatorStyle = .none
             self.tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "wallRecordCell")
@@ -80,24 +79,12 @@ class NewsfeedSearchController: UITableViewController {
         return 1
     }
 
-    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
-        
-        if let height = estimatedHeightCache[indexPath] {
-            return height
-        } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
-            
-            let height = cell.getRowHeight(record: wall[indexPath.section])
-            estimatedHeightCache[indexPath] = height
-            return height
-        }
-    }
-    
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+            cell.delegate = self
             
             let height = cell.getRowHeight(record: wall[indexPath.section])
             estimatedHeightCache[indexPath] = height
@@ -118,14 +105,24 @@ class NewsfeedSearchController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewHeader.backgroundColor = .separator
+        } else {
+            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewHeader
     }
     
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }
@@ -133,8 +130,9 @@ class NewsfeedSearchController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell", for: indexPath) as! WallRecordCell2
+        cell.delegate = self
         
-        cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
@@ -152,6 +150,9 @@ class NewsfeedSearchController: UITableViewController {
             }
         }
         
+        tableView.beginUpdates()
+        tableView.endUpdates()
+        
         return cell
     }
 
@@ -168,12 +169,12 @@ class NewsfeedSearchController: UITableViewController {
                     
                     if action == "show_record" {
                         
-                        self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                        self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                     }
                     
                     if action == "show_repost_record" {
                         
-                        self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                        self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                     }
                     
                     if action == "show_owner" {
@@ -215,43 +216,14 @@ class NewsfeedSearchController: UITableViewController {
                         
                         if action == "show_video_\(index)" {
                             
-                            self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись")
+                            self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
                             
                         }
                         
                         if action == "show_music_\(index)" {
                             
-                            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                            
-                            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                            alertController.addAction(cancelAction)
-                            
-                            let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                                
-                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo(searchString: "\(record.audioTitle[index]) \(record.audioArtist[index])", searchType: "song")
-                            }
-                            alertController.addAction(action1)
-                            
-                            let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                                
-                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo(searchString: "\(record.audioArtist[index])", searchType: "artist")
-                            }
-                            alertController.addAction(action3)
-                            
-                            let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                                
-                                let link = "\(record.audioArtist[index]). \(record.audioTitle[index])"
-                                UIPasteboard.general.string = link
-                                if let string = UIPasteboard.general.string {
-                                    self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                                }
-                            }
-                            alertController.addAction(action2)
-                            
-                            self.present(alertController, animated: true)
-                            
+                            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                            self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
                         }
                     }
                     
@@ -269,6 +241,8 @@ class NewsfeedSearchController: UITableViewController {
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore1 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 
@@ -285,6 +259,8 @@ class NewsfeedSearchController: UITableViewController {
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+                cell.delegate = self
+                
                 wall[indexPath.section].readMore2 = 0
                 estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
                 
@@ -516,7 +492,7 @@ class NewsfeedSearchController: UITableViewController {
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             let record = wall[indexPath.section]
             
-            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     

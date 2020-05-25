@@ -51,13 +51,13 @@ class CommentCell2: UITableViewCell {
     
     func configureCountCell(count: Int, total: Int) {
         
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in self.subviews {
             if subview.tag == 100 {
                 subview.removeFromSuperview()
             }
         }
-        
-        backgroundColor = .white
         
         countButton.tag = 100
         countButton.setTitle("Показать еще \(count) из \(total) комментариев", for: .normal)
@@ -72,6 +72,8 @@ class CommentCell2: UITableViewCell {
     
     func configureCell(comment: Comments, profiles: [CommentsProfiles], groups: [CommentsGroups], indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         self.comment = comment
         self.users = profiles
         self.groups = groups
@@ -84,10 +86,8 @@ class CommentCell2: UITableViewCell {
         
         if (comment.replyComment == 0) {
             leftX = 0
-            backgroundColor = .white
         } else {
             leftX = 0 //30
-            backgroundColor = .white //UIColor(white: 0.95, alpha: 1)
         }
         
         configureAvatar(comment: comment, profiles: profiles, groups: groups, indexPath: indexPath, cell: cell, tableView: tableView)
@@ -104,7 +104,11 @@ class CommentCell2: UITableViewCell {
         
         let separator = UILabel()
         separator.tag = 100
-        separator.backgroundColor = UIColor.lightGray
+        if #available(iOS 13.0, *) {
+            separator.backgroundColor = .separator
+        } else {
+            separator.backgroundColor = UIColor.lightGray
+        }
         separator.frame = CGRect(x: avatarHeight + 2 * leftInsets, y: topY + topInsets, width: UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets, height: separatorHeight)
         self.addSubview(separator)
         
@@ -117,8 +121,40 @@ class CommentCell2: UITableViewCell {
         images.removeAll(keepingCapacity: false)
         
         if comment.attach.count > 0 {
+            
+            topY += vertInsets
+            
+            var photos: [Photos] = []
+            let maxWidth = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
             for index in 0...comment.attach.count-1 {
                 if comment.attach[index].type == "photo" {
+                    let photo = Photos(json: JSON.null)
+                    photo.uid = "\(comment.attach[index].ownerID)"
+                    photo.pid = "\(comment.attach[index].id)"
+                    photo.xxbigPhotoURL = comment.attach[index].photoURL
+                    photo.xbigPhotoURL = comment.attach[index].photoURL
+                    photo.bigPhotoURL = comment.attach[index].photoURL
+                    photo.photoURL = comment.attach[index].photoURL
+                    photo.width = comment.attach[index].photoWidth
+                    photo.height = comment.attach[index].photoHeight
+                    photo.photoAccessKey = comment.attach[index].accessKey
+                    photos.append(photo)
+                }
+            }
+            
+            let aView = AttachmentsView()
+            aView.backgroundColor = .clear
+            aView.tag = 100
+            aView.delegate = self.delegate
+            aView.photos = photos
+            let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: false)
+            aView.frame = CGRect(x: leftX + 3 * leftInsets + avatarHeight, y: topY, width: maxWidth, height: aHeight)
+            self.addSubview(aView)
+            
+            topY += aHeight + vertInsets
+            
+            for index in 0...comment.attach.count-1 {
+                /*if comment.attach[index].type == "photo" {
                 
                     let photoImage = UIImageView()
                     photoImage.tag = 100
@@ -171,7 +207,7 @@ class CommentCell2: UITableViewCell {
                     photoImage.addGestureRecognizer(tap)
                     
                     images.append(photoImage)
-                }
+                }*/
              
                 if comment.attach[index].type == "video" {
                     let photoImage = UIImageView()
@@ -185,7 +221,7 @@ class CommentCell2: UITableViewCell {
                     OperationQueue.main.addOperation {
                         photoImage.layer.borderColor = UIColor.black.cgColor
                         photoImage.layer.borderWidth = 1.0
-                        photoImage.layer.cornerRadius = 5.0
+                        photoImage.layer.cornerRadius = 4.0
                         photoImage.clipsToBounds = true
                     }
                     
@@ -215,8 +251,14 @@ class CommentCell2: UITableViewCell {
                     durationLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                     durationLabel.textAlignment = .center
                     durationLabel.contentMode = .center
-                    durationLabel.textColor = UIColor.black
-                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    
+                    if #available(iOS 13.0, *) {
+                        durationLabel.textColor = .label
+                        durationLabel.backgroundColor = .secondarySystemBackground
+                    } else {
+                        durationLabel.textColor = UIColor.black
+                        durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    }
                     durationLabel.layer.cornerRadius = 10
                     durationLabel.clipsToBounds = true
                     if let length = durationLabel.text?.length, length > 5 {
@@ -232,7 +274,7 @@ class CommentCell2: UITableViewCell {
                     
                     let tap = UITapGestureRecognizer()
                     tap.add {
-                        self.delegate.openVideoController(ownerID: "\(comment.attach[index].ownerID)", vid: "\(comment.attach[index].id)", accessKey: comment.attach[index].accessKey, title: "Видеозапись")
+                        self.delegate.openVideoController(ownerID: "\(comment.attach[index].ownerID)", vid: "\(comment.attach[index].id)", accessKey: comment.attach[index].accessKey, title: "Видеозапись", scrollToComment: false)
                     }
                     photoImage.isUserInteractionEnabled = true
                     photoImage.addGestureRecognizer(tap)
@@ -263,6 +305,11 @@ class CommentCell2: UITableViewCell {
                 if comment.attach[index].type == "doc" && comment.attach[index].ext == "gif" {
                     
                     let photoImage = UIImageView()
+                    if #available(iOS 13.0, *) {
+                        photoImage.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.5)
+                    } else {
+                        photoImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    }
                     photoImage.tag = 100
                     
                     let getCacheImage = GetCacheImage(url: comment.attach[index].photoURL, lifeTime: .avatarImage)
@@ -292,7 +339,11 @@ class CommentCell2: UITableViewCell {
                     
                     let gifImage = UIImageView()
                     gifImage.image = UIImage(named: "gif")
-                    gifImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    if #available(iOS 13.0, *) {
+                        gifImage.backgroundColor = UIColor.tertiaryLabel
+                    } else {
+                        gifImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    }
                     gifImage.layer.cornerRadius = 10
                     gifImage.clipsToBounds = true
                     gifImage.frame = CGRect(x: width / 2 - 30, y: (height) / 2 - 30, width: 60, height: 60)
@@ -304,8 +355,13 @@ class CommentCell2: UITableViewCell {
                     gifSizeLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                     gifSizeLabel.textAlignment = .center
                     gifSizeLabel.contentMode = .center
-                    gifSizeLabel.textColor = UIColor.black
-                    gifSizeLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    if #available(iOS 13.0, *) {
+                        gifSizeLabel.textColor = .label
+                        gifSizeLabel.backgroundColor = .tertiaryLabel
+                    } else {
+                        gifSizeLabel.textColor = UIColor.black
+                        gifSizeLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    }
                     gifSizeLabel.layer.cornerRadius = 10
                     gifSizeLabel.clipsToBounds = true
                     gifSizeLabel.frame = CGRect(x: width - 5 - 120, y: height - 5 - 20, width: 120, height: 20)
@@ -411,6 +467,12 @@ class CommentCell2: UITableViewCell {
                     artistLabel.font = UIFont(name: "Verdana-Bold", size: 13)!
                     audioLabel.font = UIFont(name: "Verdana", size: 13)!
                     
+                    if #available(iOS 13.0, *) {
+                        artistLabel.textColor = .label
+                    }
+                    
+                    audioLabel.textColor = audioLabel.tintColor
+                    
                     if comment.attach[index].title != "" {
                         audioImage.frame = CGRect(x: leftX + avatarHeight + 2 * leftInsets, y: topY + topLinkInsets, width: audioImageSize, height: audioImageSize)
                         
@@ -419,7 +481,7 @@ class CommentCell2: UITableViewCell {
                         
                         audioLabel.frame = CGRect (x: leftX + avatarHeight + 3 * leftInsets + audioImageSize, y: topY + 20, width: bounds.size.width - 4 * leftInsets - audioImageSize - avatarHeight, height: 16)
                         audioLabel.text = comment.attach[index].title
-                        audioLabel.textColor = audioLabel.tintColor
+                        
                     }
                     
                     self.addSubview(audioImage)
@@ -460,19 +522,22 @@ class CommentCell2: UITableViewCell {
         likesButton.setTitle("\(comment.countLikes)", for: UIControl.State.normal)
         likesButton.setTitle("\(comment.countLikes)", for: UIControl.State.selected)
         
-        if comment.userLikes == 1 {
-            likesButton.setTitleColor(UIColor.purple, for: UIControl.State.normal)
-            likesButton.setTitleColor(UIColor.purple, for: UIControl.State.selected)
-            likesButton.setTitleColor(UIColor.purple, for: UIControl.State.disabled)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.purple), for: UIControl.State.normal)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.purple), for: UIControl.State.selected)
-        } else {
-            likesButton.setTitleColor(UIColor.darkGray, for: UIControl.State.normal)
-            likesButton.setTitleColor(UIColor.darkGray, for: UIControl.State.selected)
-            likesButton.setTitleColor(UIColor.darkGray, for: UIControl.State.disabled)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.darkGray), for: UIControl.State.normal)
-            likesButton.setImage(UIImage(named: "filled-like_comment")?.tint(tintColor:  UIColor.darkGray), for: UIControl.State.selected)
+        var titleColor = UIColor.darkGray
+        var tintColor = UIColor.darkGray
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .secondaryLabel
+            tintColor = .secondaryLabel
         }
+        
+        if comment.userLikes == 1 {
+            titleColor = .systemPurple
+            tintColor = .systemPurple
+        }
+        
+        likesButton.setTitleColor(titleColor, for: .normal)
+        likesButton.tintColor = tintColor
+        likesButton.setImage(UIImage(named: "filled-like_comment"), for: .normal)
     }
 
     func configureLikesButton(comment: Comments, topY: CGFloat) -> CGFloat {
@@ -661,14 +726,40 @@ class CommentCell2: UITableViewCell {
         topY += vertInsets + size.height + vertInsets + likesButtonHeight + topInsets
         
         if comment.attach.count > 0 {
+            
+            topY += vertInsets
+            
+            var photos: [Photos] = []
+            let maxWidth = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
+            for index in 0...comment.attach.count-1 {
+                if comment.attach[index].type == "photo" {
+                    let photo = Photos(json: JSON.null)
+                    photo.uid = "\(comment.attach[index].ownerID)"
+                    photo.pid = "\(comment.attach[index].id)"
+                    photo.xxbigPhotoURL = comment.attach[index].photoURL
+                    photo.xbigPhotoURL = comment.attach[index].photoURL
+                    photo.bigPhotoURL = comment.attach[index].photoURL
+                    photo.photoURL = comment.attach[index].photoURL
+                    photo.width = comment.attach[index].photoWidth
+                    photo.height = comment.attach[index].photoHeight
+                    photo.photoAccessKey = comment.attach[index].accessKey
+                    photos.append(photo)
+                }
+            }
+            
+            let aView = AttachmentsView()
+            aView.photos = photos
+            let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: true)
+            topY += aHeight + vertInsets
+            
             for index in 0...comment.attach.count-1 {
                 if comment.attach[index].type != "" {
-                    if comment.attach[index].type == "photo" {
+                    /*if comment.attach[index].type == "photo" {
                         
                         let width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
                         let height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                         topY = topY + height + vertInsets
-                    }
+                    }*/
                     
                     if comment.attach[index].type == "video" {
                         var height: CGFloat = 0
@@ -743,12 +834,12 @@ class CommentCell2: UITableViewCell {
         
         if comment.attach.count > 0 {
             for index in 0...comment.attach.count-1 {
-                if comment.attach[index].type == "photo" {
+                /*if comment.attach[index].type == "photo" {
                     if touch.y >= images[index].frame.minY && touch.y < images[index].frame.maxY && touch.x >= images[index].frame.minX && touch.x < images[index].frame.maxX {
                         
                         res = "show_photo_\(index)"
                     }
-                }
+                }*/
                 
                 if comment.attach[index].type == "video" {
                     if touch.y >= images[index].frame.minY && touch.y < images[index].frame.maxY && touch.x >= images[index].frame.minX && touch.x < images[index].frame.maxX {
@@ -777,35 +868,8 @@ class CommentCell2: UITableViewCell {
     }
     
     func tapAudioAttach(comment: Comments, index: Int) {
-        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
         
-        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-        alertController.addAction(cancelAction)
-        
-        let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-            
-            ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-            self.delegate.getITunesInfo(searchString: "\(comment.attach[index].title) \(comment.attach[index].artist)", searchType: "song")
-        }
-        alertController.addAction(action1)
-        
-        let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-            
-            ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-            self.delegate.getITunesInfo(searchString: "\(comment.attach[index].artist)", searchType: "artist")
-        }
-        alertController.addAction(action3)
-        
-        let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-            
-            let link = "\(comment.attach[index].artist). \(comment.attach[index].title)"
-            UIPasteboard.general.string = link
-            if let string = UIPasteboard.general.string {
-                self.delegate.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-            }
-        }
-        alertController.addAction(action2)
-        
-        self.delegate.present(alertController, animated: true)
+        ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
+        self.delegate.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title, controller: self.delegate)
     }
 }

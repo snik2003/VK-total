@@ -57,7 +57,7 @@ class ReloadNotificationsController: Operation {
             controller.readButton.layer.borderWidth = 0.6
             controller.readButton.layer.cornerRadius = 12
             controller.readButton.clipsToBounds = true
-            controller.readButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            controller.readButton.backgroundColor = vkSingleton.shared.mainColor
             controller.readButton.isEnabled = true
             controller.readButton.frame = CGRect(x: 20, y: 10, width: controller.tableView.frame.width - 40, height: 25)
             controller.readButton.addTarget(self, action: #selector(controller.readButtonClick(sender:)), for: .touchUpInside)

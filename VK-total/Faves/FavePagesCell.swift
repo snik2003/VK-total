@@ -19,6 +19,8 @@ class FavePagesCell: UITableViewCell {
     
     func configureCell(group: FavePages, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
      
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in subviews {
             if subview.tag == 100 {
                 subview.removeFromSuperview()
@@ -49,6 +51,11 @@ class FavePagesCell: UITableViewCell {
             descriptionLabel.minimumScaleFactor = 0.5
             descriptionLabel.frame = CGRect(x: 60, y: 26, width: bounds.size.width - 100, height: 15)
             self.addSubview(descriptionLabel)
+        }
+        
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+            descriptionLabel.textColor = .secondaryLabel
         }
         
         avatarImage = UIImageView()

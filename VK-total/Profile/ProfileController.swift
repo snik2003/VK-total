@@ -10,7 +10,7 @@ import UIKit
 import RealmSwift
 import SwiftyJSON
 
-class ProfileController: UITableViewController {
+class ProfileController: InnerTableViewController {
 
     var userProfile = [UserProfileInfo]()
     var photos = [Photos]()
@@ -42,12 +42,12 @@ class ProfileController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
-        refreshControl?.tintColor = UIColor.gray
+        if #available(iOS 13.0, *) {
+            self.refreshControl?.tintColor = .secondaryLabel
+        } else {
+            self.refreshControl?.tintColor = .gray
+        }
         tableView.addSubview(refreshControl!)
         
         OperationQueue.main.addOperation {
@@ -433,12 +433,12 @@ class ProfileController: UITableViewController {
                         
                         if action == "show_record" {
                             
-                            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_repost_record" {
                             
-                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                         }
                         
                         if action == "show_owner" {
@@ -958,7 +958,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
         if let index = indexPath?.section, index > 5 {
             let record = wall[index - 6]
             
-            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     

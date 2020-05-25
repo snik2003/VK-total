@@ -56,5 +56,10 @@ class ReloadVideoController: Operation {
         controller.tableView.delaysContentTouches = false
         controller.tableView.separatorStyle = .singleLine
         ViewControllerUtils().hideActivityIndicator()
+        
+        if controller.scrollToComment && controller.comments.count > 0 {
+            controller.tableView.scrollToRow(at: IndexPath(row: 1, section: 1), at: .bottom, animated: true)
+            controller.scrollToComment = false
+        }
     }
 }

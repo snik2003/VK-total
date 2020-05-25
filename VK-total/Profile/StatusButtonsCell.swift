@@ -45,7 +45,7 @@ class StatusButtonsCell: UITableViewCell {
         
         if profile.canWritePrivateMessage == 1 {
             messageButton.isEnabled = true
-            messageButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            messageButton.backgroundColor = vkSingleton.shared.mainColor
         } else {
             messageButton.isEnabled = false
             messageButton.backgroundColor = UIColor.lightGray
@@ -56,7 +56,7 @@ class StatusButtonsCell: UITableViewCell {
                 friendButton.setTitle("Добавить в друзья", for: UIControl.State.normal)
                 friendButton.setTitle("Добавить в друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = true
-                friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                friendButton.backgroundColor = vkSingleton.shared.mainColor
             } else {
                 friendButton.setTitle("Вы не друзья", for: UIControl.State.normal)
                 friendButton.setTitle("Вы не друзья", for: UIControl.State.disabled)
@@ -76,7 +76,7 @@ class StatusButtonsCell: UITableViewCell {
             friendButton.setTitle("Подписан на вас", for: UIControl.State.normal)
             friendButton.setTitle("Подписан на вас", for: UIControl.State.disabled)
             friendButton.isEnabled = true
-            friendButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            friendButton.backgroundColor = vkSingleton.shared.mainColor
         }
         
         if profile.friendStatus == 3 {

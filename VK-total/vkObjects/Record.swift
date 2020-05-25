@@ -88,7 +88,10 @@ class Record {
                 self.mediaType[index] = json["attachments"][index]["type"].stringValue
                 
                 if self.mediaType[index] == "photo" {
-                    self.photoURL[index] = json["attachments"][index]["photo"]["photo_807"].stringValue
+                    self.photoURL[index] = json["attachments"][index]["photo"]["photo_1204"].stringValue
+                    if self.photoURL[index] == "" {
+                        self.photoURL[index] = json["attachments"][index]["photo"]["photo_807"].stringValue
+                    }
                     if self.photoURL[index] == "" {
                         self.photoURL[index] = json["attachments"][index]["photo"]["photo_604"].stringValue
                     }
@@ -162,7 +165,10 @@ class Record {
                 self.mediaType[index] = json["copy_history"][0]["attachments"][index]["type"].stringValue
                 
                 if self.mediaType[index] == "photo" {
-                    self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_807"].stringValue
+                    self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_1204"].stringValue
+                    if self.photoURL[index] == "" {
+                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_807"].stringValue
+                    }
                     if self.photoURL[index] == "" {
                         self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_604"].stringValue
                     }

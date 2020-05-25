@@ -1271,9 +1271,25 @@ extension UIViewController: VkOperationProtocol {
             if error.errorCode == 0 {
                 controller.topics[0].isClosed = 0
                 OperationQueue.main.addOperation {
-                    controller.commentView = DCCommentView.init(scrollView: controller.tableView, frame: controller.view.bounds)
+                    controller.commentView = DCCommentView.init(scrollView: controller.tableView, frame: controller.view.bounds, color: vkSingleton.shared.backColor)
                     controller.commentView.delegate = controller
-                    controller.commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                    controller.commentView.textView.backgroundColor = .clear
+                    controller.commentView.textView.textColor = .black
+                    controller.commentView.textView.tintColor = vkSingleton.shared.mainColor
+                    controller.commentView.tintColor = vkSingleton.shared.mainColor
+                    
+                    if #available(iOS 13.0, *) {
+                        if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
+                            controller.commentView.textView.textColor = .label
+                            controller.commentView.textView.tintColor = .label
+                            controller.commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+                        } else if AppConfig.shared.darkMode {
+                            controller.commentView.textView.textColor = .label
+                            controller.commentView.textView.tintColor = .label
+                            controller.commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+                        }
+                    }
+                    
                     controller.commentView.accessoryImage = UIImage(named: "attachment")
                     controller.commentView.accessoryButton.addTarget(controller, action: #selector(controller.tapAccessoryButton(sender:)), for: .touchUpInside)
                     
@@ -1787,7 +1803,7 @@ extension UIViewController: VkOperationProtocol {
                 let postID = json["response"]["post_id"].intValue
                 if success == 1 {
                     OperationQueue.main.addOperation {
-                        self.openWallRecord(ownerID: Int(vkSingleton.shared.userID)!, postID: postID, accessKey: "", type: "post")
+                        self.openWallRecord(ownerID: Int(vkSingleton.shared.userID)!, postID: postID, accessKey: "", type: "post", scrollToComment: false)
                     }
                 }
                 self.setOfflineStatus(dependence: request)
@@ -1922,7 +1938,7 @@ extension UIViewController: VkOperationProtocol {
                     } else if let delegateController = delegate as? GroupProfileController2 {
                         delegateController.refresh()
                     }
-                    delegate.openWallRecord(ownerID: Int(ownerID)!, postID: postID, accessKey: "", type: "post")
+                    delegate.openWallRecord(ownerID: Int(ownerID)!, postID: postID, accessKey: "", type: "post", scrollToComment: false)
                 }
             } else {
                 delegate.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")

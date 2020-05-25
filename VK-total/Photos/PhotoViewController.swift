@@ -11,7 +11,7 @@ import SwiftyJSON
 import SCLAlertView
 import CMPhotoCropEditor
 
-class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
+class PhotoViewController: InnerTableViewController, PECropViewControllerDelegate {
 
     var delegate: UIViewController!
     
@@ -42,10 +42,6 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         OperationQueue.main.addOperation {
             ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
@@ -96,12 +92,15 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                 
                 let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
                 let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
+                let upSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
                 
                 leftSwipe.direction = .left
                 rightSwipe.direction = .right
+                upSwipe.direction = .up
                 
                 self.view.addGestureRecognizer(leftSwipe)
                 self.view.addGestureRecognizer(rightSwipe)
+                self.view.addGestureRecognizer(upSwipe)
             }
         }
         OperationQueue.main.addOperation(getServerDataOperation)
@@ -158,6 +157,7 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                 getCacheImage.completionBlock = {
                     OperationQueue.main.addOperation {
                         let controller = PECropViewController()
+                        controller.view.backgroundColor = vkSingleton.shared.backColor
                         controller.delegate = self
                         controller.image = getCacheImage.outputImage
                         controller.keepingCropAspectRatio = true
@@ -175,6 +175,14 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
             if photo.userID == vkSingleton.shared.userID {
                 let action3 = UIAlertAction(title: "Удалить фотографию", style: .destructive) { action in
                     
+                    var titleColor = UIColor.black
+                    var backColor = UIColor.white
+                    
+                    if #available(iOS 13.0, *) {
+                        titleColor = .label
+                        backColor = vkSingleton.shared.backColor
+                    }
+                    
                     let appearance = SCLAlertView.SCLAppearance(
                         kTitleTop: 32.0,
                         kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -182,7 +190,10 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                         kTextFont: UIFont(name: "Verdana", size: 13)!,
                         kButtonFont: UIFont(name: "Verdana", size: 14)!,
                         showCloseButton: false,
-                        showCircularIcon: true
+                        showCircularIcon: true,
+                        circleBackgroundColor: backColor,
+                        contentViewColor: backColor,
+                        titleColor: titleColor
                     )
                     let alertView = SCLAlertView(appearance: appearance)
                     
@@ -322,19 +333,31 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
                 likesButton.setTitle("\(curPhoto.likesCount)", for: UIControl.State.normal)
                 likesButton.setTitle("\(curPhoto.likesCount)", for: UIControl.State.selected)
                 
-                if curPhoto.userLikesThisPhoto == 1 {
-                    likesButton.setTitleColor(UIColor.init(red: 228/255, green: 71/255, blue: 71/255, alpha: 1), for: .normal)
-                    likesButton.setImage(UIImage(named: "filled-like"), for: .normal)
-                } else {
-                    likesButton.setTitleColor(UIColor.white, for: .normal)
-                    likesButton.setImage(UIImage(named: "like"), for: .normal)
+                var titleColor = UIColor.darkGray
+                var tintColor = UIColor.darkGray
+                
+                if #available(iOS 13.0, *) {
+                    titleColor = .secondaryLabel
+                    tintColor = .secondaryLabel
                 }
+                
+                if curPhoto.userLikesThisPhoto == 1 {
+                    titleColor = UIColor.systemPurple.withAlphaComponent(0.8)
+                    tintColor = UIColor.systemPurple.withAlphaComponent(0.8)
+                }
+                
+                likesButton.setTitleColor(titleColor, for: .normal)
+                likesButton.tintColor = tintColor
                 
                 commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControl.State.normal)
                 commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControl.State.selected)
 
+                commentsButton.setTitleColor(commentsButton.tintColor.withAlphaComponent(0.8), for: .normal)
+                commentsButton.imageView?.tintColor = commentsButton.tintColor.withAlphaComponent(0.8)
+                
                 commentsButton.isEnabled = true
-                likesListButton.isEnabled = curPhoto.likesCount > 0
+                likesListButton.isEnabled = true
+                likesListButton.isUserInteractionEnabled = curPhoto.likesCount > 0
                 likesButton.isHidden = false
                 commentsButton.isHidden = false
                 likesListButton.isHidden = false
@@ -363,6 +386,10 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
     
 
     @objc func handleSwipes(sender: UISwipeGestureRecognizer) {
+        
+        if (sender.direction == .up) {
+            self.navigationController?.popViewController(animated: true)
+        }
         
         var start = false
         if (sender.direction == .right) {
@@ -542,7 +569,7 @@ class PhotoViewController: UITableViewController, PECropViewControllerDelegate {
     @IBAction func commentsButtonClick() {
         
         if photo.count > 0 {
-            self.openWallRecord(ownerID: Int(photo[0].userID)!, postID: Int(photo[0].photoID)!, accessKey: photos[numPhoto].photoAccessKey, type: "photo")
+            self.openWallRecord(ownerID: Int(photo[0].userID)!, postID: Int(photo[0].photoID)!, accessKey: photos[numPhoto].photoAccessKey, type: "photo", scrollToComment: false)
         }
     }
 }

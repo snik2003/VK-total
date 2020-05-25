@@ -33,7 +33,7 @@ class GroupDialogsCell: UITableViewCell {
     
     func configureCell(mess: Message, users: [DialogsUsers], indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
-        self.backgroundColor = UIColor.white
+        self.backgroundColor = .clear
         
         for subview in self.subviews {
             if subview.tag == 100 {
@@ -84,6 +84,11 @@ class GroupDialogsCell: UITableViewCell {
         
         nameLabel.tag = 100
         nameLabel.text = name
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+        } else {
+            nameLabel.textColor = .black
+        }
         if online == 1 {
             if onlineMobile == 1 {
                 let fullString = "\(name) "
@@ -93,7 +98,11 @@ class GroupDialogsCell: UITableViewCell {
                 let rangeOfColoredString = (fullString as NSString).range(of: "●")
                 let attributedString = NSMutableAttributedString(string: fullString)
                 
-                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: nameLabel.tintColor], range: rangeOfColoredString)
+                if #available(iOS 13.0, *) {
+                    attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.link], range: rangeOfColoredString)
+                } else {
+                    attributedString.setAttributes([NSAttributedString.Key.foregroundColor: nameLabel.tintColor], range: rangeOfColoredString)
+                }
                 
                 nameLabel.attributedText = attributedString
             }
@@ -108,7 +117,11 @@ class GroupDialogsCell: UITableViewCell {
         dateLabel.tag = 100
         dateLabel.text = mess.date.toStringLastTime()
         dateLabel.font = dateFont
-        dateLabel.textColor = UIColor.darkGray
+        if #available(iOS 13.0, *) {
+            dateLabel.textColor = .secondaryLabel
+        } else {
+            dateLabel.textColor = .darkGray
+        }
         
         dateLabel.frame = CGRect(x: 2 * leftInsets + userAvatarSize, y: topInsets + 16, width: UIScreen.main.bounds.width - userAvatarSize - 3 * leftInsets, height: 17)
         self.addSubview(dateLabel)
@@ -154,11 +167,11 @@ class GroupDialogsCell: UITableViewCell {
         messView.layer.borderWidth = 0
         if mess.out == 0 {
             if mess.readState == 0 {
-                self.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+                self.backgroundColor = vkSingleton.shared.unreadColor
             }
         } else {
             if mess.readState == 0 {
-                messView.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+                messView.backgroundColor = vkSingleton.shared.unreadColor
                 messView.configureMessageView(out: 0, radius: 6, border: 0.2)
             }
         }
@@ -171,7 +184,11 @@ class GroupDialogsCell: UITableViewCell {
             messLabel.text = mess.body.replacingOccurrences(of: "\n", with: " ").prepareTextForPublic()
             
             messLabel.numberOfLines = 2
-            messLabel.textColor = UIColor.darkGray
+            if #available(iOS 13.0, *) {
+                messLabel.textColor = .secondaryLabel
+            } else {
+                messLabel.textColor = .darkGray
+            }
         } else if mess.typeAttach.count > 0 {
             if mess.typeAttach == "photo" {
                 messLabel.text = "[Фотография]"

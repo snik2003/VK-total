@@ -8,7 +8,7 @@
 
 import UIKit
 
-class TopicsController: UIViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
+class TopicsController: InnerViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
     var groupID: String = ""
     var group: [GroupProfile] = []
@@ -41,10 +41,6 @@ class TopicsController: UIViewController, UITableViewDelegate, UITableViewDataSo
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.createSearchBar()
             self.createTableView()
@@ -118,8 +114,8 @@ class TopicsController: UIViewController, UITableViewDelegate, UITableViewDataSo
         
         if #available(iOS 13.0, *) {
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-            searchField.textColor = .black
+            searchField.backgroundColor = .separator
+            searchField.textColor = .label
         } else {
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
                 searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
@@ -132,6 +128,7 @@ class TopicsController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     func createTableView() {
         tableView = UITableView()
+        tableView.backgroundColor = vkSingleton.shared.backColor
         tableView.frame = CGRect(x: 0, y: searchBar.frame.maxY, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - tabHeight - searchBar.frame.maxY)
         
         tableView.delegate = self
@@ -248,7 +245,12 @@ class TopicsController: UIViewController, UITableViewDelegate, UITableViewDataSo
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }

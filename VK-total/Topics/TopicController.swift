@@ -11,8 +11,9 @@ import SCLAlertView
 import SwiftyJSON
 import DCCommentView
 import Popover
+import AVFoundation
 
-class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate {
+class TopicController: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate {
 
     var groupID = ""
     var topicID = ""
@@ -50,7 +51,8 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     fileprivate var popover: Popover!
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.up),
-        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))
+        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+        .color(vkSingleton.shared.backColor)
     ]
 
     let product1 = [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108, 109, 110,
@@ -68,13 +70,11 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
+    var player = AVQueuePlayer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         OperationQueue.main.addOperation {
             self.createTableView()
         }
@@ -97,11 +97,28 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     func createTableView() {
-        tableView = UITableView()
         
-        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds)
+        tableView = UITableView()
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        
+        commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
-        commentView.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        commentView.textView.backgroundColor = .clear
+        commentView.textView.textColor = .black
+        commentView.textView.tintColor = vkSingleton.shared.mainColor
+        commentView.tintColor = vkSingleton.shared.mainColor
+        
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            } else if AppConfig.shared.darkMode {
+                commentView.textView.textColor = .label
+                commentView.textView.tintColor = .label
+                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+            }
+        }
         
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
@@ -115,7 +132,6 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
         }
         
         commentView.accessoryImage = UIImage(named: "attachment")
-        commentView.accessoryButton.tintColor = vkSingleton.shared.mainColor
         commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
         
         tableView.delegate = self
@@ -137,6 +153,8 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     func configureStickerView(sView: UIView, product: [Int], numProd: Int, width: CGFloat) {
+        
+        sView.backgroundColor = vkSingleton.shared.backColor
         
         for subview in sView.subviews {
             if subview is UIButton {
@@ -204,9 +222,9 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     menuButton.layer.borderWidth = 1
                     
                     if index == numProd {
-                        menuButton.backgroundColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 0.5)
+                        menuButton.backgroundColor = vkSingleton.shared.mainColor
                         menuButton.layer.cornerRadius = 10
-                        menuButton.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+                        menuButton.layer.borderColor = vkSingleton.shared.mainColor.cgColor
                         menuButton.layer.borderWidth = 1
                     }
                     
@@ -249,10 +267,10 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
         sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 20
+        let width = self.view.bounds.width - 40
         let height = width + 70
         let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        
+        stickerView.backgroundColor = vkSingleton.shared.backColor
         configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
         
         self.popover = Popover(options: self.popoverOptions)
@@ -373,6 +391,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                 return 40
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "commentCell") as! CommentCell2
+                cell.delegate = self
                 
                 let index = comments.count - indexPath.row
                 let height = cell.getRowHeight(comment: comments[index])
@@ -385,12 +404,17 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 10
+        return 0
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        
+        if #available(iOS 13.0, *) {
+            viewFooter.backgroundColor = .separator
+        } else {
+            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+        }
         
         return viewFooter
     }
@@ -417,6 +441,7 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
         case 2:
             if indexPath.row == 0 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "commentCell", for: indexPath) as! CommentCell2
+                cell.delegate = self
                 
                 if comments.count < total {
                     var count = self.count
@@ -492,12 +517,12 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                     
                     for index in 0...9 {
                         if action == "show_photo_\(index)" {
-                            self.openWallRecord(ownerID: comment.attach[index].ownerID, postID: comment.attach[index].id, accessKey: comment.attach[index].accessKey, type: "photo")
+                            self.openWallRecord(ownerID: comment.attach[index].ownerID, postID: comment.attach[index].id, accessKey: comment.attach[index].accessKey, type: "photo", scrollToComment: false)
                         }
                         
                         if action == "show_video_\(index)" {
                             
-                            self.openVideoController(ownerID: "\(comment.attach[index].ownerID)", vid: "\(comment.attach[index].id)", accessKey: comment.attach[index].accessKey, title: "Видеозапись")
+                            self.openVideoController(ownerID: "\(comment.attach[index].ownerID)", vid: "\(comment.attach[index].id)", accessKey: comment.attach[index].accessKey, title: "Видеозапись", scrollToComment: false)
                         }
                         
                         if action == "save_gif_\(index)" {
@@ -528,36 +553,8 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                         
                         if action == "show_music_\(index)" {
                             
-                            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                            
-                            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                            alertController.addAction(cancelAction)
-                            
-                            let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                                
-                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo(searchString: "\(comment.attach[index].title) \(comment.attach[index].artist)", searchType: "song")
-                            }
-                            alertController.addAction(action1)
-                            
-                            let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                                
-                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo(searchString: "\(comment.attach[index].artist)", searchType: "artist")
-                            }
-                            alertController.addAction(action3)
-                            
-                            let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                                
-                                let link = "\(comment.attach[index].artist). \(comment.attach[index].title)"
-                                UIPasteboard.general.string = link
-                                if let string = UIPasteboard.general.string {
-                                    self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                                }
-                            }
-                            alertController.addAction(action2)
-                            
-                            self.present(alertController, animated: true)
+                            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                            self.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title, controller: self)
                         }
                     }
                     
@@ -577,6 +574,8 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
             
             if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
                 if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                    cell.delegate = self
+                    
                     let comment = comments[comments.count - indexPath.row]
                     
                     var title = ""
@@ -704,6 +703,14 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                         
                         let action5 = UIAlertAction(title: "Удалить", style: .destructive) { action in
                             
+                            var titleColor = UIColor.black
+                            var backColor = UIColor.white
+                            
+                            if #available(iOS 13.0, *) {
+                                titleColor = .label
+                                backColor = vkSingleton.shared.backColor
+                            }
+                            
                             let appearance = SCLAlertView.SCLAppearance(
                                 kTitleTop: 32.0,
                                 kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -711,7 +718,10 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
                                 kTextFont: UIFont(name: "Verdana", size: 13)!,
                                 kButtonFont: UIFont(name: "Verdana", size: 14)!,
                                 showCloseButton: false,
-                                showCircularIcon: true
+                                showCircularIcon: true,
+                                circleBackgroundColor: backColor,
+                                contentViewColor: backColor,
+                                titleColor: titleColor
                             )
                             let alertView = SCLAlertView(appearance: appearance)
                             
@@ -940,35 +950,46 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     
     func changeTitleTopic(oldTitle: String) {
         
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
             kTitleFont: UIFont(name: "Verdana", size: 13)!,
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
-            showCloseButton: false
+            showCloseButton: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = oldTitle
         
         alert.customSubview = textView
         
-        alert.addButton("Готово", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Готово", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
             self.editTopic(newTitle: textView.text!, controller: self)
         }
         
-        alert.addButton("Отмена", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
         }
         
@@ -976,6 +997,14 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
     }
     
     func deleteATopic() {
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 32.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -983,7 +1012,10 @@ class TopicController: UIViewController, UITableViewDelegate, UITableViewDataSou
             kTextFont: UIFont(name: "Verdana", size: 13)!,
             kButtonFont: UIFont(name: "Verdana", size: 14)!,
             showCloseButton: false,
-            showCircularIcon: true
+            showCircularIcon: true,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         let alertView = SCLAlertView(appearance: appearance)
         

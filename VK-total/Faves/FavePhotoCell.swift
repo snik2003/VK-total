@@ -19,6 +19,8 @@ class FavePhotoCell: UITableViewCell {
     
     func configureCell(photo: Photos, indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in subviews {
             if subview.tag == 100 {
                 subview.removeFromSuperview()

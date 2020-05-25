@@ -141,7 +141,7 @@ extension UILabel {
         return NSLocationInRange(indexOfCharacter, targetRange)
     }
     
-    func prepareTextForPublish2(_ delegate: UIViewController) {
+    func prepareTextForPublish2(_ delegate: UIViewController, color: UIColor? = nil) {
         if var text = self.text {
             self.lineBreakMode = .byWordWrapping
             
@@ -159,7 +159,13 @@ extension UILabel {
             
             let fullString = text
             let attributedString = NSMutableAttributedString(string: fullString)
-            attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.black, NSAttributedString.Key.font: self.font], range: NSRange(location: 0, length: fullString.length))
+            
+            var textColor = UIColor.black
+            if #available(iOS 13.0, *) { textColor = .label }
+            if let color = color { textColor = color }
+                
+            
+            attributedString.setAttributes([NSAttributedString.Key.foregroundColor: textColor, NSAttributedString.Key.font: self.font], range: NSRange(location: 0, length: fullString.length))
             
             for match in allMatches1 {
                 let range = (fullString as NSString).range(of: match.getNameFromLink())
@@ -263,7 +269,7 @@ extension UILabel {
                                     let record = vc.news[indexPath.row]
                                     if let cell = vc.tableView.cellForRow(at: indexPath) as? Record2Cell {
                                         if self == cell.repostTextLabel {
-                                            vc.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post")
+                                            vc.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
                                         }
                                     }
                                 } else {
@@ -305,7 +311,7 @@ extension UILabel {
                                         vc.selectButton.title = "Вложить"
                                     }
                                 } else {
-                                    vc.openVideoController(ownerID: "\(video.ownerID)", vid: "\(video.id)", accessKey: video.accessKey, title: "Видеозапись")
+                                    vc.openVideoController(ownerID: "\(video.ownerID)", vid: "\(video.id)", accessKey: video.accessKey, title: "Видеозапись", scrollToComment: false)
                                 }
                             }
                         }
@@ -317,7 +323,7 @@ extension UILabel {
                             
                             if let indexPath = vc.tableView.indexPathForRow(at: buttonPosition) {
                                 let record = vc.wall[indexPath.section]
-                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                             }
                         }
                         
@@ -328,7 +334,7 @@ extension UILabel {
                             
                             if let indexPath = vc.tableView.indexPathForRow(at: buttonPosition) {
                                 let record = vc.wall[indexPath.section]
-                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                             }
                         }
         
@@ -339,7 +345,7 @@ extension UILabel {
                             
                             if let indexPath = vc.tableView.indexPathForRow(at: buttonPosition) {
                                 let record = vc.wall[indexPath.section]
-                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                             }
                         }
                         
@@ -350,18 +356,7 @@ extension UILabel {
                             
                             if let indexPath = vc.tableView.indexPathForRow(at: buttonPosition) {
                                 let record = vc.news[indexPath.section]
-                                vc.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post")
-                            }
-                        }
-                        
-                    } else if let vc = delegate as? Newsfeed2Controller {
-                        
-                        if tap.state == .ended {
-                            let buttonPosition: CGPoint = tap.location(in: vc.tableView)
-                            
-                            if let indexPath = vc.tableView.indexPathForRow(at: buttonPosition) {
-                                let record = vc.news[indexPath.section]
-                                vc.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post")
+                                vc.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post", scrollToComment: false)
                             }
                         }
                         
@@ -372,7 +367,7 @@ extension UILabel {
                             
                             if let indexPath = vc.tableView.indexPathForRow(at: buttonPosition) {
                                 let record = vc.wall[indexPath.section]
-                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                             }
                         }
                         
@@ -385,11 +380,11 @@ extension UILabel {
                                 switch vc.source {
                                 case "post":
                                     let record = vc.wall[indexPath.section]
-                                    vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post")
+                                    vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                                 case "video":
                                     let video = vc.videos[indexPath.row]
                                     
-                                    vc.openVideoController(ownerID: "\(video.ownerID)", vid: "\(video.id)", accessKey: video.accessKey, title: "Видеозапись")
+                                    vc.openVideoController(ownerID: "\(video.ownerID)", vid: "\(video.id)", accessKey: video.accessKey, title: "Видеозапись", scrollToComment: false)
                                 default:
                                     break
                                 }

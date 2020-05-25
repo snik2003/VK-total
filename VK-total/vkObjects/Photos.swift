@@ -21,7 +21,7 @@ class Photos {
     var bigPhotoURL: String = ""
     var xbigPhotoURL: String = ""
     var xxbigPhotoURL: String = ""
-
+    
     init(json: JSON) {
         self.uid = json["owner_id"].stringValue
         self.pid = json["id"].stringValue

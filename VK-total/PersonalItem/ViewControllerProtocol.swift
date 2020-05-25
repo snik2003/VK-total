@@ -16,6 +16,7 @@ import Alamofire
 import SwiftMessages
 import Popover
 import SafariServices
+import BTNavigationDropdownMenu
 
 protocol NotificationCellProtocol {
     
@@ -29,7 +30,7 @@ protocol NotificationCellProtocol {
     
     func openGroupsListController(uid: String, title: String, type: String)
     
-    func openVideoController(ownerID: String, vid: String, accessKey: String, title: String)
+    func openVideoController(ownerID: String, vid: String, accessKey: String, title: String, scrollToComment: Bool)
     
     func openVideoListController(ownerID: String, title: String, type: String)
     
@@ -45,7 +46,7 @@ protocol NotificationCellProtocol {
     
     func openPhotoAlbumController(ownerID: String, albumID: String, title: String, controller: PhotosListController!)
     
-    func openWallRecord(ownerID: Int, postID: Int, accessKey: String, type: String)
+    func openWallRecord(ownerID: Int, postID: Int, accessKey: String, type: String, scrollToComment: Bool)
     
     func openPageController(pageID: Int, groupID: Int)
     
@@ -122,6 +123,7 @@ extension UIViewController: NotificationCellProtocol {
         }
     }
     
+    
     func openProfileController(id: Int, name: String) {
         if id > 0 {
             let profileController = self.storyboard?.instantiateViewController(withIdentifier: "ProfileController2") as! ProfileController2
@@ -181,7 +183,7 @@ extension UIViewController: NotificationCellProtocol {
         self.navigationController?.pushViewController(groupsController, animated: true)
     }
     
-    func openVideoController(ownerID: String, vid: String, accessKey: String, title: String) {
+    func openVideoController(ownerID: String, vid: String, accessKey: String, title: String, scrollToComment: Bool) {
         let videoController = self.storyboard?.instantiateViewController(withIdentifier: "VideoController") as! VideoController
         
         videoController.ownerID = ownerID
@@ -276,13 +278,14 @@ extension UIViewController: NotificationCellProtocol {
 
     }
     
-    func openWallRecord(ownerID: Int, postID: Int, accessKey: String, type: String) {
+    func openWallRecord(ownerID: Int, postID: Int, accessKey: String, type: String, scrollToComment: Bool) {
         let recordController = self.storyboard?.instantiateViewController(withIdentifier: "Record2Controller") as! Record2Controller
         
         recordController.type = type
         recordController.ownerID = "\(ownerID)"
         recordController.itemID = "\(postID)"
         recordController.accessKey = accessKey
+        recordController.scrollToComment = scrollToComment
         
         recordController.delegate = self
         
@@ -473,7 +476,7 @@ extension UIViewController: NotificationCellProtocol {
                 }
                 if accs.count == 2 {
                     if let ownerID = Int(accs[0]), let postID = Int(accs[1]) {
-                        openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post")
+                        openWallRecord(ownerID: ownerID, postID: postID, accessKey: "", type: "post", scrollToComment: false)
                     }
                 }
                 
@@ -486,7 +489,7 @@ extension UIViewController: NotificationCellProtocol {
                 }
                 if accs.count == 2 {
                     if let ownerID = Int(accs[0]), let photoID = Int(accs[1]) {
-                        openWallRecord(ownerID: ownerID, postID: photoID, accessKey: "", type: "photo")
+                        openWallRecord(ownerID: ownerID, postID: photoID, accessKey: "", type: "photo", scrollToComment: false)
                     }
                 }
                 
@@ -499,7 +502,7 @@ extension UIViewController: NotificationCellProtocol {
                 }
                 if accs.count == 2 {
                     if let ownerID = Int(accs[0]), let videoID = Int(accs[1]) {
-                        openVideoController(ownerID: "\(ownerID)", vid: "\(videoID)", accessKey: "", title: "")
+                        openVideoController(ownerID: "\(ownerID)", vid: "\(videoID)", accessKey: "", title: "", scrollToComment: false)
                     }
                 }
                 
@@ -659,22 +662,47 @@ extension UIViewController: NotificationCellProtocol {
                 validURL = "http://\(url1)"
             }
             
-            
-            if let url = URL(string: validURL) {
-                if #available(iOS 11.0, *) {
+            if #available(iOS 11.0, *) {
+                if let url = URL(string: validURL) {
                     let config = SFSafariViewController.Configuration()
                     config.entersReaderIfAvailable = false
 
                     let browserController = SFSafariViewController(url: url, configuration: config)
-                    browserController.preferredBarTintColor = UIColor(red: 0, green: 84/255, blue: 147/255, alpha: 1)
                     browserController.preferredControlTintColor = .white
-                    if #available(iOS 13.0, *) { browserController.overrideUserInterfaceStyle = .light }
-                    self.present(browserController, animated: true)
-                } else {
-                    if let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as? BrowserController {
-                        browserController.path = "\(validURL)"
-                        self.navigationController?.pushViewController(browserController, animated: true)
+                    browserController.preferredBarTintColor = UIColor(red: 0, green: 84/255, blue: 147/255, alpha: 1)
+                    
+                    let mainColor = vkSingleton.shared.mainColor
+                    let backColor = vkSingleton.shared.backColor
+                    
+                    if #available(iOS 13.0, *) {
+                        if AppConfig.shared.autoMode {
+                            if self.traitCollection.userInterfaceStyle == .dark {
+                                browserController.overrideUserInterfaceStyle = .dark
+                                browserController.preferredBarTintColor = mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                                browserController.view.backgroundColor = backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                            } else {
+                                browserController.overrideUserInterfaceStyle = .light
+                                browserController.preferredBarTintColor = mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                                browserController.view.backgroundColor = backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                            }
+                        } else if AppConfig.shared.darkMode {
+                            browserController.overrideUserInterfaceStyle = .dark
+                            browserController.preferredBarTintColor = mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                            browserController.view.backgroundColor = backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                        } else {
+                            browserController.overrideUserInterfaceStyle = .light
+                            browserController.preferredBarTintColor = mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                            browserController.view.backgroundColor = backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                        }
                     }
+                    
+                    self.present(browserController, animated: true)
+                }
+            } else {
+                if let url = URL(string: validURL) {
+                    let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
+                    browserController.path = url.absoluteString
+                    self.navigationController?.pushViewController(browserController, animated: true)
                 }
             }
         } else {
@@ -779,12 +807,23 @@ extension UIViewController: NotificationCellProtocol {
     func showErrorMessage(title: String, msg: String) {
         
         OperationQueue.main.addOperation {
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            if #available(iOS 13.0, *) {
+                titleColor = .label
+                backColor = vkSingleton.shared.backColor
+            }
+            
             let appearance = SCLAlertView.SCLAppearance(
                 kWindowWidth: UIScreen.main.bounds.width - 40,
                 kTitleFont: UIFont(name: "Verdana", size: 13)!,
                 kTextFont: UIFont(name: "Verdana", size: 12)!,
                 kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
-                showCloseButton: false
+                showCloseButton: false,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
             )
             
             let alert = SCLAlertView(appearance: appearance)
@@ -798,12 +837,23 @@ extension UIViewController: NotificationCellProtocol {
     func showSuccessMessage(title: String, msg: String) {
         
         OperationQueue.main.addOperation {
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            if #available(iOS 13.0, *) {
+                titleColor = .label
+                backColor = vkSingleton.shared.backColor
+            }
+            
             let appearance = SCLAlertView.SCLAppearance(
                 kWindowWidth: UIScreen.main.bounds.width - 40,
                 kTitleFont: UIFont(name: "Verdana", size: 13)!,
                 kTextFont: UIFont(name: "Verdana", size: 12)!,
                 kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
-                showCloseButton: false
+                showCloseButton: false,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
             )
             
             let alert = SCLAlertView(appearance: appearance)
@@ -817,12 +867,23 @@ extension UIViewController: NotificationCellProtocol {
     func showInfoMessage(title: String, msg: String) {
         
         OperationQueue.main.addOperation {
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            if #available(iOS 13.0, *) {
+                titleColor = .label
+                backColor = vkSingleton.shared.backColor
+            }
+            
             let appearance = SCLAlertView.SCLAppearance(
                 kWindowWidth: UIScreen.main.bounds.width - 40,
                 kTitleFont: UIFont(name: "Verdana", size: 13)!,
                 kTextFont: UIFont(name: "Verdana", size: 12)!,
                 kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
-                showCloseButton: false
+                showCloseButton: false,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
             )
             
             let alert = SCLAlertView(appearance: appearance)
@@ -927,7 +988,7 @@ extension UIViewController: NotificationCellProtocol {
             //print(realm.configuration.fileURL!)
             
             realm.beginWrite()
-            realm.add(account, update: true)
+            realm.add(account, update: .all)
             try realm.commitWrite()
         } catch {
             print(error)
@@ -1091,6 +1152,10 @@ extension UIViewController: NotificationCellProtocol {
             
             AppConfig.shared.passwordOn = userDefault.bool(forKey: "passwordOn")
             AppConfig.shared.touchID = userDefault.bool(forKey: "touchID")
+            
+            AppConfig.shared.autoMode = userDefault.bool(forKey: "autoMode")
+            AppConfig.shared.darkMode = userDefault.bool(forKey: "darkMode")
+            
             if let digits = userDefault.string(forKey: "passDigits") {
                 AppConfig.shared.passwordDigits = digits
             } else {
@@ -1139,9 +1204,20 @@ extension UIViewController: NotificationCellProtocol {
         userDefault.set(AppConfig.shared.touchID, forKey: "touchID")
         userDefault.set(AppConfig.shared.passwordDigits, forKey: "passDigits")
         //userDefault.set("0000", forKey: "passDigits")
+        
+        userDefault.set(AppConfig.shared.autoMode, forKey: "autoMode")
+        userDefault.set(AppConfig.shared.darkMode, forKey: "darkMode")
     }
     
     func commentReplyRecordController(replyName: String, replyText: String, indexPath: IndexPath, controller: Record2Controller) {
+        
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
         
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
@@ -1150,30 +1226,33 @@ extension UIViewController: NotificationCellProtocol {
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
-            showCircularIcon: false
+            showCircularIcon: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = "\(replyText)"
         //textView.becomeFirstResponder()
         
         alert.customSubview = textView
         
-        alert.addButton("Готово", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Готово", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
             controller.createRecordComment(text: textView.text, attachments: controller.attachments, replyID: controller.comments[controller.comments.count - indexPath.row].id, guid: "\(Date().timeIntervalSince1970)", stickerID: 0, controller: controller)
         }
         
-        alert.addButton("Отмена", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
         }
         
@@ -1182,6 +1261,14 @@ extension UIViewController: NotificationCellProtocol {
     
     func commentReplyVideoController(replyName: String, replyText: String, indexPath: IndexPath, controller: VideoController) {
         
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1189,30 +1276,33 @@ extension UIViewController: NotificationCellProtocol {
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
-            showCircularIcon: false
+            showCircularIcon: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = "\(replyText)"
         //textView.becomeFirstResponder()
         
         alert.customSubview = textView
         
-        alert.addButton("Готово", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Готово", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
             controller.createVideoComment(text: textView.text, attachments: controller.attachments, stickerID: 0, replyID: controller.comments[controller.comments.count - indexPath.row].id, guid: "\(Date().timeIntervalSince1970)", controller: controller)
         }
         
-        alert.addButton("Отмена", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
         }
         
@@ -1220,6 +1310,14 @@ extension UIViewController: NotificationCellProtocol {
     }
     
     func repost(description: String, ownerID: String, itemID: String, type: String) {
+        
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
         
         let appearance = SCLAlertView.SCLAppearance(
             //kCircleHeight: 60,
@@ -1230,19 +1328,22 @@ extension UIViewController: NotificationCellProtocol {
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
-            showCircularIcon: true
+            showCircularIcon: true,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 150))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = ""
         
         alert.customSubview = textView
@@ -1266,6 +1367,14 @@ extension UIViewController: NotificationCellProtocol {
     
     func editRecord(description: String, record: Record, controller: Record2Controller) {
         
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 32.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1273,19 +1382,22 @@ extension UIViewController: NotificationCellProtocol {
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
-            showCircularIcon: true
+            showCircularIcon: true,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 150))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = record.text
         
         alert.customSubview = textView
@@ -1329,6 +1441,192 @@ extension UIViewController: NotificationCellProtocol {
         
     }
     
+    func getITunesInfo2(artist: String, title: String, controller: UIViewController) {
+        
+        let player = AVQueuePlayer()
+        
+        OperationQueue.main.addOperation {
+            NotificationCenter.default.addObserver(controller, selector: #selector(controller.playerDidFinishPlaying(note:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player.currentItem)
+        }
+            
+        let alertController = UIAlertController(title: "\(artist)\n«\(title)»", message: nil, preferredStyle: .actionSheet)
+        
+        let completionBlock = {
+            OperationQueue.main.addOperation {
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                alertController.addAction(cancelAction)
+                
+                let action = UIAlertAction(title: "Скопировать название", style: .default) { action in
+                    
+                    let link = "\(artist)\n«\(title)»"
+                    UIPasteboard.general.string = link
+                    if let string = UIPasteboard.general.string {
+                        controller.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
+                    }
+                }
+                alertController.addAction(action)
+                
+                ViewControllerUtils().hideActivityIndicator()
+                controller.present(alertController, animated: true)
+            }
+        }
+        
+        var lang = "us"
+        lang = NSLinguisticTagger.dominantLanguage(for: artist)!
+        if lang != "ru" { lang = "us" }
+        
+        
+        let url = "https://itunes.apple.com/search/"
+        let parameters = [
+            "term": artist,
+            "media": "music",
+            "country": lang,
+            "entity": "musicArtist"
+        ]
+        
+        let request = GetITunesDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else {
+                completionBlock()
+                return
+            }
+            
+            guard let json = try? JSON(data: data) else {
+                completionBlock()
+                print("json error")
+                return
+            }
+            print(json)
+            
+            let count = json["resultCount"].intValue
+            if count > 0 {
+                OperationQueue.main.addOperation {
+                    let action = UIAlertAction(title: "Открыть исполнителя в Apple Music", style: .default) { action in
+                        
+                        let workURL = json["results"][0]["artistLinkUrl"].stringValue
+                        controller.openBrowserControllerNoCheck(url: workURL)
+                    }
+                    alertController.addAction(action)
+                }
+            }
+            
+            var lang = "us"
+            lang = NSLinguisticTagger.dominantLanguage(for: "\(title) \(artist)")!
+            if lang != "ru" { lang = "us" }
+            
+            
+            let url2 = "https://itunes.apple.com/search/"
+            let parameters2 = [
+                "term": "\(title) \(artist)",
+                "media": "music",
+                "country": lang
+            ]
+            
+            let request2 = GetITunesDataOperation(url: url2, parameters: parameters2)
+            request2.completionBlock = {
+                guard let data2 = request2.data else {
+                    completionBlock()
+                    return
+                }
+                
+                guard let json2 = try? JSON(data: data2) else {
+                    completionBlock()
+                    print("json error")
+                    return
+                }
+                print(json2)
+                
+                let count = json2["resultCount"].intValue
+                if count > 0 {
+                    OperationQueue.main.addOperation {
+                        let song = IMusic(json: json2["results"][0])
+                        
+                        let action2 = UIAlertAction(title: "Сохранить песню в «Избранное»", style: .default) { action in
+                            
+                            do {
+                                var config = Realm.Configuration.defaultConfiguration
+                                config.deleteRealmIfMigrationNeeded = false
+                                config.schemaVersion = 1
+                                
+                                let realm = try Realm(configuration: config)
+                                
+                                realm.beginWrite()
+                                realm.add(song, update: .all)
+                                try realm.commitWrite()
+                                controller.showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(song.song)» успешно записана в «Избранное»")
+                            } catch {
+                                controller.showErrorMessage(title: "База Данных Realm", msg: "Ошибка: \(error)")
+                            }
+                        }
+                        alertController.addAction(action2)
+                        
+                        if let songURL = URL(string: song.reserv4.trimmingCharacters(in: .whitespacesAndNewlines)) {
+                            let action = UIAlertAction(title: "Прослушать отрывок из песни", style: .default) { action in
+                                if let vc = controller as? Record2Controller {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? ProfileController2 {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? GroupProfileController2 {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? TopicController {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? Newsfeed2Controller {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? NewsfeedSearchController {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? FavePostsController2 {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? DialogController {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                } else if let vc = controller as? GroupDialogController {
+                                    vc.player.removeAllItems()
+                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.player.play()
+                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                }
+                            }
+                            alertController.addAction(action)
+                        }
+                        
+                        let action1 = UIAlertAction(title: "Открыть песню в Apple Music", style: .default) { action in
+                        
+                            controller.openBrowserControllerNoCheck(url: song.URL)
+                        }
+                        alertController.addAction(action1)
+                    }
+                }
+                
+                completionBlock()
+            }
+            OperationQueue().addOperation(request2)
+        }
+        OperationQueue().addOperation(request)
+    }
+    
     func getITunesInfo(searchString: String, searchType: String) {
         
         var lang = "us"
@@ -1366,8 +1664,9 @@ extension UIViewController: NotificationCellProtocol {
                     
                     OperationQueue.main.addOperation {
                         ViewControllerUtils().hideActivityIndicator()
+                        self.openBrowserControllerNoCheck(url: workURL)
                         
-                        let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
+                        /*let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
                         
                         browserController.path = "\(workURL)"
                         
@@ -1377,7 +1676,7 @@ extension UIViewController: NotificationCellProtocol {
                         browserController.workURL = workURL
                         browserController.previewURL = previewURL
                         
-                        self.navigationController?.pushViewController(browserController, animated: true)
+                        self.navigationController?.pushViewController(browserController, animated: true)*/
                     }
                 } else if searchType == "song" {
                     let workURL = json["results"][0]["trackViewUrl"].stringValue
@@ -1391,8 +1690,9 @@ extension UIViewController: NotificationCellProtocol {
                     
                     OperationQueue.main.addOperation {
                         ViewControllerUtils().hideActivityIndicator()
+                        self.openBrowserControllerNoCheck(url: workURL)
                         
-                        let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
+                        /*let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
                         
                         browserController.path = "\(workURL)"
                         
@@ -1406,7 +1706,7 @@ extension UIViewController: NotificationCellProtocol {
                         browserController.workURL = workURL
                         browserController.avatarURL = avatarURL
                         
-                        self.navigationController?.pushViewController(browserController, animated: true)
+                        self.navigationController?.pushViewController(browserController, animated: true)*/
                     }
                 }
             } else {
@@ -1446,6 +1746,14 @@ extension UIViewController: NotificationCellProtocol {
     
     func commentToReport(userID: String, reason: String) {
         
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1453,30 +1761,33 @@ extension UIViewController: NotificationCellProtocol {
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
-            showCircularIcon: false
+            showCircularIcon: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = ""
         //textView.becomeFirstResponder()
         
         alert.customSubview = textView
         
-        alert.addButton("Отправить жалобу", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отправить жалобу", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
             self.reportUser(userID: userID, type: reason, comment: textView.text!)
         }
         
-        alert.addButton("Отмена, я передумал", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отмена, я передумал", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
         }
         
@@ -1515,6 +1826,14 @@ extension UIViewController: NotificationCellProtocol {
     
     func commentToReportOnObject(ownerID: String, itemID: String, type: String, reason: Int) {
         
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
@@ -1522,30 +1841,33 @@ extension UIViewController: NotificationCellProtocol {
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
-            showCircularIcon: false
+            showCircularIcon: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = ""
         //textView.becomeFirstResponder()
         
         alert.customSubview = textView
         
-        alert.addButton("Отправить жалобу", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отправить жалобу", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
             self.reportObject(ownerID: ownerID, type: type, reason: reason, itemID: itemID, comment: textView.text!)
         }
         
-        alert.addButton("Отмена, я передумал", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отмена, я передумал", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
         }
         
@@ -1607,11 +1929,16 @@ extension UIViewController: NotificationCellProtocol {
         //var text1 = text.components(separatedBy: [".","!","?"])
         //let iconImage = UIImage(named: "AppIcon")
         let view = MessageView.viewFromNib(layout: .tabView)
+        
+        if #available(iOS 13.0, *) {
+            view.backgroundView.backgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        }
+        
         view.configureContent(title: "ВКлючайся!", body: text, iconImage: nil, iconText: nil, buttonImage: nil, buttonTitle: "", buttonTapHandler: nil)
         
         
         view.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 13)!
-        view.titleLabel?.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        view.titleLabel?.textColor = vkSingleton.shared.mainColor
         
         view.button?.isHidden = true
         view.bodyLabel?.font = UIFont(name: "Verdana", size: 13)!
@@ -1626,7 +1953,7 @@ extension UIViewController: NotificationCellProtocol {
         var config = SwiftMessages.defaultConfig
         config.presentationStyle = .top
         config.presentationContext = .viewController(self)
-        config.duration = .seconds(seconds: 4)
+        config.duration = .seconds(seconds: 5)
         config.interactiveHide = true
         
         SwiftMessages.show(config: config, view: view)
@@ -1748,6 +2075,11 @@ extension UIViewController: NotificationCellProtocol {
     
     func showMessageOnScreen(title: String, text: String, image: UIImage?, userID: Int, chatID: Int, groupID: Int, startID: Int) {
         let view = MessageView.viewFromNib(layout: .tabView)
+        
+        if #available(iOS 13.0, *) {
+            view.backgroundView.backgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        }
+        
         view.configureContent(title: title, body: text, iconImage: image, iconText: nil, buttonImage: nil, buttonTitle: "", buttonTapHandler: nil)
         
         if image != nil {
@@ -1813,10 +2145,86 @@ extension UIViewController: NotificationCellProtocol {
         var config = SwiftMessages.defaultConfig
         config.presentationStyle = .top
         config.presentationContext = .viewController(self)
-        config.duration = .seconds(seconds: 4)
+        config.duration = .seconds(seconds: 5)
         config.interactiveHide = true
         
         SwiftMessages.show(config: config, view: view)
+    }
+    
+    func showAudioPlayOnScreen(artist: String, title: String, player: AVQueuePlayer) {
+        
+        SwiftMessages.hideAll()
+        let view = MessageView.viewFromNib(layout: .tabView)
+        
+        if #available(iOS 13.0, *) {
+            view.backgroundView.backgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+        }
+        
+        let iImage = UIImage(named: "music")
+        let bImage = UIImage(named: "stop-play")
+        let tText = "00:30   "
+        view.configureContent(title: artist, body: title, iconImage: iImage, iconText: nil, buttonImage: bImage, buttonTitle: tText, buttonTapHandler: { _ in
+            player.removeAllItems()
+            view.button?.tag = 0
+            SwiftMessages.hideAll()
+        })
+        
+        view.iconImageView?.clipsToBounds = true
+        view.iconImageView?.contentMode = .scaleAspectFill
+        view.iconImageView?.layer.borderColor = UIColor.lightGray.cgColor
+        
+        view.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 10)!
+        view.titleLabel?.adjustsFontSizeToFitWidth = true
+        view.titleLabel?.minimumScaleFactor = 0.6
+        view.titleLabel?.textColor = .black
+        
+        view.bodyLabel?.font = UIFont(name: "Verdana", size: 11)!
+        view.bodyLabel?.textColor = view.bodyLabel?.tintColor
+        
+        view.button?.tintColor = vkSingleton.shared.mainColor
+        view.button?.setTitleColor(vkSingleton.shared.mainColor, for: .normal)
+        view.button?.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 10)!
+        view.button?.semanticContentAttribute = .forceRightToLeft
+        view.button?.tag = 30
+        
+        let tap = UITapGestureRecognizer()
+        tap.numberOfTapsRequired = 1
+        
+        tap.add {
+            player.removeAllItems()
+            view.button?.tag = 0
+            SwiftMessages.hideAll()
+        }
+        view.addGestureRecognizer(tap)
+        view.isUserInteractionEnabled = true
+        
+        view.configureDropShadow()
+        var config = SwiftMessages.defaultConfig
+        config.presentationStyle = .top
+        config.presentationContext = .viewController(self)
+        config.duration = .seconds(seconds: 30)
+        config.interactiveHide = true
+        
+        SwiftMessages.show(config: config, view: view)
+        
+        UIApplication.shared.beginBackgroundTask(expirationHandler: nil)
+        let timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(updateTimer(timer:)), userInfo: view.button, repeats: true)
+        RunLoop.current.add(timer, forMode: .common)
+    }
+    
+    @objc func updateTimer(timer: Timer) {
+        if let button = timer.userInfo as? UIButton {
+            button.tag -= 1
+            
+            if button.tag >= 0 {
+                let timeInSeconds = button.tag % 60;
+                OperationQueue.main.addOperation {
+                    button.setTitle(String(format: "00:%02d   ", arguments: [timeInSeconds]), for: .normal)
+                }
+            } else if timer.isValid {
+                timer.invalidate()
+            }
+        }
     }
     
     func openDialogController(userID: String, chatID: String, startID: Int, attachment: String, messIDs: [Int], image: UIImage?) {
@@ -1877,18 +2285,23 @@ extension UIViewController: NotificationCellProtocol {
         var popover: Popover!
         let popoverOptions: [PopoverOption] = [
             .type(.up),
-            .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6))
+            .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+            .color(vkSingleton.shared.backColor)
         ]
         
         let view = UIView()
         
-        let width = UIScreen.main.bounds.width - 2 * 10
+        let width = UIScreen.main.bounds.width - 40
         var height: CGFloat = 10
         
         let titleLabel = UILabel()
         titleLabel.text = "Отправлять комментарии:"
-        titleLabel.textColor = .black
-        titleLabel.font = UIFont(name: "Verdana", size: 14)!
+        if #available(iOS 13.0, *) {
+            titleLabel.textColor = .label
+        } else {
+            titleLabel.textColor = .black
+        }
+        titleLabel.font = UIFont(name: "Verdana", size: 13)!
         titleLabel.textAlignment = .center
         titleLabel.frame = CGRect(x: 10, y: height, width: width - 20, height: 20)
         view.addSubview(titleLabel)
@@ -1897,14 +2310,18 @@ extension UIViewController: NotificationCellProtocol {
         
         let ownLabel = UILabel()
         ownLabel.text = "от своего имени"
-        ownLabel.textColor = .black
+        if #available(iOS 13.0, *) {
+            ownLabel.textColor = .label
+        } else {
+            ownLabel.textColor = .black
+        }
         
         let fullString = "от своего имени"
         let rangeOfColoredString = (fullString as NSString).range(of: "своего имени")
         let attributedString = NSMutableAttributedString(string: fullString)
         
         if vkSingleton.shared.commentFromGroup == 0 {
-            attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.red], range: rangeOfColoredString)
+            attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemRed], range: rangeOfColoredString)
         } else {
             attributedString.setAttributes([NSAttributedString.Key.foregroundColor: ownLabel.tintColor], range: rangeOfColoredString)
         }
@@ -1940,7 +2357,11 @@ extension UIViewController: NotificationCellProtocol {
         }
         OperationQueue().addOperation(getCacheImage)
         avatar.layer.cornerRadius = 15
-        avatar.layer.borderColor = UIColor.gray.cgColor
+        if #available(iOS 13.0, *) {
+            avatar.layer.borderColor = UIColor.separator.cgColor
+        } else {
+            avatar.layer.borderColor = UIColor.gray.cgColor
+        }
         avatar.layer.borderWidth = 0.6
         avatar.clipsToBounds = true
         avatar.frame = CGRect(x: width - 40, y: height, width: 30, height: 30)
@@ -1992,7 +2413,11 @@ extension UIViewController: NotificationCellProtocol {
                     for group in groups {
                         let ownLabel = UILabel()
                         ownLabel.text = "от \(group.name)"
-                        ownLabel.textColor = .black
+                        if #available(iOS 13.0, *) {
+                            ownLabel.textColor = .label
+                        } else {
+                            ownLabel.textColor = .black
+                        }
                         
                         if let gid = Int(group.gid) {
                             let fullString = "от \(group.name)"
@@ -2000,7 +2425,7 @@ extension UIViewController: NotificationCellProtocol {
                             let attributedString = NSMutableAttributedString(string: fullString)
                             
                             if vkSingleton.shared.commentFromGroup == gid {
-                                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.red], range: rangeOfColoredString)
+                                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: UIColor.systemRed], range: rangeOfColoredString)
                             } else {
                                 attributedString.setAttributes([NSAttributedString.Key.foregroundColor: ownLabel.tintColor], range: rangeOfColoredString)
                             }
@@ -2085,6 +2510,44 @@ extension UIViewController {
         if let vc = self as? Record2Controller, let popover = vc.popover {
             popover.dismiss()
         }
+    }
+}
+
+extension SCLAlertView {
+    open override func viewDidLayoutSubviews() {
+        if #available(iOS 13.0, *) {
+            if !AppConfig.shared.autoMode {
+                if AppConfig.shared.darkMode {
+                    self.overrideUserInterfaceStyle = .dark
+                } else {
+                    self.overrideUserInterfaceStyle = .light
+                }
+            }
+        }
+        
+        super.viewDidLayoutSubviews()
+    }
+}
+
+extension Popover {
+    
+    open override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        self.layoutSubviews()
+    }
+    
+    open override func layoutSubviews() {
+        if #available(iOS 13.0, *) {
+            if !AppConfig.shared.autoMode {
+                if AppConfig.shared.darkMode {
+                    self.overrideUserInterfaceStyle = .dark
+                } else {
+                    self.overrideUserInterfaceStyle = .light
+                }
+            }
+        }
+        
+        super.layoutSubviews()
     }
 }
 

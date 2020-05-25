@@ -9,7 +9,7 @@
 import UIKit
 import RealmSwift
 
-class AddAccountController: UITableViewController {
+class AddAccountController: InnerTableViewController {
 
     var accounts = [AccountVK]()
     let userDefaults = UserDefaults.standard
@@ -19,10 +19,6 @@ class AddAccountController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-
         readAccountsFromRealm()
     }
 
@@ -72,7 +68,11 @@ class AddAccountController: UITableViewController {
             if vkSingleton.shared.userID != "\(account.userID)" {
                 
                 if let cell = tableView.cellForRow(at: indexPath) {
-                    cell.backgroundColor = UIColor.lightGray
+                    if #available(iOS 13.0, *) {
+                        cell.backgroundColor = .opaqueSeparator
+                    } else {
+                        cell.backgroundColor = UIColor.lightGray
+                    }
                     
                     let alertController = VKAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
                     
@@ -191,13 +191,16 @@ class AddAccountController: UITableViewController {
                 avatarImage.layer.cornerRadius = 25
                 avatarImage.contentMode = .scaleAspectFit
                 avatarImage.clipsToBounds = true
+                avatarImage.layer.borderColor = UIColor.gray.cgColor
+                avatarImage.layer.borderWidth = 0.6
                 
                 if vkSingleton.shared.userID == "\(account.userID)" {
-                    avatarImage.layer.borderColor = UIColor.black.cgColor
-                    avatarImage.layer.borderWidth = 1.0
+                    if #available(iOS 13.0, *) {
+                        cell.backgroundColor = .separator
+                    }
                 } else {
-                    avatarImage.layer.borderColor = UIColor.gray.cgColor
-                    avatarImage.layer.borderWidth = 0.6
+                    cell.backgroundColor = vkSingleton.shared.backColor
+                    
                 }
             }
             cell.addSubview(avatarImage)
@@ -219,7 +222,7 @@ class AddAccountController: UITableViewController {
             button.frame = CGRect(x: 50, y: 28, width: UIScreen.main.bounds.width - 100, height: 44)
             button.layer.cornerRadius = 6
             button.clipsToBounds = true
-            button.backgroundColor = UIColor(red: 0, green: 84/255, blue: 147/255, alpha: 1)
+            button.backgroundColor = vkSingleton.shared.mainColor
             button.setTitle("Добавить учетную запись", for: .normal)
             button.setTitleColor(.white, for: .normal)
             button.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12.0)!
@@ -283,6 +286,16 @@ extension VKAlertController {
     open override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
+        if #available(iOS 13.0, *) {
+            if !AppConfig.shared.autoMode {
+                if AppConfig.shared.darkMode {
+                    self.overrideUserInterfaceStyle = .dark
+                } else {
+                    self.overrideUserInterfaceStyle = .light
+                }
+            }
+        }
+        
         let accounts = readAccountsFromRealm()
         
         for i in self.actions {
@@ -329,19 +342,5 @@ extension VKAlertController {
         }
         
         return []
-    }
-}
-
-extension UIAlertController {
-    open override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-
-        for i in self.actions {
-            let attributedText = NSAttributedString(string: i.title ?? "", attributes: [NSAttributedString.Key.font : UIFont(name: "Verdana", size: 16.0)!])
-
-            guard let label = (i.value(forKey: "__representer") as AnyObject).value(forKey: "label") as? UILabel else { return }
-            label.attributedText = attributedText
-        }
-
     }
 }

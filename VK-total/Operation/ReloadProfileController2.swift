@@ -25,7 +25,7 @@ class ReloadProfileController2: Operation {
         if controller.userProfile.count > 0 {
             let user = controller.userProfile[0]
             if user.blacklisted == 1 {
-                controller.showErrorMessage(title: "Предупреждение", msg: "\nВы находитесь в черном списке \(user.firstNameGen)\n")
+                //controller.showErrorMessage(title: "Предупреждение", msg: "\nВы находитесь в черном списке \(user.firstNameGen)\n")
             }
         }
         

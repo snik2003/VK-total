@@ -24,7 +24,7 @@ struct InfoInProfile {
 }
 
 
-class UserInfoTableViewController: UITableViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PECropViewControllerDelegate {
+class UserInfoTableViewController: InnerTableViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate, PECropViewControllerDelegate {
 
     var users = [UserProfileInfo]()
     var partner = [UserProfileInfo]()
@@ -55,10 +55,6 @@ class UserInfoTableViewController: UITableViewController, UIImagePickerControlle
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         self.pickerController.delegate = self
         self.tableView.register(RelativeCell.self, forCellReuseIdentifier: "relativeCell")
@@ -214,12 +210,13 @@ class UserInfoTableViewController: UITableViewController, UIImagePickerControlle
     
     @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
 // Local variable inserted by Swift 4.2 migrator.
-let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
+        let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
 
         
         if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
             
             let controller = PECropViewController()
+            controller.view.backgroundColor = vkSingleton.shared.backColor
             controller.delegate = self
             controller.image = chosenImage
             controller.keepingCropAspectRatio = true
@@ -248,30 +245,42 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
     func changeStatus() {
         
         let user = users[0]
+        
+        var titleColor = UIColor.black
+        var backColor = UIColor.white
+        
+        if #available(iOS 13.0, *) {
+            titleColor = .label
+            backColor = vkSingleton.shared.backColor
+        }
+        
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
             kWindowWidth: UIScreen.main.bounds.width - 40,
             kTitleFont: UIFont(name: "Verdana", size: 13)!,
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
-            showCloseButton: false
+            showCloseButton: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
         )
         
         let alert = SCLAlertView(appearance: appearance)
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
         
-        textView.layer.borderColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1).cgColor
+        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
         textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        textView.textColor = vkSingleton.shared.mainColor
         textView.text = "\(user.status)"
         
         alert.customSubview = textView
         
-        alert.addButton("Готово", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Готово", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
             let url = "/method/status.set"
             let parameters = [
@@ -307,7 +316,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
             OperationQueue().addOperation(request)
         }
         
-        alert.addButton("Отмена", backgroundColor: UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1), textColor: UIColor.white) {
+        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
             
         }
         
@@ -610,42 +619,46 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
         
         return UITableView.automaticDimension
     }
+    
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let view = UIView()
-        view.layer.backgroundColor = UIColor(displayP3Red: 235/255, green: 235/255, blue: 235/255, alpha: 1).cgColor
+        
+        if #available(iOS 13.0, *) {
+            if section == 0 {
+                view.backgroundColor = vkSingleton.shared.backColor
+            } else {
+                view.backgroundColor = UIColor.separator
+            }
+        } else {
+            view.backgroundColor = UIColor(displayP3Red: 235/255, green: 235/255, blue: 235/255, alpha: 1)
+        }
+        
         return view
     }
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let view = UIView()
 
-        view.layer.backgroundColor = UIColor(displayP3Red: 235/255, green: 235/255, blue: 235/255, alpha: 1).cgColor
+        if #available(iOS 13.0, *) {
+            if section < 2 {
+                view.backgroundColor = vkSingleton.shared.backColor
+            } else {
+                view.backgroundColor = .separator
+            }
+        } else {
+            view.backgroundColor = UIColor(displayP3Red: 235/255, green: 235/255, blue: 235/255, alpha: 1)
+        }
         
         return view
     }
     
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
-        if section == 1 {
-            if !isStatusExists {
-                return 0
-            }
-        }
-        if section == 4 {
-            if relatives.count == 0 {
-                return 0
-            }
-        }
-        if section == 5 {
-            if countLifePositionSection == 0 {
-                return 0
-            }
-        }
-        if section == 6 {
-            if countPersonalInfoSection == 0 {
-                return 0
-            }
-        }
+        //if section == 1 && !isStatusExists { return 8 }
+        if section == 2 && countBasicInfoSection == 0 { return 0 }
+        if section == 4 && relatives.count == 0 { return 0 }
+        if section == 5 && countLifePositionSection == 0 { return 0 }
+        if section == 6 && countPersonalInfoSection == 0 { return 0 }
         
         return 8
     }
@@ -669,8 +682,16 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
                 let user = users[0]
 
                 cell.textLabel?.text = "\(user.firstName) \(user.lastName)"
-                cell.backgroundColor = UIColor(displayP3Red: 235/255, green: 235/255, blue: 235/255, alpha: 1)
+                cell.backgroundColor = vkSingleton.shared.backColor
                 cell.detailTextLabel?.font = UIFont(name: "Verdana", size: 11)!
+                
+                if #available(iOS 13.0, *) {
+                    cell.detailTextLabel?.textColor = .secondaryLabel
+                    cell.textLabel?.textColor = .label
+                } else {
+                    cell.detailTextLabel?.textColor = UIColor.gray
+                    cell.textLabel?.textColor = UIColor.gray
+                }
                 
                 if user.deactivated != "" {
                     if (user.deactivated == "banned") {
@@ -678,8 +699,6 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
                     } else {
                         cell.detailTextLabel?.text = "страница удалена"
                     }
-                    cell.detailTextLabel?.textColor = UIColor.gray
-                    cell.textLabel?.textColor = UIColor.gray
                 }
                 else {
                     if user.onlineStatus == 1 {
@@ -687,7 +706,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
                         if user.onlineMobile == 1 {
                             cell.detailTextLabel?.text = "онлайн (моб.)"
                         }
-                        cell.detailTextLabel?.textColor = UIColor.blue
+                        cell.detailTextLabel?.textColor = cell.detailTextLabel?.tintColor
                         cell.detailTextLabel?.isEnabled = true
                     }
                     else {
@@ -697,10 +716,15 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
                         dateFormatter.dateFormat = "dd MMMM yyyy г. в HH:mm"
                         dateFormatter.timeZone = TimeZone.current
                         
-                        cell.detailTextLabel?.textColor = UIColor.darkGray
                         cell.detailTextLabel?.text = "заходил " + dateFormatter.string(from: date as    Date)
                         if user.sex == 1 {
                             cell.detailTextLabel?.text = "заходила " + dateFormatter.string(from: date as Date)
+                        }
+                        
+                        if #available(iOS 13.0, *) {
+                            cell.detailTextLabel?.textColor = .secondaryLabel
+                        } else {
+                            cell.detailTextLabel?.textColor = .darkGray
                         }
                     }
                 }
@@ -736,7 +760,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
             cell = tableView.dequeueReusableCell(withIdentifier: "basicInfoCell", for: indexPath)
             
             if countBasicInfoSection > 0 {
-                cell.imageView?.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                cell.imageView?.tintColor = vkSingleton.shared.mainColor
                 cell.imageView?.image = UIImage(named: basicInfoSection[indexPath.row].image)
                 cell.textLabel?.numberOfLines = 0
                 cell.textLabel?.text = "\(basicInfoSection[indexPath.row].value)"
@@ -762,7 +786,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
             cell = tableView.dequeueReusableCell(withIdentifier: "contactInfoCell", for: indexPath)
             
             if countContactInfoSection > 0 {
-                cell.imageView?.tintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                cell.imageView?.tintColor = vkSingleton.shared.mainColor
                 cell.imageView?.image = UIImage(named: contactInfoSection[indexPath.row].image)
                 cell.textLabel?.numberOfLines = 0
                 cell.textLabel?.text = "\(contactInfoSection[indexPath.row].value)"
@@ -782,6 +806,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
         case 4:
             let cell = tableView.dequeueReusableCell(withIdentifier: "relativeCell", for: indexPath) as! RelativeCell
             
+            cell.backgroundColor = vkSingleton.shared.backColor
             cell.delegate = self
             cell.configureCell(relatives: users[0].relatives, users: relatives)
             
@@ -793,7 +818,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
             
             if countLifePositionSection > 0 {
                 cell.textLabel?.numberOfLines = 1
-                cell.textLabel?.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                cell.textLabel?.textColor = vkSingleton.shared.mainColor
                 cell.textLabel?.text = lifePositionSection[indexPath.row].image
                 cell.detailTextLabel?.numberOfLines = 0
                 cell.detailTextLabel?.text = "\(lifePositionSection[indexPath.row].value)"
@@ -805,7 +830,7 @@ let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
             
             if countPersonalInfoSection > 0 {
                 cell.textLabel?.numberOfLines = 1
-                cell.textLabel?.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+                cell.textLabel?.textColor = vkSingleton.shared.mainColor
                 cell.textLabel?.text = personalInfoSection[indexPath.row].image
                 cell.detailTextLabel?.numberOfLines = 0
                 cell.detailTextLabel?.text = "\(personalInfoSection[indexPath.row].value)"

@@ -18,6 +18,8 @@ class PhotoAlbumsListCell: UITableViewCell {
     
     func configureCell(albums: [PhotoAlbum], indexPath: IndexPath ) {
        
+        self.backgroundColor = vkSingleton.shared.backColor
+        
         for subview in self.subviews {
             if subview is UIImageView || subview is UILabel {
                 subview.removeFromSuperview()

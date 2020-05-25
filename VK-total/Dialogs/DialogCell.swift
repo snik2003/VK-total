@@ -29,11 +29,8 @@ class DialogCell: UITableViewCell {
     let dateFont = UIFont(name: "Verdana", size: 10)!
     let actFont = UIFont(name: "Verdana", size: 11)!
     
-    let inBackColor = UIColor(displayP3Red: 244/255, green: 223/255, blue: 200/255, alpha: 1)
-    let outBackColor = UIColor(displayP3Red: 200/255, green: 200/255, blue: 238/255, alpha: 1)
-    let actionColor = UIColor.lightGray
-    
     func configureCell(dialog: DialogHistory, users: [DialogsUsers], indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) -> CGFloat {
+        
         
         for subview in self.subviews {
             if subview.tag == 200 {
@@ -58,7 +55,7 @@ class DialogCell: UITableViewCell {
             
             messText.tag = 200
             messText.font = messFont
-            messText.backgroundColor = UIColor.clear
+            messText.backgroundColor = .clear
             messText.numberOfLines = 0
             
             avatarImage.tag = 200
@@ -72,7 +69,11 @@ class DialogCell: UITableViewCell {
                 self.avatarImage.layer.cornerRadius = self.avatarSize/2
                 self.avatarImage.clipsToBounds = true
                 self.avatarImage.contentMode = .scaleAspectFill
-                self.avatarImage.layer.borderColor = UIColor.lightGray.cgColor
+                if #available(iOS 13.0, *) {
+                    self.avatarImage.layer.borderColor = UIColor.secondaryLabel.cgColor
+                } else {
+                    self.avatarImage.layer.borderColor = UIColor.lightGray.cgColor
+                }
                 self.avatarImage.layer.borderWidth = 0.5
             }
             
@@ -98,11 +99,15 @@ class DialogCell: UITableViewCell {
             let rect = getTextSize(text: dialog.body.prepareTextForPublic(), font: messFont)
             
             messText.text = dialog.body
-            messText.prepareTextForPublish2(self.delegate)
+            messText.prepareTextForPublish2(self.delegate, color: .black)
             
             messView.tag = 200
             messView.layer.cornerRadius = 15
-            messView.layer.borderColor = UIColor.lightGray.cgColor
+            if #available(iOS 13.0, *) {
+                messView.layer.borderColor = UIColor.secondaryLabel.cgColor
+            } else {
+                messView.layer.borderColor = UIColor.lightGray.cgColor
+            }
             messView.layer.borderWidth = 0.5
             messText.frame = CGRect(x: 10, y: 0, width: rect.width - 20, height: rect.height)
             
@@ -114,10 +119,10 @@ class DialogCell: UITableViewCell {
             
             if dialog.out == 0 {
                 bubbleX = 2 * leftInsets + avatarSize
-                messView.backgroundColor = inBackColor
+                messView.backgroundColor = vkSingleton.shared.inBackColor
             } else {
                 bubbleX = UIScreen.main.bounds.width - 2 * leftInsets - avatarSize - rect.width
-                messView.backgroundColor = outBackColor
+                messView.backgroundColor = vkSingleton.shared.outBackColor
             }
             
             messView.addSubview(messText)
@@ -147,7 +152,7 @@ class DialogCell: UITableViewCell {
                         photo.layer.cornerRadius = 12
                         photo.clipsToBounds = true
                         photo.contentMode = .scaleAspectFill
-                        photo.backgroundColor = UIColor.clear
+                        photo.backgroundColor = .clear
                     }
                     
                     var photoX: CGFloat = 5
@@ -232,7 +237,7 @@ class DialogCell: UITableViewCell {
                         video.layer.cornerRadius = 12
                         video.clipsToBounds = true
                         video.contentMode = .scaleAspectFill
-                        video.backgroundColor = UIColor.clear
+                        video.backgroundColor = .clear
                     }
                     
                     var videoX: CGFloat = 5
@@ -265,8 +270,14 @@ class DialogCell: UITableViewCell {
                     durationLabel.font = UIFont(name: "Verdana-Bold", size: 8.0)!
                     durationLabel.textAlignment = .center
                     durationLabel.contentMode = .center
-                    durationLabel.textColor = UIColor.black
-                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    if #available(iOS 13.0, *) {
+                        durationLabel.textColor = .label
+                        durationLabel.backgroundColor = .secondarySystemBackground
+                    } else {
+                        durationLabel.textColor = .black
+                        durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                    }
+                    
                     durationLabel.layer.cornerRadius = 6
                     durationLabel.clipsToBounds = true
                     if let length = durationLabel.text?.length, length > 5 {
@@ -282,7 +293,7 @@ class DialogCell: UITableViewCell {
                     tap.add {
                         if self.delegate.mode != .edit {
                             video.viewTouched(controller: self.delegate)
-                            self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
+                            self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись", scrollToComment: false)
                         }
                     }
                     tap.numberOfTapsRequired = 1
@@ -313,7 +324,7 @@ class DialogCell: UITableViewCell {
                     
                     photo.frame = CGRect(x: 0, y: bubbleHeight, width: width, height: height)
                     
-                    messView.backgroundColor = UIColor.clear
+                    messView.backgroundColor = .clear
                     messView.layer.borderWidth = 0
                     messView.addSubview(photo)
                     bubbleHeight += height
@@ -444,8 +455,13 @@ class DialogCell: UITableViewCell {
             
             let markCheck = BEMCheckBox()
             markCheck.tag = 200
-            markCheck.onTintColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
-            markCheck.onCheckColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+            markCheck.onTintColor = vkSingleton.shared.mainColor
+            markCheck.onCheckColor = vkSingleton.shared.mainColor
+            if #available(iOS 13.0, *) {
+                markCheck.backgroundColor = vkSingleton.shared.backColor
+            } else {
+                markCheck.backgroundColor = .white
+            }
             markCheck.lineWidth = 2
             markCheck.on = self.delegate.markMessages.contains(dialog.id)
             markCheck.isEnabled = false
@@ -479,11 +495,15 @@ class DialogCell: UITableViewCell {
             markCheck.frame = CGRect(x: markX, y: bubbleY + bubbleHeight/2 - 10, width: 20, height: 20)
             self.addSubview(markCheck)
             
+            if #available(iOS 13.0, *) {
+                dateLabel.textColor = .secondaryLabel
+            } else {
+                dateLabel.isEnabled = false
+            }
             
             dateLabel.tag = 200
             dateLabel.text = dialog.date.toStringLastTime()
             dateLabel.font = dateFont
-            dateLabel.isEnabled = false
             
             if dialog.out == 0 {
                 dateLabel.textAlignment = .left
@@ -532,13 +552,20 @@ class DialogCell: UITableViewCell {
                 }
             }
             
+            if #available(iOS 13.0, *) {
+                actLabel.textColor = .secondaryLabel
+                dateLabel.textColor = .secondaryLabel
+            } else {
+                actLabel.isEnabled = false
+                dateLabel.isEnabled = false
+            }
+            
             actLabel.tag = 200
             actLabel.text = text
             actLabel.font = actFont
             actLabel.numberOfLines = 1
             actLabel.adjustsFontSizeToFitWidth = true
             actLabel.minimumScaleFactor = 0.5
-            actLabel.isEnabled = false
             
             actLabel.textAlignment = .center
             actLabel.frame = CGRect(x: 10, y: 10, width: self.bounds.width - 20, height: 16)
@@ -547,7 +574,6 @@ class DialogCell: UITableViewCell {
             dateLabel.tag = 200
             dateLabel.text = dialog.date.toStringLastTime()
             dateLabel.font = dateFont
-            dateLabel.isEnabled = false
             
             dateLabel.textAlignment = .center
             dateLabel.frame = CGRect(x: 10, y: actLabel.frame.maxY, width: self.bounds.width - 20, height: 16)
@@ -557,9 +583,9 @@ class DialogCell: UITableViewCell {
         }
         
         if dialog.readState == 0 {
-            self.backgroundColor = UIColor.purple.withAlphaComponent(0.2)
+            self.backgroundColor = vkSingleton.shared.unreadColor
         } else {
-            self.backgroundColor = tableView.backgroundColor
+            self.backgroundColor = vkSingleton.shared.backColor
         }
         
         return topY
@@ -743,6 +769,7 @@ class DialogCell: UITableViewCell {
         statusLabel.text = "Пересланное сообщение"
         statusLabel.textAlignment = .right
         statusLabel.font = UIFont(name: "Verdana", size: 10)!
+        statusLabel.textColor = .black
         statusLabel.isEnabled = false
         statusLabel.frame = CGRect(x: leftInsets, y: leftInsets, width: rect.width - 2 * leftInsets, height: 15)
         view.addSubview(statusLabel)
@@ -764,7 +791,11 @@ class DialogCell: UITableViewCell {
                 avatar.layer.cornerRadius = 14
                 avatar.clipsToBounds = true
                 avatar.contentMode = .scaleAspectFill
-                avatar.layer.borderColor = UIColor.lightGray.cgColor
+                if #available(iOS 13.0, *) {
+                    avatar.layer.borderColor = UIColor.secondaryLabel.cgColor
+                } else {
+                    avatar.layer.borderColor = UIColor.lightGray.cgColor
+                }
                 avatar.layer.borderWidth = 0.5
             }
         }
@@ -784,9 +815,11 @@ class DialogCell: UITableViewCell {
         avatar.isUserInteractionEnabled = true
         avatar.addGestureRecognizer(tap)
         
+        
         let nameLabel = UILabel()
         nameLabel.tag = 200
         nameLabel.text = name
+        nameLabel.textColor = .black
         nameLabel.font = UIFont(name: "Verdana-Bold", size: 11)!
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.5
@@ -796,6 +829,8 @@ class DialogCell: UITableViewCell {
         let dateLabel = UILabel()
         dateLabel.tag = 200
         dateLabel.text = mess.date.toStringLastTime()
+        dateLabel.textColor = .black
+        dateLabel.isEnabled = false
         dateLabel.font = UIFont(name: "Verdana", size: 9)!
         dateLabel.adjustsFontSizeToFitWidth = true
         dateLabel.minimumScaleFactor = 0.5
@@ -806,7 +841,7 @@ class DialogCell: UITableViewCell {
         let fwdBodyLabel = UILabel()
         fwdBodyLabel.tag = 200
         fwdBodyLabel.text = mess.body
-        fwdBodyLabel.prepareTextForPublish2(self.delegate)
+        fwdBodyLabel.prepareTextForPublish2(self.delegate, color: .black)
         fwdBodyLabel.font = fwdmFont
         fwdBodyLabel.backgroundColor = UIColor.clear
         fwdBodyLabel.numberOfLines = 0
@@ -922,8 +957,14 @@ class DialogCell: UITableViewCell {
                 durationLabel.font = UIFont(name: "Verdana-Bold", size: 8.0)!
                 durationLabel.textAlignment = .center
                 durationLabel.contentMode = .center
-                durationLabel.textColor = UIColor.black
-                durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                if #available(iOS 13.0, *) {
+                    durationLabel.textColor = .label
+                    durationLabel.backgroundColor = .secondarySystemBackground
+                } else {
+                    durationLabel.textColor = .black
+                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
+                }
+                
                 durationLabel.layer.cornerRadius = 6
                 durationLabel.clipsToBounds = true
                 if let length = durationLabel.text?.length, length > 5 {
@@ -938,7 +979,7 @@ class DialogCell: UITableViewCell {
                 let tap = UITapGestureRecognizer()
                 tap.add {
                     if self.delegate.mode != .edit {
-                        self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись")
+                        self.delegate.openVideoController(ownerID: "\(attach.videos[0].ownerID)", vid: "\(attach.videos[0].id)", accessKey: attach.videos[0].accessKey, title: "Видеозапись", scrollToComment: false)
                     }
                 }
                 tap.numberOfTapsRequired = 1
@@ -961,6 +1002,7 @@ class DialogCell: UITableViewCell {
     func configureWall(wall: WallAttach, users: [DialogsUsers], topY: CGFloat) -> UIView {
         
         let view = UIView()
+        view.backgroundColor = vkSingleton.shared.backColor
         view.tag = 200
         
         var url = ""
@@ -977,10 +1019,14 @@ class DialogCell: UITableViewCell {
         getCacheImage.completionBlock = {
             OperationQueue.main.addOperation {
                 avatar.image = getCacheImage.outputImage
-                avatar.layer.cornerRadius = 14
+                avatar.layer.cornerRadius = 15
                 avatar.clipsToBounds = true
                 avatar.contentMode = .scaleAspectFill
-                avatar.layer.borderColor = UIColor.lightGray.cgColor
+                if #available(iOS 13.0, *) {
+                    avatar.layer.borderColor = UIColor.secondaryLabel.cgColor
+                } else {
+                    avatar.layer.borderColor = UIColor.lightGray.cgColor
+                }
                 avatar.layer.borderWidth = 0.5
             }
         }
@@ -1011,6 +1057,11 @@ class DialogCell: UITableViewCell {
         dateLabel.frame = CGRect(x: 2 * leftInsets + 30, y: leftInsets + 14, width: width - 3 * leftInsets - 30, height: 16)
         view.addSubview(dateLabel)
         
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+            dateLabel.textColor = .secondaryLabel
+        }
+        
         let bodyLabel = UILabel()
         bodyLabel.tag = 200
         
@@ -1023,17 +1074,25 @@ class DialogCell: UITableViewCell {
         }
         
         bodyLabel.font = UIFont(name: "Verdana", size: 11)!
-        bodyLabel.textColor = UIColor.gray
+        if #available(iOS 13.0, *) {
+            bodyLabel.textColor = .secondaryLabel
+        } else {
+            bodyLabel.textColor = .gray
+        }
         bodyLabel.numberOfLines = 2
         bodyLabel.frame = CGRect(x: topInsets, y: 2 * leftInsets + 30, width: width - 2 * topInsets, height: 30)
         view.addSubview(bodyLabel)
         
         let height = 3 * leftInsets + 30 + 30
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.gray.cgColor
+        if #available(iOS 13.0, *) {
+            view.layer.borderColor = UIColor.secondaryLabel.cgColor
+        } else {
+            view.layer.borderColor = UIColor.gray.cgColor
+        }
         view.layer.borderWidth = 0.6
         view.layer.cornerRadius = height/4
-        view.backgroundColor = UIColor.white
+        view.backgroundColor = vkSingleton.shared.backColor
         
         let tap = UITapGestureRecognizer()
         tap.add {
@@ -1047,7 +1106,7 @@ class DialogCell: UITableViewCell {
                 
                 let action1 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
                     
-                    self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post")
+                    self.delegate.openWallRecord(ownerID: wall.fromID, postID: wall.id, accessKey: "", type: "post", scrollToComment: false)
                 }
                 alertController.addAction(action1)
                 
@@ -1064,6 +1123,7 @@ class DialogCell: UITableViewCell {
     func configureGift(gift: GiftAttach, topY: CGFloat) -> UIView {
         
         let view = UIView()
+        view.backgroundColor = vkSingleton.shared.backColor
         view.tag = 200
         
         let width: CGFloat = 150
@@ -1074,7 +1134,11 @@ class DialogCell: UITableViewCell {
         statusLabel.text = "Подарок"
         statusLabel.textAlignment = .center
         statusLabel.font = UIFont(name: "Verdana", size: 9)!
-        statusLabel.isEnabled = false
+        if #available(iOS 13.0, *) {
+            statusLabel.textColor = .secondaryLabel
+        } else {
+            statusLabel.isEnabled = false
+        }
         statusLabel.frame = CGRect(x: 0, y: width, width: width, height: 15)
         view.addSubview(statusLabel)
         
@@ -1096,10 +1160,13 @@ class DialogCell: UITableViewCell {
         view.addSubview(giftImage)
         
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.gray.cgColor
+        if #available(iOS 13.0, *) {
+            view.layer.borderColor = UIColor.secondaryLabel.cgColor
+        } else {
+            view.layer.borderColor = UIColor.gray.cgColor
+        }
         view.layer.borderWidth = 0.6
         view.layer.cornerRadius = 13
-        view.backgroundColor = UIColor.white
         
         return view
     }
@@ -1107,6 +1174,7 @@ class DialogCell: UITableViewCell {
     func configureDoc(doc: DocAttach, users: [DialogsUsers], topY: CGFloat) -> UIView {
         
         let view = UIView()
+        view.backgroundColor = vkSingleton.shared.backColor
         view.tag = 200
         
         let width: CGFloat = 0.7 * UIScreen.main.bounds.width
@@ -1132,7 +1200,11 @@ class DialogCell: UITableViewCell {
         }
         statusLabel.textAlignment = .center
         statusLabel.font = UIFont(name: "Verdana", size: 9)!
-        statusLabel.isEnabled = false
+        if #available(iOS 13.0, *) {
+            statusLabel.textColor = .secondaryLabel
+        } else {
+            statusLabel.isEnabled = false
+        }
         statusLabel.frame = CGRect(x: leftInsets, y: leftInsets, width: width - 2 * leftInsets, height: 15)
         view.addSubview(statusLabel)
         
@@ -1140,6 +1212,9 @@ class DialogCell: UITableViewCell {
         let nameLabel = UILabel()
         nameLabel.tag = 200
         nameLabel.text = doc.title
+        if #available(iOS 13.0, *) {
+            nameLabel.textColor = .label
+        }
         nameLabel.textAlignment = .center
         nameLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
         nameLabel.numberOfLines = 2
@@ -1176,10 +1251,13 @@ class DialogCell: UITableViewCell {
         
         let height = 2 * leftInsets + 15 + 30 + 20
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.gray.cgColor
+        if #available(iOS 13.0, *) {
+            view.layer.borderColor = UIColor.secondaryLabel.cgColor
+        } else {
+            view.layer.borderColor = UIColor.gray.cgColor
+        }
         view.layer.borderWidth = 0.6
         view.layer.cornerRadius = height/4
-        view.backgroundColor = UIColor.white
         
         return view
     }
@@ -1218,50 +1296,31 @@ class DialogCell: UITableViewCell {
         linkLabel.backgroundColor = UIColor.clear
         linkLabel.numberOfLines = 1
         
+        if #available(iOS 13.0, *) {
+            titleLabel.textColor = .label
+            linkLabel.textColor = .secondaryLabel
+        }
+        
         linkLabel.frame = CGRect(x: leftInsets + 30, y: selfY, width: width - 2 * leftInsets - 30, height: 15)
         view.addSubview(linkLabel)
         
         let height =  selfY + 15 + leftInsets
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.gray.cgColor
+        if #available(iOS 13.0, *) {
+            view.layer.borderColor = UIColor.secondaryLabel.cgColor
+        } else {
+            view.layer.borderColor = UIColor.gray.cgColor
+        }
         view.layer.borderWidth = 0.6
         view.layer.cornerRadius = height/4
-        view.backgroundColor = UIColor.white
+        view.backgroundColor = vkSingleton.shared.backColor
         
         let tap = UITapGestureRecognizer()
         tap.add {
             view.viewTouched(controller: self.delegate)
             
-            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-            
-            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-            alertController.addAction(cancelAction)
-            
-            let action1 = UIAlertAction(title: "Открыть песню в iTunes", style: .default) { action in
-                
-                ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-                self.delegate.getITunesInfo(searchString: "\(audio.title) \(audio.artist)", searchType: "song")
-            }
-            alertController.addAction(action1)
-            
-            let action3 = UIAlertAction(title: "Открыть исполнителя в iTunes", style: .default) { action in
-                
-                ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-                self.delegate.getITunesInfo(searchString: "\(audio.artist)", searchType: "artist")
-            }
-            alertController.addAction(action3)
-            
-            let action2 = UIAlertAction(title: "Скопировать название", style: .default) { action in
-                
-                let link = "\(audio.artist) «\(audio.title)»"
-                UIPasteboard.general.string = link
-                if let string = UIPasteboard.general.string {
-                    self.delegate.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
-                }
-            }
-            alertController.addAction(action2)
-            
-            self.delegate.present(alertController, animated: true)
+            ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
+            self.delegate.getITunesInfo2(artist: audio.artist, title: audio.title, controller: self.delegate)
         }
         view.isUserInteractionEnabled = true
         view.addGestureRecognizer(tap)
@@ -1281,6 +1340,9 @@ class DialogCell: UITableViewCell {
         let avatar = UIImageView()
         avatar.image = UIImage(named: "link")
         avatar.frame = CGRect(x: leftInsets, y: selfY + 2, width: 26, height: 26)
+        if #available(iOS 13.0, *) {
+            avatar.tintColor = .label
+        }
         view.addSubview(avatar)
         
         let titleLabel = UILabel()
@@ -1306,15 +1368,24 @@ class DialogCell: UITableViewCell {
         linkLabel.textColor = linkLabel.tintColor
         linkLabel.numberOfLines = 1
         
+        if #available(iOS 13.0, *) {
+            titleLabel.textColor = .label
+            linkLabel.textColor = .secondaryLabel
+        }
+        
         linkLabel.frame = CGRect(x: leftInsets + 30, y: selfY, width: width - 2 * leftInsets - 30, height: 15)
         view.addSubview(linkLabel)
         
         let height =  selfY + 15 + leftInsets
         view.frame = CGRect(x: 5, y: topY, width: width, height: height)
-        view.layer.borderColor = UIColor.gray.cgColor
+        if #available(iOS 13.0, *) {
+            view.layer.borderColor = UIColor.secondaryLabel.cgColor
+        } else {
+            view.layer.borderColor = UIColor.gray.cgColor
+        }
         view.layer.borderWidth = 0.6
         view.layer.cornerRadius = height/4
-        view.backgroundColor = UIColor.white
+        view.backgroundColor = vkSingleton.shared.backColor
         
         let tap = UITapGestureRecognizer()
         tap.add {
@@ -1407,7 +1478,11 @@ extension UIView {
     func configureMessageView(out: Int, radius: CGFloat, border: CGFloat) {
         
         if #available(iOS 11.0, *) {
-            self.layer.borderColor = UIColor.gray.cgColor
+            if #available(iOS 13.0, *) {
+                self.layer.borderColor = UIColor.secondaryLabel.cgColor
+            } else {
+                self.layer.borderColor = UIColor.gray.cgColor
+            }
             self.layer.borderWidth = border
             self.layer.cornerRadius = radius
             if out == 0 {

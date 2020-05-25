@@ -404,11 +404,8 @@
 /* Class = "UISegmentedControl"; Q8D-xn-WUb.segmentTitles[0] = "Оценили"; ObjectID = "Q8D-xn-WUb"; */
 "Q8D-xn-WUb.segmentTitles[0]" = "Оценили";
 
-/* Class = "UISegmentedControl"; Q8D-xn-WUb.segmentTitles[1] = "Поделились"; ObjectID = "Q8D-xn-WUb"; */
-"Q8D-xn-WUb.segmentTitles[1]" = "Поделились";
-
 /* Class = "UISegmentedControl"; Q8D-xn-WUb.segmentTitles[2] = "Друзья"; ObjectID = "Q8D-xn-WUb"; */
-"Q8D-xn-WUb.segmentTitles[2]" = "Друзья";
+"Q8D-xn-WUb.segmentTitles[1]" = "Друзья";
 
 /* Class = "UILabel"; text = "Label"; ObjectID = "QAB-Ka-jeT"; */
 "QAB-Ka-jeT.text" = "Label";

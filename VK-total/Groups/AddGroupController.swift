@@ -14,7 +14,7 @@ extension String {
     }
 }
 
-class AddGroupController: UITableViewController, UISearchBarDelegate {
+class AddGroupController: InnerTableViewController, UISearchBarDelegate {
  
     var searchGroups = [Groups]()
     
@@ -24,10 +24,6 @@ class AddGroupController: UITableViewController, UISearchBarDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
         
         OperationQueue.main.addOperation {
             self.tableView.separatorStyle = .none
@@ -44,8 +40,8 @@ class AddGroupController: UITableViewController, UISearchBarDelegate {
             
             if #available(iOS 13.0, *) {
                 let searchField = self.searchBar.searchTextField
-                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                searchField.textColor = .black
+                searchField.backgroundColor = .separator
+                searchField.textColor = .label
             } else {
                 if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
                     searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)

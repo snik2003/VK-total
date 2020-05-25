@@ -24,7 +24,7 @@ class RelativeCell: UITableViewCell {
         titleLabel.tag = 200
         titleLabel.text = "Родственники"
         titleLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
-        titleLabel.textColor = UIColor.init(displayP3Red: 0/255, green: 84/255, blue: 147/255, alpha: 1)
+        titleLabel.textColor = vkSingleton.shared.mainColor
         titleLabel.frame = CGRect(x: 16, y: 3, width: UIScreen.main.bounds.width - 20, height: 20)
         self.addSubview(titleLabel)
         

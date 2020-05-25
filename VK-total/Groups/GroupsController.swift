@@ -8,7 +8,7 @@
 
 import UIKit
 
-class GroupsController: UITableViewController, UISearchBarDelegate {
+class GroupsController: InnerTableViewController, UISearchBarDelegate {
     
     var userID = vkSingleton.shared.userID
     
@@ -28,10 +28,6 @@ class GroupsController: UITableViewController, UISearchBarDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        if #available(iOS 13.0, *) {
-            overrideUserInterfaceStyle = .light
-        }
-        
         OperationQueue.main.addOperation {
             self.tableView.separatorStyle = .none
             ViewControllerUtils().showActivityIndicator(uiView: self.view.superview!)
@@ -47,8 +43,8 @@ class GroupsController: UITableViewController, UISearchBarDelegate {
             
             if #available(iOS 13.0, *) {
                 let searchField = self.searchBar.searchTextField
-                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                searchField.textColor = .black
+                searchField.backgroundColor = .separator
+                searchField.textColor = .label
             } else {
                 if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
                     searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
