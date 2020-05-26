@@ -120,7 +120,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
     let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
-    var player = AVQueuePlayer()
+    var player = AVPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()

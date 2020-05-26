@@ -40,6 +40,8 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
         return queue
     }()
     
+    var singleTap = UITapGestureRecognizer()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -76,6 +78,17 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             let reposts = json["response"][2]["items"].compactMap { Likes(json: $0.1) }
             
             OperationQueue.main.addOperation {
+                let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
+                let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
+                let upSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
+                
+                leftSwipe.direction = .left
+                rightSwipe.direction = .right
+                upSwipe.direction = .up
+                
+                self.singleTap = UITapGestureRecognizer(target: self, action: #selector(self.tapHandle(sender:)))
+                self.singleTap.numberOfTapsRequired = 1
+                
                 self.photo = photos
                 self.likes = likes
                 self.reposts = reposts
@@ -89,18 +102,10 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 self.tableView.reloadData()
                 ViewControllerUtils().hideActivityIndicator()
                 
-                
-                let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
-                let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
-                let upSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
-                
-                leftSwipe.direction = .left
-                rightSwipe.direction = .right
-                upSwipe.direction = .up
-                
                 self.view.addGestureRecognizer(leftSwipe)
                 self.view.addGestureRecognizer(rightSwipe)
                 self.view.addGestureRecognizer(upSwipe)
+                self.view.addGestureRecognizer(self.singleTap)
             }
         }
         OperationQueue.main.addOperation(getServerDataOperation)
@@ -113,6 +118,14 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
         }
+    }
+    
+    override var prefersStatusBarHidden: Bool {
+        return navigationController?.isNavigationBarHidden == true
+    }
+
+    override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
+        return UIStatusBarAnimation.slide
     }
     
     override func didReceiveMemoryWarning() {
@@ -258,7 +271,7 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if photo.count > 0 {
+        if photo.count > 0 && navigationController?.isNavigationBarHidden == false {
             return 2
         }
         return 1
@@ -269,7 +282,8 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
         switch indexPath.row {
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "photoCell", for: indexPath) as! PhotoImageCell
-
+            cell.delegate = self
+            
             if photos.count > 0 {
                 let photo = photos[numPhoto]
                 
@@ -318,6 +332,12 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                     
                     cell.photoImage.frame = CGRect(x: leftPhoto, y: 0, width: widthPhoto, height: cell.scrollView.bounds.height)
                 }
+                
+                let doubleTap = UITapGestureRecognizer(target: cell, action: #selector(cell.doubleTapAction(sender:)))
+                doubleTap.numberOfTapsRequired = 2
+                cell.addGestureRecognizer(doubleTap)
+                
+                singleTap.require(toFail: doubleTap)
             }
             return cell
         case 1:
@@ -371,10 +391,22 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
         }
     }
     
+    override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 0.0001
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return 0.0001
+    }
+    
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if indexPath.row == 0 {
             if photo.count > 0 {
-                return tableView.bounds.height - 40 - navHeight - tabHeight
+                if navigationController?.isNavigationBarHidden == false {
+                    return tableView.bounds.height - 40 - navHeight - tabHeight
+                } else {
+                    return tableView.bounds.height
+                }
             }
             return tableView.bounds.height - navHeight - tabHeight
         }
@@ -384,15 +416,22 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
         return 0
     }
     
-
+    @objc func tapHandle(sender: UITapGestureRecognizer) {
+        self.navigationController?.setNavigationBarHidden(navigationController?.isNavigationBarHidden == false, animated: false)
+        self.tabBarController?.tabBar.isHidden = self.navigationController?.isNavigationBarHidden == true
+        self.tableView.reloadData()
+    }
+    
     @objc func handleSwipes(sender: UISwipeGestureRecognizer) {
         
-        if (sender.direction == .up) {
+        if sender.direction == .up {
+            self.navigationController?.setNavigationBarHidden(false, animated: false)
+            self.tabBarController?.tabBar.isHidden = false
             self.navigationController?.popViewController(animated: true)
         }
         
         var start = false
-        if (sender.direction == .right) {
+        if sender.direction == .right {
             if numPhoto > 0 {
                 numPhoto -= 1
                 start = true
@@ -400,7 +439,7 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             }
         }
         
-        if (sender.direction == .left) {
+        if sender.direction == .left {
             if numPhoto < photos.count-1 {
                 numPhoto += 1
                 start = true

@@ -870,6 +870,6 @@ class CommentCell2: UITableViewCell {
     func tapAudioAttach(comment: Comments, index: Int) {
         
         ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-        self.delegate.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title, controller: self.delegate)
+        self.delegate.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title)
     }
 }

@@ -98,7 +98,7 @@ protocol NotificationCellProtocol {
     
     func editRecord(description: String, record: Record, controller: Record2Controller)
     
-    func getITunesInfo(searchString: String, searchType: String)
+    func getITunesInfo2(artist: String, title: String)
     
     func saveGifToDevice(url: URL)
     
@@ -1441,14 +1441,8 @@ extension UIViewController: NotificationCellProtocol {
         
     }
     
-    func getITunesInfo2(artist: String, title: String, controller: UIViewController) {
+    func getITunesInfo2(artist: String, title: String) {
         
-        let player = AVQueuePlayer()
-        
-        OperationQueue.main.addOperation {
-            NotificationCenter.default.addObserver(controller, selector: #selector(controller.playerDidFinishPlaying(note:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: player.currentItem)
-        }
-            
         let alertController = UIAlertController(title: "\(artist)\n«\(title)»", message: nil, preferredStyle: .actionSheet)
         
         let completionBlock = {
@@ -1461,13 +1455,13 @@ extension UIViewController: NotificationCellProtocol {
                     let link = "\(artist)\n«\(title)»"
                     UIPasteboard.general.string = link
                     if let string = UIPasteboard.general.string {
-                        controller.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
+                        self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
                     }
                 }
                 alertController.addAction(action)
                 
                 ViewControllerUtils().hideActivityIndicator()
-                controller.present(alertController, animated: true)
+                self.present(alertController, animated: true)
             }
         }
         
@@ -1504,7 +1498,7 @@ extension UIViewController: NotificationCellProtocol {
                     let action = UIAlertAction(title: "Открыть исполнителя в Apple Music", style: .default) { action in
                         
                         let workURL = json["results"][0]["artistLinkUrl"].stringValue
-                        controller.openBrowserControllerNoCheck(url: workURL)
+                        self.openBrowserControllerNoCheck(url: workURL)
                     }
                     alertController.addAction(action)
                 }
@@ -1553,60 +1547,60 @@ extension UIViewController: NotificationCellProtocol {
                                 realm.beginWrite()
                                 realm.add(song, update: .all)
                                 try realm.commitWrite()
-                                controller.showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(song.song)» успешно записана в «Избранное»")
+                                self.showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(song.song)» успешно записана в «Избранное»")
                             } catch {
-                                controller.showErrorMessage(title: "База Данных Realm", msg: "Ошибка: \(error)")
+                                self.showErrorMessage(title: "База Данных Realm", msg: "Ошибка: \(error)")
                             }
                         }
                         alertController.addAction(action2)
                         
                         if let songURL = URL(string: song.reserv4.trimmingCharacters(in: .whitespacesAndNewlines)) {
                             let action = UIAlertAction(title: "Прослушать отрывок из песни", style: .default) { action in
-                                if let vc = controller as? Record2Controller {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                if let vc = self as? Record2Controller {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? ProfileController2 {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? ProfileController2 {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? GroupProfileController2 {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? GroupProfileController2 {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? TopicController {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? TopicController {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? Newsfeed2Controller {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? Newsfeed2Controller {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? NewsfeedSearchController {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? NewsfeedSearchController {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? FavePostsController2 {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? FavePostsController2 {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? DialogController {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? DialogController {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
-                                } else if let vc = controller as? GroupDialogController {
-                                    vc.player.removeAllItems()
-                                    vc.player.insert(AVPlayerItem(url: songURL), after: nil)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
+                                } else if let vc = self as? GroupDialogController {
+                                    vc.player = AVPlayer(url: songURL)
+                                    vc.player.seek(to: CMTime.zero)
                                     vc.player.play()
-                                    vc.showAudioPlayOnScreen(artist: artist, title: title, player: vc.player)
+                                    vc.showAudioPlayOnScreen(song: song, player: vc.player)
                                 }
                             }
                             alertController.addAction(action)
@@ -1614,7 +1608,7 @@ extension UIViewController: NotificationCellProtocol {
                         
                         let action1 = UIAlertAction(title: "Открыть песню в Apple Music", style: .default) { action in
                         
-                            controller.openBrowserControllerNoCheck(url: song.URL)
+                            self.openBrowserControllerNoCheck(url: song.URL)
                         }
                         alertController.addAction(action1)
                     }
@@ -1623,104 +1617,6 @@ extension UIViewController: NotificationCellProtocol {
                 completionBlock()
             }
             OperationQueue().addOperation(request2)
-        }
-        OperationQueue().addOperation(request)
-    }
-    
-    func getITunesInfo(searchString: String, searchType: String) {
-        
-        var lang = "us"
-        if #available(iOS 11.0, *) {
-            lang = NSLinguisticTagger.dominantLanguage(for: searchString)!
-        }
-        if lang != "ru" { lang = "us" }
-        
-        
-        let url = "https://itunes.apple.com/search/"
-        var parameters = [
-            "term": searchString,
-            "media": "music",
-            "country": lang
-        ]
-    
-        if searchType == "artist" {
-            parameters["entity"] = "musicArtist"
-        }
-        
-        let request = GetITunesDataOperation(url: url, parameters: parameters)
-        request.completionBlock = {
-            guard let data = request.data else { return }
-            guard let json = try? JSON(data: data) else { print("json error"); return }
-            //print(json)
-            
-            let count = json["resultCount"].intValue
-            if count > 0 {
-                if searchType == "artist" {
-                    
-                    let workURL = json["results"][0]["artistLinkUrl"].stringValue
-                    let previewURL = json["results"][0]["artistLinkUrl"].stringValue
-                    let artistID = json["results"][0]["artistId"].intValue
-                    let artist = json["results"][0]["artistName"].stringValue
-                    
-                    OperationQueue.main.addOperation {
-                        ViewControllerUtils().hideActivityIndicator()
-                        self.openBrowserControllerNoCheck(url: workURL)
-                        
-                        /*let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
-                        
-                        browserController.path = "\(workURL)"
-                        
-                        browserController.type = searchType
-                        browserController.artistID = artistID
-                        browserController.artist = artist
-                        browserController.workURL = workURL
-                        browserController.previewURL = previewURL
-                        
-                        self.navigationController?.pushViewController(browserController, animated: true)*/
-                    }
-                } else if searchType == "song" {
-                    let workURL = json["results"][0]["trackViewUrl"].stringValue
-                    let previewURL = json["results"][0]["previewUrl"].stringValue
-                    let songID = json["results"][0]["trackId"].intValue
-                    let artistID = json["results"][0]["artistId"].intValue
-                    let song = json["results"][0]["trackName"].stringValue
-                    let artist = json["results"][0]["artistName"].stringValue
-                    let album = json["results"][0]["collectionName"].stringValue
-                    let avatarURL = json["results"][0]["artworkUrl100"].stringValue
-                    
-                    OperationQueue.main.addOperation {
-                        ViewControllerUtils().hideActivityIndicator()
-                        self.openBrowserControllerNoCheck(url: workURL)
-                        
-                        /*let browserController = self.storyboard?.instantiateViewController(withIdentifier: "BrowserController") as! BrowserController
-                        
-                        browserController.path = "\(workURL)"
-                        
-                        browserController.type = searchType
-                        browserController.songID = songID
-                        browserController.artistID = artistID
-                        browserController.artist = artist
-                        browserController.album = album
-                        browserController.song = song
-                        browserController.previewURL = previewURL
-                        browserController.workURL = workURL
-                        browserController.avatarURL = avatarURL
-                        
-                        self.navigationController?.pushViewController(browserController, animated: true)*/
-                    }
-                }
-            } else {
-                OperationQueue.main.addOperation {
-                    ViewControllerUtils().hideActivityIndicator()
-                    if searchType == "song" {
-                        self.showErrorMessage(title: "Поиск в iTunes", msg: "В iTunes не найдена песня «\(searchString)»")
-                    } else if searchType == "artist" {
-                        self.showErrorMessage(title: "Поиск в iTunes", msg: "В iTunes не найден исполнитель «\(searchString)»")
-                    } else {
-                        self.showErrorMessage(title: "Поиск в iTunes", msg: "Ошибка поиска в iTunes по  параметрам «\(searchString)»")
-                    }
-                }
-            }
         }
         OperationQueue().addOperation(request)
     }
@@ -2151,20 +2047,23 @@ extension UIViewController: NotificationCellProtocol {
         SwiftMessages.show(config: config, view: view)
     }
     
-    func showAudioPlayOnScreen(artist: String, title: String, player: AVQueuePlayer) {
+    func showAudioPlayOnScreen(song: IMusic, player: AVPlayer) {
         
         SwiftMessages.hideAll()
-        let view = MessageView.viewFromNib(layout: .tabView)
         
+        let view = MessageView.viewFromNib(layout: .tabView)
+
         if #available(iOS 13.0, *) {
             view.backgroundView.backgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
         }
         
+        let title = song.artist
+        let body = song.song
         let iImage = UIImage(named: "music")
         let bImage = UIImage(named: "stop-play")
         let tText = "00:30   "
-        view.configureContent(title: artist, body: title, iconImage: iImage, iconText: nil, buttonImage: bImage, buttonTitle: tText, buttonTapHandler: { _ in
-            player.removeAllItems()
+        view.configureContent(title: title, body: body, iconImage: iImage, iconText: nil, buttonImage: bImage, buttonTitle: tText, buttonTapHandler: { _ in
+            player.pause()
             view.button?.tag = 0
             SwiftMessages.hideAll()
         })
@@ -2185,18 +2084,62 @@ extension UIViewController: NotificationCellProtocol {
         view.button?.setTitleColor(vkSingleton.shared.mainColor, for: .normal)
         view.button?.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 10)!
         view.button?.semanticContentAttribute = .forceRightToLeft
-        view.button?.tag = 30
+        view.button?.tag = 3000
         
         let tap = UITapGestureRecognizer()
         tap.numberOfTapsRequired = 1
         
         tap.add {
-            player.removeAllItems()
-            view.button?.tag = 0
-            SwiftMessages.hideAll()
+            let alertController = UIAlertController(title: "\(song.artist)\n«\(song.song)»", message: nil, preferredStyle: .actionSheet)
+            
+            let action1 = UIAlertAction(title: "Сохранить песню в «Избранное»", style: .default) { action in
+                
+                do {
+                    var config = Realm.Configuration.defaultConfiguration
+                    config.deleteRealmIfMigrationNeeded = false
+                    config.schemaVersion = 1
+                    
+                    let realm = try Realm(configuration: config)
+                    
+                    realm.beginWrite()
+                    realm.add(song, update: .all)
+                    try realm.commitWrite()
+                    self.showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(song.song)» успешно записана в «Избранное»")
+                } catch {
+                    self.showErrorMessage(title: "База Данных Realm", msg: "Ошибка: \(error)")
+                }
+            }
+            alertController.addAction(action1)
+            
+            let action2 = UIAlertAction(title: "Открыть песню в Apple Music", style: .default) { action in
+            
+                self.openBrowserControllerNoCheck(url: song.URL)
+            }
+            alertController.addAction(action2)
+            
+            let action3 = UIAlertAction(title: "Скопировать название", style: .default) { action in
+                
+                let link = "\(song.artist)\n«\(song.song)»"
+                UIPasteboard.general.string = link
+                if let string = UIPasteboard.general.string {
+                    self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
+                }
+            }
+            alertController.addAction(action3)
+            
+            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+            alertController.addAction(cancelAction)
+            
+            self.present(alertController, animated: true)
         }
         view.addGestureRecognizer(tap)
         view.isUserInteractionEnabled = true
+        
+        let progress = UIProgressView()
+        progress.tag = 5000
+        progress.backgroundColor = .clear
+        progress.tintColor = view.bodyLabel?.tintColor
+        progress.progress = 0
         
         view.configureDropShadow()
         var config = SwiftMessages.defaultConfig
@@ -2207,22 +2150,27 @@ extension UIViewController: NotificationCellProtocol {
         
         SwiftMessages.show(config: config, view: view)
         
+        progress.frame = CGRect(x: 50, y: 61, width: UIScreen.main.bounds.width - 100, height: 5)
+        view.addSubview(progress)
+        
         UIApplication.shared.beginBackgroundTask(expirationHandler: nil)
-        let timer = Timer.scheduledTimer(timeInterval: 1, target: self, selector: #selector(updateTimer(timer:)), userInfo: view.button, repeats: true)
+        let timer = Timer.scheduledTimer(timeInterval: 0.01, target: self, selector: #selector(updateTimer(timer:)), userInfo: view, repeats: true)
         RunLoop.current.add(timer, forMode: .common)
     }
     
     @objc func updateTimer(timer: Timer) {
-        if let button = timer.userInfo as? UIButton {
+        if let view = timer.userInfo as? MessageView, let button = view.button, let progress = view.viewWithTag(5000) as? UIProgressView {
             button.tag -= 1
             
             if button.tag >= 0 {
-                let timeInSeconds = button.tag % 60;
+                let timeInSeconds = button.tag / 100 % 60;
                 OperationQueue.main.addOperation {
                     button.setTitle(String(format: "00:%02d   ", arguments: [timeInSeconds]), for: .normal)
+                    progress.progress = Float(3000 - button.tag) / Float(3000)
                 }
             } else if timer.isValid {
                 timer.invalidate()
+                SwiftMessages.hideAll()
             }
         }
     }

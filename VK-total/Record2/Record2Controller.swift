@@ -87,7 +87,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
     let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
-    var player = AVQueuePlayer()
+    var player = AVPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -869,7 +869,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             if action == "show_music_\(index)" {
                                 
                                 ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
+                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
                             }
                         }
                         

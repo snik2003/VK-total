@@ -70,7 +70,7 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
     let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
-    var player = AVQueuePlayer()
+    var player = AVPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -554,7 +554,7 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
                         if action == "show_music_\(index)" {
                             
                             ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                            self.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title, controller: self)
+                            self.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title)
                         }
                     }
                     

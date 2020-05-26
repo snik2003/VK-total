@@ -1199,7 +1199,7 @@ class GroupDialogCell: UITableViewCell {
             view.viewTouched(controller: self.delegate)
             
             ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
-            self.delegate.getITunesInfo2(artist: audio.artist, title: audio.title, controller: self.delegate)
+            self.delegate.getITunesInfo2(artist: audio.artist, title: audio.title)
         }
         view.isUserInteractionEnabled = true
         view.addGestureRecognizer(tap)

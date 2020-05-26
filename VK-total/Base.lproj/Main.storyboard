@@ -3616,7 +3616,7 @@
         <!--Vk Tabbar Controller-->
         <scene sceneID="1zk-Ug-QWL">
             <objects>
-                <tabBarController automaticallyAdjustsScrollViewInsets="NO" modalPresentationStyle="fullScreen" id="FpP-MF-i3p" customClass="VkTabbarController" customModule="VK_total" customModuleProvider="target" sceneMemberID="viewController">
+                <tabBarController extendedLayoutIncludesOpaqueBars="YES" modalPresentationStyle="fullScreen" id="FpP-MF-i3p" customClass="VkTabbarController" customModule="VK_total" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
                     <navigationItem key="navigationItem" id="dFD-ek-m0p"/>
                     <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" itemPositioning="centered" id="65e-tZ-K3u">
@@ -5036,7 +5036,7 @@
                                                 </userDefinedRuntimeAttribute>
                                                 <userDefinedRuntimeAttribute type="boolean" keyPath="hideBox" value="NO"/>
                                                 <userDefinedRuntimeAttribute type="number" keyPath="animationDuration">
-                                                    <real key="value" value="-1"/>
+                                                    <real key="value" value="1"/>
                                                 </userDefinedRuntimeAttribute>
                                             </userDefinedRuntimeAttributes>
                                         </view>
@@ -5431,16 +5431,16 @@
         <!--Фото-->
         <scene sceneID="jP4-8g-f10">
             <objects>
-                <tableViewController storyboardIdentifier="photoViewController" id="PKU-zv-tUV" customClass="PhotoViewController" customModule="VK_total" sceneMemberID="viewController">
-                    <tableView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" scrollEnabled="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" dataMode="prototypes" style="plain" separatorInsetReference="fromAutomaticInsets" allowsSelection="NO" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" id="xl7-mv-G5A">
+                <tableViewController storyboardIdentifier="photoViewController" extendedLayoutIncludesOpaqueBars="YES" modalPresentationStyle="fullScreen" id="PKU-zv-tUV" customClass="PhotoViewController" customModule="VK_total" sceneMemberID="viewController">
+                    <tableView key="view" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" alwaysBounceVertical="YES" scrollEnabled="NO" showsHorizontalScrollIndicator="NO" showsVerticalScrollIndicator="NO" dataMode="prototypes" style="plain" separatorStyle="none" separatorInsetReference="fromAutomaticInsets" allowsSelection="NO" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" contentViewInsetsToSafeArea="NO" translatesAutoresizingMaskIntoConstraints="NO" id="xl7-mv-G5A">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="568"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <color key="backgroundColor" name="appMainBackColor"/>
-                        <color key="separatorColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="separatorColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <inset key="separatorInset" minX="10" minY="0.0" maxX="10" maxY="0.0"/>
-                        <color key="sectionIndexBackgroundColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="sectionIndexBackgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <prototypes>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="photoCell" rowHeight="436" id="PVd-ZP-6zw" customClass="PhotoImageCell" customModule="VK_total" customModuleProvider="target">
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="default" indentationWidth="10" reuseIdentifier="photoCell" rowHeight="436" id="PVd-ZP-6zw" customClass="PhotoImageCell" customModule="VK_total" customModuleProvider="target">
                                 <rect key="frame" x="0.0" y="28" width="320" height="436"/>
                                 <autoresizingMask key="autoresizingMask"/>
                                 <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="PVd-ZP-6zw" id="lbz-ST-J0U">
@@ -5479,15 +5479,15 @@
                                     <outlet property="scrollView" destination="bri-cJ-FKF" id="cYo-iI-1F6"/>
                                 </connections>
                             </tableViewCell>
-                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="likesCell" rowHeight="40" id="1KQ-1k-OhJ">
-                                <rect key="frame" x="0.0" y="464" width="320" height="40"/>
+                            <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" selectionStyle="none" indentationWidth="10" reuseIdentifier="likesCell" rowHeight="51" id="1KQ-1k-OhJ">
+                                <rect key="frame" x="0.0" y="464" width="320" height="51"/>
                                 <autoresizingMask key="autoresizingMask"/>
-                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="1KQ-1k-OhJ" id="Jtf-nJ-nvU">
-                                    <rect key="frame" x="0.0" y="0.0" width="320" height="40"/>
+                                <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" tableViewCell="1KQ-1k-OhJ" id="Jtf-nJ-nvU">
+                                    <rect key="frame" x="0.0" y="0.0" width="320" height="51"/>
                                     <autoresizingMask key="autoresizingMask"/>
                                     <subviews>
                                         <button hidden="YES" opaque="NO" tag="1" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="pv3-kD-mr7">
-                                            <rect key="frame" x="0.0" y="-1" width="90" height="40"/>
+                                            <rect key="frame" x="0.0" y="-1" width="90" height="51"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="90" id="uqJ-WF-91x"/>
                                             </constraints>
@@ -5502,7 +5502,7 @@
                                             </connections>
                                         </button>
                                         <button hidden="YES" opaque="NO" tag="2" contentMode="scaleToFill" semanticContentAttribute="forceRightToLeft" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="keT-il-X4F">
-                                            <rect key="frame" x="230" y="0.0" width="90" height="40"/>
+                                            <rect key="frame" x="230" y="0.0" width="90" height="51"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="90" id="Wr6-Ek-6uK"/>
                                             </constraints>
@@ -5517,12 +5517,14 @@
                                             </connections>
                                         </button>
                                         <button hidden="YES" opaque="NO" tag="3" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="jr2-gG-L38">
-                                            <rect key="frame" x="140" y="0.0" width="40" height="40"/>
+                                            <rect key="frame" x="140" y="0.0" width="40" height="51"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="40" id="Pkw-bS-Z6q"/>
                                             </constraints>
-                                            <color key="tintColor" name="appMainBackColor"/>
-                                            <state key="normal" image="likes-list"/>
+                                            <color key="tintColor" systemColor="secondaryLabelColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                                            <state key="normal" image="likes-list">
+                                                <color key="titleShadowColor" systemColor="secondaryLabelColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.59999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                                            </state>
                                             <connections>
                                                 <action selector="infoLikesButtonClick" destination="PKU-zv-tUV" eventType="touchUpInside" id="voR-Re-DFY"/>
                                             </connections>
@@ -5532,7 +5534,7 @@
                                         <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="pv3-kD-mr7" secondAttribute="trailing" constant="20" symbolic="YES" id="5sl-AT-aJs"/>
                                     </constraints>
                                 </tableViewCellContentView>
-                                <color key="backgroundColor" systemColor="separatorColor" red="0.23529411759999999" green="0.23529411759999999" blue="0.26274509800000001" alpha="0.28999999999999998" colorSpace="custom" customColorSpace="sRGB"/>
+                                <color key="backgroundColor" name="appMainBackColor"/>
                                 <constraints>
                                     <constraint firstItem="keT-il-X4F" firstAttribute="height" secondItem="1KQ-1k-OhJ" secondAttribute="height" id="9mI-J0-vKf"/>
                                     <constraint firstAttribute="trailing" secondItem="keT-il-X4F" secondAttribute="trailing" constant="-1.1368683772161603e-13" id="Nb9-cB-1kN"/>
@@ -5564,13 +5566,17 @@
         <!--Navigation Controller-->
         <scene sceneID="W1X-TJ-t1a">
             <objects>
-                <navigationController storyboardIdentifier="navigationPhoto" modalPresentationStyle="fullScreen" id="Wnb-fG-kin" sceneMemberID="viewController">
+                <navigationController storyboardIdentifier="navigationPhoto" extendedLayoutIncludesOpaqueBars="YES" modalPresentationStyle="fullScreen" hidesBarsOnTap="YES" id="Wnb-fG-kin" sceneMemberID="viewController">
                     <navigationBar key="navigationBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="G84-M2-4Et">
                         <rect key="frame" x="0.0" y="0.0" width="320" height="44"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <color key="tintColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                         <color key="barTintColor" name="appMainColor"/>
                     </navigationBar>
+                    <toolbar key="toolbar" opaque="NO" clearsContextBeforeDrawing="NO" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="uaB-Wk-wPC">
+                        <autoresizingMask key="autoresizingMask"/>
+                        <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    </toolbar>
                     <connections>
                         <segue destination="PKU-zv-tUV" kind="relationship" relationship="rootViewController" id="nBu-Hf-7pK"/>
                     </connections>

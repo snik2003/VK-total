@@ -70,7 +70,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     
     var barButton: UIBarButtonItem!
     
-    var player = AVQueuePlayer()
+    var player = AVPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -391,7 +391,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                             if action == "show_music_\(index)" {
                                 
                                 ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
+                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
                             }
                         }
                         

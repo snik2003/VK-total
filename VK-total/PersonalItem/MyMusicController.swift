@@ -10,6 +10,8 @@ import UIKit
 import RealmSwift
 import SCLAlertView
 import AVFoundation
+import SwiftMessages
+import BEMCheckBox
 
 class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDataSource {
 
@@ -25,9 +27,12 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
     var albumTextField: UITextField!
     var songTextField: UITextField!
     
-    var player = AVQueuePlayer()
+    var player = AVPlayer()
     var isPlaying = false
     var playIndexPath: IndexPath!
+    
+    var repeatSong = false
+    var repeatAll = false
     
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
@@ -44,22 +49,20 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        OperationQueue.main.addOperation {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-            self.configureTableView()
-            if self.source == "" {
-                self.configureSearchView()
-            }
+        //repeatSong = UserDefaults.standard.bool(forKey: "Music_Itunes_repeatSong")
+        //repeatAll = UserDefaults.standard.bool(forKey: "Music_Itunes_repeatAll")
+        
+        self.configureTableView()
+        if self.source == "" {
+            self.configureSearchView()
         }
         
         getMusicFromRealm()
         
-        OperationQueue.main.addOperation {
-            NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying(note:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: self.player.currentItem)
-            self.tableView.reloadData()
-            self.tableView.separatorStyle = .singleLine
-            ViewControllerUtils().hideActivityIndicator()
-        }
+        NotificationCenter.default.addObserver(self, selector: #selector(self.playerDidFinishPlaying(note:)), name: NSNotification.Name.AVPlayerItemDidPlayToEndTime, object: self.player.currentItem)
+        
+        self.tableView.reloadData()
+        self.tableView.separatorStyle = .singleLine
         
         let tap = UITapGestureRecognizer(target: self, action: #selector(hideKeyboard))
         tap.cancelsTouchesInView = false
@@ -76,9 +79,28 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
     }
     
     @objc override func playerDidFinishPlaying(note: NSNotification) {
-        if playIndexPath != nil {
-            if let cell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {
-                cell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
+        
+        if repeatSong {
+            player.seek(to: CMTime.zero)
+            player.play()
+            
+            if let indexPath = playIndexPath {
+                var song = IMusic()
+                if indexPath.section == 0 {
+                    song = search[indexPath.row]
+                } else {
+                    song = music[indexPath.row]
+                }
+                
+                showAudioPlayOnScreen(song: song, player: player)
+            }
+        } else if repeatAll {
+            
+        } else {
+            if playIndexPath != nil {
+                if let cell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {
+                    cell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
+                }
             }
         }
     }
@@ -350,22 +372,53 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
             
             self.present(alertController, animated: true)
         } else {
-            if playIndexPath != nil {
+            /*if playIndexPath != nil && playIndexPath != indexPath {
                 if let oldCell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {
                     oldCell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
                 }
+                SwiftMessages.hideAll()
                 player.removeAllItems()
                 isPlaying = false
-            }
+            }*/
             
             var song: IMusic!
+            if indexPath.section == 0 { song = search[indexPath.row] }
+            else { song = music[indexPath.row] }
+            
+            let alertController = UIAlertController(title: "\(song.artist)\n«\(song.song)»", message: nil, preferredStyle: .actionSheet)
+            
             if indexPath.section == 0 {
-                song = search[indexPath.row]
-            } else {
-                song = music[indexPath.row]
+                let action1 = UIAlertAction(title: "Сохранить песню в «Избранное»", style: .default) { action in
+                    if self.addSongToRealm(music: song) {
+                        self.search.remove(at: indexPath.row)
+                        self.getMusicFromRealm()
+                        self.tableView.reloadData()
+                        self.showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(song.song)» успешно добавлена в «Избранное».")
+                    }
+                }
+                alertController.addAction(action1)
             }
             
-            self.openBrowserControllerNoCheck(url: song.URL)
+            let action2 = UIAlertAction(title: "Открыть песню в Apple Music", style: .default) { action in
+            
+                self.openBrowserControllerNoCheck(url: song.URL)
+            }
+            alertController.addAction(action2)
+            
+            let action3 = UIAlertAction(title: "Скопировать название", style: .default) { action in
+                
+                let link = "\(song.artist)\n«\(song.song)»"
+                UIPasteboard.general.string = link
+                if let string = UIPasteboard.general.string {
+                    self.showInfoMessage(title: "Скопировано:" , msg: "\(string)")
+                }
+            }
+            alertController.addAction(action3)
+            
+            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+            alertController.addAction(cancelAction)
+            
+            self.present(alertController, animated: true)
         }
     }
     
@@ -388,23 +441,24 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
                 if let oldCell = tableView.cellForRow(at: playIndexPath) as? MyMusicCell {
                     oldCell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
                 }
-                player.removeAllItems()
+                SwiftMessages.hideAll()
+                player.pause()
                 isPlaying = false
             }
             
             if isPlaying {
                 cell.listenButton.imageView?.tintColor = vkSingleton.shared.mainColor
-                
-                player.removeAllItems()
+                player.pause()
+                SwiftMessages.hideAll()
                 isPlaying = false
             } else {
                 if let url = URL(string: song.reserv4) {
-                    cell.listenButton.imageView?.tintColor = UIColor.red
+                    cell.listenButton.imageView?.tintColor = UIColor.purple
                     
-                    player.removeAllItems()
-                    player.insert(AVPlayerItem(url: url), after: nil)
+                    player = AVPlayer(url: url)
+                    player.seek(to: CMTime.zero)
                     player.play()
-                    self.showAudioPlayOnScreen(artist: song.artist, title: song.song, player: player)
+                    self.showAudioPlayOnScreen(song: song, player: player)
                     
                     isPlaying = true
                     playIndexPath = indexPath
@@ -420,7 +474,7 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
     func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath) -> [UITableViewRowAction]? {
         
         if indexPath.section == 0 {
-            let addAction = UITableViewRowAction(style: .normal, title: "Добавить") { (rowAction, indexPath) in
+            let addAction = UITableViewRowAction(style: .normal, title: "Добавить в\n«Избранное»") { (rowAction, indexPath) in
                 if self.addSongToRealm(music: self.search[indexPath.row]) {
                     let title = self.search[indexPath.row].song
                     self.search.remove(at: indexPath.row)
@@ -429,11 +483,11 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
                     self.showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(title)» успешно добавлена в «Избранное».")
                 }
             }
-            addAction.backgroundColor = .green
+            addAction.backgroundColor = vkSingleton.shared.mainColor
         
             return [addAction]
         } else {
-            let deleteAction = UITableViewRowAction(style: .normal, title: "Удалить") { (rowAction, indexPath) in
+            let deleteAction = UITableViewRowAction(style: .normal, title: "Удалить из\n«Избранное»") { (rowAction, indexPath) in
                 let song = self.music[indexPath.row]
                 
                 var titleColor = UIColor.black
@@ -471,7 +525,7 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
                 alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить песню «\(song.song)» из раздела «Избранное»?")
                 
             }
-            deleteAction.backgroundColor = .red
+            deleteAction.backgroundColor = .purple
             
             return [deleteAction]
         }
@@ -567,6 +621,78 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
         clearButton.addTarget(self, action: #selector(self.searchITunes(sender:)), for: .touchUpInside)
         topY += 25
         
+        /*topY += 15
+        
+        let repeatSongCheck = BEMCheckBox()
+        repeatSongCheck.onTintColor = vkSingleton.shared.mainColor
+        repeatSongCheck.onCheckColor = vkSingleton.shared.mainColor
+        repeatSongCheck.backgroundColor = .white
+        repeatSongCheck.lineWidth = 2
+        repeatSongCheck.on = self.repeatSong
+        
+        repeatSongCheck.frame = CGRect(x: 20, y: topY, width: 20, height: 20)
+        searchView.addSubview(repeatSongCheck)
+        
+        let repeatSongLabel = UILabel()
+        repeatSongLabel.textColor = .black
+        repeatSongLabel.alpha = self.repeatSong ? 1.0 : 0.6
+        repeatSongLabel.font = UIFont(name: "Verdana", size: 11)!
+        repeatSongLabel.text = "Повторять песню"
+        repeatSongLabel.adjustsFontSizeToFitWidth = true
+        repeatSongLabel.minimumScaleFactor = 0.5
+        repeatSongLabel.frame = CGRect(x: 50, y: topY, width: UIScreen.main.bounds.width/2 - 50, height: 20)
+        searchView.addSubview(repeatSongLabel)
+        
+        
+        let repeatAllCheck = BEMCheckBox()
+        repeatAllCheck.onTintColor = vkSingleton.shared.mainColor
+        repeatAllCheck.onCheckColor = vkSingleton.shared.mainColor
+        repeatAllCheck.backgroundColor = .white
+        repeatAllCheck.lineWidth = 2
+        repeatAllCheck.on = self.repeatAll
+        
+        repeatAllCheck.frame = CGRect(x: UIScreen.main.bounds.width/2, y: topY, width: 20, height: 20)
+        searchView.addSubview(repeatAllCheck)
+        
+        let repeatAllLabel = UILabel()
+        repeatAllLabel.textColor = .black
+        repeatAllLabel.alpha = self.repeatAll ? 1.0 : 0.6
+        repeatAllLabel.font = UIFont(name: "Verdana", size: 11)!
+        repeatAllLabel.text = "Повторять «Избранное»"
+        repeatAllLabel.adjustsFontSizeToFitWidth = true
+        repeatAllLabel.minimumScaleFactor = 0.5
+        repeatAllLabel.frame = CGRect(x: UIScreen.main.bounds.width/2 + 30, y: topY, width: UIScreen.main.bounds.width/2 - 50, height: 20)
+        searchView.addSubview(repeatAllLabel)
+        
+        repeatSongCheck.add(for: .valueChanged) {
+            self.repeatSong = repeatSongCheck.on
+            if self.repeatSong {
+                repeatSongLabel.alpha = 1.0
+                repeatAllLabel.alpha = 0.6
+                repeatAllCheck.setOn(false, animated: true)
+                self.repeatAll = false
+            } else {
+                repeatSongLabel.alpha = 0.6
+            }
+            UserDefaults.standard.set(self.repeatSong, forKey: "Music_Itunes_repeatSong")
+            UserDefaults.standard.set(self.repeatAll, forKey: "Music_Itunes_repeatAll")
+        }
+        
+        repeatAllCheck.add(for: .valueChanged) {
+            self.repeatAll = repeatAllCheck.on
+            if self.repeatAll {
+                repeatAllLabel.alpha = 1.0
+                repeatSongLabel.alpha = 0.6
+                repeatSongCheck.setOn(false, animated: true)
+                self.repeatSong = false
+            } else {
+                repeatAllLabel.alpha = 0.6
+            }
+            UserDefaults.standard.set(self.repeatSong, forKey: "Music_Itunes_repeatSong")
+            UserDefaults.standard.set(self.repeatAll, forKey: "Music_Itunes_repeatAll")
+        }
+        
+        topY += 20*/
         
         if #available(iOS 13.0, *) {
             artistTextField.textColor = .label
@@ -576,6 +702,12 @@ class MyMusicController: InnerViewController, UITableViewDelegate, UITableViewDa
             artistTextField.layer.borderColor = UIColor.secondaryLabel.cgColor
             albumTextField.layer.borderColor = UIColor.secondaryLabel.cgColor
             songTextField.layer.borderColor = UIColor.secondaryLabel.cgColor
+            
+            /*repeatSongCheck.backgroundColor = vkSingleton.shared.backColor
+            repeatAllCheck.backgroundColor = vkSingleton.shared.backColor
+            
+            repeatSongLabel.textColor = .label
+            repeatAllLabel.textColor = .label*/
         }
         
         searchView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: topY + 10)

@@ -63,7 +63,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     
     var tableView: UITableView!
     
-    var player = AVQueuePlayer()
+    var player = AVPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -581,7 +581,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                     if action == "show_music_\(index)" {
                         
                         ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                        self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index], controller: self)
+                        self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
                     }
                 }
                 

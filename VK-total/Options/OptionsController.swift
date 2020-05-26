@@ -266,6 +266,7 @@ class OptionsController: InnerTableViewController {
             case 1:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
                 
+                cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushNewMessage
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
                 cell.nameLabel.text = "Новые сообщения"
@@ -275,6 +276,7 @@ class OptionsController: InnerTableViewController {
             case 2:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
                 
+                cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushComment
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
                 cell.nameLabel.text = "Новые комментарии"
@@ -284,6 +286,7 @@ class OptionsController: InnerTableViewController {
             case 3:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
                 
+                cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushNewFriends
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
                 cell.nameLabel.text = "Заявки в друзья"
@@ -293,6 +296,7 @@ class OptionsController: InnerTableViewController {
             case 4:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
                 
+                cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushNots
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
                 cell.nameLabel.text = "Ответы"
@@ -535,16 +539,6 @@ class OptionsController: InnerTableViewController {
             
             if indexPath.section == 8 {
                 AppConfig.shared.darkMode = sender.on
-                
-                /*if #available(iOS 13.0, *) {
-                    if AppConfig.shared.darkMode {
-                        self.overrideUserInterfaceStyle = .dark
-                    } else {
-                        self.overrideUserInterfaceStyle = .light
-                    }
-                    self.view.layoutSubviews()
-                    self.tabBarController?.tabBar.layoutSubviews()
-                }*/
             }
             
             tableView.reloadData()
