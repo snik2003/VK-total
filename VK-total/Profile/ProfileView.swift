@@ -162,7 +162,7 @@ class ProfileView: UIView {
     
     func updateOwnerButtons() {
         if allRecordsButton.isSelected {
-            //allRecordsButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
+            allRecordsButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
             allRecordsButton.layer.borderColor = vkSingleton.shared.labelColor.cgColor
             
             allRecordsButton.layer.cornerRadius = 5
@@ -171,7 +171,7 @@ class ProfileView: UIView {
             allRecordsButton.tintColor = vkSingleton.shared.mainColor
             
             ownerButton.isSelected = false
-            //ownerButton.setTitleColor(UIColor.black, for: .normal)
+            ownerButton.setTitleColor(vkSingleton.shared.secondaryLabelColor, for: .normal)
             
             ownerButton.layer.cornerRadius = 5
             ownerButton.clipsToBounds = true
@@ -181,7 +181,7 @@ class ProfileView: UIView {
         }
         
         if ownerButton.isSelected {
-            //ownerButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
+            ownerButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
             ownerButton.layer.borderColor = vkSingleton.shared.labelColor.cgColor
             
             ownerButton.clipsToBounds = true
@@ -190,7 +190,7 @@ class ProfileView: UIView {
             ownerButton.layer.cornerRadius = 5
             
             allRecordsButton.isSelected = false
-            //allRecordsButton.setTitleColor(UIColor.black, for: .normal)
+            allRecordsButton.setTitleColor(vkSingleton.shared.secondaryLabelColor, for: .normal)
             
             allRecordsButton.clipsToBounds = true
             allRecordsButton.layer.cornerRadius = 5
@@ -266,6 +266,7 @@ class ProfileView: UIView {
         
         if postponed > 0 {
             let separator = UIView()
+            separator.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: 5)
             separator.backgroundColor = vkSingleton.shared.separatorColor
             self.addSubview(separator)
             
@@ -287,7 +288,6 @@ class ProfileView: UIView {
             self.addSubview(postponedWallButton)
             
             topY += 30
-            
         }
         
         return topY

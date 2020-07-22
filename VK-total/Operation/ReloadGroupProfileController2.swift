@@ -17,7 +17,7 @@ class ReloadGroupProfileController2: Operation {
     }
     
     override func main() {
-        guard let parseGroupWall = dependencies[0] as? ParseGroupWall, let parseGroupProfile = dependencies[1] as? ParseGroupProfile else { return }
+        guard let parseGroupWall = dependencies[0] as? ParseGroupWall, let parseGroupProfile = dependencies[1] as? ParseGroupProfile, let parsePostponed = dependencies[2] as? ParseGroupWall else { return }
         
         if controller.offset == 0 {
             controller.wall = parseGroupWall.wall
@@ -31,6 +31,10 @@ class ReloadGroupProfileController2: Operation {
         
         controller.viewCount += parseGroupWall.wall.count
         controller.groupProfile = parseGroupProfile.outputData
+        
+        controller.postponedWall = parsePostponed.wall
+        controller.postponedProfiles = parsePostponed.profiles
+        controller.postponedGroups = parsePostponed.groups
         
         if controller.groupProfile.count > 0 && controller.offset == 0 {
             ViewControllerUtils().hideActivityIndicator()
