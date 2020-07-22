@@ -416,11 +416,11 @@ class WallRecordCell: UITableViewCell {
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
         if record.userLikes == 1 {
-            likesButton.setTitleColor(UIColor.purple, for: .normal)
-            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor:  UIColor.purple), for: .normal)
+            likesButton.setTitleColor(vkSingleton.shared.likeColor, for: .normal)
+            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor: vkSingleton.shared.likeColor), for: .normal)
         } else {
-            likesButton.setTitleColor(UIColor.darkGray, for: .normal)
-            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor:  UIColor.darkGray), for: .normal)
+            likesButton.setTitleColor(.darkGray, for: .normal)
+            likesButton.setImage(UIImage(named: "filled-like2")?.tint(tintColor: .darkGray), for: .normal)
         }
     }
     
@@ -481,7 +481,7 @@ class WallRecordCell: UITableViewCell {
                     gifSizeLabel.contentMode = .center
                     gifSizeLabel.textColor = UIColor.black
                     gifSizeLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    gifSizeLabel.layer.cornerRadius = 10
+                    gifSizeLabel.layer.cornerRadius = 4
                     gifSizeLabel.clipsToBounds = true
                     gifSizeLabel.frame = CGRect(x: imageWidth - 10 - 120, y: imageHeight - 4 - 10 - 20, width: 120, height: 20)
                     imageView.addSubview(gifSizeLabel)
@@ -563,14 +563,9 @@ class WallRecordCell: UITableViewCell {
                 durationLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                 durationLabel.textAlignment = .center
                 durationLabel.contentMode = .center
-                if #available(iOS 13.0, *) {
-                    durationLabel.textColor = .label
-                    durationLabel.backgroundColor = .secondarySystemBackground
-                } else {
-                    durationLabel.textColor = UIColor.black
-                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                }
-                durationLabel.layer.cornerRadius = 10
+                durationLabel.textColor = .white
+                durationLabel.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                durationLabel.layer.cornerRadius = 4
                 durationLabel.clipsToBounds = true
                 if let length = durationLabel.text?.length, length > 5 {
                     durationLabel.frame = CGRect(x: imageWidth - 10 - 90, y: imageHeight - 4 - 10 - 20, width: 90, height: 20)

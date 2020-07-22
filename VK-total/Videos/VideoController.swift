@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import AVFoundation
 import Alamofire
 import SwiftyJSON
 import WebKit
@@ -84,19 +85,37 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        OperationQueue.main.addOperation {
-            self.configureTableView()
-            
-            self.tableView.register(CommentCell2.self, forCellReuseIdentifier: "commentCell")
-            
-            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 44)
-            
-            let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .done, target: self, action: #selector(self.tapBarButtonItem(sender:)))
-            self.navigationItem.rightBarButtonItem = barButton
-            
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-        }
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+        tableView.sectionIndexTrackingBackgroundColor = vkSingleton.shared.backColor
+        tableView.separatorColor = vkSingleton.shared.separatorColor
+        self.view.backgroundColor = vkSingleton.shared.backColor
         
+        let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .done, target: self, action: #selector(self.tapBarButtonItem(sender:)))
+        self.navigationItem.rightBarButtonItem = barButton
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
+            configureTableView()
+            tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
+            
+            ViewControllerUtils().showActivityIndicator(uiView: view)
+            getVideo()
+        }
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+    
+    }
+    
+    func getVideo() {
         let url = "/method/video.get"
         let parameters = [
             "access_token": vkSingleton.shared.accessToken,
@@ -176,20 +195,6 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
         reloadTableController.addDependency(parseComments)
         reloadTableController.addDependency(parseReposts)
         OperationQueue.main.addOperation(reloadTableController)
-    }
-
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        
-        if firstAppear {
-            firstAppear = false
-            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
-        }
-    }
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-    
     }
     
     func didSendComment(_ text: String!) {
@@ -330,31 +335,19 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
     }
     
     func configureTableView() {
-        tableView.backgroundColor = vkSingleton.shared.backColor
-        
         commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
         commentView.textView.backgroundColor = .clear
-        commentView.textView.textColor = .black
-        commentView.textView.tintColor = vkSingleton.shared.mainColor
-        commentView.tintColor = vkSingleton.shared.mainColor
-        
-        if #available(iOS 13.0, *) {
-            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            } else if AppConfig.shared.darkMode {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            }
-        }
+        commentView.textView.textColor = vkSingleton.shared.labelColor
+        commentView.textView.tintColor = vkSingleton.shared.secondaryLabelColor
+        commentView.textView.changeKeyboardAppearanceMode()
+        commentView.tintColor = vkSingleton.shared.secondaryLabelColor
         
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-        commentView.tabHeight = self.tabHeight
+        
+        commentView.tabHeight = 0
         
         setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
         //setCommentFromGroupID(id: 0, controller: self)
@@ -485,13 +478,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
@@ -502,7 +489,6 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
             
             let cell = self.tableView.dequeueReusableCell(withIdentifier: "videoCell", for: indexPath) as! VideoCell
             
-            cell.webView.navigationDelegate = self
             cell.configureCell(record: video, profiles: users, groups: groups, likes: likes, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             
             cell.likesButton.addTarget(self, action: #selector(self.likeVideo(sender:)), for: .touchUpInside)
@@ -656,187 +642,186 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
             let buttonPosition: CGPoint = sender.location(in: self.tableView)
             
             if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
-                let cell = self.tableView.cellForRow(at: indexPath) as! CommentCell2
-                let index = comments.count - indexPath.row
-                let comment = comments[index]
-                
-                var title = ""
-                if "\(comment.fromID)" == vkSingleton.shared.userID {
-                    title = "\(comment.date.toStringLastTime()) Вы написали:"
-                } else {
-                    if comment.fromID > 0 {
-                        let user = commentsProfiles.filter({ $0.uid == comment.fromID })
-                        if user.count > 0 {
-                            if user[0].sex == 1 {
-                                title = "\(comment.date.toStringLastTime())\n\(user[0].firstName) \(user[0].lastName) написала:"
-                            } else {
-                                title = "\(comment.date.toStringLastTime())\n\(user[0].firstName) \(user[0].lastName) написал:"
-                            }
-                        }
+                if let cell = self.tableView.cellForRow(at: indexPath) as? CommentCell2 {
+                    let index = comments.count - indexPath.row
+                    let comment = comments[index]
+                    
+                    var title = ""
+                    if "\(comment.fromID)" == vkSingleton.shared.userID {
+                        title = "\(comment.date.toStringLastTime()) Вы написали:"
                     } else {
-                        title = "\(comment.date.toStringLastTime())\nСообщество написало:"
-                    }
-                }
-                
-                var mess = comment.text.prepareTextForPublic().replacingOccurrences(of: "\n", with: " ")
-                if mess.length > 100 {
-                    mess = "\(String(mess.prefix(100)))..."
-                }
-                
-                if comment.attach.count == 1 {
-                    if mess != "" && comment.attach[0].type != "" {
-                        mess = "\(mess)\n"
-                    }
-                    
-                    if comment.attach[0].type == "photo" || comment.attach[0].type == "posted_photo"{
-                        mess = "\(mess)[Фотография]"
-                    } else if comment.attach[0].type == "video" {
-                        mess = "\(mess)[Видеозапись]"
-                    } else if comment.attach[0].type == "sticker" {
-                        mess = "\(mess)[Стикер]"
-                    } else if comment.attach[0].type == "gift" {
-                        mess = "\(mess)[Подарок]"
-                    } else if comment.attach[0].type == "wall" {
-                        mess = "\(mess)[Запись на стене]"
-                    } else if comment.attach[0].type == "doc" {
-                        mess = "\(mess)[Документ]"
-                    } else if comment.attach[0].type == "link" {
-                        mess = "\(mess)[Ссылка]"
-                    }
-                } else if comment.attach.count > 0 {
-                    if mess != ""  {
-                        mess = "\(mess)\n"
-                    }
-                    
-                    mess = "\(mess)[\(comment.attach.count.attachAdder())]"
-                }
-                
-                let alertController = UIAlertController(title: title, message: mess, preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                alertController.addAction(cancelAction)
-                
-                if vkSingleton.shared.userID != "\(comment.fromID)" {
-                    let action5 = UIAlertAction(title: cell.nameLabel.text!, style: .default) { action in
-                        self.openProfileController(id: comment.fromID, name: "")
-                        
-                    }
-                    alertController.addAction(action5)
-                    
-                    let replyName = comment.getReplyCommentFromID(id: comment.fromID, users: commentsProfiles, groups: commentsGroups)
-                    
-                    let replyText = comment.getReplyTextFromID(id: comment.fromID, users: commentsProfiles, groups: commentsGroups)
-                    
-                    let action1 = UIAlertAction(title: "Ответить \(replyName)", style: .default) { action in
-                        
-                        self.openNewCommentController(ownerID: self.ownerID, message: replyText, type: "new_video_comment", title: "Новый комментарий", replyID: comment.id, replyName: replyName, comment: nil, controller: self)
-                    }
-                    alertController.addAction(action1)
-                }
-                
-                if comment.canLike == 1 && comment.userLikes == 0 {
-                    let action2 = UIAlertAction(title: "Мне нравится", style: .default) { action in
-                        
-                        self.likeVideoCommentManually(indexPath: indexPath)
-                    }
-                    alertController.addAction(action2)
-                }
-                
-                if comment.userLikes == 1 {
-                    let action3 = UIAlertAction(title: "Отменить «Мне нравится»", style: .destructive) { action in
-                        
-                        self.likeVideoCommentManually(indexPath: indexPath)
-                    }
-                    alertController.addAction(action3)
-                }
-                
-                if comment.countLikes > 0 {
-                    let action4 = UIAlertAction(title: "Список «Кому нравится»", style: .default) { action in
-                        
-                        let url = "/method/likes.getList"
-                        let parameters = [
-                            "access_token": vkSingleton.shared.accessToken,
-                            "type": "video_comment",
-                            "owner_id": "\(self.ownerID)",
-                            "item_id": "\(comment.id)",
-                            "extended": "1",
-                            "fields": "id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status",
-                            "count": "1000",
-                            "skip_own": "0",
-                            "v": vkSingleton.shared.version
-                        ]
-                        
-                        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
-                        OperationQueue().addOperation(getServerDataOperation)
-                        
-                        let parseLikes = ParseLikes()
-                        parseLikes.addDependency(getServerDataOperation)
-                        parseLikes.completionBlock = {
-                            OperationQueue.main.addOperation {
-                                let likesController = self.storyboard?.instantiateViewController(withIdentifier: "LikesUsersController") as! LikesUsersController
-                                
-                                likesController.likes = parseLikes.outputData
-                                likesController.title = "Оценили"
-                                self.navigationController?.pushViewController(likesController, animated: true)
+                        if comment.fromID > 0 {
+                            let user = commentsProfiles.filter({ $0.uid == comment.fromID })
+                            if user.count > 0 {
+                                if user[0].sex == 1 {
+                                    title = "\(comment.date.toStringLastTime())\n\(user[0].firstName) \(user[0].lastName) написала:"
+                                } else {
+                                    title = "\(comment.date.toStringLastTime())\n\(user[0].firstName) \(user[0].lastName) написал:"
+                                }
                             }
+                        } else {
+                            title = "\(comment.date.toStringLastTime())\nСообщество написало:"
                         }
-                        OperationQueue().addOperation(parseLikes)
-                        
                     }
-                    alertController.addAction(action4)
-                }
-                
-                if "\(comment.fromID)" == vkSingleton.shared.userID || (comment.fromID < 0 && vkSingleton.shared.adminGroupID.contains(abs(comment.fromID))) {
-                    let action7  = UIAlertAction(title: "Редактировать", style: .default) { action in
-                        
-                        self.openNewCommentController(ownerID: self.ownerID, message: comment.text, type: "edit_video_comment", title: "Редактирование", replyID: 0, replyName: "", comment: comment, controller: self)
-                    }
-                    alertController.addAction(action7)
                     
-                    let action5 = UIAlertAction(title: "Удалить", style: .destructive) { action in
+                    var mess = comment.text.prepareTextForPublic().replacingOccurrences(of: "\n", with: " ")
+                    if mess.length > 100 {
+                        mess = "\(String(mess.prefix(100)))..."
+                    }
+                    
+                    if comment.attach.count == 1 {
+                        if mess != "" && comment.attach[0].type != "" {
+                            mess = "\(mess)\n"
+                        }
                         
-                        var titleColor = UIColor.black
-                        var backColor = UIColor.white
+                        if comment.attach[0].type == "photo" || comment.attach[0].type == "posted_photo"{
+                            mess = "\(mess)[Фотография]"
+                        } else if comment.attach[0].type == "video" {
+                            mess = "\(mess)[Видеозапись]"
+                        } else if comment.attach[0].type == "sticker" {
+                            mess = "\(mess)[Стикер]"
+                        } else if comment.attach[0].type == "gift" {
+                            mess = "\(mess)[Подарок]"
+                        } else if comment.attach[0].type == "wall" {
+                            mess = "\(mess)[Запись на стене]"
+                        } else if comment.attach[0].type == "doc" {
+                            mess = "\(mess)[Документ]"
+                        } else if comment.attach[0].type == "link" {
+                            mess = "\(mess)[Ссылка]"
+                        }
+                    } else if comment.attach.count > 0 {
+                        if mess != ""  {
+                            mess = "\(mess)\n"
+                        }
                         
-                        if #available(iOS 13.0, *) {
-                            titleColor = .label
+                        mess = "\(mess)[\(comment.attach.count.attachAdder())]"
+                    }
+                    
+                    let alertController = UIAlertController(title: title, message: mess, preferredStyle: .actionSheet)
+                    
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                    alertController.addAction(cancelAction)
+                    
+                    if vkSingleton.shared.userID != "\(comment.fromID)" {
+                        let action5 = UIAlertAction(title: cell.nameLabel.text!, style: .default) { action in
+                            self.openProfileController(id: comment.fromID, name: "")
+                            
+                        }
+                        alertController.addAction(action5)
+                        
+                        let replyName = comment.getReplyCommentFromID(id: comment.fromID, users: commentsProfiles, groups: commentsGroups)
+                        
+                        let replyText = comment.getReplyTextFromID(id: comment.fromID, users: commentsProfiles, groups: commentsGroups)
+                        
+                        let action1 = UIAlertAction(title: "Ответить \(replyName)", style: .default) { action in
+                            
+                            self.openNewCommentController(ownerID: self.ownerID, message: replyText, type: "new_video_comment", title: "Новый комментарий", replyID: comment.id, replyName: replyName, comment: nil, controller: self)
+                        }
+                        alertController.addAction(action1)
+                    }
+                    
+                    if comment.canLike == 1 && comment.userLikes == 0 {
+                        let action2 = UIAlertAction(title: "Мне нравится", style: .default) { action in
+                            
+                            self.likeVideoCommentManually(indexPath: indexPath)
+                        }
+                        alertController.addAction(action2)
+                    }
+                    
+                    if comment.userLikes == 1 {
+                        let action3 = UIAlertAction(title: "Отменить «Мне нравится»", style: .destructive) { action in
+                            
+                            self.likeVideoCommentManually(indexPath: indexPath)
+                        }
+                        alertController.addAction(action3)
+                    }
+                    
+                    if comment.countLikes > 0 {
+                        let action4 = UIAlertAction(title: "Список «Кому нравится»", style: .default) { action in
+                            
+                            let url = "/method/likes.getList"
+                            let parameters = [
+                                "access_token": vkSingleton.shared.accessToken,
+                                "type": "video_comment",
+                                "owner_id": "\(self.ownerID)",
+                                "item_id": "\(comment.id)",
+                                "extended": "1",
+                                "fields": "id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status",
+                                "count": "1000",
+                                "skip_own": "0",
+                                "v": vkSingleton.shared.version
+                            ]
+                            
+                            let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+                            OperationQueue().addOperation(getServerDataOperation)
+                            
+                            let parseLikes = ParseLikes()
+                            parseLikes.addDependency(getServerDataOperation)
+                            parseLikes.completionBlock = {
+                                OperationQueue.main.addOperation {
+                                    let likesController = self.storyboard?.instantiateViewController(withIdentifier: "LikesUsersController") as! LikesUsersController
+                                    
+                                    likesController.likes = parseLikes.outputData
+                                    likesController.title = "Оценили"
+                                    self.navigationController?.pushViewController(likesController, animated: true)
+                                }
+                            }
+                            OperationQueue().addOperation(parseLikes)
+                            
+                        }
+                        alertController.addAction(action4)
+                    }
+                    
+                    if "\(comment.fromID)" == vkSingleton.shared.userID || (comment.fromID < 0 && vkSingleton.shared.adminGroupID.contains(abs(comment.fromID))) {
+                        let action7  = UIAlertAction(title: "Редактировать", style: .default) { action in
+                            
+                            self.openNewCommentController(ownerID: self.ownerID, message: comment.text, type: "edit_video_comment", title: "Редактирование", replyID: 0, replyName: "", comment: comment, controller: self)
+                        }
+                        alertController.addAction(action7)
+                        
+                        let action5 = UIAlertAction(title: "Удалить", style: .destructive) { action in
+                            
+                            var titleColor = UIColor.black
+                            var backColor = UIColor.white
+                            
+                            titleColor = vkSingleton.shared.labelColor
                             backColor = vkSingleton.shared.backColor
-                        }
-                        
-                        let appearance = SCLAlertView.SCLAppearance(
-                            kTitleTop: 32.0,
-                            kWindowWidth: UIScreen.main.bounds.width - 40,
-                            kTitleFont: UIFont(name: "Verdana-Bold", size: 12)!,
-                            kTextFont: UIFont(name: "Verdana", size: 13)!,
-                            kButtonFont: UIFont(name: "Verdana", size: 14)!,
-                            showCloseButton: false,
-                            showCircularIcon: true,
-                            circleBackgroundColor: backColor,
-                            contentViewColor: backColor,
-                            titleColor: titleColor
-                        )
-                        let alertView = SCLAlertView(appearance: appearance)
-                        
-                        alertView.addButton("Да, я уверен") {
                             
-                            self.deleteVideoComment(commentID: "\(comment.id)", controller: self)
-                        }
-                        alertView.addButton("Отмена, я передумал") {
+                            let appearance = SCLAlertView.SCLAppearance(
+                                kTitleTop: 32.0,
+                                kWindowWidth: UIScreen.main.bounds.width - 40,
+                                kTitleFont: UIFont(name: "Verdana-Bold", size: 12)!,
+                                kTextFont: UIFont(name: "Verdana", size: 13)!,
+                                kButtonFont: UIFont(name: "Verdana", size: 14)!,
+                                showCloseButton: false,
+                                showCircularIcon: true,
+                                circleBackgroundColor: backColor,
+                                contentViewColor: backColor,
+                                titleColor: titleColor
+                            )
+                            let alertView = SCLAlertView(appearance: appearance)
                             
+                            alertView.addButton("Да, я уверен") {
+                                
+                                self.deleteVideoComment(commentID: "\(comment.id)", controller: self)
+                            }
+                            alertView.addButton("Отмена, я передумал") {
+                                
+                            }
+                            alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить данный комментарий? Это действие необратимо.")
                         }
-                        alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить данный комментарий? Это действие необратимо.")
+                        alertController.addAction(action5)
                     }
-                    alertController.addAction(action5)
-                }
-                
-                
-                let action6 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
                     
-                    self.reportOnObject(ownerID: self.ownerID, itemID: "\(comment.id)", type: "video_comment")
+                    
+                    let action6 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
+                        
+                        self.reportOnObject(ownerID: self.ownerID, itemID: "\(comment.id)", type: "video_comment")
+                    }
+                    alertController.addAction(action6)
+                    
+                    self.present(alertController, animated: true)
                 }
-                alertController.addAction(action6)
-                
-                self.present(alertController, animated: true)
             }
         }
     }
@@ -990,7 +975,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1031,7 +1016,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1085,7 +1070,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                                     }
                                 }
                             } else {
-                                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                                error.showErrorMessage(controller: self)
                             }
                         }
                         
@@ -1123,7 +1108,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                                     }
                                 }
                             } else {
-                                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                                error.showErrorMessage(controller: self)
                             }
                         }
                         
@@ -1173,7 +1158,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -1211,7 +1196,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -1308,7 +1293,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                                 self.tableView.endUpdates()
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1349,7 +1334,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                                 self.tableView.endUpdates()
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1384,9 +1369,7 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                     if error.errorCode == 0 {
                         self.showSuccessMessage(title: "Мои видеозаписи", msg: "\nВидеозапись «\(video.title)» успешно удалена.\n")
                     } else {
-                        let title = "Ошибка #\(error.errorCode)"
-                        let msg = "\n\(error.errorMsg)\n"
-                        self.showErrorMessage(title: title, msg: msg)
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 

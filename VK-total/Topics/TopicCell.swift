@@ -77,14 +77,12 @@ class TopicCell: UITableViewCell {
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.3
         
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-            titleLabel.textColor = .label
-            createdLabel.textColor = .secondaryLabel
-            updatedLabel.textColor = .secondaryLabel
-            commentLabel.textColor = .label
-            countLabel.textColor = .secondaryLabel
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
+        titleLabel.textColor = vkSingleton.shared.labelColor
+        createdLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        updatedLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        commentLabel.textColor = vkSingleton.shared.labelColor
+        countLabel.textColor = vkSingleton.shared.secondaryLabelColor
         
         nameLabel.frame = CGRect(x: 2 * leftInsets + avatarHeight, y: 5, width: bounds.width - 3 * leftInsets - avatarHeight, height: 20)
         self.addSubview(nameLabel)
@@ -135,7 +133,7 @@ class TopicCell: UITableViewCell {
         if topic.isClosed == 1 {
             closedLabel.text = "Обсуждение закрыто"
             closedLabel.textAlignment = .center
-            closedLabel.textColor = UIColor.purple
+            closedLabel.textColor = vkSingleton.shared.likeColor
             closedLabel.font = closedFont
             closedLabel.numberOfLines = 1
             

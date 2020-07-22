@@ -14,6 +14,7 @@ class PhotoImageCell: UITableViewCell, UIScrollViewDelegate {
     
     @IBOutlet weak var scrollView: UIScrollView!
     @IBOutlet weak var photoImage: UIImageView!
+    @IBOutlet weak var label: UILabel!
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return self.photoImage
@@ -27,8 +28,10 @@ class PhotoImageCell: UITableViewCell, UIScrollViewDelegate {
     
     @objc func doubleTapAction(sender: UITapGestureRecognizer) {
         if scrollView.zoomScale == 1 {
+            self.label.isHidden = true
             self.scrollView.setZoomScale(3, animated: true)
         } else {
+            if self.label.tag == 1 { self.label.isHidden = false }
             self.scrollView.setZoomScale(1, animated: true)
         }
     }

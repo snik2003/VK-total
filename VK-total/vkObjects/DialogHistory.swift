@@ -60,7 +60,7 @@ class DialogHistory: Equatable {
         self.out = json["out"].intValue
         self.title = json["title"].stringValue
         self.body = json["body"].stringValue
-        self.typeAttach = json["attachment"]["type"].stringValue
+        self.typeAttach = json["attachments"]["type"].stringValue
         self.emoji = json["emoji"].intValue
         self.important = json["important"].intValue
         self.deleted = json["deleted"].intValue
@@ -183,10 +183,30 @@ class DialogHistory: Equatable {
                 doc.ownerID = json["attachments"][index]["doc"]["owner_id"].intValue
                 doc.title = json["attachments"][index]["doc"]["title"].stringValue
                 doc.size = json["attachments"][index]["doc"]["size"].intValue
-                doc.ext = json["attachments"][index]["doc"]["ext"].intValue
+                doc.ext = json["attachments"][index]["doc"]["ext"].stringValue
                 doc.url = json["attachments"][index]["doc"]["url"].stringValue
                 doc.date = json["attachments"][index]["doc"]["date"].intValue
                 doc.type = json["attachments"][index]["doc"]["type"].intValue
+                doc.accessKey = json["attachments"][index]["doc"]["access_key"].stringValue
+                
+                doc.linkMP3 = json["attachments"][index]["doc"]["preview"]["audio_msg"]["link_mp3"].stringValue
+                doc.linkOGG = json["attachments"][index]["doc"]["preview"]["audio_msg"]["link_ogg"].stringValue
+                doc.duration = json["attachments"][index]["doc"]["preview"]["audio_msg"]["duration"].intValue
+                
+                if doc.type == 4 {
+                    self.hasSticker = true
+                    
+                    doc.link = json["attachments"][index]["doc"]["preview"]["graffiti"]["src"].stringValue
+                    doc.width = json["attachments"][index]["doc"]["preview"]["graffiti"]["width"].intValue
+                    doc.height = json["attachments"][index]["doc"]["preview"]["graffiti"]["height"].intValue
+                    
+                    if doc.link.isEmpty {
+                        doc.link = json["attachments"][index]["doc"]["preview"]["photo"]["sizes"][0]["src"].stringValue
+                        doc.width = json["attachments"][index]["doc"]["preview"]["photo"]["sizes"][0]["width"].intValue
+                        doc.height = json["attachments"][index]["doc"]["preview"]["photo"]["sizes"][0]["height"].intValue
+                    }
+                }
+                
                 att.docs.append(doc)
             }
             
@@ -258,6 +278,106 @@ class DialogHistory: Equatable {
                         video.isPrivate = json["fwd_messages"][index1]["attachments"][index2]["video"]["is_private"].intValue
                         video.accessKey = json["fwd_messages"][index1]["attachments"][index2]["video"]["access_key"].stringValue
                         att.videos.append(video)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "audio" {
+                        let audio = AudioAttach(json: JSON.null)
+                        audio.id = json["fwd_messages"][index1]["attachments"][index2]["audio"]["id"].intValue
+                        audio.ownerID = json["fwd_messages"][index1]["attachments"][index2]["audio"]["owner_id"].intValue
+                        audio.artist = json["fwd_messages"][index1]["attachments"][index2]["audio"]["artist"].stringValue
+                        audio.title = json["fwd_messages"][index1]["attachments"][index2]["audio"]["title"].stringValue
+                        audio.duration = json["fwd_messages"][index1]["attachments"][index2]["audio"]["duration"].intValue
+                        audio.url = json["fwd_messages"][index1]["attachments"][index2]["audio"]["url"].intValue
+                        audio.albumID = json["fwd_messages"][index1]["attachments"][index2]["audio"]["album_id"].intValue
+                        audio.accessKey = json["fwd_messages"][index1]["attachments"][index2]["audio"]["access_key"].stringValue
+                        att.audio.append(audio)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "sticker" {
+                        self.hasSticker = true
+                        
+                        let sticker = StickerAttach(json: JSON.null)
+                        sticker.id = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["id"].intValue
+                        sticker.productID = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["product_id"].intValue
+                        sticker.width = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["width"].intValue
+                        sticker.height = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["height"].intValue
+                        sticker.photo256 = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_256"].stringValue
+                        sticker.photo128 = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_128"].stringValue
+                        att.stickers.append(sticker)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "wall" {
+                        let wall = WallAttach(json: JSON.null)
+                        wall.id = json["fwd_messages"][index1]["attachments"][index2]["wall"]["id"].intValue
+                        wall.fromID = json["fwd_messages"][index1]["attachments"][index2]["wall"]["from_id"].intValue
+                        wall.date = json["fwd_messages"][index1]["attachments"][index2]["wall"]["date"].intValue
+                        wall.text = json["fwd_messages"][index1]["attachments"][index2]["wall"]["text"].stringValue
+                        wall.postType = json["fwd_messages"][index1]["attachments"][index2]["wall"]["post_type"].stringValue
+                        att.wall.append(wall)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "gift" {
+                        let gift = GiftAttach(json: JSON.null)
+                        gift.id = json["fwd_messages"][index1]["attachments"][index2]["gift"]["id"].intValue
+                        gift.thumb48 = json["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_48"].stringValue
+                        gift.thumb96 = json["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_96"].stringValue
+                        gift.thumb256 = json["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_256"].stringValue
+                        att.gift.append(gift)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "doc" {
+                        let doc = DocAttach(json: JSON.null)
+                        doc.id = json["fwd_messages"][index1]["attachments"][index2]["doc"]["id"].intValue
+                        doc.ownerID = json["fwd_messages"][index1]["attachments"][index2]["doc"]["owner_id"].intValue
+                        doc.title = json["fwd_messages"][index1]["attachments"][index2]["doc"]["title"].stringValue
+                        doc.size = json["fwd_messages"][index1]["attachments"][index2]["doc"]["size"].intValue
+                        doc.ext = json["fwd_messages"][index1]["attachments"][index2]["doc"]["ext"].stringValue
+                        doc.url = json["fwd_messages"][index1]["attachments"][index2]["doc"]["url"].stringValue
+                        doc.date = json["fwd_messages"][index1]["attachments"][index2]["doc"]["date"].intValue
+                        doc.type = json["fwd_messages"][index1]["attachments"][index2]["doc"]["type"].intValue
+                        doc.accessKey = json["fwd_messages"][index1]["attachments"][index2]["doc"]["access_key"].stringValue
+                        
+                        doc.linkMP3 = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["link_mp3"].stringValue
+                        doc.linkOGG = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["link_ogg"].stringValue
+                        doc.duration = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["duration"].intValue
+
+                        if doc.type == 4 {
+                            self.hasSticker = true
+                            
+                            doc.link = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["graffiti"]["src"].stringValue
+                            doc.width = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["graffiti"]["width"].intValue
+                            doc.height = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["graffiti"]["height"].intValue
+                            
+                            if doc.link.isEmpty {
+                                doc.link = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["photo"]["sizes"][0]["src"].stringValue
+                                doc.width = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["photo"]["sizes"][0]["width"].intValue
+                                doc.height = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["photo"]["sizes"][0]["height"].intValue
+                            }
+                        }
+                    
+                        att.docs.append(doc)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "link" {
+                        let link = LinkAttach(json: JSON.null)
+                        link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["title"].stringValue
+                        if link.title == "" {
+                            link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["description"].stringValue
+                            if link.title == "" {
+                                link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["caption"].stringValue
+                                if link.title == "" {
+                                    link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["photo"]["text"].stringValue
+                                }
+                            }
+                        }
+                        link.url = json["fwd_messages"][index1]["attachments"][index2]["link"]["url"].stringValue
+                        att.link.append(link)
                         mess.attach.append(att)
                     }
                 }
@@ -332,4 +452,26 @@ extension Array where Element: Equatable {
         return result
     }
 }
+
+extension Array where Element: Codable {
+    
+    func saveInUserDefaults(KeyName: String) {
+        let encoder = JSONEncoder()
+        if let encoded = try? encoder.encode(self) {
+            UserDefaults.standard.set(encoded, forKey: KeyName)
+        }
+    }
+    
+    func loadFromUserDefaults(KeyName: String) -> Array {
+        if let data = UserDefaults.standard.object(forKey: KeyName) as? Data {
+            let decoder = JSONDecoder()
+            if let objects = try? decoder.decode(Array.self, from: data) {
+                return objects
+            }
+        }
+        
+        return []
+    }
+}
+
 

@@ -41,5 +41,6 @@ class IMusic: Object {
         self.artist = json["artistName"].stringValue
         self.album = json["collectionName"].stringValue
         self.reserv5 = json["artworkUrl100"].stringValue
+        self.reserv6 = json["artistViewUrl"].stringValue
     }
 }

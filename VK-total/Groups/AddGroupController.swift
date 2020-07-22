@@ -40,12 +40,18 @@ class AddGroupController: InnerTableViewController, UISearchBarDelegate {
             
             if #available(iOS 13.0, *) {
                 let searchField = self.searchBar.searchTextField
-                searchField.backgroundColor = .separator
-                searchField.textColor = .label
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
             } else {
+                self.searchBar.changeKeyboardAppearanceMode()
                 if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
-                    searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                    searchField.textColor = .black
+                    searchField.backgroundColor = vkSingleton.shared.separatorColor
+                    searchField.textColor = vkSingleton.shared.labelColor
+                    searchField.changeKeyboardAppearanceMode()
+                } else if let searchField = self.searchBar.value(forKey: "searchField") as? UITextField {
+                    searchField.backgroundColor = vkSingleton.shared.separatorColor
+                    searchField.textColor = vkSingleton.shared.labelColor
+                    searchField.changeKeyboardAppearanceMode()
                 }
             }
         }

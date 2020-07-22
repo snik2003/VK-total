@@ -75,15 +75,22 @@ class MembersController: InnerViewController, UITableViewDelegate, UITableViewDa
 
     func createSearchBar() {
         searchBar = UISearchBar(frame: CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: 54))
+        searchBar.tintColor = vkSingleton.shared.labelColor
         
         if #available(iOS 13.0, *) {
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = .separator
-            searchField.textColor = .label
+            searchField.backgroundColor = vkSingleton.shared.separatorColor
+            searchField.textColor = vkSingleton.shared.labelColor
         } else {
+            searchBar.changeKeyboardAppearanceMode()
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
-                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                searchField.textColor = .black
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
+            } else if let searchField = searchBar.value(forKey: "searchField") as? UITextField {
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
             }
         }
         
@@ -110,7 +117,11 @@ class MembersController: InnerViewController, UITableViewDelegate, UITableViewDa
         isRefresh = true
         
         OperationQueue.main.addOperation {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
         }
         
         let url = "/method/groups.getMembers"
@@ -161,25 +172,13 @@ class MembersController: InnerViewController, UITableViewDelegate, UITableViewDa
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = .white
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = .white
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -272,13 +271,8 @@ class MembersController: InnerViewController, UITableViewDelegate, UITableViewDa
             let deleteAction = UITableViewRowAction(style: .normal, title: "Исключить") { (rowAction, indexPath) in
                 let user = self.users[indexPath.row]
                 
-                var titleColor = UIColor.black
-                var backColor = UIColor.white
-                
-                if #available(iOS 13.0, *) {
-                    titleColor = .label
-                    backColor = vkSingleton.shared.backColor
-                }
+                let titleColor = vkSingleton.shared.labelColor
+                let backColor = vkSingleton.shared.backColor
                 
                 let appearance = SCLAlertView.SCLAppearance(
                     kTitleTop: 32.0,
@@ -318,7 +312,7 @@ class MembersController: InnerViewController, UITableViewDelegate, UITableViewDa
                             self.offset = 0
                             self.refresh()
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     OperationQueue().addOperation(request)

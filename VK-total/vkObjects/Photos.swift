@@ -10,9 +10,11 @@ import Foundation
 import SwiftyJSON
 
 class Photos {
-    var uid: String = ""
-    var pid: String = ""
+    var uid: String = "0"
+    var pid: String = "0"
+    var ownerID: String = "0"
     var createdTime: Int = 0
+    var text: String = ""
     var width: Int = 0
     var height: Int = 0
     var photoURL: String = ""
@@ -23,9 +25,12 @@ class Photos {
     var xxbigPhotoURL: String = ""
     
     init(json: JSON) {
-        self.uid = json["owner_id"].stringValue
+        self.ownerID = json["owner_id"].stringValue
+        self.uid = json["user_id"].stringValue
+        if self.uid.isEmpty { self.uid = self.ownerID }
         self.pid = json["id"].stringValue
         self.createdTime = json["date"].intValue
+        self.text = json["text"].stringValue
         self.width = json["width"].intValue
         self.height = json["height"].intValue
         self.photoURL = json["photo_130"].stringValue
@@ -40,6 +45,7 @@ class Photos {
 class Photo {
     var photoID: String = ""
     var albumID: String = ""
+    var ownerID: String = ""
     var userID: String = ""
     var postID: Int = 0
     var text: String = ""
@@ -64,7 +70,9 @@ class Photo {
     init(json: JSON) {
         self.photoID = json["id"].stringValue
         self.albumID = json["album_id"].stringValue
-        self.userID = json["owner_id"].stringValue
+        self.ownerID = json["owner_id"].stringValue
+        self.userID = json["user_id"].stringValue
+        if self.userID.isEmpty { self.userID = self.ownerID }
         self.postID = json["post_id"].intValue
         self.text = json["text"].stringValue
         self.createdTime = json["date"].intValue

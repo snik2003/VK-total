@@ -18,25 +18,33 @@ class ReloadNewsfeed2Controller: Operation {
     override func main() {
         guard let parseNewsfeed = dependencies.first as? ParseNewsfeed else { return }
         
+        controller.viewCount += parseNewsfeed.news.count
+        
         if controller.startFrom == "" && controller.offset == 0 {
             controller.news = parseNewsfeed.news
             controller.newsProfiles = parseNewsfeed.profiles
             controller.newsGroups = parseNewsfeed.groups
         } else {
-            for new in parseNewsfeed.news {
-                controller.news.append(new)
+            if controller.news.count > controller.leftCellCount {
+                controller.news = Array(controller.news.dropFirst(controller.news.count - controller.leftCellCount))
+                controller.tableView.reloadData()
+                controller.tableView.scrollToRow(at: IndexPath(row: 0, section: controller.leftCellCount - 1), at: .bottom, animated: false)
             }
-            for profile in parseNewsfeed.profiles {
-                controller.newsProfiles.append(profile)
-            }
-            for group in parseNewsfeed.groups {
-                controller.newsGroups.append(group)
-            }
+            
+            controller.news.append(contentsOf: parseNewsfeed.news)
+            controller.newsProfiles.append(contentsOf: parseNewsfeed.profiles)
+            controller.newsGroups.append(contentsOf: parseNewsfeed.groups)
+        }
+        
+        if parseNewsfeed.news.count == 0 {
+            controller.tableView.tableFooterView = nil
         }
         controller.startFrom = parseNewsfeed.nextFrom
         controller.offset += controller.count
         controller.tableView.reloadData()
         controller.refreshControl?.endRefreshing()
+        controller.spinner.startAnimating()
+        controller.menuView.isUserInteractionEnabled = true
         ViewControllerUtils().hideActivityIndicator()
     }
 }

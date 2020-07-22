@@ -20,4 +20,5 @@ target 'VK-total' do
   pod 'Popover'
   pod 'CMPhotoCropEditor'
   pod 'YandexMobileMetrica/Dynamic', '3.7.1'
+  pod 'Swifter', '~> 1.4.7'
 end

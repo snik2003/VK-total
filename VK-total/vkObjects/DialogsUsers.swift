@@ -9,7 +9,7 @@
 import Foundation
 import SwiftyJSON
 
-class DialogsUsers {
+class DialogsUsers: Codable {
     var uid: String = ""
     var firstName: String = ""
     var lastName: String = ""

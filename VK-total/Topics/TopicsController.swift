@@ -111,15 +111,22 @@ class TopicsController: InnerViewController, UITableViewDelegate, UITableViewDat
     
     func createSearchBar() {
         searchBar = UISearchBar(frame: CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: 0))
+        searchBar.tintColor = vkSingleton.shared.labelColor
         
         if #available(iOS 13.0, *) {
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = .separator
-            searchField.textColor = .label
+            searchField.backgroundColor = vkSingleton.shared.separatorColor
+            searchField.textColor = vkSingleton.shared.labelColor
         } else {
+            searchBar.changeKeyboardAppearanceMode()
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
-                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                searchField.textColor = .black
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
+            } else if let searchField = searchBar.value(forKey: "searchField") as? UITextField {
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
             }
         }
         
@@ -240,18 +247,12 @@ class TopicsController: InnerViewController, UITableViewDelegate, UITableViewDat
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 10
+        return 7
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     

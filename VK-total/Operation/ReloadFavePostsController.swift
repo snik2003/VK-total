@@ -76,6 +76,7 @@ class ReloadFavePostsController: Operation {
         
         controller.offset += controller.count
         controller.tableView.reloadData()
+        controller.menuView.isUserInteractionEnabled = true
         ViewControllerUtils().hideActivityIndicator()
     }
 }

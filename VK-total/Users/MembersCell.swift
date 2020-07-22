@@ -26,10 +26,7 @@ class MembersCell: UITableViewCell {
         
         nameLabel = UILabel()
         nameLabel.text = "\(user.firstName) \(user.lastName)"
-        
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
         
         if user.onlineStatus == 1 && filter == "managers" {
             if user.onlineMobile == 1 {
@@ -52,12 +49,7 @@ class MembersCell: UITableViewCell {
         
         statusLabel = UILabel()
         statusLabel.isUserInteractionEnabled = false
-        
-        if #available(iOS 13.0, *) {
-            statusLabel.textColor = .secondaryLabel
-        } else {
-            statusLabel.textColor = UIColor.black.withAlphaComponent(0.6)
-        }
+        statusLabel.textColor = vkSingleton.shared.secondaryLabelColor
         
         if filter == "managers" {
             if user.role == "moderator" {

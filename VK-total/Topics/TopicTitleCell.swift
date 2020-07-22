@@ -69,9 +69,7 @@ class TopicTitleCell: UITableViewCell {
         typeLabel.frame = CGRect(x: 2 * leftInsets + avatarHeight, y: 30, width: bounds.width - 3 * leftInsets - avatarHeight, height: 15)
         self.addSubview(typeLabel)
         
-        if #available(iOS 13.0, *) {
-            titleLabel.textColor = .label
-            typeLabel.textColor = .secondaryLabel
-        }
+        titleLabel.textColor = vkSingleton.shared.labelColor
+        typeLabel.textColor = vkSingleton.shared.secondaryLabelColor
     }
 }

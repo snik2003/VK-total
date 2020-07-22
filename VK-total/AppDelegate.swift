@@ -37,7 +37,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         UNUserNotificationCenter.current().delegate = self
         
         if let userInfo = launchOptions?[UIApplication.LaunchOptionsKey.remoteNotification] as? [AnyHashable: Any] {
-            vkSingleton.shared.pushInfo = userInfo
+            vkSingleton.shared.pushInfo2 = userInfo
         }
         
         StoreReviewHelper.incrementAppOpenedCount()
@@ -48,7 +48,18 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
     }
 
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        
+        if !url.absoluteString.isEmpty {
+            let stringURL = url.absoluteString.replacingOccurrences(of: "vktotal://", with: "https://").replacingOccurrences(of: "vk://", with: "https://")
+            vkSingleton.shared.openLink = stringURL
+        }
+        
+        return true
+    }
+    
     func applicationDidEnterBackground(_ application: UIApplication) {
+        
         if AppConfig.shared.passwordOn {
             if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), !(currentVC is PasswordController) {
                 let vc = currentVC.storyboard?.instantiateViewController(withIdentifier: "PasswordController") as! PasswordController
@@ -65,6 +76,25 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func applicationDidBecomeActive(_ application: UIApplication) {
         
+        if vkSingleton.shared.openLink != "" {
+            if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController) {
+                if currentVC is InnerViewController || currentVC is InnerTableViewController {
+                    currentVC.openBrowserController(url: vkSingleton.shared.openLink)
+                    vkSingleton.shared.openLink = ""
+                } else if currentVC is UIAlertController {
+                    currentVC.dismiss(animated: false) { () -> Void in
+                        if let currentVC2 = self.topViewControllerWithRootViewController(rootViewController: self.window?.rootViewController) {
+                            currentVC2.openBrowserController(url: vkSingleton.shared.openLink)
+                            vkSingleton.shared.openLink = ""
+                        }
+                    }
+                } else if currentVC is SFSafariViewController {
+                    vkSingleton.shared.openLink = ""
+                }
+            }
+        }
+        
+    
         if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), let controllers = currentVC.navigationController?.viewControllers {
             for controller in controllers {
                 
@@ -125,9 +155,32 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                     
                     if let view = dc.view.superview {
                         ViewControllerUtils().showActivityIndicator(uiView: view)
+                    } else {
+                        ViewControllerUtils().showActivityIndicator(uiView: dc.view)
                     }
+                    
                     dc.offset = 0
-                    dc.refresh()
+                    if AppConfig.shared.setOfflineStatus {
+                        dc.refreshExecute()
+                    } else {
+                        dc.getAllDialogsOnline()
+                    }
+                }
+            }
+        }
+        
+        
+        if let userInfo = vkSingleton.shared.pushInfo {
+            if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), !(currentVC is PasswordController) {
+                
+                if currentVC is UIAlertController || currentVC is SFSafariViewController {
+                    currentVC.dismiss(animated: false) { () -> Void in
+                        if let currentVC2 = self.topViewControllerWithRootViewController(rootViewController: self.window?.rootViewController) {
+                            self.tapPushNotification(userInfo, controller: currentVC2)
+                        }
+                    }
+                } else {
+                    self.tapPushNotification(userInfo, controller: currentVC)
                 }
             }
         }
@@ -212,21 +265,24 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     }
     
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        
+         
         let userInfo = response.notification.request.content.userInfo
+        vkSingleton.shared.pushInfo = userInfo
         print(userInfo)
         
-        if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), !(currentVC is PasswordController) {
-            
-            if currentVC is UIAlertController || currentVC is SFSafariViewController {
-                currentVC.dismiss(animated: false) { () -> Void in
-                    if let currentVC2 = self.topViewControllerWithRootViewController(rootViewController: self.window?.rootViewController) {
-                        self.tapPushNotification(userInfo, controller: currentVC2)
+        if UIApplication.shared.applicationState == .active {
+            if let currentVC = topViewControllerWithRootViewController(rootViewController: window?.rootViewController), !(currentVC is PasswordController) {
+                
+                if currentVC is UIAlertController || currentVC is SFSafariViewController {
+                    currentVC.dismiss(animated: false) { () -> Void in
+                        if let currentVC2 = self.topViewControllerWithRootViewController(rootViewController: self.window?.rootViewController) {
+                            self.tapPushNotification(userInfo, controller: currentVC2)
+                        }
                     }
+                } else {
+                    self.tapPushNotification(userInfo, controller: currentVC)
                 }
-            } else {
-                self.tapPushNotification(userInfo, controller: currentVC)
-            }
+            } 
         }
         
         completionHandler()
@@ -235,6 +291,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     func tapPushNotification(_ userInfo: [AnyHashable: Any], controller: UIViewController) {
 
         UIApplication.shared.applicationIconBadgeNumber = 0
+        vkSingleton.shared.pushInfo = nil
         SwiftMessages.hideAll()
         if let type = (userInfo["data"] as AnyObject).object(forKey: "category") as? String {
             

@@ -9,8 +9,9 @@
 import UIKit
 import AVFoundation
 import SwiftyJSON
+import WebKit
 
-class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewDataSource {
+class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewDataSource, UIScrollViewDelegate, WKNavigationDelegate {
     
     @IBOutlet weak var barItem: UIBarButtonItem!
     
@@ -18,6 +19,8 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     let refreshControl = UIRefreshControl()
     
     var profileView: ProfileView!
+    var profileView2: ProfileView!
+    var isProfileHeader = false
     
     var userProfile = [UserProfileInfo]()
     var photos = [Photos]()
@@ -25,6 +28,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     var wall = [Wall]()
     var wallProfiles = [WallProfiles]()
     var wallGroups = [WallGroups]()
+    var videos = [Videos]()
     
     var postponedWall = [Wall]()
     var postponedWallProfiles = [WallProfiles]()
@@ -40,8 +44,11 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     var photoX: [Int : CGFloat] = [:]
     
     var offset = 0
-    let count = 20
+    var viewCount = 0
+    let count = 15
     var isRefresh = false
+    
+    var spinner: UIActivityIndicatorView!
     
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
@@ -70,20 +77,26 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             self.createTableView()
             
             self.barItem.isEnabled = true
-            //self.barItem.addBadge(number: 22)
             
-            self.tableView.separatorStyle = .none
-            
-            self.refreshControl.attributedTitle = NSAttributedString(string: "Обновляем данные")
+            let myAttribute = [NSAttributedString.Key.foregroundColor: vkSingleton.shared.labelColor]
+            let myAttrString = NSAttributedString(string: "Обновляем данные", attributes: myAttribute)
+            self.refreshControl.attributedTitle = myAttrString
             self.refreshControl.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
-            if #available(iOS 13.0, *) {
-                self.refreshControl.tintColor = .secondaryLabel
-            } else {
-                self.refreshControl.tintColor = .gray
-            }
+            self.refreshControl.tintColor = vkSingleton.shared.labelColor
             self.tableView.addSubview(self.refreshControl)
             
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            self.spinner = UIActivityIndicatorView(style: .white)
+            self.spinner.color = vkSingleton.shared.labelColor
+            self.spinner.stopAnimating()
+            self.spinner.hidesWhenStopped = true
+            self.spinner.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: 60)
+            self.tableView.tableFooterView = self.spinner
+            
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
         }
         
         refreshExecute()
@@ -114,13 +127,15 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     func createTableView() {
         tableView = UITableView()
         tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
-    
+        
         tableView.backgroundColor = vkSingleton.shared.backColor
         tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+        tableView.showsVerticalScrollIndicator = false
         
         tableView.delegate = self
         tableView.dataSource = self
     
+        tableView.separatorStyle = .none
         tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "wallRecordCell")
     
         self.view.addSubview(tableView)
@@ -128,14 +143,18 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     
     @objc func pullToRefresh() {
         offset = 0
+        viewCount = 0
+        spinner.stopAnimating()
+        tableView.tableFooterView = spinner
+        
+        estimatedHeightCache.removeAll(keepingCapacity: false)
         refreshExecute()
     }
     
     func refreshExecute() {
         
         isRefresh = true
-        estimatedHeightCache.removeAll(keepingCapacity: false)
-     
+        
         var code = "var a = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_id\":\"\(userID)\",\"fields\":\"id,first_name,last_name,maiden_name,domain,sex,relation,bdate,home_town,has_photo,city,country,status,last_seen,online,photo_max_orig,photo_max,photo_id,followers_count,counters,deactivated,education,contacts,connections,site,about,interests,activities,books,games,movies,music,tv,quotes,first_name_abl,first_name_gen,first_name_acc,can_post,can_send_friend_request,can_write_private_message,friend_status,is_favorite,blacklisted,blacklisted_by_me,crop_photo,is_hidden_from_feed,wall_default,personal,relatives,is_closed,can_access_closed\",\"v\":\"5.89\"});\n"
         
         code = "\(code) var b = API.photos.getAll({\"owner_id\":\"\(userID)\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"extended\":1,\"count\":100,\"photo_sizes\":0,\"skip_hidden\":0,\"v\": \"\(vkSingleton.shared.version)\"});\n"
@@ -162,7 +181,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             self.userProfile = json["response"][0].compactMap { UserProfileInfo(json: $0.1) }
             self.photos = json["response"][1]["items"].compactMap { Photos(json: $0.1) }
             
-            //print(json["response"][4])
+            //print(json["response"][2])
             
             if self.userID == vkSingleton.shared.userID {
                 OperationQueue.main.addOperation {
@@ -172,11 +191,10 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                             vkSingleton.shared.avatarURL = self.userProfile[0].maxPhotoOrigURL
                         }
                     }
-                    if let userInfo = vkSingleton.shared.pushInfo {
-                        vkSingleton.shared.pushInfo = nil
-                        if let appDelegate = UIApplication.shared.delegate as? AppDelegate {
-                            appDelegate.tapPushNotification(userInfo, controller: self)
-                        }
+                    
+                    if let userInfo = vkSingleton.shared.pushInfo2, let appDelegate = UIApplication.shared.delegate as? AppDelegate {
+                        vkSingleton.shared.pushInfo2 = nil
+                        appDelegate.tapPushNotification(userInfo, controller: self)
                     }
                 }
             }
@@ -215,33 +233,143 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             let profilesData = json["response"][2]["profiles"].compactMap { WallProfiles(json: $0.1) }
             let groupsData = json["response"][2]["groups"].compactMap { WallGroups(json: $0.1) }
             
-            if self.offset == 0 {
-                self.wall = wallData
-                self.wallProfiles = profilesData
-                self.wallGroups = groupsData
-            } else {
-                for record in wallData {
-                    self.wall.append(record)
-                }
-                for group in groupsData {
-                    self.wallGroups.append(group)
-                }
-                for profile in profilesData {
-                    self.wallProfiles.append(profile)
+            var videoIDs = ""
+            for wall in wallData {
+                for index in 0...9 {
+                    if wall.mediaType[index] == "video" {
+                        if videoIDs == "" {
+                            if wall.photoAccessKey[index] == "" {
+                                videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                            } else {
+                                videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                            }
+                        } else {
+                            if wall.photoAccessKey[index] == "" {
+                                videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                            } else {
+                                videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                            }
+                        }
+                    }
                 }
             }
             
-            self.offset += self.count
-            OperationQueue.main.addOperation {
-                self.setProfileView()
-                self.tableView.reloadData()
-                if self.userProfile.count > 0 {
-                    let user = self.userProfile[0]
-                    self.title = "\(user.firstName) \(user.lastName)"
+            if videoIDs != "" {
+                let url2 = "/method/video.get"
+                let parameters2 = [
+                    "access_token": vkSingleton.shared.accessToken,
+                    "owner_id": self.userID,
+                    "videos": videoIDs,
+                    "extended": "0",
+                    "fields": "id, first_name, last_name, photo_100",
+                    "v": vkSingleton.shared.version
+                ]
+                
+                let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                getServerDataOperation2.completionBlock = {
+                    guard let data = getServerDataOperation2.data else { return }
+                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    //print(json)
+                    
+                    let wallVideos = json["response"]["items"].compactMap({ Videos(json: $0.1) })
+                    
+                    if self.offset == 0 {
+                        self.wall = wallData
+                        self.wallProfiles = profilesData
+                        self.wallGroups = groupsData
+                        self.videos = wallVideos
+                    } else {
+                        self.wall.append(contentsOf: wallData)
+                        self.wallGroups.append(contentsOf: groupsData)
+                        self.wallProfiles.append(contentsOf: profilesData)
+                        self.videos.append(contentsOf: wallVideos)
+                    }
+                    
+                    self.offset += self.count
+                    self.viewCount += wallData.count
+                    
+                    if self.userID == vkSingleton.shared.userID {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: {
+                            if wallData.count == 0 {
+                                self.tableView.tableFooterView = nil
+                            }
+                            
+                            self.setProfileView()
+                            self.tableView.reloadData()
+                            if self.userProfile.count > 0 {
+                                let user = self.userProfile[0]
+                                self.title = "\(user.firstName) \(user.lastName)"
+                            }
+                            self.refreshControl.endRefreshing()
+                            self.spinner.startAnimating()
+                            self.saveAccountToRealm()
+                        })
+                    } else {
+                        OperationQueue.main.addOperation {
+                            if wallData.count == 0 {
+                                self.tableView.tableFooterView = nil
+                            }
+                            
+                            self.setProfileView()
+                            self.tableView.reloadData()
+                            if self.userProfile.count > 0 {
+                                let user = self.userProfile[0]
+                                self.title = "\(user.firstName) \(user.lastName)"
+                            }
+                            self.refreshControl.endRefreshing()
+                            self.spinner.startAnimating()
+                            self.saveAccountToRealm()
+                        }
+                    }
                 }
-                self.refreshControl.endRefreshing()
-                self.saveAccountToRealm()
-                ViewControllerUtils().hideActivityIndicator()
+                OperationQueue().addOperation(getServerDataOperation2)
+            } else {
+                if self.offset == 0 {
+                    self.wall = wallData
+                    self.wallProfiles = profilesData
+                    self.wallGroups = groupsData
+                } else {
+                    self.wall.append(contentsOf: wallData)
+                    self.wallProfiles.append(contentsOf: profilesData)
+                    self.wallGroups.append(contentsOf: groupsData)
+                }
+                
+                self.offset += self.count
+                self.viewCount += wallData.count
+                    
+                if self.userID == vkSingleton.shared.userID {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: {
+                        if wallData.count == 0 {
+                            self.tableView.tableFooterView = nil
+                        }
+                        
+                        self.setProfileView()
+                        self.tableView.reloadData()
+                        if self.userProfile.count > 0 {
+                            let user = self.userProfile[0]
+                            self.title = "\(user.firstName) \(user.lastName)"
+                        }
+                        self.refreshControl.endRefreshing()
+                        self.spinner.startAnimating()
+                        self.saveAccountToRealm()
+                    })
+                } else {
+                    OperationQueue.main.addOperation {
+                        if wallData.count == 0 {
+                            self.tableView.tableFooterView = nil
+                        }
+                        
+                        self.setProfileView()
+                        self.tableView.reloadData()
+                        if self.userProfile.count > 0 {
+                            let user = self.userProfile[0]
+                            self.title = "\(user.firstName) \(user.lastName)"
+                        }
+                        self.refreshControl.endRefreshing()
+                        self.spinner.startAnimating()
+                        self.saveAccountToRealm()
+                    }
+                }
             }
         }
         OperationQueue().addOperation(getServerDataOperation)
@@ -249,9 +377,6 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     
     func refresh() {
         let opq = OperationQueue()
-        isRefresh = true
-        
-        estimatedHeightCache.removeAll(keepingCapacity: false)
         
         let url1 = "/method/users.get"
         let parameters1 = [
@@ -346,9 +471,6 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     
     func refreshWall() {
         let opq = OperationQueue()
-        isRefresh = true
-        
-        estimatedHeightCache.removeAll(keepingCapacity: false)
         
         let url = "/method/wall.get"
         let parameters = [
@@ -370,11 +492,19 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             self.wall = parseUserWall.wall
             self.wallProfiles = parseUserWall.profiles
             self.wallGroups = parseUserWall.groups
+            
             self.offset += self.count
+            self.viewCount += parseUserWall.wall.count
+            
             OperationQueue.main.addOperation {
+                if parseUserWall.wall.count == 0 {
+                    self.tableView.tableFooterView = nil
+                }
+                
                 self.setProfileView()
                 self.tableView.reloadData()
                 self.refreshControl.endRefreshing()
+                self.spinner.startAnimating()
                 ViewControllerUtils().hideActivityIndicator()
             }
         }
@@ -443,14 +573,29 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         return 1
     }
     
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        if let height = estimatedHeightCache[indexPath] {
+            return height
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+            cell.delegate = self
+            cell.drawCell = false
+            
+            let height = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+            estimatedHeightCache[indexPath] = height
+            return height
+        }
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
             cell.delegate = self
+            cell.drawCell = false
             
-            let height = cell.getRowHeight(record: wall[indexPath.section])
+            let height = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             estimatedHeightCache[indexPath] = height
             return height
         }
@@ -472,26 +617,15 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -500,7 +634,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell", for: indexPath) as! WallRecordCell2
         cell.delegate = self
         
-        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
@@ -525,97 +659,25 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
-        if indexPath.section == tableView.numberOfSections - 1 && indexPath.section == offset - 1 {
+        if isRefresh && tableView.numberOfSections == viewCount && indexPath.section == tableView.numberOfSections - 2 {
             isRefresh = false
         }
     }
-    
+
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         
-        if isRefresh == false {
-            OperationQueue.main.addOperation {
-                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                self.refreshExecute()
+        let y = scrollView.contentOffset.y + scrollView.bounds.size.height - scrollView.contentInset.bottom
+        let h = scrollView.contentSize.height
+        
+        if y >= (h - 30.0) {
+            if viewCount >= offset {
+                if !isRefresh { refreshExecute() }
+            } else {
+                tableView.tableFooterView = nil
             }
         }
     }
    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let record = wall[indexPath.section]
-        
-        if let cell = tableView.cellForRow(at: indexPath) as? WallRecordCell2 {
-            
-            let action = cell.getActionOnClickPosition(touch: cell.position, record: record)
-            
-            if action == "show_record" {
-                
-                self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
-            }
-            
-            if action == "show_repost_record" {
-                
-                self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
-            }
-            
-            if action == "show_owner" {
-                
-                self.openProfileController(id: record.fromID, name: "")
-            }
-            
-            if action == "show_repost_owner" {
-                
-                self.openProfileController(id: record.repostOwnerID, name: "")
-            }
-            
-            for index in 0...9 {
-                if action == "show_photo_\(index)" {
-                    let photoViewController = self.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
-                    
-                    var newIndex = 0
-                    for ind in 0...9 {
-                        if record.mediaType[ind] == "photo" {
-                            let photos = Photos(json: JSON.null)
-                            photos.uid = "\(record.photoOwnerID[ind])"
-                            photos.pid = "\(record.photoID[ind])"
-                            photos.xxbigPhotoURL = record.photoURL[ind]
-                            photos.xbigPhotoURL = record.photoURL[ind]
-                            photos.bigPhotoURL = record.photoURL[ind]
-                            photos.photoURL = record.photoURL[ind]
-                            photos.width = record.photoWidth[ind]
-                            photos.height = record.photoHeight[ind]
-                            photoViewController.photos.append(photos)
-                            if ind == index {
-                                photoViewController.numPhoto = newIndex
-                            }
-                            newIndex += 1
-                        }
-                    }
-                    
-                    photoViewController.delegate = self
-                    
-                    self.navigationController?.pushViewController(photoViewController, animated: true)
-                }
-                
-                if action == "show_video_\(index)" {
-                    
-                    self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
-                    
-                }
-                
-                if action == "show_music_\(index)" {
-                    
-                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                    self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
-                }
-            }
-            
-            if action == "show_signer_profile" {
-                self.openProfileController(id: record.signerID, name: "")
-            }
-        }
-    }
-    
     @IBAction func readMoreButtonTap1(sender: UIButton) {
         let buttonPosition: CGPoint = sender.convert(CGPoint.zero, to: self.tableView)
         
@@ -623,13 +685,12 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore1 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -641,13 +702,12 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore2 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -705,7 +765,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -766,7 +826,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -820,7 +880,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -859,7 +919,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -1120,12 +1180,14 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                     alertController.addAction(action1)
                 }
                 
+                
                 let action6 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
                     
                     self.reportOnUser(userID: self.userID)
                 }
                 alertController.addAction(action6)
             }
+            
             
             if self.userID == vkSingleton.shared.userID {
                 let action6 = UIAlertAction(title: "Сменить учетную запись", style: .default) { action in
@@ -1187,7 +1249,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1238,7 +1300,8 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")                        }
+                            error.showErrorMessage(controller: self)
+                        }
                     }
                     
                     friendQueue.addOperation(request)
@@ -1288,7 +1351,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1339,7 +1402,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1361,12 +1424,14 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                 
                 let photos = Photos(json: JSON.null)
                 photos.uid = "\(user.uid)"
+                photos.ownerID = "\(user.uid)"
                 let comps = user.avatarID.components(separatedBy: "_")
                 if comps.count > 1 {
                     photos.pid = comps[1]
                     
                     for index in 0...self.photos.count - 1 {
                         if photos.pid == self.photos[index].pid {
+                            photos.text = self.photos[index].text
                             photos.xxbigPhotoURL = self.photos[index].xxbigPhotoURL
                             photos.xbigPhotoURL = self.photos[index].xbigPhotoURL
                             photos.bigPhotoURL = self.photos[index].bigPhotoURL
@@ -1422,7 +1487,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                     self.profileView.collectionView1.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "counterCell")
                     self.profileView.collectionView1.backgroundColor = vkSingleton.shared.backColor
                     self.profileView.collectionView1.showsVerticalScrollIndicator = false
-                    self.profileView.collectionView1.showsHorizontalScrollIndicator = true
+                    self.profileView.collectionView1.showsHorizontalScrollIndicator = false
                     profileView.addSubview(self.profileView.collectionView1)
                     self.profileView.collectionView1.reloadData()
                     height += 65
@@ -1432,11 +1497,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                     let photosCountLabel = UILabel()
                     photosCountLabel.text = "\(userProfile[0].photosCount) фото"
                     photosCountLabel.font = UIFont(name: "Verdana", size: 13)
-                    if #available(iOS 13.0, *) {
-                        photosCountLabel.textColor = .label
-                    } else {
-                        photosCountLabel.textColor = .lightGray
-                    }
+                    photosCountLabel.textColor = vkSingleton.shared.labelColor
                     photosCountLabel.contentMode = .center
                     photosCountLabel.textAlignment = .left
                     photosCountLabel.frame = CGRect(x: 10, y: height, width: UIScreen.main.bounds.width - 60, height: 25)
@@ -1447,11 +1508,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                         let photosDiscCountLabel = UILabel()
                         photosDiscCountLabel.text = "▸"
                         photosDiscCountLabel.font = UIFont(name: "Verdana", size: 20)
-                        if #available(iOS 13.0, *) {
-                            photosDiscCountLabel.textColor = .label
-                        } else {
-                            photosDiscCountLabel.textColor = .lightGray
-                        }
+                        photosDiscCountLabel.textColor = vkSingleton.shared.labelColor
                         photosDiscCountLabel.contentMode = .center
                         photosDiscCountLabel.textAlignment = .right
                         photosDiscCountLabel.frame = CGRect(x: UIScreen.main.bounds.width - 40, y: height, width: 30, height: 25)
@@ -1472,7 +1529,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                     self.profileView.collectionView2.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
                     self.profileView.collectionView2.backgroundColor = vkSingleton.shared.backColor
                     self.profileView.collectionView2.showsVerticalScrollIndicator = false
-                    self.profileView.collectionView2.showsHorizontalScrollIndicator = true
+                    self.profileView.collectionView2.showsHorizontalScrollIndicator = false
                     profileView.addSubview(self.profileView.collectionView2)
                     self.profileView.collectionView2.reloadData()
                     height += 100
@@ -1480,11 +1537,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
                 
                 let separator1 = UIView()
                 separator1.frame = CGRect(x: 0, y: height + 5, width: UIScreen.main.bounds.width, height: 5)
-                if #available(iOS 13.0, *) {
-                    separator1.backgroundColor = .separator
-                } else {
-                    separator1.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-                }
+                separator1.backgroundColor = vkSingleton.shared.separatorColor
                 profileView.addSubview(separator1)
                 
                 let tap = UITapGestureRecognizer()
@@ -1506,6 +1559,13 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             profileView.ownerButton.addTarget(self, action: #selector(self.tapOwnerButton(sender:)), for: .touchUpInside)
             
             self.tableView.tableHeaderView = profileView
+            
+            profileView2 = ProfileView()
+            profileView2.delegate = self
+            profileView2.backgroundColor = vkSingleton.shared.backColor
+            
+            let height2: CGFloat = profileView2.configureCell2(profile: userProfile[0])
+            profileView2.frame = CGRect(x: 0, y: 0, width: tableView.bounds.width, height: height2)
         }
     }
     
@@ -1574,8 +1634,14 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         
         filterRecords = "all"
         offset = 0
+        viewCount = 0
+        
         OperationQueue.main.addOperation {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
         }
         refreshWall()
     }
@@ -1585,8 +1651,14 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         
         filterRecords = "owner"
         offset = 0
+        viewCount = 0
+        
         OperationQueue.main.addOperation {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
         }
         refreshWall()
     }
@@ -1717,7 +1789,7 @@ extension ProfileController2: UICollectionViewDelegate, UICollectionViewDataSour
                     }
                 }
                 
-                self.openPhotosListController(ownerID: userID, title: title, type: "photos")
+                self.openPhotosListController(ownerID: userID, title: title, type: "photos", isAdmin: false)
             }
             
             if countersSection[indexPath.section].comment == "friendsCount" {
@@ -1837,18 +1909,16 @@ extension ProfileController2: UICollectionViewDelegate, UICollectionViewDataSour
                     countLabel.font = UIFont(name: "Verdana-Bold", size: 18)
                     nameLabel.font = UIFont(name: "Verdana", size: 10)
                 }
+            } else if AppConfig.shared.darkMode {
+                countLabel.font = UIFont(name: "Verdana-Bold", size: 18)
+                nameLabel.font = UIFont(name: "Verdana", size: 10)
             }
             nameLabel.adjustsFontSizeToFitWidth = true
             nameLabel.minimumScaleFactor = 0.8
             
-            if #available(iOS 13.0, *) {
-                countLabel.textColor = .label
-                nameLabel.textColor = .secondaryLabel
-            } else {
-                countLabel.textColor = .black
-                nameLabel.textColor = .black
-                nameLabel.isEnabled = false
-            }
+            countLabel.textColor = vkSingleton.shared.labelColor
+            nameLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            
             countLabel.text = countersSection[indexPath.section].value
             nameLabel.text = countersSection[indexPath.section].image
             

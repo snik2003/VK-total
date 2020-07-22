@@ -35,9 +35,7 @@ class FaveUsersCell: UITableViewCell {
         nameLabel.frame = CGRect(x: 60, y: 5, width: bounds.size.width - 100, height: 25)
         self.addSubview(nameLabel)
         
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
         
         descriptionLabel = UILabel()
         descriptionLabel.tag = 100
@@ -46,12 +44,7 @@ class FaveUsersCell: UITableViewCell {
         if source == "banned" {
             descriptionLabel.text = "Пользователь"
             if user.uid < 0 { descriptionLabel.text = "Сообщество" }
-            if #available(iOS 13.0, *) {
-                descriptionLabel.textColor = .secondaryLabel
-            } else {
-                descriptionLabel.textColor = .black
-                descriptionLabel.alpha = 0.6
-            }
+            descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
         }
         descriptionLabel.font = descFont
         descriptionLabel.numberOfLines = 1

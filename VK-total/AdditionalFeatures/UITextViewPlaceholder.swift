@@ -77,5 +77,71 @@ extension UITextView: UITextViewDelegate {
         self.resizePlaceholder()
         self.delegate = self
     }
-    
 }
+
+extension UITextView {
+    func changeKeyboardAppearanceMode() {
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode {
+                if self.traitCollection.userInterfaceStyle == .dark {
+                    self.keyboardAppearance = .dark
+                } else {
+                    self.keyboardAppearance = .light
+                }
+            } else if AppConfig.shared.darkMode {
+                self.keyboardAppearance = .dark
+            } else {
+                self.keyboardAppearance = .light
+            }
+        } else if AppConfig.shared.darkMode {
+            self.keyboardAppearance = .dark
+        } else {
+            self.keyboardAppearance = .light
+        }
+    }
+}
+
+extension UITextField {
+    func changeKeyboardAppearanceMode() {
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode {
+                if self.traitCollection.userInterfaceStyle == .dark {
+                    self.keyboardAppearance = .dark
+                } else {
+                    self.keyboardAppearance = .light
+                }
+            } else if AppConfig.shared.darkMode {
+                self.keyboardAppearance = .dark
+            } else {
+                self.keyboardAppearance = .light
+            }
+        } else if AppConfig.shared.darkMode {
+            self.keyboardAppearance = .dark
+        } else {
+            self.keyboardAppearance = .light
+        }
+    }
+}
+
+extension UISearchBar {
+    func changeKeyboardAppearanceMode() {
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode {
+                if self.traitCollection.userInterfaceStyle == .dark {
+                    self.keyboardAppearance = .dark
+                } else {
+                    self.keyboardAppearance = .light
+                }
+            } else if AppConfig.shared.darkMode {
+                self.keyboardAppearance = .dark
+            } else {
+                self.keyboardAppearance = .light
+            }
+        } else if AppConfig.shared.darkMode {
+            self.keyboardAppearance = .dark
+        } else {
+            self.keyboardAppearance = .light
+        }
+    }
+}
+

@@ -49,6 +49,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
     var newsProfiles = [RecordProfiles]()
     var newsGroups = [RecordGroups]()
     var photo: Photo!
+    var videos = [Videos]()
     
     var likes = [Likes]()
     var reposts = [Likes]()
@@ -92,18 +93,8 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        OperationQueue.main.addOperation {
-            
-            self.configureTableView()
-            
-            let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
-            self.navigationItem.rightBarButtonItem = barButton
-            
-            self.tableView.separatorStyle = .none
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-        }
-        
-        getRecord()
+        let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
+        self.navigationItem.rightBarButtonItem = barButton
     }
 
     override func viewDidLayoutSubviews() {
@@ -112,6 +103,12 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
         if firstAppear {
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
+            self.configureTableView()
+            self.tableView.separatorStyle = .none
+            
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            getRecord()
         }
     }
     
@@ -126,27 +123,17 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
         commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
         commentView.textView.backgroundColor = .clear
-        commentView.textView.textColor = .black
-        commentView.textView.tintColor = vkSingleton.shared.mainColor
-        commentView.tintColor = vkSingleton.shared.mainColor
-        
-        if #available(iOS 13.0, *) {
-            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            } else if AppConfig.shared.darkMode {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            }
-        }
+        commentView.textView.textColor = vkSingleton.shared.labelColor
+        commentView.textView.tintColor = vkSingleton.shared.secondaryLabelColor
+        commentView.textView.changeKeyboardAppearanceMode()
+        commentView.tintColor = vkSingleton.shared.secondaryLabelColor
         
         commentView.sendImage = UIImage(named: "send")
         
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-        commentView.tabHeight = self.tabHeight
+        
+        commentView.tabHeight = 0
         
         setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
         
@@ -403,7 +390,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                 guard let data = getServerDataOperation.data else { return }
                 
                 guard let json = try? JSON(data: data) else { print("json error"); return }
-                //print(json["response"][2])
+                //print(json["response"][0])
             
                 let record = json["response"][0]["items"].compactMap { Record(json: $0.1) }
                 let recordProfiles = json["response"][0]["profiles"].compactMap { RecordProfiles(json: $0.1) }
@@ -418,52 +405,146 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                 
                 let reposts = json["response"][3]["items"].compactMap { Likes(json: $0.1) }
                 
-                OperationQueue.main.addOperation {
-                    self.news = record
-                    self.newsGroups = recordGroups
-                    self.newsProfiles = recordProfiles
-                    
-                    self.likes = likes
-                    self.reposts = reposts
-                    
-                    self.totalComments = commentsCount
-                    if self.offset == 0 {
-                        self.comments = comments
-                        self.commentsGroups = commentsGroups
-                        self.commentsProfiles = commentsProfiles
-                    } else {
-                        for comment in comments {
-                            self.comments.append(comment)
-                        }
-                        for profile in commentsProfiles {
-                            self.commentsProfiles.append(profile)
-                        }
-                        for group in commentsGroups {
-                            self.commentsGroups.append(group)
+                var videoIDs = ""
+                for wall in record {
+                    for index in 0...9 {
+                        if wall.mediaType[index] == "video" {
+                            if videoIDs == "" {
+                                if wall.photoAccessKey[index] == "" {
+                                    videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                                } else {
+                                    videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                                }
+                            } else {
+                                if wall.photoAccessKey[index] == "" {
+                                    videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                                } else {
+                                    videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                                }
+                            }
                         }
                     }
+                }
+                
+                if videoIDs != "" {
+                    let url2 = "/method/video.get"
+                    let parameters2 = [
+                        "access_token": vkSingleton.shared.accessToken,
+                        "owner_id": self.ownerID,
+                        "videos": videoIDs,
+                        "extended": "0",
+                        "fields": "id, first_name, last_name, photo_100",
+                        "v": vkSingleton.shared.version
+                    ]
                     
-                    self.title = "Запись"
-                    
-                    if self.news.count > 0 {
-                        if self.news[0].canComment == 0 {
-                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
-                            self.tableView.backgroundColor = vkSingleton.shared.backColor
-                            self.view.addSubview(self.tableView)
-                            self.commentView.removeFromSuperview()
+                    let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                    getServerDataOperation2.completionBlock = {
+                        guard let data = getServerDataOperation2.data else { return }
+                        guard let json = try? JSON(data: data) else { print("json error"); return }
+                        //print(json)
+                        
+                        self.videos = json["response"]["items"].compactMap({ Videos(json: $0.1) })
+                
+                        OperationQueue.main.addOperation {
+                            self.news = record
+                            self.newsGroups = recordGroups
+                            self.newsProfiles = recordProfiles
+                            
+                            self.likes = likes
+                            self.reposts = reposts
+                            
+                            self.totalComments = commentsCount
+                            if self.offset == 0 {
+                                self.comments = comments
+                                self.commentsGroups = commentsGroups
+                                self.commentsProfiles = commentsProfiles
+                            } else {
+                                for comment in comments {
+                                    self.comments.append(comment)
+                                }
+                                for profile in commentsProfiles {
+                                    self.commentsProfiles.append(profile)
+                                }
+                                for group in commentsGroups {
+                                    self.commentsGroups.append(group)
+                                }
+                            }
+                            
+                            self.title = "Запись"
+                            
+                            if self.news.count > 0 {
+                                if self.news[0].canComment == 0 {
+                                    self.tableView.frame = CGRect(x: 0, y: self.navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.navHeight - self.tabHeight)
+                                    self.tableView.backgroundColor = vkSingleton.shared.backColor
+                                    self.view.addSubview(self.tableView)
+                                    self.commentView.removeFromSuperview()
+                                    self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
+                                } else {
+                                    self.view.addSubview(self.commentView)
+                                }
+                            }
+                            
+                            self.offset += self.count
+                            self.tableView.reloadData()
+                            self.tableView.separatorStyle = .singleLine
+                            ViewControllerUtils().hideActivityIndicator()
+                            
+                            if self.scrollToComment && self.comments.count > 0 {
+                                self.tableView.scrollToRow(at: IndexPath(row: 1, section: 1), at: .bottom, animated: true)
+                                self.scrollToComment = false
+                            }
+                        }
+                    }
+                    self.queue.addOperation(getServerDataOperation2)
+                } else {
+                    OperationQueue.main.addOperation {
+                        self.news = record
+                        self.newsGroups = recordGroups
+                        self.newsProfiles = recordProfiles
+                        
+                        self.likes = likes
+                        self.reposts = reposts
+                        
+                        self.totalComments = commentsCount
+                        if self.offset == 0 {
+                            self.comments = comments
+                            self.commentsGroups = commentsGroups
+                            self.commentsProfiles = commentsProfiles
                         } else {
-                            self.view.addSubview(self.commentView)
+                            for comment in comments {
+                                self.comments.append(comment)
+                            }
+                            for profile in commentsProfiles {
+                                self.commentsProfiles.append(profile)
+                            }
+                            for group in commentsGroups {
+                                self.commentsGroups.append(group)
+                            }
                         }
-                    }
-                    
-                    self.offset += self.count
-                    self.tableView.reloadData()
-                    self.tableView.separatorStyle = .singleLine
-                    ViewControllerUtils().hideActivityIndicator()
-                    
-                    if self.scrollToComment && self.comments.count > 0 {
-                        self.tableView.scrollToRow(at: IndexPath(row: 1, section: 1), at: .bottom, animated: true)
-                        self.scrollToComment = false
+                        
+                        self.title = "Запись"
+                        
+                        if self.news.count > 0 {
+                            if self.news[0].canComment == 0 {
+                                self.tableView.frame = CGRect(x: 0, y: self.navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.navHeight - self.tabHeight)
+                                self.tableView.backgroundColor = vkSingleton.shared.backColor
+                                self.view.addSubview(self.tableView)
+                                self.commentView.removeFromSuperview()
+                                self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
+                            } else {
+                                self.view.addSubview(self.commentView)
+                            }
+                        }
+                        
+                        self.offset += self.count
+                        self.tableView.reloadData()
+                        self.tableView.separatorStyle = .singleLine
+                        ViewControllerUtils().hideActivityIndicator()
+                        
+                        if self.scrollToComment && self.comments.count > 0 {
+                            self.tableView.scrollToRow(at: IndexPath(row: 1, section: 1), at: .bottom, animated: true)
+                            self.scrollToComment = false
+                        }
                     }
                 }
             }
@@ -541,8 +622,8 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                         
                         self.photo = photo
                         let record = Record(json: JSON.null)
-                        record.ownerID = Int(photo.userID)!
-                        record.fromID = Int(photo.userID)!
+                        record.ownerID = Int(photo.ownerID)!
+                        record.fromID = Int(photo.ownerID)!
                         record.id = Int(photo.photoID)!
                         
                         record.mediaType[0] = "photo"
@@ -592,10 +673,11 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                     
                     if self.news.count > 0 {
                         if self.news[0].canComment == 0 {
-                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
+                            self.tableView.frame = CGRect(x: 0, y: self.navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.navHeight - self.tabHeight)
                             self.tableView.backgroundColor = vkSingleton.shared.backColor
                             self.view.addSubview(self.tableView)
                             self.commentView.removeFromSuperview()
+                            self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
                         } else {
                             self.view.addSubview(self.commentView)
                         }
@@ -605,6 +687,11 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                     self.tableView.reloadData()
                     self.tableView.separatorStyle = .singleLine
                     ViewControllerUtils().hideActivityIndicator()
+
+                    if self.scrollToComment && self.comments.count > 0 {
+                        self.tableView.scrollToRow(at: IndexPath(row: 1, section: 1), at: .bottom, animated: true)
+                        self.scrollToComment = false
+                    }
                 }
             }
             queue.addOperation(getServerDataOperation)
@@ -675,25 +762,13 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -702,6 +777,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
         if indexPath.section == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell", for: indexPath) as! Record2Cell
             cell.delegate = self
+            cell.videos = self.videos
             
             rowHeightCache[indexPath] = cell.configureCell(record: news[indexPath.row], profiles: newsProfiles, groups: newsGroups, likes: likes, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             
@@ -815,7 +891,9 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                                     if record.mediaType[ind] == "photo" {
                                         let photos = Photos(json: JSON.null)
                                         photos.uid = "\(record.photoOwnerID[ind])"
+                                        photos.ownerID = "\(record.photoOwnerID[ind])"
                                         photos.pid = "\(record.photoID[ind])"
+                                        photos.text = record.photoText[ind]
                                         photos.xxbigPhotoURL = record.photoURL[ind]
                                         photos.xbigPhotoURL = record.photoURL[ind]
                                         photos.bigPhotoURL = record.photoURL[ind]
@@ -827,6 +905,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                                             photoViewController.numPhoto = newIndex
                                         }
                                         newIndex += 1
+                                        print("photo text = -\(photos.text)-")
                                     }
                                 }
                                 
@@ -868,7 +947,6 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             
                             if action == "show_music_\(index)" {
                                 
-                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
                                 self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
                             }
                         }
@@ -1050,10 +1128,8 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             var titleColor = UIColor.black
                             var backColor = UIColor.white
                             
-                            if #available(iOS 13.0, *) {
-                                titleColor = .label
-                                backColor = vkSingleton.shared.backColor
-                            }
+                            titleColor = vkSingleton.shared.labelColor
+                            backColor = vkSingleton.shared.backColor
                             
                             let appearance = SCLAlertView.SCLAppearance(
                                 kTitleTop: 32.0,
@@ -1266,7 +1342,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1327,7 +1403,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1386,7 +1462,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -1429,7 +1505,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -1485,7 +1561,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                         }
                     }
                 } else {
-                    self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                    error.showErrorMessage(controller: self)
                 }
             }
             
@@ -1526,7 +1602,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                         }
                     }
                 } else {
-                    self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                    error.showErrorMessage(controller: self)
                 }
             }
             
@@ -1585,7 +1661,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1626,7 +1702,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                                 }
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1711,7 +1787,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             self.news[0].isPinned = 1
                             self.showSuccessMessage(title: "Запись на стене", msg: "\nЗапись успешно закреплена на стене\n")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1747,7 +1823,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             self.news[0].isPinned = 0
                             self.showSuccessMessage(title: "Запись на стене", msg: "\nЗапись успешно откреплена на стене\n")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1779,10 +1855,8 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                     var titleColor = UIColor.black
                     var backColor = UIColor.white
                     
-                    if #available(iOS 13.0, *) {
-                        titleColor = .label
-                        backColor = vkSingleton.shared.backColor
-                    }
+                    titleColor = vkSingleton.shared.labelColor
+                    backColor = vkSingleton.shared.backColor
                     
                     let appearance = SCLAlertView.SCLAppearance(
                         kTitleTop: 32.0,
@@ -1824,10 +1898,8 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                     var titleColor = UIColor.black
                     var backColor = UIColor.white
                     
-                    if #available(iOS 13.0, *) {
-                        titleColor = .label
-                        backColor = vkSingleton.shared.backColor
-                    }
+                    titleColor = vkSingleton.shared.labelColor
+                    backColor = vkSingleton.shared.backColor
                     
                     let appearance = SCLAlertView.SCLAppearance(
                         kTitleTop: 32.0,
@@ -1885,7 +1957,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                                     }
                                 }
                             } else {
-                                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                                error.showErrorMessage(controller: self)
                             }
                         }
                         
@@ -1943,16 +2015,15 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                 }
                 alertController.addAction(action7)
                 
-                if photo.userID == vkSingleton.shared.userID && (delegate is ProfileController2 || delegate is GroupProfileController2 || delegate is PhotoViewController || delegate is PhotoAlbumController) {
+                if (photo.ownerID == vkSingleton.shared.userID || photo.userID == vkSingleton.shared.userID || photo.userID == "100") &&
+                    (delegate is ProfileController2 || delegate is GroupProfileController2 || delegate is PhotoViewController || delegate is PhotoAlbumController) {
                     let action7 = UIAlertAction(title: "Удалить фотографию", style: .destructive) { action in
                         
                         var titleColor = UIColor.black
                         var backColor = UIColor.white
                         
-                        if #available(iOS 13.0, *) {
-                            titleColor = .label
-                            backColor = vkSingleton.shared.backColor
-                        }
+                        titleColor = vkSingleton.shared.labelColor
+                        backColor = vkSingleton.shared.backColor
                         
                         let appearance = SCLAlertView.SCLAppearance(
                             kTitleTop: 32.0,
@@ -1970,24 +2041,12 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                         
                         alertView.addButton("Да, я уверен") {
                             
-                            self.deletePhotoFromSite(ownerID: self.photo.userID, photoID: self.photo.photoID, delegate: self.delegate)
+                            self.deletePhotoFromSite(ownerID: self.photo.ownerID, photoID: self.photo.photoID, delegate: self.delegate)
                         }
                         alertView.addButton("Отмена, я передумал") {
                             
                         }
                         alertView.showWarning("Подтверждение!", subTitle: "Вы уверены, что хотите удалить фотографию? Это действие необратимо.")
-                        
-                        /*let alertController2 = UIAlertController(title: "Подтверждение!", message: "Вы уверены что хотите удалить фотографию? Это действие необратимо.", preferredStyle: .alert)
-                        
-                        let cancelAction = UIAlertAction(title: "Отмена, я передумал", style: .cancel)
-                        alertController2.addAction(cancelAction)
-                        
-                        let yesAction = UIAlertAction(title: "Да, я уверен", style: .destructive) { action in
-                            
-                            self.deletePhotoFromSite(ownerID: self.photo.userID, photoID: self.photo.photoID)
-                        }
-                        alertController2.addAction(yesAction)
-                        self.present(alertController2, animated: true)*/
                     }
                     alertController.addAction(action7)
                     
@@ -2190,9 +2249,10 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                         if record.canComment == 1 {
                             record.canComment = 0
                             
-                            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 49)
+                            self.tableView.frame = CGRect(x: 0, y: self.navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - self.navHeight - self.tabHeight)
                             self.view.addSubview(self.tableView)
                             self.commentView.removeFromSuperview()
+                            self.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
                         } else {
                             record.canComment = 1
                             self.view.addSubview(self.commentView)
@@ -2202,7 +2262,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Редактирование параметров записи", msg: "\nОшибка #\(error.errorCode): \(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)

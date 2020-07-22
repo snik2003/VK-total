@@ -108,11 +108,7 @@ class GroupProfileView: UIView {
             
             let separator = UIView()
             separator.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: 5)
-            if #available(iOS 13.0, *) {
-                separator.backgroundColor = .separator
-            } else {
-                separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-            }
+            separator.backgroundColor = vkSingleton.shared.separatorColor
             self.addSubview(separator)
             
             topY += 5
@@ -137,11 +133,7 @@ class GroupProfileView: UIView {
             
             let separator = UIView()
             separator.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: 5)
-            if #available(iOS 13.0, *) {
-                separator.backgroundColor = .separator
-            } else {
-                separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-            }
+            separator.backgroundColor = vkSingleton.shared.separatorColor
             self.addSubview(separator)
             
             topY += 5
@@ -168,11 +160,7 @@ class GroupProfileView: UIView {
             
             let separator = UIView()
             separator.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: 5)
-            if #available(iOS 13.0, *) {
-                separator.backgroundColor = .separator
-            } else {
-                separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-            }
+            separator.backgroundColor = vkSingleton.shared.separatorColor
             self.addSubview(separator)
             
             topY += 5
@@ -200,24 +188,9 @@ class GroupProfileView: UIView {
         OperationQueue.main.addOperation {
             self.avatarImageView.layer.borderWidth = 5.0
             self.avatarImageView.layer.cornerRadius = 50
+             self.avatarImageView.layer.borderColor = vkSingleton.shared.backColor.cgColor
             self.avatarImageView.contentMode = .scaleAspectFit
             self.avatarImageView.clipsToBounds = true
-            
-            if #available(iOS 13.0, *) {
-                if AppConfig.shared.autoMode {
-                    if self.traitCollection.userInterfaceStyle == .dark {
-                        self.avatarImageView.layer.borderColor = vkSingleton.shared.backColor.cgColor
-                    } else {
-                        self.avatarImageView.layer.borderColor = UIColor.white.cgColor
-                    }
-                } else if AppConfig.shared.darkMode {
-                    self.avatarImageView.layer.borderColor = vkSingleton.shared.backColor.cgColor
-                } else {
-                    self.avatarImageView.layer.borderColor = UIColor.white.cgColor
-                }
-            } else {
-                self.avatarImageView.layer.borderColor = UIColor.white.cgColor
-            }
         }
         
         avatarImageView.frame = CGRect(x: leftAvatarInsets, y: topAvatarInsets, width: avatarImageHeight, height: avatarImageHeight)
@@ -272,6 +245,7 @@ class GroupProfileView: UIView {
         groupNameLabel.frame = CGRect(x: leftInsets, y: groupNameLabelTop, width: width, height: height)
         
         groupNameLabel.textAlignment = .center
+        groupNameLabel.textColor = vkSingleton.shared.labelColor
         
         self.addSubview(groupNameLabel)
         
@@ -378,11 +352,7 @@ class GroupProfileView: UIView {
         }
         
         statusSeparator1.frame = CGRect(x: 0, y: topY + verticalSpacingInsets, width: UIScreen.main.bounds.width, height: statusSeparatorHeight)
-        if #available(iOS 13.0, *) {
-            statusSeparator1.backgroundColor = .separator
-        } else {
-            statusSeparator1.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        statusSeparator1.backgroundColor = vkSingleton.shared.separatorColor
         statusSeparator1.isHidden = false
         
         statusLabel.frame = CGRect(x: leftInsets, y: topY + statusSeparatorHeight + verticalSpacingInsets, width: width, height: height)
@@ -397,7 +367,7 @@ class GroupProfileView: UIView {
         }
         activityLabel.font = activityLabelFont
         activityLabel.textAlignment = .center
-        activityLabel.frame = CGRect(x: leftInsets, y: topY + verticalSpacingInsets + statusSeparatorHeight + height, width: maxWidth, height: 30)
+        activityLabel.frame = CGRect(x: leftInsets, y: topY + statusSeparatorHeight + verticalSpacingInsets + height, width: maxWidth, height: 30)
         activityLabel.isHidden = false
         activityLabel.isEnabled = false
         
@@ -409,11 +379,6 @@ class GroupProfileView: UIView {
         }
         var titleColor = UIColor.black
         var backColor = UIColor.lightGray
-        
-        /*if #available(iOS 13.0, *) {
-            titleColor = .label
-            backColor = .separator
-        }*/
         
         if profile.isAdmin == 0 {
             if profile.isMember == 1 {
@@ -448,11 +413,7 @@ class GroupProfileView: UIView {
         isMemberButton.frame = CGRect(x: memberButtonLeftInsets, y: topY + verticalSpacingInsets + statusSeparatorHeight + height + activityLabel.frame.height + 2 * verticalSpacingInsets, width: UIScreen.main.bounds.width - 2 * memberButtonLeftInsets, height: memberButtonHeight)
         
         statusSeparator2.frame = CGRect(x: 0, y: topY + statusSeparatorHeight + verticalSpacingInsets + height + activityLabel.frame.height + 2 * verticalSpacingInsets + isMemberButton.frame.height + 2 * verticalSpacingInsets, width: UIScreen.main.bounds.width, height: statusSeparatorHeight)
-        if #available(iOS 13.0, *) {
-            statusSeparator2.backgroundColor = .separator
-        } else {
-            statusSeparator2.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        statusSeparator2.backgroundColor = vkSingleton.shared.separatorColor
         statusSeparator2.isHidden = false
         
         self.addSubview(statusLabel)
@@ -505,19 +466,15 @@ class GroupProfileView: UIView {
             statusSeparator2.frame = CGRect(x: 0, y: topNew, width: UIScreen.main.bounds.width, height: statusSeparatorHeight)
         }
         
-        return topNew
+        return statusSeparator2.frame.maxY
     }
     
     func updateMemberButton(profile: GroupProfile) {
         var title = "Вы администратор"
         
         var titleColor = UIColor.black
-        var backColor = UIColor.lightGray
-        
-        if #available(iOS 13.0, *) {
-            backColor = .separator
-        }
-        
+        var backColor = vkSingleton.shared.separatorColor
+
         if profile.isAdmin == 0 {
             if profile.isMember == 1 {
                 title = "Вы подписаны"
@@ -573,11 +530,7 @@ class GroupProfileView: UIView {
         self.addSubview(membersLabel)
         
         statusSeparator3.frame = CGRect(x: 0, y: topY + membersLabel.frame.height, width: UIScreen.main.bounds.width, height: statusSeparatorHeight)
-        if #available(iOS 13.0, *) {
-            statusSeparator3.backgroundColor = .separator
-        } else {
-            statusSeparator3.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        statusSeparator3.backgroundColor = vkSingleton.shared.separatorColor
         self.addSubview(statusSeparator3)
         
         return topY + membersLabel.frame.height + statusSeparatorHeight
@@ -585,11 +538,7 @@ class GroupProfileView: UIView {
     
     func addSeparator4(_ topY: CGFloat) {
         statusSeparator4.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: statusSeparatorHeight)
-        if #available(iOS 13.0, *) {
-            statusSeparator4.backgroundColor = .separator
-        } else {
-            statusSeparator4.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        statusSeparator4.backgroundColor = vkSingleton.shared.separatorColor
         self.addSubview(statusSeparator4)
     }
     

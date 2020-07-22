@@ -80,7 +80,8 @@ class NewCommentController: InnerViewController, UIImagePickerControllerDelegate
         textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1.0
         textView.layer.cornerRadius = 5
-        textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
+        
+        textView.changeKeyboardAppearanceMode()
         
         startConfigureView()
         
@@ -102,6 +103,10 @@ class NewCommentController: InnerViewController, UIImagePickerControllerDelegate
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
         }
+        
+        toolView.backgroundColor = vkSingleton.shared.mainColor
+        textView.textColor = vkSingleton.shared.secondaryLabelColor
+        textView.backgroundColor = .clear
     }
     
     func setAttachments() {
@@ -421,7 +426,7 @@ class NewCommentController: InnerViewController, UIImagePickerControllerDelegate
         usersController.userID = vkSingleton.shared.userID
         usersController.type = "friends"
         usersController.source = "add_comment_mention"
-        usersController.title = "Упомянуть в записи"
+        usersController.title = "Упомянуть в тексте"
         
         usersController.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(usersController.tapCancelButton(sender:)))
@@ -437,7 +442,7 @@ class NewCommentController: InnerViewController, UIImagePickerControllerDelegate
         groupsController.userID = vkSingleton.shared.userID
         groupsController.type = ""
         groupsController.source = "add_comment_mention"
-        groupsController.title = "Упомянуть в записи"
+        groupsController.title = "Упомянуть в тексте"
         
         groupsController.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(groupsController.tapCancelButton(sender:)))
@@ -596,6 +601,29 @@ extension NewCommentController: UICollectionViewDelegate, UICollectionViewDataSo
                     self.collectionView.reloadData()
                 }
                 alertController.addAction(action1)
+                
+                if typeOf[index] == "wall" {
+                    let action2 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
+                        
+                        self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                        deleteView.removeFromSuperview()
+                    }
+                    alertController.addAction(action2)
+                } else if typeOf[index] == "photo" {
+                    let action2 = UIAlertAction(title: "Открыть фотографию", style: .default) { action in
+                        
+                        self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                        deleteView.removeFromSuperview()
+                    }
+                    alertController.addAction(action2)
+                } else if typeOf[index] == "video" {
+                    let action2 = UIAlertAction(title: "Открыть видеозапись", style: .default) { action in
+                        
+                        self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                        deleteView.removeFromSuperview()
+                    }
+                    alertController.addAction(action2)
+                }
                 
                 present(alertController, animated: true)
             }

@@ -90,6 +90,13 @@ extension String {
         
         return text
     }
+    
+    func digitsOnly() -> String{
+        let stringArray = self.components(separatedBy: CharacterSet.decimalDigits.inverted)
+        let newString = stringArray.joined(separator: "")
+
+        return newString
+    }
 }
 
 extension UILabel {
@@ -160,10 +167,8 @@ extension UILabel {
             let fullString = text
             let attributedString = NSMutableAttributedString(string: fullString)
             
-            var textColor = UIColor.black
-            if #available(iOS 13.0, *) { textColor = .label }
+            var textColor = vkSingleton.shared.labelColor
             if let color = color { textColor = color }
-                
             
             attributedString.setAttributes([NSAttributedString.Key.foregroundColor: textColor, NSAttributedString.Key.font: self.font], range: NSRange(location: 0, length: fullString.length))
             
@@ -257,7 +262,7 @@ extension UILabel {
                 }
                 
                 if isTap == false {
-                    print("tap nithing")
+                    print("tap nothing")
                     
                     if let vc = delegate as? Record2Controller {
                         
@@ -356,7 +361,7 @@ extension UILabel {
                             
                             if let indexPath = vc.tableView.indexPathForRow(at: buttonPosition) {
                                 let record = vc.news[indexPath.section]
-                                vc.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post", scrollToComment: false)
+                                vc.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
                             }
                         }
                         

@@ -52,17 +52,27 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
         
         if #available(iOS 13.0, *) {
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = .separator
-            searchField.textColor = .label
+            searchField.backgroundColor = vkSingleton.shared.separatorColor
+            searchField.textColor = vkSingleton.shared.labelColor
         } else {
+            searchBar.changeKeyboardAppearanceMode()
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
-                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                searchField.textColor = .black
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
+            } else if let searchField = searchBar.value(forKey: "searchField") as? UITextField {
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
             }
         }
         
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.backgroundColor = vkSingleton.shared.backColor
+        tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+        tableView.sectionIndexTrackingBackgroundColor = vkSingleton.shared.backColor
+        tableView.separatorColor = vkSingleton.shared.separatorColor
         
         OperationQueue.main.addOperation {
             self.searchBar.delegate = self
@@ -74,7 +84,12 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
             self.searchBar.placeholder = ""
             
             self.tableView.separatorStyle = .none
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
             
             if self.type == "requests" {
                 let deleteButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapDeleteAllRequests(sender:)))
@@ -87,10 +102,8 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                 self.tableView.allowsMultipleSelection = false
             }
             
-            if #available(iOS 13, *) {} else {
-                self.segmentedControl.tintColor = vkSingleton.shared.mainColor
-                self.segmentedControl.backgroundColor = vkSingleton.shared.backColor
-            }
+            self.segmentedControl.tintColor = vkSingleton.shared.mainColor
+            self.segmentedControl.backgroundColor = vkSingleton.shared.backColor
         }
         
         refresh()
@@ -388,7 +401,12 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
     {
         users.removeAll(keepingCapacity: false)
         tableView.reloadData()
-        ViewControllerUtils().showActivityIndicator(uiView: self.view)
+        
+        if let aView = self.tableView.superview {
+            ViewControllerUtils().showActivityIndicator(uiView: aView)
+        } else {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+        }
         
         switch sender.selectedSegmentIndex {
         case 0:
@@ -501,12 +519,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         
         if type == "friends" || type == "commonFriends" {
             let label = UILabel()
@@ -514,13 +527,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
             label.frame = CGRect(x: 10, y: 1, width: tableView.frame.width - 20, height: 16)
             label.textAlignment = .right
             label.text = sections[section].letter
-            
-            if #available(iOS 13.0, *) {
-                label.textColor = .label
-            } else {
-                label.textColor = .black
-            }
-            
+            label.textColor = vkSingleton.shared.labelColor
             viewHeader.addSubview(label)
         }
         
@@ -530,7 +537,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
         
-        viewFooter.backgroundColor = vkSingleton.shared.backColor
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -701,12 +708,16 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "usersCell", for: indexPath)
+        cell.backgroundColor = vkSingleton.shared.backColor
         
         for subview in cell.subviews {
             if subview.tag == 200 {
                 subview.removeFromSuperview()
             }
         }
+        
+        cell.textLabel?.textColor = vkSingleton.shared.labelColor
+        cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
         
         switch type {
         case "friends","commonFriends","followers","subscript","requests","chat_users":
@@ -725,12 +736,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                 if user.deactivated == "deleted" {
                     cell.detailTextLabel?.text = "страница удалена"
                 }
-                if #available(iOS 13.0, *) {
-                    cell.detailTextLabel?.textColor = .secondaryLabel
-                } else {
-                    cell.detailTextLabel?.textColor = UIColor.black
-                    cell.detailTextLabel?.isEnabled = false
-                }
+                cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
             } else {
                 if user.onlineStatus == 1 {
                     cell.detailTextLabel?.text = "онлайн"
@@ -745,12 +751,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                     } else {
                         cell.detailTextLabel?.text = "заходил \(user.lastSeen.toStringLastTime())"
                     }
-                    if #available(iOS 13.0, *) {
-                        cell.detailTextLabel?.textColor = .secondaryLabel
-                    } else {
-                        cell.detailTextLabel?.textColor = UIColor.black
-                        cell.detailTextLabel?.isEnabled = false
-                    }
+                    cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
                 }
             }
             

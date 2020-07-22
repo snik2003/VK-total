@@ -52,10 +52,7 @@ class MyMusicCell: UITableViewCell {
                 
         artistLabel.frame = CGRect (x: 2 * leftInsets + avatarSize, y: 9, width: bounds.size.width - 4 * leftInsets - avatarSize - listenButtonSize, height: 16)
         artistLabel.text = song.artist
-        
-        if #available(iOS 13.0, *) {
-            artistLabel.textColor = .label
-        }
+        artistLabel.textColor = vkSingleton.shared.labelColor
         
         songLabel.frame = CGRect (x: 2 * leftInsets + avatarSize, y: 25, width: bounds.size.width - 4 * leftInsets - avatarSize - listenButtonSize, height: 16)
         songLabel.textColor = songLabel.tintColor

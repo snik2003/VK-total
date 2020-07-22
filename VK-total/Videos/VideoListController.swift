@@ -65,6 +65,8 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
             self.searchBar.showsCancelButton = false
             self.searchBar.sizeToFit()
             self.searchBar.placeholder = ""
+            self.searchBar.showsCancelButton = false
+            self.searchBar.backgroundColor = vkSingleton.shared.backColor
             
             if self.ownerID == vkSingleton.shared.userID && self.type == "" && self.source == "" {
                 let barButton = UIBarButtonItem(barButtonSystemItem: .search, target: self, action: #selector(self.tapBarButtonItem(sender:)))
@@ -105,15 +107,22 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
     
     func createSearchBar() {
         searchBar = UISearchBar(frame: CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: 54))
+        searchBar.tintColor = vkSingleton.shared.labelColor
         
         if #available(iOS 13.0, *) {
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = .separator
-            searchField.textColor = .label
+            searchField.backgroundColor = vkSingleton.shared.separatorColor
+            searchField.textColor = vkSingleton.shared.labelColor
         } else {
+            searchBar.changeKeyboardAppearanceMode()
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
-                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                searchField.textColor = .black
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
+            } else if let searchField = searchBar.value(forKey: "searchField") as? UITextField {
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
             }
         }
         
@@ -215,13 +224,7 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -341,7 +344,7 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
                 if vc.attach.count + markPhotos.count <= vc.maxCountAttach {
                     for video in self.videos {
                         if let videoImage = markPhotos[video.id] {
-                            let attachment = "video\(video.ownerID)_\(video.id)"
+                            let attachment = "video\(video.ownerID)_\(video.id)_\(video.accessKey)"
                             vc.attach.append(attachment)
                             vc.isLoad.append(false)
                             vc.typeOf.append("video")

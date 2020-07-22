@@ -75,11 +75,6 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        OperationQueue.main.addOperation {
-            self.createTableView()
-        }
-        
-        getTopicComments()
     }
 
     override func viewDidLayoutSubviews() {
@@ -88,6 +83,9 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
         if firstAppear {
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
+            createTableView()
+            getTopicComments()
         }
     }
     
@@ -100,30 +98,21 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
         
         tableView = UITableView()
         tableView.backgroundColor = vkSingleton.shared.backColor
+        tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight)
         
         commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
         commentView.textView.backgroundColor = .clear
-        commentView.textView.textColor = .black
-        commentView.textView.tintColor = vkSingleton.shared.mainColor
-        commentView.tintColor = vkSingleton.shared.mainColor
-        
-        if #available(iOS 13.0, *) {
-            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            } else if AppConfig.shared.darkMode {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            }
-        }
+        commentView.textView.textColor = vkSingleton.shared.labelColor
+        commentView.textView.tintColor = vkSingleton.shared.secondaryLabelColor
+        commentView.textView.changeKeyboardAppearanceMode()
+        commentView.tintColor = vkSingleton.shared.secondaryLabelColor
         
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-        commentView.tabHeight = self.tabHeight
+        
+        commentView.tabHeight = 0
         
         if vkSingleton.shared.commentFromGroup > 0 && vkSingleton.shared.commentFromGroup == abs(Int(self.groupID)!) {
             setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: self)
@@ -142,7 +131,6 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
         tableView.register(CommentCell2.self, forCellReuseIdentifier: "commentCell")
         
         tableView.separatorStyle = .none
-        //self.view.addSubview(tableView)
     }
     
     @objc func tapFromGroupButton(sender: UIButton) {
@@ -404,18 +392,12 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 0
+        return 7
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -553,7 +535,6 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
                         
                         if action == "show_music_\(index)" {
                             
-                            ViewControllerUtils().showActivityIndicator(uiView: self.view)
                             self.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title)
                         }
                     }
@@ -706,10 +687,8 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
                             var titleColor = UIColor.black
                             var backColor = UIColor.white
                             
-                            if #available(iOS 13.0, *) {
-                                titleColor = .label
-                                backColor = vkSingleton.shared.backColor
-                            }
+                            titleColor = vkSingleton.shared.labelColor
+                            backColor = vkSingleton.shared.backColor
                             
                             let appearance = SCLAlertView.SCLAppearance(
                                 kTitleTop: 32.0,
@@ -789,7 +768,7 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
                         }
                     }
                 } else {
-                    self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                    error.showErrorMessage(controller: self)
                 }
             }
             
@@ -826,7 +805,7 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
                         }
                     }
                 } else {
-                    self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                    error.showErrorMessage(controller: self)
                 }
             }
             
@@ -953,10 +932,8 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
         var titleColor = UIColor.black
         var backColor = UIColor.white
         
-        if #available(iOS 13.0, *) {
-            titleColor = .label
-            backColor = vkSingleton.shared.backColor
-        }
+        titleColor = vkSingleton.shared.labelColor
+        backColor = vkSingleton.shared.backColor
         
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
@@ -977,10 +954,11 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
         textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
-        textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
+        textView.backgroundColor = backColor
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = vkSingleton.shared.mainColor
+        textView.textColor = vkSingleton.shared.secondaryLabelColor
         textView.text = oldTitle
+        textView.changeKeyboardAppearanceMode()
         
         alert.customSubview = textView
         
@@ -1000,10 +978,8 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
         var titleColor = UIColor.black
         var backColor = UIColor.white
         
-        if #available(iOS 13.0, *) {
-            titleColor = .label
-            backColor = vkSingleton.shared.backColor
-        }
+        titleColor = vkSingleton.shared.labelColor
+        backColor = vkSingleton.shared.backColor
         
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 32.0,

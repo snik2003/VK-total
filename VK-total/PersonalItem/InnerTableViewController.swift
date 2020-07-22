@@ -10,36 +10,31 @@ import UIKit
 
 class InnerTableViewController: UITableViewController {
 
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        if #available(iOS 13.0, *) {} else {
+            if AppConfig.shared.darkMode {
+                return .lightContent
+            } else {
+                return .default
+            }
+        }
+        
+        return .default
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        vkSingleton.shared.configureColors(controller: self)
     }
 
     override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
         super.traitCollectionDidChange(previousTraitCollection)
         
         if #available(iOS 13.0, *) {
-            if AppConfig.shared.autoMode {
-                vkSingleton.shared.mainColor = UIColor(named: "appMainColor")!.resolvedColor(with: traitCollection)
-                vkSingleton.shared.backColor = UIColor(named: "appMainBackColor")!.resolvedColor(with: traitCollection)
-                
-                self.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
-                self.navigationController?.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
-                self.navigationController?.navigationBar.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
-            } else if AppConfig.shared.darkMode {
-                vkSingleton.shared.mainColor = UIColor(named: "appMainColor")!.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                vkSingleton.shared.backColor = UIColor(named: "appMainBackColor")!.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                
-                self.overrideUserInterfaceStyle = .dark
-                self.navigationController?.overrideUserInterfaceStyle = .dark
-                self.navigationController?.navigationBar.overrideUserInterfaceStyle = .dark
+            if UIScreen.main.traitCollection.userInterfaceStyle == .dark {
+                vkSingleton.shared.deviceInterfaceStyle = .dark
             } else {
-                vkSingleton.shared.mainColor = UIColor(named: "appMainColor")!.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                vkSingleton.shared.backColor = UIColor(named: "appMainBackColor")!.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                
-                self.overrideUserInterfaceStyle = .light
-                self.navigationController?.overrideUserInterfaceStyle = .light
-                self.navigationController?.navigationBar.overrideUserInterfaceStyle = .light
+                vkSingleton.shared.deviceInterfaceStyle = .light
             }
         }
         
@@ -47,22 +42,19 @@ class InnerTableViewController: UITableViewController {
     }
     
     override func viewDidLayoutSubviews() {
-        if #available(iOS 13.0, *) {
-            if AppConfig.shared.autoMode {
-                self.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
-                self.navigationController?.overrideUserInterfaceStyle = traitCollection.userInterfaceStyle
-            } else if AppConfig.shared.darkMode {
-                self.overrideUserInterfaceStyle = .dark
-                self.navigationController?.overrideUserInterfaceStyle = .dark
-            } else {
-                self.overrideUserInterfaceStyle = .light
-                self.navigationController?.overrideUserInterfaceStyle = .light
-            }
-        }
-        
+        vkSingleton.shared.configureColors(controller: self)
         super.viewDidLayoutSubviews()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        if vkSingleton.shared.openLink != "" {
+            self.openBrowserController(url: vkSingleton.shared.openLink)
+            vkSingleton.shared.openLink = ""
+        }
+    }
+    
     @objc func hideKeyboard() {
         self.view.endEditing(true)
     }

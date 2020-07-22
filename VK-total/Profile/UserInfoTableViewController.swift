@@ -77,6 +77,12 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 }
             }
             
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
+            
             if relUsers != "" {
                 let url = "/method/users.get"
                 let parameters = [
@@ -107,13 +113,6 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        /*if users.count > 0, users[0].uid == vkSingleton.shared.userID {
-            OperationQueue.main.addOperation {
-                self.prepareInfo()
-                self.tableView.reloadData()
-            }
-        }*/
     }
     
     override func didReceiveMemoryWarning() {
@@ -246,13 +245,8 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
         
         let user = users[0]
         
-        var titleColor = UIColor.black
-        var backColor = UIColor.white
-        
-        if #available(iOS 13.0, *) {
-            titleColor = .label
-            backColor = vkSingleton.shared.backColor
-        }
+        let titleColor = vkSingleton.shared.labelColor
+        let backColor = vkSingleton.shared.backColor
         
         let appearance = SCLAlertView.SCLAppearance(
             kTitleTop: 12.0,
@@ -261,6 +255,7 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
             kTextFont: UIFont(name: "Verdana", size: 12)!,
             kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
             showCloseButton: false,
+            showCircularIcon: false,
             circleBackgroundColor: backColor,
             contentViewColor: backColor,
             titleColor: titleColor
@@ -270,13 +265,14 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
         
         let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
         
-        textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
+        textView.layer.borderColor = titleColor.cgColor
         textView.layer.borderWidth = 1
         textView.layer.cornerRadius = 5
-        textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
+        textView.backgroundColor = backColor
         textView.font = UIFont(name: "Verdana", size: 13)
-        textView.textColor = vkSingleton.shared.mainColor
+        textView.textColor = vkSingleton.shared.secondaryLabelColor
         textView.text = "\(user.status)"
+        textView.changeKeyboardAppearanceMode()
         
         alert.customSubview = textView
         
@@ -310,17 +306,15 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                         self.tableView.reloadData()
                     }
                 } else {
-                    self.showErrorMessage(title: "Статус", msg: "Ошибка #\(error.errorCode): \(error.errorMsg)")
+                    error.showErrorMessage(controller: self)
                 }
             }
             OperationQueue().addOperation(request)
         }
         
-        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
-            
-        }
+        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {}
         
-        alert.showInfo("", subTitle: "", closeButtonTitle: "Готово")
+        alert.showInfo("Введите новый статус:", subTitle: "", closeButtonTitle: "Готово")
     }
     
     func prepareInfo() {
@@ -338,11 +332,18 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
             
             let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
             getServerDataOperation.completionBlock = {
-                guard let data = getServerDataOperation.data else { return }
+                guard let data = getServerDataOperation.data else {
+                    ViewControllerUtils().hideActivityIndicator()
+                    return
+                }
                 
-                guard let json = try? JSON(data: data) else { print("json error"); return }
+                guard let json = try? JSON(data: data) else {
+                    print("json error");
+                    ViewControllerUtils().hideActivityIndicator()
+                    return
+                }
+                
                 //print(json)
-                
                 self.partner = json["response"].compactMap { UserProfileInfo(json: $0.1) }
                 
                 var personal: InfoInProfile
@@ -570,6 +571,7 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 
                 OperationQueue.main.addOperation {
                     self.tableView.reloadData()
+                    ViewControllerUtils().hideActivityIndicator()
                 }
             }
             OperationQueue().addOperation(getServerDataOperation)
@@ -623,14 +625,10 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let view = UIView()
         
-        if #available(iOS 13.0, *) {
-            if section == 0 {
-                view.backgroundColor = vkSingleton.shared.backColor
-            } else {
-                view.backgroundColor = UIColor.separator
-            }
+        if section == 0 {
+            view.backgroundColor = vkSingleton.shared.backColor
         } else {
-            view.backgroundColor = UIColor(displayP3Red: 235/255, green: 235/255, blue: 235/255, alpha: 1)
+            view.backgroundColor = vkSingleton.shared.separatorColor
         }
         
         return view
@@ -639,14 +637,10 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let view = UIView()
 
-        if #available(iOS 13.0, *) {
-            if section < 2 {
-                view.backgroundColor = vkSingleton.shared.backColor
-            } else {
-                view.backgroundColor = .separator
-            }
+        if section < 2 {
+            view.backgroundColor = vkSingleton.shared.backColor
         } else {
-            view.backgroundColor = UIColor(displayP3Red: 235/255, green: 235/255, blue: 235/255, alpha: 1)
+            view.backgroundColor = vkSingleton.shared.separatorColor
         }
         
         return view
@@ -685,13 +679,8 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 cell.backgroundColor = vkSingleton.shared.backColor
                 cell.detailTextLabel?.font = UIFont(name: "Verdana", size: 11)!
                 
-                if #available(iOS 13.0, *) {
-                    cell.detailTextLabel?.textColor = .secondaryLabel
-                    cell.textLabel?.textColor = .label
-                } else {
-                    cell.detailTextLabel?.textColor = UIColor.gray
-                    cell.textLabel?.textColor = UIColor.gray
-                }
+                cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
+                cell.textLabel?.textColor = vkSingleton.shared.labelColor
                 
                 if user.deactivated != "" {
                     if (user.deactivated == "banned") {
@@ -721,11 +710,7 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                             cell.detailTextLabel?.text = "заходила " + dateFormatter.string(from: date as Date)
                         }
                         
-                        if #available(iOS 13.0, *) {
-                            cell.detailTextLabel?.textColor = .secondaryLabel
-                        } else {
-                            cell.detailTextLabel?.textColor = .darkGray
-                        }
+                        cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
                     }
                 }
             
@@ -753,6 +738,30 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 cell.textLabel?.numberOfLines = 0
                 //cell.textLabel?.font = UIFont(name: "System", size: 13)
                 cell.textLabel?.text = "\(user.status)"
+                cell.textLabel?.textColor = vkSingleton.shared.labelColor
+                
+                let tap = UITapGestureRecognizer()
+                cell.textLabel?.isUserInteractionEnabled = true
+                cell.textLabel?.addGestureRecognizer(tap)
+                tap.add {
+                    let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                    
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                    alertController.addAction(cancelAction)
+                    
+                    let action = UIAlertAction(title: "Скопировать статус", style: .default) { action in
+                        
+                        if let text = cell.textLabel?.text {
+                            UIPasteboard.general.string = text
+                            if let string = UIPasteboard.general.string {
+                                self.showInfoMessage(title: "Статус помещён в буфер обмена:" , msg: "\(string)")
+                            }
+                        }
+                    }
+                    alertController.addAction(action)
+                    
+                    self.present(alertController, animated: true)
+                }
             }
             
             return cell
@@ -764,6 +773,7 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 cell.imageView?.image = UIImage(named: basicInfoSection[indexPath.row].image)
                 cell.textLabel?.numberOfLines = 0
                 cell.textLabel?.text = "\(basicInfoSection[indexPath.row].value)"
+                cell.textLabel?.textColor = vkSingleton.shared.labelColor
                 
                 if (basicInfoSection[indexPath.row].comment == "relation") {
                     if let partner = self.partner.first, let user = self.users.first, user.relationPatrnerId > 0 {
@@ -790,15 +800,61 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 cell.imageView?.image = UIImage(named: contactInfoSection[indexPath.row].image)
                 cell.textLabel?.numberOfLines = 0
                 cell.textLabel?.text = "\(contactInfoSection[indexPath.row].value)"
+                cell.textLabel?.textColor = vkSingleton.shared.labelColor
                 
                 if contactInfoSection[indexPath.row].comment == "site" {
                     cell.textLabel?.textColor = cell.textLabel?.tintColor
                     
                     let tap = UITapGestureRecognizer()
+                    cell.textLabel?.isUserInteractionEnabled = true
+                    cell.textLabel?.addGestureRecognizer(tap)
                     tap.add {
-                        self.openBrowserController(url: self.contactInfoSection[indexPath.row].value)
+                        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                        
+                        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                        alertController.addAction(cancelAction)
+                        
+                        let action1 = UIAlertAction(title: "Открыть ссылку", style: .default) { action in
+                            
+                            self.openBrowserController(url: self.contactInfoSection[indexPath.row].value)
+                        }
+                        alertController.addAction(action1)
+                        
+                        let action2 = UIAlertAction(title: "Скопировать ссылку", style: .default) { action in
+                            
+                            let link = self.contactInfoSection[indexPath.row].value
+                            UIPasteboard.general.string = link
+                            if let string = UIPasteboard.general.string {
+                                self.showInfoMessage(title: "Ссылка скопирована в буфер обмена:" , msg: "\(string)")
+                            }
+                        }
+                        alertController.addAction(action2)
+                        
+                        self.present(alertController, animated: true)
                     }
-                    cell.addGestureRecognizer(tap)
+                } else {
+                    let tap = UITapGestureRecognizer()
+                    cell.textLabel?.isUserInteractionEnabled = true
+                    cell.textLabel?.addGestureRecognizer(tap)
+                    tap.add {
+                        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                        
+                        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                        alertController.addAction(cancelAction)
+                        
+                        let action = UIAlertAction(title: "Скопировать текст", style: .default) { action in
+                            
+                            if let text = cell.textLabel?.text {
+                                UIPasteboard.general.string = text
+                                if let string = UIPasteboard.general.string {
+                                    self.showInfoMessage(title: "Текст помещён в буфер обмена:" , msg: "\(string)")
+                                }
+                            }
+                        }
+                        alertController.addAction(action)
+                        
+                        self.present(alertController, animated: true)
+                    }
                 }
             }
             
@@ -822,6 +878,7 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 cell.textLabel?.text = lifePositionSection[indexPath.row].image
                 cell.detailTextLabel?.numberOfLines = 0
                 cell.detailTextLabel?.text = "\(lifePositionSection[indexPath.row].value)"
+                cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
             }
             
             return cell
@@ -834,6 +891,7 @@ class UserInfoTableViewController: InnerTableViewController, UIImagePickerContro
                 cell.textLabel?.text = personalInfoSection[indexPath.row].image
                 cell.detailTextLabel?.numberOfLines = 0
                 cell.detailTextLabel?.text = "\(personalInfoSection[indexPath.row].value)"
+                cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
                 //print(personalInfoSection[indexPath.row].comment)
             }
             

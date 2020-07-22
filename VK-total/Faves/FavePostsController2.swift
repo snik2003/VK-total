@@ -26,6 +26,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     var wall = [Wall]()
     var wallProfiles = [WallProfiles]()
     var wallGroups = [WallGroups]()
+    var wallVideos = [Videos]()
     
     var photos = [Photos]()
     var videos = [Videos]()
@@ -38,10 +39,8 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     var favePages = [FavePages]()
     
     var offset = 0
-    let count = 100
+    let count = 40
     var isRefresh = false
-    
-    var menuView: BTNavigationDropdownMenu!
     
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
@@ -62,34 +61,21 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     }()
     
     var tableView: UITableView!
-    
+    var menuView: BTNavigationDropdownMenu!
     var player = AVPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         createTableView()
-        menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[0], items: itemsMenu)
-        menuView.cellBackgroundColor = vkSingleton.shared.backColor
-        menuView.cellSelectionColor = vkSingleton.shared.backColor
-        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
-        menuView.cellSeparatorColor = vkSingleton.shared.separatorColor
         
-        if #available(iOS 13.0, *) {
-            if !AppConfig.shared.autoMode {
-                if AppConfig.shared.darkMode {
-                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                } else {
-                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                }
-            }
-        }
+        menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[view.tag], items: itemsMenu)
+        menuView.cellBackgroundColor = vkSingleton.shared.separatorColor2
+        menuView.cellSelectionColor = vkSingleton.shared.separatorColor2
+        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
+        menuView.cellSeparatorColor = vkSingleton.shared.mainColor
+        
+        menuView.checkMarkImage = UIImage(named: "checkmark")
         
         menuView.cellTextLabelAlignment = .center
         menuView.selectedCellTextLabelColor = .systemRed
@@ -98,7 +84,10 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         navigationItem.titleView = menuView
         
         menuView.didSelectItemAtIndexHandler = {[weak self] (indexPath: Int) -> () in
+            self?.menuView.isUserInteractionEnabled = false
             self?.selectedMenu = indexPath
+            self?.view.tag = indexPath
+            
             switch indexPath {
             case 0:
                 self?.source = "users"
@@ -147,6 +136,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             }
         }
         
+        menuView.isUserInteractionEnabled = false
         refresh()
     }
 
@@ -159,9 +149,17 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         }
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+    }
+    
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        menuView.hide()
+        
+        if let menuView = navigationItem.titleView as? BTNavigationDropdownMenu {
+            menuView.hide()
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -173,6 +171,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         tableView = UITableView()
         tableView.backgroundColor = vkSingleton.shared.backColor
         tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
+        tableView.showsVerticalScrollIndicator = false
         
         tableView.delegate = self
         tableView.dataSource = self
@@ -281,6 +280,57 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         // парсим объект с данными
         let parseFaves = ParseFaves(type: source)
         parseFaves.addDependency(getServerDataOperation)
+        if source == "post" {
+            parseFaves.completionBlock = {
+                var videoIDs = ""
+                for wall in parseFaves.wall {
+                    for index in 0...9 {
+                        if wall.mediaType[index] == "video" {
+                            if videoIDs == "" {
+                                if wall.photoAccessKey[index] == "" {
+                                    videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                                } else {
+                                    videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                                }
+                            } else {
+                                if wall.photoAccessKey[index] == "" {
+                                    videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                                } else {
+                                    videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if videoIDs != "" {
+                    let url = "/method/video.get"
+                    let parameters = [
+                        "access_token": vkSingleton.shared.accessToken,
+                        "owner_id": vkSingleton.shared.userID,
+                        "videos": videoIDs,
+                        "extended": "0",
+                        "fields": "id, first_name, last_name, photo_100",
+                        "v": vkSingleton.shared.version
+                    ]
+                    
+                    let getServerDataOperation2 = GetServerDataOperation(url: url, parameters: parameters)
+                    getServerDataOperation2.completionBlock = {
+                        guard let data = getServerDataOperation2.data else { return }
+                        guard let json = try? JSON(data: data) else { print("json error"); return }
+                        //print(json)
+                        
+                        let wallVideos = json["response"]["items"].compactMap({ Videos(json: $0.1) })
+                        if self.offset == 0 {
+                            self.wallVideos = wallVideos
+                        } else {
+                            self.wallVideos.append(contentsOf: wallVideos)
+                        }
+                    }
+                    opq.addOperation(getServerDataOperation2)
+                }
+            }
+        }
         opq.addOperation(parseFaves)
         
         self.setOfflineStatus(dependence: getServerDataOperation)
@@ -334,6 +384,57 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         }
     }
     
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        
+        if source == "post" {
+            if let height = estimatedHeightCache[indexPath] {
+                return height
+            } else {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
+                cell.delegate = self
+                cell.drawCell = false
+                
+                let height = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+                estimatedHeightCache[indexPath] = height
+                return height
+            }
+        } else if source == "photo" {
+            if let height = estimatedHeightCache[indexPath] {
+                return height
+            } else {
+                let photo = photos[indexPath.section]
+                
+                var height = self.tableView.bounds.width
+                if photo.height > 0 && photo.width > 0 {
+                    height = self.tableView.bounds.width * CGFloat(photo.height) / CGFloat(photo.width)
+                }
+                estimatedHeightCache[indexPath] = height
+                return height
+            }
+        } else if source == "video" {
+            if let height = estimatedHeightCache[indexPath] {
+                return height
+            } else {
+                let height = (UIScreen.main.bounds.width * 0.5) * CGFloat(240) / CGFloat(320)
+                estimatedHeightCache[indexPath] = height
+                return height
+            }
+        } else if source == "users" || source == "banned" || source == "groups" {
+            return 50
+        } else if source == "links" {
+            if let height = estimatedHeightCache[indexPath] {
+                return height
+            } else {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "linksCell") as! FaveLinksCell
+                
+                let height = cell.getRowHeight(link: faveLinks[indexPath.row])
+                estimatedHeightCache[indexPath] = height
+                return height
+            }
+        }
+        return UITableView.automaticDimension
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         if source == "post" {
@@ -342,8 +443,9 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
-                let height = cell.getRowHeight(record: wall[indexPath.section])
+                let height = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 estimatedHeightCache[indexPath] = height
                 return height
             }
@@ -398,24 +500,13 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -426,7 +517,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell", for: indexPath) as! WallRecordCell2
             cell.delegate = self
             
-            estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+            estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: wallVideos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             
             cell.repostsButton.addTarget(self, action: #selector(self.tapRepostButton(sender:)), for: .touchUpInside)
             cell.likesButton.addTarget(self, action: #selector(self.likePost(sender:)), for: .touchUpInside)
@@ -449,6 +540,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             tableView.beginUpdates()
             tableView.endUpdates()
             
+            cell.selectionStyle = .none
             return cell
         case "photo":
             let cell = tableView.dequeueReusableCell(withIdentifier: "photoCell", for: indexPath) as! FavePhotoCell
@@ -457,6 +549,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             
             cell.selectionStyle = .none
             
+            cell.selectionStyle = .none
             return cell
         case "video":
             let cell = tableView.dequeueReusableCell(withIdentifier: "videoCell", for: indexPath) as! VideoListCell
@@ -468,6 +561,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             cell.accessoryType = .disclosureIndicator
             cell.selectionStyle = .none
             
+            cell.selectionStyle = .none
             return cell
         case "users":
             let cell = tableView.dequeueReusableCell(withIdentifier: "usersCell", for: indexPath) as! FaveUsersCell
@@ -488,6 +582,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             cell.separatorInset = UIEdgeInsets(top: 0, left: 60, bottom: 0, right: 30)
             cell.accessoryType = .disclosureIndicator
             
+            cell.selectionStyle = .none
             return cell
         case "links":
             let cell = tableView.dequeueReusableCell(withIdentifier: "linksCell", for: indexPath) as! FaveLinksCell
@@ -498,6 +593,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             cell.separatorInset = UIEdgeInsets(top: 0, left: 60, bottom: 0, right: 30)
             cell.accessoryType = .disclosureIndicator
             
+            cell.selectionStyle = .none
             return cell
         case "banned":
             let cell = tableView.dequeueReusableCell(withIdentifier: "usersCell", for: indexPath) as! FaveUsersCell
@@ -508,6 +604,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             cell.separatorInset = UIEdgeInsets(top: 0, left: 60, bottom: 0, right: 30)
             cell.accessoryType = .disclosureIndicator
             
+            cell.selectionStyle = .none
             return cell
         default:
             let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
@@ -520,75 +617,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         
         switch source {
         case "post":
-            if let cell = tableView.cellForRow(at: indexPath) as? WallRecordCell2 {
-            
-                let record = wall[indexPath.section]
-                
-                let action = cell.getActionOnClickPosition(touch: cell.position, record: record)
-                
-                if action == "show_record" {
-                    
-                    self.openWallRecord(ownerID: record.fromID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
-                }
-                
-                if action == "show_repost_record" {
-                    
-                    self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
-                }
-                
-                if action == "show_owner" {
-                    
-                    self.openProfileController(id: record.fromID, name: "")
-                }
-                
-                if action == "show_repost_owner" {
-                    
-                    self.openProfileController(id: record.repostOwnerID, name: "")
-                }
-                
-                for index in 0...9 {
-                    if action == "show_photo_\(index)" {
-                        let photoViewController = self.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
-                        
-                        var newIndex = 0
-                        for ind in 0...9 {
-                            if record.mediaType[ind] == "photo" {
-                                let photos = Photos(json: JSON.null)
-                                photos.uid = "\(record.photoOwnerID[ind])"
-                                photos.pid = "\(record.photoID[ind])"
-                                photos.xxbigPhotoURL = record.photoURL[ind]
-                                photos.xbigPhotoURL = record.photoURL[ind]
-                                photos.bigPhotoURL = record.photoURL[ind]
-                                photos.photoURL = record.photoURL[ind]
-                                photos.width = record.photoWidth[ind]
-                                photos.height = record.photoHeight[ind]
-                                photoViewController.photos.append(photos)
-                                if ind == index {
-                                    photoViewController.numPhoto = newIndex
-                                }
-                                newIndex += 1
-                            }
-                        }
-                        
-                        self.navigationController?.pushViewController(photoViewController, animated: true)
-                    }
-                    
-                    if action == "show_video_\(index)" {
-                        
-                        self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
-                    }
-                    
-                    if action == "show_music_\(index)" {
-                        
-                        ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                        self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
-                    }
-                }
-                
-                if action == "show_signer_profile" {
-                    self.openProfileController(id: record.signerID, name: "")
-                }
-            }
+            break
         case "photo":
             if let visibleIndexPath = tableView.indexPathsForVisibleRows {
                 for index in visibleIndexPath {
@@ -644,10 +673,8 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             var titleColor = UIColor.black
             var backColor = UIColor.white
             
-            if #available(iOS 13.0, *) {
-                titleColor = .label
-                backColor = vkSingleton.shared.backColor
-            }
+            titleColor = vkSingleton.shared.labelColor
+            backColor = vkSingleton.shared.backColor
             
             let appearance = SCLAlertView.SCLAppearance(
                 kTitleTop: 32.0,
@@ -757,7 +784,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -818,7 +845,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -873,7 +900,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -912,7 +939,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -999,13 +1026,12 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore1 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -1017,13 +1043,12 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore2 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }

@@ -99,7 +99,8 @@ class NewRecordController: InnerViewController, UIImagePickerControllerDelegate,
             self.textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             self.textView.layer.borderWidth = 1.0
             self.textView.layer.cornerRadius = 5
-            self.textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
+            self.textView.textColor = vkSingleton.shared.secondaryLabelColor
+            self.textView.changeKeyboardAppearanceMode()
             
             self.startConfigureView()
             self.configureSetupLabel()
@@ -121,6 +122,9 @@ class NewRecordController: InnerViewController, UIImagePickerControllerDelegate,
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
         }
+        
+        toolView.backgroundColor = vkSingleton.shared.mainColor
+        textView.backgroundColor = vkSingleton.shared.backColor
     }
     
     func setAttachments() {
@@ -519,7 +523,7 @@ class NewRecordController: InnerViewController, UIImagePickerControllerDelegate,
         usersController.userID = vkSingleton.shared.userID
         usersController.type = "friends"
         usersController.source = "add_mention"
-        usersController.title = "Упомянуть в записи"
+        usersController.title = "Упомянуть в тексте"
         
         usersController.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(usersController.tapCancelButton(sender:)))
@@ -535,7 +539,7 @@ class NewRecordController: InnerViewController, UIImagePickerControllerDelegate,
         groupsController.userID = vkSingleton.shared.userID
         groupsController.type = ""
         groupsController.source = "add_mention"
-        groupsController.title = "Упомянуть в записи"
+        groupsController.title = "Упомянуть в тексте"
         
         groupsController.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(groupsController.tapCancelButton(sender:)))
@@ -567,10 +571,8 @@ class NewRecordController: InnerViewController, UIImagePickerControllerDelegate,
             var titleColor = UIColor.black
             var backColor = UIColor.white
             
-            if #available(iOS 13.0, *) {
-                titleColor = .label
-                backColor = vkSingleton.shared.backColor
-            }
+            titleColor = vkSingleton.shared.labelColor
+            backColor = vkSingleton.shared.backColor
             
             let appearance = SCLAlertView.SCLAppearance(
                 kTitleTop: 32.0,
@@ -590,14 +592,16 @@ class NewRecordController: InnerViewController, UIImagePickerControllerDelegate,
             let textField = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 22))
             
             textField.keyboardType = .URL
-            textField.layer.borderColor = UIColor.black.cgColor
+            textField.layer.borderColor = vkSingleton.shared.labelColor.cgColor
             textField.layer.borderWidth = 1
             textField.layer.cornerRadius = 5
             textField.contentMode = .center
             textField.textColor = textField.tintColor
-            textField.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
+            textField.backgroundColor = vkSingleton.shared.backColor
             textField.font = UIFont(name: "Verdana", size: 12)
             textField.text = ""
+            textField.textColor = vkSingleton.shared.secondaryLabelColor
+            textField.changeKeyboardAppearanceMode()
             
             alert.customSubview = textField
             
@@ -853,23 +857,46 @@ extension NewRecordController: UICollectionViewDelegate, UICollectionViewDataSou
                             self.collectionView.reloadData()
                         }
                         alertController.addAction(action1)
+                        
+                        if typeOf[index] == "wall" {
+                            let action1 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
+                                
+                                self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                                deleteView.removeFromSuperview()
+                            }
+                            alertController.addAction(action1)
+                        } else if typeOf[index] == "photo" {
+                            let action1 = UIAlertAction(title: "Открыть фотографию", style: .default) { action in
+                                
+                                self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                                deleteView.removeFromSuperview()
+                            }
+                            alertController.addAction(action1)
+                        } else if typeOf[index] == "video" {
+                            let action1 = UIAlertAction(title: "Открыть видеозапись", style: .default) { action in
+                                
+                                self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                                deleteView.removeFromSuperview()
+                            }
+                            alertController.addAction(action1)
+                        }
                     } else {
                         if typeOf[index] == "wall" {
-                            let action1 = UIAlertAction(title: "Открыть запись", style: .destructive) { action in
+                            let action1 = UIAlertAction(title: "Открыть запись", style: .default) { action in
                                 
                                 self.openWallRecord(ownerID: self.repostOwnerID, postID: self.repostItemID, accessKey: "", type: "post", scrollToComment: false)
                                 deleteView.removeFromSuperview()
                             }
                             alertController.addAction(action1)
                         } else if typeOf[index] == "photo" {
-                            let action1 = UIAlertAction(title: "Открыть фотографию", style: .destructive) { action in
+                            let action1 = UIAlertAction(title: "Открыть фотографию", style: .default) { action in
                                 
                                 self.openWallRecord(ownerID: self.repostOwnerID, postID: self.repostItemID, accessKey: self.repostAccessKey, type: "photo", scrollToComment: false)
                                 deleteView.removeFromSuperview()
                             }
                             alertController.addAction(action1)
                         } else if typeOf[index] == "video" {
-                            let action1 = UIAlertAction(title: "Открыть видеозапись", style: .destructive) { action in
+                            let action1 = UIAlertAction(title: "Открыть видеозапись", style: .default) { action in
                                 
                                 self.openVideoController(ownerID: "\(self.repostOwnerID)", vid: "\(self.repostItemID)", accessKey: self.repostAccessKey, title: "Видеозапись", scrollToComment: false)
                                 deleteView.removeFromSuperview()

@@ -17,30 +17,21 @@ class ReloadGroupProfileController2: Operation {
     }
     
     override func main() {
-        guard let parseGroupWall = dependencies[0] as? ParseGroupWall, let parseGroupProfile = dependencies[1] as? ParseGroupProfile, let parsePostponed = dependencies[2] as? ParseGroupWall else { return }
-        
-        
-        controller.postponedWall = parsePostponed.wall
-        controller.postponedProfiles = parsePostponed.profiles
-        controller.postponedGroups = parsePostponed.groups
+        guard let parseGroupWall = dependencies[0] as? ParseGroupWall, let parseGroupProfile = dependencies[1] as? ParseGroupProfile else { return }
         
         if controller.offset == 0 {
             controller.wall = parseGroupWall.wall
             controller.profiles = parseGroupWall.profiles
             controller.groups = parseGroupWall.groups
         } else {
-            for record in parseGroupWall.wall {
-                controller.wall.append(record)
-            }
-            for profile in parseGroupWall.profiles {
-                controller.profiles.append(profile)
-            }
-            for group in parseGroupWall.groups {
-                controller.groups.append(group)
-            }
+            controller.wall.append(contentsOf: parseGroupWall.wall)
+            controller.profiles.append(contentsOf: parseGroupWall.profiles)
+            controller.groups.append(contentsOf: parseGroupWall.groups)
         }
         
+        controller.viewCount += parseGroupWall.wall.count
         controller.groupProfile = parseGroupProfile.outputData
+        
         if controller.groupProfile.count > 0 && controller.offset == 0 {
             ViewControllerUtils().hideActivityIndicator()
             
@@ -62,20 +53,30 @@ class ReloadGroupProfileController2: Operation {
                 } else if group.name.contains("18+") || group.status.contains("18+") || group.description.contains("18+") {
                     warning18PlusLimits()
                 } else {
-                    controller.offset += controller.count
+                    if parseGroupWall.wall.count == 0 {
+                        controller.tableView.tableFooterView = nil
+                    }
+                    
                     controller.setProfileView()
+                    controller.offset += controller.count
                     controller.tableView.reloadData()
                     controller.tableView.isHidden = false
                     controller.refreshControl.endRefreshing()
+                    controller.spinner.startAnimating()
                     ViewControllerUtils().hideActivityIndicator()
                 }
             }
         } else {
-            controller.offset += controller.count
+            if parseGroupWall.wall.count == 0 {
+                controller.tableView.tableFooterView = nil
+            }
+            
             controller.setProfileView()
+            controller.offset += controller.count
             controller.tableView.reloadData()
             controller.tableView.isHidden = false
             controller.refreshControl.endRefreshing()
+            controller.spinner.startAnimating()
             ViewControllerUtils().hideActivityIndicator()
         }
     }

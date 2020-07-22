@@ -42,9 +42,10 @@ class ReloadTopicController: Operation {
         if controller.topics.count > 0 {
             controller.title = controller.topics[0].title
             if controller.topics[0].isClosed == 1 {
-                controller.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 44)
+                controller.tableView.frame = CGRect(x: 0, y: controller.navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - controller.navHeight - controller.tabHeight)
                 controller.view.addSubview(controller.tableView)
                 controller.commentView.removeFromSuperview()
+                controller.tableView.reloadRows(at: [IndexPath(row: 0, section: 0)], with: .fade)
             } else {
                 controller.view.addSubview(controller.commentView)
             }

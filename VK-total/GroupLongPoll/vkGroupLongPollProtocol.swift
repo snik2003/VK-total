@@ -158,7 +158,7 @@ extension UIViewController: vkGroupLongPollProtocol {
                                 vkGroupLongPoll.shared.updates[groupID] = json["updates"].compactMap { Updates(json: $0.1) }
                                 
                                 print("groupID = \(groupID)")
-                                print(json)
+                                //print(json)
                                 self.handleGroupUpdates(groupID)
                                 self.groupLongPoll(groupID)
                             } else if failed == 2 && failed == 3 {

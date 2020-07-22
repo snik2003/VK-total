@@ -14,12 +14,36 @@ class AddAccountController: InnerTableViewController {
     var accounts = [AccountVK]()
     let userDefaults = UserDefaults.standard
     
+    var friendsCounters: [String: Int] = [:]
+    var notesCounters: [String: Int] = [:]
+    var messagesCounters: [String: Int] = [:]
+    
     var changeAccount = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        readAccountsFromRealm()
+        //readAccountsFromRealm()
+        
+        
+        if let aView = self.tableView.superview {
+            ViewControllerUtils().showActivityIndicator(uiView: aView)
+        } else {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+        }
+        
+        for account in accounts {
+            self.getAccountCounters(account: account, counters: { token, friendsCounters, messagesCounters, notesCounters in
+                OperationQueue.main.addOperation {
+                    self.friendsCounters[token] = friendsCounters
+                    self.notesCounters[token] = notesCounters
+                    self.messagesCounters[token] = messagesCounters
+                    
+                    self.tableView.reloadData()
+                    if account == self.accounts.last { ViewControllerUtils().hideActivityIndicator() }
+                }
+            })
+        }
     }
 
     override func didReceiveMemoryWarning() {
@@ -31,6 +55,8 @@ class AddAccountController: InnerTableViewController {
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        if accounts.count == 0 { return 0 }
+        
         if changeAccount {
             return accounts.count + 1
         }
@@ -54,7 +80,7 @@ class AddAccountController: InnerTableViewController {
             return 100
         }
         
-        return 60
+        return 70
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
@@ -101,10 +127,20 @@ class AddAccountController: InnerTableViewController {
                             }
                         }
                         
-                        let controller = self.storyboard?.instantiateViewController(withIdentifier: "LoginFormController") as! LoginFormController
-                        controller.changeAccount = true
                         
-                        UIApplication.shared.keyWindow?.rootViewController = controller
+                        let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                        let window = UIApplication.shared.keyWindow
+                        
+                        if let controller  = storyboard.instantiateViewController(withIdentifier: "LoginFormController") as? LoginFormController {
+                            
+                            controller.view.backgroundColor = vkSingleton.shared.backColor
+                            controller.changeAccount = true
+                            
+                            UIView.transition(with: window!, duration: 0.9, options: .transitionFlipFromLeft, animations: {
+                                window?.rootViewController = controller
+                                window?.makeKeyAndVisible()
+                            }, completion: nil)
+                        }
                     }
                     
                     alertController.addAction(action1)
@@ -154,64 +190,37 @@ class AddAccountController: InnerTableViewController {
         switch indexPath.row {
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "serviceCell", for: indexPath)
+            cell.backgroundColor = vkSingleton.shared.backColor
+            
+            if let label = cell.viewWithTag(1) as? UILabel {
+                label.textColor = vkSingleton.shared.labelColor
+            }
             
             return cell
         case 1...accounts.count:
-            let cell = tableView.dequeueReusableCell(withIdentifier: "accountCell", for: indexPath)
-            
-            for subview in cell.subviews {
-                if subview.tag == 100 { subview.removeFromSuperview() }
-            }
+            let cell = tableView.dequeueReusableCell(withIdentifier: "accountCell", for: indexPath) as! AddAccountCell
             
             let account = accounts[indexPath.row - 1]
             
-            cell.textLabel?.text = "\(account.firstName) \(account.lastName)"
-            cell.textLabel?.font = UIFont(name: "Verdana", size: 13.0)
-            cell.textLabel?.numberOfLines = 1
+            var friendsCounter = 0
+            var notesCounter = 0
+            var messagesCounter = 0
             
-            cell.imageView?.isHidden = true
-            
-            cell.detailTextLabel?.textColor = cell.tintColor
-            cell.detailTextLabel?.font = UIFont(name: "Verdana", size: 11.0)
-            cell.detailTextLabel?.isEnabled = true
-            cell.detailTextLabel?.text = "https://vk.com/\(account.screenName)"
-            
-            
-            let avatarImage = UIImageView()
-            avatarImage.tag = 100
-            avatarImage.frame = CGRect(x: 20, y: 5, width: 50, height: 50)
-            avatarImage.image = UIImage(named: "error")
-            
-            let getCacheImage = GetCacheImage(url: account.avatarURL, lifeTime: .avatarImage)
-            let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImage, indexPath: indexPath, tableView: tableView)
-            setImageToRow.addDependency(getCacheImage)
-            OperationQueue().addOperation(getCacheImage)
-            OperationQueue.main.addOperation(setImageToRow)
-            OperationQueue.main.addOperation {
-                avatarImage.layer.cornerRadius = 25
-                avatarImage.contentMode = .scaleAspectFit
-                avatarImage.clipsToBounds = true
-                avatarImage.layer.borderColor = UIColor.gray.cgColor
-                avatarImage.layer.borderWidth = 0.6
+            if let counter1 = self.friendsCounters[account.token],
+                let counter2 = self.messagesCounters[account.token],
+                let counter3 = self.notesCounters[account.token] {
                 
-                if vkSingleton.shared.userID == "\(account.userID)" {
-                    if #available(iOS 13.0, *) {
-                        cell.backgroundColor = .separator
-                    }
-                } else {
-                    cell.backgroundColor = vkSingleton.shared.backColor
-                    
-                }
+                friendsCounter = counter1
+                messagesCounter = counter2
+                notesCounter = counter3
             }
-            cell.addSubview(avatarImage)
             
-            if vkSingleton.shared.userID == "\(account.userID)" {
-                cell.textLabel?.font = UIFont(name: "Verdana-Bold", size: 13.0)
-            }
+            cell.configureCell(account: account, friendsCounter: friendsCounter, messagesCounter: messagesCounter, notesCounter: notesCounter, indexPath: indexPath, cell: cell, tableView: tableView)
             
             return cell
         case accounts.count + 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "addAccountCell", for: indexPath)
+            cell.backgroundColor = vkSingleton.shared.backColor
             
             for subview in cell.subviews {
                 if subview.tag == 100 { subview.removeFromSuperview() }
@@ -281,7 +290,24 @@ class VKAlertController : UIAlertController {
     }
 }
 
+extension UIView {
+
+    var recursiveSubviews: [UIView] {
+        var subviews = self.subviews.compactMap({$0})
+        subviews.forEach { subviews.append(contentsOf: $0.recursiveSubviews) }
+        return subviews
+    }
+}
+
 extension VKAlertController {
+    
+    private var cancelActionView: UIView? {
+        return view.recursiveSubviews.compactMap({
+            $0 as? UILabel}
+        ).first(where: {
+            $0.text == actions.first(where: { $0.style == .cancel })?.title
+        })?.superview?.superview
+    }
     
     open override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
@@ -294,6 +320,9 @@ extension VKAlertController {
                     self.overrideUserInterfaceStyle = .light
                 }
             }
+        } else if AppConfig.shared.darkMode {
+            self.view.subviews.first?.subviews.first?.subviews.first?.backgroundColor = vkSingleton.shared.backColor
+            self.cancelActionView?.backgroundColor = vkSingleton.shared.backColor
         }
         
         let accounts = readAccountsFromRealm()

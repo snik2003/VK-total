@@ -85,11 +85,8 @@ class DialogsCell: UITableViewCell {
         
         nameLabel.tag = 100
         nameLabel.text = name
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-        } else {
-            nameLabel.textColor = .black
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
+        
         if online == 1 {
             if onlineMobile == 1 {
                 let fullString = "\(name) "
@@ -118,11 +115,7 @@ class DialogsCell: UITableViewCell {
         dateLabel.tag = 100
         dateLabel.text = mess.date.toStringLastTime()
         dateLabel.font = dateFont
-        if #available(iOS 13.0, *) {
-            dateLabel.textColor = .secondaryLabel
-        } else {
-            dateLabel.textColor = .darkGray
-        }
+        dateLabel.textColor = vkSingleton.shared.secondaryLabelColor
         
         dateLabel.frame = CGRect(x: 2 * leftInsets + userAvatarSize, y: topInsets + 16, width: UIScreen.main.bounds.width - userAvatarSize - 3 * leftInsets, height: 17)
         self.addSubview(dateLabel)
@@ -196,29 +189,50 @@ class DialogsCell: UITableViewCell {
         } else {
             timer.invalidate()
             
-            if mess.body != "" {
+            if !mess.body.isEmpty {
                 messLabel.text = mess.body.replacingOccurrences(of: "\n", with: " ").prepareTextForPublic()
                 
                 messLabel.numberOfLines = 2
-                
-                if #available(iOS 13.0, *) {
-                    messLabel.textColor = .secondaryLabel
-                } else {
-                    messLabel.textColor = .darkGray
-                }
-            } else if mess.typeAttach.count > 0 {
-                if mess.typeAttach == "photo" {
+                messLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            } else if let attach = mess.attach.first, !attach.type.isEmpty {
+                if attach.type == "photo" {
                     messLabel.text = "[Фотография]"
-                } else if mess.typeAttach == "video" {
+                } else if attach.type == "video" {
                     messLabel.text = "[Видеозапись]"
-                } else if mess.typeAttach == "sticker" {
+                } else if attach.type == "sticker" {
                     messLabel.text = "[Стикер]"
-                } else if mess.typeAttach == "wall" {
+                } else if attach.type == "wall" {
                     messLabel.text = "[Запись на стене]"
-                } else if mess.typeAttach == "gift" {
+                } else if attach.type == "gift" {
                     messLabel.text = "[Подарок]"
-                } else if mess.typeAttach == "doc" {
-                    messLabel.text = "[Документ]"
+                } else if attach.type == "link" {
+                    messLabel.text = "[Ссылка]"
+                } else if attach.type == "doc" {
+                    if let doc = attach.docs.first {
+                        if doc.type == 3 {
+                            messLabel.text = "[GIF]"
+                        } else if doc.type == 4 {
+                            messLabel.text = "[Граффити]"
+                        } else if doc.type == 5 {
+                            messLabel.text = "[Голосовое сообщение]"
+                        } else if doc.type == 6 {
+                            messLabel.text = "[Видеозапись]"
+                        } else {
+                            messLabel.text = "[Документ]"
+                        }
+                    } else {
+                        messLabel.text = "[Документ]"
+                    }
+                } else {
+                    messLabel.text = "[Вложение]"
+                }
+                messLabel.numberOfLines = 1
+                messLabel.textColor = messLabel.tintColor
+            } else if mess.typeAttach.count == 0 && mess.fwdMessage.count > 0 {
+                if mess.fwdMessage.count == 1 {
+                    messLabel.text = "[Пересланное сообщение]"
+                } else {
+                    messLabel.text = "[Пересланные сообщения]"
                 }
                 messLabel.numberOfLines = 1
                 messLabel.textColor = messLabel.tintColor
@@ -262,12 +276,9 @@ class DialogsCell: UITableViewCell {
                     }
                 }
                 messLabel.numberOfLines = 2
-                
-                if #available(iOS 13.0, *) {
-                    messLabel.textColor = .secondaryLabel
-                } else {
-                    messLabel.textColor = .darkGray
-                }
+                messLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            } else {
+                messLabel.text = mess.body
             }
         }
     }

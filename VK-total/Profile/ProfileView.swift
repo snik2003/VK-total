@@ -11,7 +11,7 @@ import SwiftyJSON
 
 class ProfileView: UIView {
     
-    var delegate: UIViewController!
+    var delegate: ProfileController2!
 
     var avatarImage = UIImageView()
     var onlineStatusLabel = UILabel()
@@ -64,12 +64,7 @@ class ProfileView: UIView {
                 friendButton.setTitle("Вы не друзья", for: UIControl.State.normal)
                 friendButton.setTitle("Вы не друзья", for: UIControl.State.disabled)
                 friendButton.isEnabled = false
-                
-                if #available(iOS 13.0, *) {
-                    friendButton.backgroundColor = .separator
-                } else {
-                    friendButton.backgroundColor = .lightGray
-                }
+                friendButton.backgroundColor = vkSingleton.shared.separatorColor
             }
         }
         
@@ -77,11 +72,7 @@ class ProfileView: UIView {
             friendButton.setTitle("Вы подписаны", for: UIControl.State.normal)
             friendButton.setTitle("Вы подписаны", for: UIControl.State.disabled)
             friendButton.isEnabled = true
-            if #available(iOS 13.0, *) {
-                friendButton.backgroundColor = .separator
-            } else {
-                friendButton.backgroundColor = .lightGray
-            }
+            friendButton.backgroundColor = vkSingleton.shared.separatorColor
         }
         
         if profile.friendStatus == 2 {
@@ -95,11 +86,7 @@ class ProfileView: UIView {
             friendButton.setTitle("У Вас в друзьях", for: UIControl.State.normal)
             friendButton.setTitle("У Вас в друзьях", for: UIControl.State.disabled)
             friendButton.isEnabled = true
-            if #available(iOS 13.0, *) {
-                friendButton.backgroundColor = .separator
-            } else {
-                friendButton.backgroundColor = .lightGray
-            }
+            friendButton.backgroundColor = vkSingleton.shared.separatorColor
         }
     }
     
@@ -125,17 +112,11 @@ class ProfileView: UIView {
         
         if profile.canWritePrivateMessage == 0 {
             messageButton.isEnabled = false
-            if #available(iOS 13.0, *) {
-                messageButton.backgroundColor = .separator
-            } else {
-                messageButton.backgroundColor = .lightGray
-            }
+            messageButton.backgroundColor = vkSingleton.shared.separatorColor
         }
         
         messageButton.add(for: .touchUpInside) {
-            if let controller = self.delegate as? ProfileController2 {
-                controller.tapMessageButton(sender: self.messageButton)
-            }
+            self.delegate.tapMessageButton(sender: self.messageButton)
         }
         
         if profile.uid == vkSingleton.shared.userID {
@@ -151,9 +132,7 @@ class ProfileView: UIView {
             updateFriendButton(profile: profile)
             
             friendButton.add(for: .touchUpInside) {
-                if let controller = self.delegate as? ProfileController2 {
-                    controller.addFriendButton(sender: self.friendButton)
-                }
+                self.delegate.addFriendButton(sender: self.friendButton)
             }
         }
         
@@ -183,13 +162,8 @@ class ProfileView: UIView {
     
     func updateOwnerButtons() {
         if allRecordsButton.isSelected {
-            if #available(iOS 13.0, *) {
-                allRecordsButton.setTitleColor(.label, for: .selected)
-                allRecordsButton.layer.borderColor = UIColor.label.cgColor
-            } else {
-                allRecordsButton.setTitleColor(UIColor.white, for: .selected)
-                allRecordsButton.layer.borderColor = UIColor.black.cgColor
-            }
+            //allRecordsButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
+            allRecordsButton.layer.borderColor = vkSingleton.shared.labelColor.cgColor
             
             allRecordsButton.layer.cornerRadius = 5
             allRecordsButton.clipsToBounds = true
@@ -197,28 +171,18 @@ class ProfileView: UIView {
             allRecordsButton.tintColor = vkSingleton.shared.mainColor
             
             ownerButton.isSelected = false
-            ownerButton.setTitleColor(UIColor.black, for: .normal)
+            //ownerButton.setTitleColor(UIColor.black, for: .normal)
             
             ownerButton.layer.cornerRadius = 5
             ownerButton.clipsToBounds = true
             
-            if #available(iOS 13.0, *) {
-                ownerButton.backgroundColor = .separator
-                ownerButton.tintColor = .separator
-            } else {
-                ownerButton.backgroundColor = .lightGray
-                ownerButton.tintColor = .lightGray
-            }
+            ownerButton.backgroundColor = vkSingleton.shared.separatorColor
+            ownerButton.tintColor = vkSingleton.shared.separatorColor
         }
         
         if ownerButton.isSelected {
-            if #available(iOS 13.0, *) {
-                ownerButton.setTitleColor(.label, for: .selected)
-                ownerButton.layer.borderColor = UIColor.label.cgColor
-            } else {
-                ownerButton.setTitleColor(UIColor.white, for: .selected)
-                ownerButton.layer.borderColor = UIColor.black.cgColor
-            }
+            //ownerButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
+            ownerButton.layer.borderColor = vkSingleton.shared.labelColor.cgColor
             
             ownerButton.clipsToBounds = true
             ownerButton.backgroundColor = vkSingleton.shared.mainColor
@@ -226,18 +190,13 @@ class ProfileView: UIView {
             ownerButton.layer.cornerRadius = 5
             
             allRecordsButton.isSelected = false
-            allRecordsButton.setTitleColor(UIColor.black, for: .normal)
+            //allRecordsButton.setTitleColor(UIColor.black, for: .normal)
             
             allRecordsButton.clipsToBounds = true
             allRecordsButton.layer.cornerRadius = 5
             
-            if #available(iOS 13.0, *) {
-                allRecordsButton.backgroundColor = .separator
-                allRecordsButton.tintColor = .separator
-            } else {
-                allRecordsButton.backgroundColor = UIColor.lightGray
-                allRecordsButton.tintColor = UIColor.lightGray
-            }
+            allRecordsButton.backgroundColor = vkSingleton.shared.separatorColor
+            allRecordsButton.tintColor = vkSingleton.shared.separatorColor
         }
     }
     
@@ -245,6 +204,8 @@ class ProfileView: UIView {
         
         allRecordsButton.setTitle("Все записи", for: .normal)
         allRecordsButton.setTitle("Все записи", for: .selected)
+        allRecordsButton.setTitleColor(vkSingleton.shared.labelColor, for: .normal)
+        allRecordsButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
         allRecordsButton.titleLabel?.font = UIFont(name: "Verdana", size: 14)!
         
         let allRecordsButtonSize = getTextSize(text: "Все записи", font: UIFont(name: "Verdana", size: 14.0)!)
@@ -253,6 +214,8 @@ class ProfileView: UIView {
         
         ownerButton.setTitle("Записи \(profile.firstNameGen)", for: .selected)
         ownerButton.setTitle("Записи \(profile.firstNameGen)", for: .normal)
+        ownerButton.setTitleColor(vkSingleton.shared.labelColor, for: .normal)
+        ownerButton.setTitleColor(vkSingleton.shared.labelColor, for: .selected)
         ownerButton.titleLabel?.font = UIFont(name: "Verdana", size: 14)!
         
         let ownerButtonSize = getTextSize(text: "Записи \(profile.firstNameGen)", font: UIFont(name: "Verdana", size: 14.0)!)
@@ -279,11 +242,7 @@ class ProfileView: UIView {
         if profile.canPost == 1 {
             let separator = UIView()
             separator.frame = CGRect(x: 0, y: topY, width: UIScreen.main.bounds.width, height: 5)
-            if #available(iOS 13.0, *) {
-                separator.backgroundColor = .separator
-            } else {
-                separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-            }
+            separator.backgroundColor = vkSingleton.shared.separatorColor
             self.addSubview(separator)
             
             topY += 5
@@ -307,11 +266,7 @@ class ProfileView: UIView {
         
         if postponed > 0 {
             let separator = UIView()
-            if #available(iOS 13.0, *) {
-                separator.backgroundColor = .separator
-            } else {
-                separator.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-            }
+            separator.backgroundColor = vkSingleton.shared.separatorColor
             self.addSubview(separator)
             
             topY += 5
@@ -338,9 +293,16 @@ class ProfileView: UIView {
         return topY
     }
     
+    func configureCell2(profile: UserProfileInfo) -> CGFloat {
+        var topY = createInfoView(profile: profile, topY: delegate.navHeight + 20, radius: 12)
+        topY = setStatusButtons(profile, topY + 20)
+        
+        return topY
+    }
+    
     func configureCell(profile: UserProfileInfo) -> CGFloat {
         
-        var topY: CGFloat = UIScreen.main.bounds.width * 0.9
+        var topY: CGFloat = UIScreen.main.bounds.width
         avatarImage.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: topY)
         
         var hasCropPhoto = 1
@@ -359,6 +321,7 @@ class ProfileView: UIView {
                 OperationQueue.main.addOperation {
                     self.avatarImage.image = getCacheImage.outputImage
                     self.avatarImage.contentMode = .center
+                    ViewControllerUtils().hideActivityIndicator()
                 }
             }
             queue.addOperation(getCacheImage)
@@ -378,9 +341,17 @@ class ProfileView: UIView {
                 
                 let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
                 getServerDataOperation.completionBlock = {
-                    guard let data = getServerDataOperation.data else { return }
+                    guard let data = getServerDataOperation.data else {
+                        ViewControllerUtils().hideActivityIndicator()
+                        return
+                    }
                     
-                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    guard let json = try? JSON(data: data) else {
+                        print("json error");
+                        ViewControllerUtils().hideActivityIndicator()
+                        return
+                    }
+                    
                     let photos = json["response"].compactMap { Photo(json: $0.1) }
                     if photos.count > 0 {
                         let getCacheImage = GetCacheImage(url: photos[0].bigPhotoURL, lifeTime: .avatarImage)
@@ -388,6 +359,7 @@ class ProfileView: UIView {
                             OperationQueue.main.addOperation {
                                 self.avatarImage.image = getCacheImage.outputImage
                                 self.avatarImage.contentMode = .scaleAspectFill
+                                ViewControllerUtils().hideActivityIndicator()
                             }
                         }
                         self.queue.addOperation(getCacheImage)
@@ -397,6 +369,7 @@ class ProfileView: UIView {
                             OperationQueue.main.addOperation {
                                 self.avatarImage.image = getCacheImage.outputImage
                                 self.avatarImage.contentMode = .scaleAspectFit
+                                ViewControllerUtils().hideActivityIndicator()
                             }
                         }
                         self.queue.addOperation(getCacheImage)
@@ -409,6 +382,7 @@ class ProfileView: UIView {
                     OperationQueue.main.addOperation {
                         self.avatarImage.image = getCacheImage.outputImage
                         self.avatarImage.contentMode = .scaleAspectFit
+                        ViewControllerUtils().hideActivityIndicator()
                     }
                 }
                 queue.addOperation(getCacheImage)
@@ -429,6 +403,7 @@ class ProfileView: UIView {
                         let rectImage = cropImage.cropImage(cropRect: rect, viewWidth: CGFloat(cropWidth), viewHeight: CGFloat(cropHeight))
                         self.avatarImage.image = rectImage
                         self.avatarImage.contentMode = .scaleAspectFill
+                        ViewControllerUtils().hideActivityIndicator()
                     }
                 }
             }
@@ -443,16 +418,15 @@ class ProfileView: UIView {
         
         self.addSubview(avatarImage)
         
-        createInfoView(profile: profile, radius: 12)
+        topY = UIScreen.main.bounds.width
+        let _ = createInfoView(profile: profile, topY: topY, radius: 12)
         setCustomFields(profile: profile)
-        
-        topY = UIScreen.main.bounds.width * 0.9
         topY = setStatusButtons(profile, topY)
         
         return topY
     }
     
-    func createInfoView(profile: UserProfileInfo, radius: CGFloat) {
+    func createInfoView(profile: UserProfileInfo, topY: CGFloat, radius: CGFloat) -> CGFloat {
         let view = UIView()
         
         var color = UIColor(red: 255/255, green: 252/255, blue: 121/255, alpha: 1)
@@ -574,10 +548,12 @@ class ProfileView: UIView {
         infoButton.frame = CGRect(x: infoX, y: infoY, width: infoButtonHeight, height: infoButtonHeight)
         view.addSubview(infoButton)
         
-        let topY = UIScreen.main.bounds.width * 0.9 - leftInsets - height
+        let topY = topY - leftInsets - height
         view.frame = CGRect(x: leftInsets, y: topY, width: width, height: height)
         view.dropShadow(color: color, opacity: 1, offSet: CGSize(width: 0, height: 0), radius: radius)
         self.addSubview(view)
+        
+        return height
     }
     
     func setCustomFields(profile: UserProfileInfo) {
@@ -700,6 +676,34 @@ extension Int {
         
         return "\(mess) вложений"
     }
+    
+    func minutesAdder() -> String {
+        
+        let mess = self
+        
+        if mess == 0 { return "" }
+        
+        if (mess % 10 == 1 && (mess % 100 != 11)) {
+            return "\(mess) минута и"
+        } else if ((mess % 10 >= 2 && mess % 10 < 5) && !(mess % 100 >= 12 && mess % 100 < 15)) {
+            return "\(mess) минуты и"
+        }
+        
+        return "\(mess) минут и"
+    }
+    
+    func secondsAdder() -> String {
+        
+        let mess = self
+        
+        if (mess % 10 == 1 && (mess % 100 != 11)) {
+            return "\(mess) секунда"
+        } else if ((mess % 10 >= 2 && mess % 10 < 5) && !(mess % 100 >= 12 && mess % 100 < 15)) {
+            return "\(mess) секунды"
+        }
+        
+        return "\(mess) секунд"
+    }
 }
 
 extension String {
@@ -739,6 +743,14 @@ extension UIImage {
         guard let cutImageRef = inputImage.cgImage?.cropping(to:cropZone) else { return nil }
         
         return UIImage(cgImage: cutImageRef)
+    }
+    
+    func convertToBase64() -> String {
+        if let data = self.pngData() {
+            return data.base64EncodedString(options: .lineLength64Characters)
+        }
+        
+        return ""
     }
 }
 

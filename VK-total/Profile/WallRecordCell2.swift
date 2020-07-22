@@ -10,6 +10,7 @@ import UIKit
 import FLAnimatedImage
 import SwiftMessages
 import SwiftyJSON
+import WebKit
 
 class WallRecordCell2: UITableViewCell {
     
@@ -84,6 +85,8 @@ class WallRecordCell2: UITableViewCell {
     
     var repostReadMoreButton = UIButton()
     
+    var drawCell = true
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -132,6 +135,8 @@ class WallRecordCell2: UITableViewCell {
     var totalLabel = UILabel()
     var poll: Poll!
     
+    var webView: WKWebView!
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         
@@ -141,202 +146,296 @@ class WallRecordCell2: UITableViewCell {
         readMoreButtonFrame()
     }
     
-    func configureCell(record: Wall, profiles: [WallProfiles], groups: [WallGroups], indexPath: IndexPath, tableView: UITableView, cell: UITableViewCell, viewController: UIViewController) -> CGFloat {
+    
+    func configureCell(record: Wall, profiles: [WallProfiles], groups: [WallGroups], videos: [Videos], indexPath: IndexPath, tableView: UITableView, cell: UITableViewCell, viewController: UIViewController) -> CGFloat {
         
-        self.backgroundColor = vkSingleton.shared.backColor
+        var topY: CGFloat = 0
         
-        for subview in self.subviews {
-            if subview.tag == 100 {
-                subview.removeFromSuperview()
-            }
-            if subview is UIImageView || subview is UILabel || subview is UIButton {
-                subview.removeFromSuperview()
-            }
-        }
-        
-        answerLabels.removeAll(keepingCapacity: false)
-        rateLabels.removeAll(keepingCapacity: false)
-        
-        signerLabel.text = ""
-        postTextLabel.text = ""
-        repostTextLabel.text = ""
-        
-        var url = ""
-        var name = ""
-        
-        if record.fromID > 0 {
-            let users = profiles.filter( { $0.uid == record.fromID } )
-            if users.count > 0 {
-                url = users[0].photoURL
-                name = "\(users[0].firstName) \(users[0].lastName)"
-                if record.isPinned == 1 {
-                    name = "📌 \(users[0].firstName) \(users[0].lastName)"
+        if drawCell {
+            self.backgroundColor = vkSingleton.shared.backColor
+            
+            for subview in self.subviews {
+                if subview.tag == 100 {
+                    subview.removeFromSuperview()
                 }
-                if record.postType == "postpone" {
-                    name = "⏱ \(users[0].firstName) \(users[0].lastName)"
+                if subview is UIImageView || subview is UILabel || subview is UIButton {
+                    subview.removeFromSuperview()
                 }
-            }
-        } else {
-            let groups = groups.filter( { $0.gid == abs(record.fromID) } )
-            if groups.count > 0 {
-                url = groups[0].photoURL
-                name = groups[0].name
-                if record.isPinned == 1 {
-                    name = "📌 \(groups[0].name)"
-                }
-                if record.postType == "postpone" {
-                    name = "⏱ \(groups[0].name)"
-                }
-            }
-        }
-        
-        var getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
-        var setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImageView, indexPath: indexPath, tableView: tableView)
-        setImageToRow.addDependency(getCacheImage)
-        queue.addOperation(getCacheImage)
-        OperationQueue.main.addOperation(setImageToRow)
-        OperationQueue.main.addOperation {
-            self.avatarImageView.layer.cornerRadius = 29
-            self.avatarImageView.clipsToBounds = true
-        }
-        
-        nameLabel.text = name
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-        }
-        nameLabel.font = UIFont(name: "Verdana-Bold", size: 15)!
-        nameLabel.adjustsFontSizeToFitWidth = true
-        nameLabel.minimumScaleFactor = 0.5
-        
-        if record.friendsOnly == 1 {
-            onlyFriendsLabel.text = "Только для друзей"
-            onlyFriendsLabel.numberOfLines = 1
-            onlyFriendsLabel.textAlignment = .right
-            onlyFriendsLabel.font = UIFont(name: "Verdana", size: 12)!
-            onlyFriendsLabel.textColor = .systemRed
-            onlyFriendsLabel.isEnabled = true
-            onlyFriendsLabel.frame = CGRect(x: 2 * leftInsets + avatarImageSize, y: 5, width: self.bounds.width - 3 * leftInsets - avatarImageSize, height: 15)
-            self.addSubview(onlyFriendsLabel)
-        }
-        
-        datePostLabel.text = record.date.toStringLastTime()
-        if record.postSource != "" {
-            datePostLabel.setSourceOfRecord(text: " \(datePostLabel.text!)", source: record.postSource, delegate: viewController)
-        }
-        dateLabelHeight = 18
-        datePostLabel.numberOfLines = 1
-        datePostLabel.contentMode = .center
-        datePostLabel.font = UIFont(name: "Verdana", size: 12)!
-        if #available(iOS 13.0, *) {
-            datePostLabel.textColor = .secondaryLabel
-        } else {
-            datePostLabel.isEnabled = false
-        }
-        
-        readMoreButton.isHidden = true
-        repostReadMoreButton.isHidden = true
-        
-        readMoreButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-        readMoreButton.setTitle("Читать полностью", for: .normal)
-        readMoreButton.setTitleColor(UIColor.init(red: 20/255, green: 120/255, blue: 246/255, alpha: 1), for: .normal)
-        
-        readMoreButton.contentMode = .left
-        readMoreButton.contentHorizontalAlignment = .left
-        
-        repostReadMoreButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-        repostReadMoreButton.setTitle("Читать полностью", for: .normal)
-        repostReadMoreButton.setTitleColor(UIColor.init(red: 20/255, green: 120/255, blue: 246/255, alpha: 1) /*UIColor.init(red: 127/255, green: 187/255, blue: 249/255, alpha: 1)*/, for: .normal)
-        repostReadMoreButton.contentMode = .left
-        repostReadMoreButton.contentHorizontalAlignment = .left
-        
-        if record.readMore1 == 0 {
-            readMoreButtonTapped = true
-        }
-        postTextLabel.text = record.text
-        postTextLabel.font = textFont
-        postTextLabel.numberOfLines = 0
-        postTextLabel.lineBreakMode = .byWordWrapping
-        postTextLabel.prepareTextForPublish2(viewController)
-        
-        repostTextLabel.text = ""
-        repostTextLabel.font = textFont
-        repostTextLabel.numberOfLines = 0
-        
-        if record.repostOwnerID != 0 {
-            if record.repostOwnerID > 0 {
-                let users = profiles.filter( { $0.uid == record.repostOwnerID } )
-                if users.count > 0 {
-                    url = users[0].photoURL
-                    name = "\(users[0].firstName) \(users[0].lastName)"
-                }
-            } else {
-                let groups = groups.filter( { $0.gid == abs(record.repostOwnerID) } )
-                if groups.count > 0 {
-                    url = groups[0].photoURL
-                    name = groups[0].name
+                
+                if let webView = subview as? WKWebView {
+                    webView.removeFromSuperview()
                 }
             }
             
-            getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
-            setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: repostAvatarImageView, indexPath: indexPath, tableView: tableView)
+            answerLabels.removeAll(keepingCapacity: false)
+            rateLabels.removeAll(keepingCapacity: false)
+            
+            signerLabel.text = ""
+            postTextLabel.text = ""
+            repostTextLabel.text = ""
+        
+            var url = ""
+            var name = ""
+            
+            if record.fromID > 0 {
+                let users = profiles.filter( { $0.uid == record.fromID } )
+                if users.count > 0 {
+                    url = users[0].photoURL
+                    name = "\(users[0].firstName) \(users[0].lastName)"
+                    if record.isPinned == 1 {
+                        name = "📌 \(users[0].firstName) \(users[0].lastName)"
+                    }
+                    if record.postType == "postpone" {
+                        name = "⏱ \(users[0].firstName) \(users[0].lastName)"
+                    }
+                }
+            } else {
+                let groups = groups.filter( { $0.gid == abs(record.fromID) } )
+                if groups.count > 0 {
+                    url = groups[0].photoURL
+                    name = groups[0].name
+                    if record.isPinned == 1 {
+                        name = "📌 \(groups[0].name)"
+                    }
+                    if record.postType == "postpone" {
+                        name = "⏱ \(groups[0].name)"
+                    }
+                }
+            }
+            
+            avatarImageView.image = UIImage(named: "no-photo")
+            var getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
+            var setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: avatarImageView, indexPath: indexPath, tableView: tableView)
             setImageToRow.addDependency(getCacheImage)
             queue.addOperation(getCacheImage)
             OperationQueue.main.addOperation(setImageToRow)
             OperationQueue.main.addOperation {
-                self.repostAvatarImageView.layer.cornerRadius = 21
-                self.repostAvatarImageView.clipsToBounds = true
+                self.avatarImageView.layer.cornerRadius = 29
+                self.avatarImageView.clipsToBounds = true
             }
             
-            if #available(iOS 13.0, *) {
-                repostNameLabel.textColor = .label
-                repostDateLabel.textColor = .secondaryLabel
-            } else {
-                repostDateLabel.isEnabled = false
+            nameLabel.text = name
+            nameLabel.textColor = vkSingleton.shared.labelColor
+            nameLabel.font = UIFont(name: "Verdana-Bold", size: 15)!
+            nameLabel.adjustsFontSizeToFitWidth = true
+            nameLabel.minimumScaleFactor = 0.5
+            
+            if record.friendsOnly == 1 {
+                onlyFriendsLabel.text = "Только для друзей"
+                onlyFriendsLabel.numberOfLines = 1
+                onlyFriendsLabel.textAlignment = .right
+                onlyFriendsLabel.font = UIFont(name: "Verdana", size: 12)!
+                onlyFriendsLabel.textColor = .systemRed
+                onlyFriendsLabel.isEnabled = true
+                onlyFriendsLabel.frame = CGRect(x: 2 * leftInsets + avatarImageSize, y: 5, width: self.bounds.width - 3 * leftInsets - avatarImageSize, height: 15)
+                if drawCell { self.addSubview(onlyFriendsLabel) }
+            }
+        
+        
+            datePostLabel.text = record.date.toStringLastTime()
+            if record.postSource != "" {
+                datePostLabel.setSourceOfRecord(text: " \(datePostLabel.text!)", source: record.postSource, delegate: viewController)
+            }
+            dateLabelHeight = 18
+            datePostLabel.numberOfLines = 1
+            datePostLabel.contentMode = .center
+            datePostLabel.font = UIFont(name: "Verdana", size: 12)!
+            datePostLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            
+            let avatarTap = UITapGestureRecognizer()
+            avatarTap.add {
+                self.delegate.openProfileController(id: record.fromID, name: name)
             }
             
-            repostNameLabel.text = name
-            repostDateLabel.text = record.repostDate.toStringLastTime()
-            repostNameLabel.adjustsFontSizeToFitWidth = true
-            repostNameLabel.minimumScaleFactor = 0.5
-            
-            repostNameLabel.font = UIFont(name: "Verdana-Bold", size: 15)!
-            repostDateLabel.font = UIFont(name: "Verdana", size: 12)!
-            
-            if record.readMore2 == 0 {
-                readMoreButtonTapped2 = true
+            let nameTap = UITapGestureRecognizer()
+            nameTap.add {
+                self.delegate.openProfileController(id: record.fromID, name: name)
             }
-            repostTextLabel.text = record.repostText
-            repostTextLabel.lineBreakMode = .byWordWrapping
-            repostTextLabel.prepareTextForPublish2(viewController)
             
-            repostAvatarImageView.isHidden = false
-            repostNameLabel.isHidden = false
-            repostDateLabel.isHidden = false
-            repostTextLabel.isHidden = false
-        } else {
-            repostAvatarImageView.isHidden = true
-            repostNameLabel.isHidden = true
-            repostDateLabel.isHidden = true
-            repostTextLabel.isHidden = true
+            let dateTap = UITapGestureRecognizer()
+            dateTap.add {
+                self.delegate.openProfileController(id: record.fromID, name: name)
+            }
+            
+            avatarImageView.isUserInteractionEnabled = true
+            nameLabel.isUserInteractionEnabled = true
+            datePostLabel.isUserInteractionEnabled = true
+            avatarImageView.addGestureRecognizer(avatarTap)
+            nameLabel.addGestureRecognizer(nameTap)
+            datePostLabel.addGestureRecognizer(dateTap)
+            
+            let postTextTap = UITapGestureRecognizer()
+            postTextTap.add {
+                self.delegate.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
+            }
+            
+            let repostTextTap = UITapGestureRecognizer()
+            repostTextTap.add {
+                self.delegate.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
+            }
+            
+            postTextLabel.isUserInteractionEnabled = true
+            repostTextLabel.isUserInteractionEnabled = true
+            postTextLabel.addGestureRecognizer(postTextTap)
+            repostTextLabel.addGestureRecognizer(repostTextTap)
+            
+            readMoreButton.isHidden = true
             repostReadMoreButton.isHidden = true
-        }
+            
+            readMoreButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+            readMoreButton.setTitle("Читать полностью", for: .normal)
+            readMoreButton.setTitleColor(UIColor.init(red: 20/255, green: 120/255, blue: 246/255, alpha: 1), for: .normal)
+            
+            readMoreButton.contentMode = .left
+            readMoreButton.contentHorizontalAlignment = .left
+            
+            repostReadMoreButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+            repostReadMoreButton.setTitle("Читать полностью", for: .normal)
+            repostReadMoreButton.setTitleColor(UIColor.init(red: 20/255, green: 120/255, blue: 246/255, alpha: 1) /*UIColor.init(red: 127/255, green: 187/255, blue: 249/255, alpha: 1)*/, for: .normal)
+            repostReadMoreButton.contentMode = .left
+            repostReadMoreButton.contentHorizontalAlignment = .left
         
-        avatarImageViewFrame()
-        nameLabelFrame()
-        datePostLabelFrame()
-        textLabelFrame(readmore: record.readMore1)
-        readMoreButtonFrame()
-        repostAvatarImageViewFrame()
-        repostNameLabelFrame()
-        repostDateLabelFrame()
-        repostTextLabelFrame(readmore: record.readMore2)
-        repostReadMoreButtonFrame()
         
+            if record.readMore1 == 0 {
+                readMoreButtonTapped = true
+            }
+            postTextLabel.text = record.text
+            postTextLabel.font = textFont
+            postTextLabel.numberOfLines = 0
+            postTextLabel.lineBreakMode = .byWordWrapping
+            postTextLabel.prepareTextForPublish2(viewController)
+            
+            repostTextLabel.text = ""
+            repostTextLabel.font = textFont
+            repostTextLabel.numberOfLines = 0
+            
+            if record.repostOwnerID != 0 {
+                if record.repostOwnerID > 0 {
+                    let users = profiles.filter( { $0.uid == record.repostOwnerID } )
+                    if users.count > 0 {
+                        url = users[0].photoURL
+                        name = "\(users[0].firstName) \(users[0].lastName)"
+                    }
+                } else {
+                    let groups = groups.filter( { $0.gid == abs(record.repostOwnerID) } )
+                    if groups.count > 0 {
+                        url = groups[0].photoURL
+                        name = groups[0].name
+                    }
+                }
+                
+                repostAvatarImageView.image = UIImage(named: "no-photo")
+                getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
+                setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: repostAvatarImageView, indexPath: indexPath, tableView: tableView)
+                setImageToRow.addDependency(getCacheImage)
+                queue.addOperation(getCacheImage)
+                OperationQueue.main.addOperation(setImageToRow)
+                OperationQueue.main.addOperation {
+                    self.repostAvatarImageView.layer.cornerRadius = 21
+                    self.repostAvatarImageView.clipsToBounds = true
+                }
+                
+                repostNameLabel.textColor = vkSingleton.shared.labelColor
+                repostDateLabel.textColor = vkSingleton.shared.secondaryLabelColor
+                
+                repostNameLabel.text = name
+                repostDateLabel.text = record.repostDate.toStringLastTime()
+                repostNameLabel.adjustsFontSizeToFitWidth = true
+                repostNameLabel.minimumScaleFactor = 0.5
+                
+                repostNameLabel.font = UIFont(name: "Verdana-Bold", size: 15)!
+                repostDateLabel.font = UIFont(name: "Verdana", size: 12)!
+                
+                if record.readMore2 == 0 {
+                    readMoreButtonTapped2 = true
+                }
+                repostTextLabel.text = record.repostText
+                repostTextLabel.lineBreakMode = .byWordWrapping
+                repostTextLabel.prepareTextForPublish2(viewController)
+                
+                repostAvatarImageView.isHidden = false
+                repostNameLabel.isHidden = false
+                repostDateLabel.isHidden = false
+                repostTextLabel.isHidden = false
+                
+                let avatarRepostTap = UITapGestureRecognizer()
+                avatarRepostTap.add {
+                    self.delegate.openProfileController(id: record.repostOwnerID, name: name)
+                }
+                
+                let nameRepostTap = UITapGestureRecognizer()
+                nameRepostTap.add {
+                    self.delegate.openProfileController(id: record.repostOwnerID, name: name)
+                }
+                
+                let dateRepostTap = UITapGestureRecognizer()
+                dateRepostTap.add {
+                    self.delegate.openProfileController(id: record.repostOwnerID, name: name)
+                }
+                
+                repostAvatarImageView.isUserInteractionEnabled = true
+                repostNameLabel.isUserInteractionEnabled = true
+                repostDateLabel.isUserInteractionEnabled = true
+                repostAvatarImageView.addGestureRecognizer(avatarRepostTap)
+                repostNameLabel.addGestureRecognizer(nameRepostTap)
+                repostDateLabel.addGestureRecognizer(dateRepostTap)
+            } else {
+                repostAvatarImageView.isHidden = true
+                repostNameLabel.isHidden = true
+                repostDateLabel.isHidden = true
+                repostTextLabel.isHidden = true
+                repostReadMoreButton.isHidden = true
+            }
         
-        var topY: CGFloat = topInsets + avatarImageSize + verticalSpacingElements + postTextLabel.frame.height + readMoreButton.frame.height + 2 * verticalSpacingElements
-        
-        if record.repostOwnerID != 0 {
-            topY = topY + repostAvatarImageSize + verticalSpacingElements + repostTextLabel.frame.height + repostReadMoreButton.frame.height + 1 + 2 * verticalSpacingElements
+            avatarImageViewFrame()
+            nameLabelFrame()
+            datePostLabelFrame()
+            textLabelFrame(readmore: record.readMore1)
+            readMoreButtonFrame()
+            repostAvatarImageViewFrame()
+            repostNameLabelFrame()
+            repostDateLabelFrame()
+            repostTextLabelFrame(readmore: record.readMore2)
+            repostReadMoreButtonFrame()
+            
+            
+            topY = topInsets + avatarImageSize + verticalSpacingElements + postTextLabel.frame.height + readMoreButton.frame.height + 1 + 2 * verticalSpacingElements
+            
+            if record.repostOwnerID != 0 {
+                topY = topY + repostAvatarImageSize + verticalSpacingElements + repostTextLabel.frame.height + repostReadMoreButton.frame.height + 1 + 2 * verticalSpacingElements
+            }
+        } else {
+            postTextLabel.text = record.text
+            postTextLabel.font = textFont
+            postTextLabel.numberOfLines = 0
+            postTextLabel.lineBreakMode = .byWordWrapping
+            postTextLabel.prepareTextForPublish2(viewController)
+            
+            let textLabelSize = getTextSize(text: postTextLabel.text!, font: textFont, readmore: record.readMore1)
+            
+            var readMoreButtonHeight: CGFloat = 20.0
+            if readMoreButton.isHidden == true {
+                readMoreButtonHeight = 0
+            }
+            
+            topY = topInsets + avatarImageSize + 3 * verticalSpacingElements + textLabelSize.height + readMoreButtonHeight + 1
+            
+            if record.repostOwnerID != 0 {
+                repostTextLabel.text = record.repostText
+                repostTextLabel.font = textFont
+                repostTextLabel.numberOfLines = 0
+                repostTextLabel.lineBreakMode = .byWordWrapping
+                repostTextLabel.prepareTextForPublish2(viewController)
+                
+                let repostTextLabelSize = getRepostTextSize(text: repostTextLabel.text!, font: textFont, readmore: record.readMore2)
+                
+                var repostReadMoreButtonHeight: CGFloat = 20.0
+                if repostReadMoreButton.isHidden == true {
+                    repostReadMoreButtonHeight = 0
+                }
+                
+                topY = topY + repostAvatarImageSize + 3 * verticalSpacingElements + repostTextLabelSize.height + repostReadMoreButtonHeight + 1
+            }
         }
         
         var photos: [Photos] = []
@@ -346,38 +445,51 @@ class WallRecordCell2: UITableViewCell {
                 let photo = Photos(json: JSON.null)
                 photo.width = record.photoWidth[index]
                 photo.height = record.photoHeight[index]
+                photo.text = record.photoText[index]
                 photo.xxbigPhotoURL = record.photoURL[index]
                 photo.xbigPhotoURL = record.photoURL[index]
                 photo.bigPhotoURL = record.photoURL[index]
                 photo.smallPhotoURL = record.photoURL[index]
                 photo.pid = "\(record.photoID[index])"
                 photo.uid = "\(record.photoOwnerID[index])"
+                photo.ownerID = "\(record.photoOwnerID[index])"
                 photo.createdTime = record.date
                 photos.append(photo)
             }
         }
         
         let aView = AttachmentsView()
-        aView.backgroundColor = .clear
-        aView.tag = 100
-        aView.delegate = self.delegate
         aView.photos = photos
-        let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: false)
-        aView.frame = CGRect(x: 10, y: topY, width: maxWidth, height: aHeight)
-        self.addSubview(aView)
         
-        topY += aHeight
+        if drawCell {
+            aView.backgroundColor = .clear
+            aView.tag = 100
+            aView.delegate = self.delegate
+            
+            let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: false)
+            aView.frame = CGRect(x: 10, y: topY, width: maxWidth, height: aHeight)
+            self.addSubview(aView)
+            
+            topY += aHeight
+        } else {
+            let aView = AttachmentsView()
+            aView.tag = 100
+            aView.photos = photos
+            let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: true)
+            
+            topY += aHeight
+        }
         
-        topY = setImageView(0, topY, record, cell, indexPath, imageView1, tableView)
-        topY = setImageView(1, topY, record, cell, indexPath, imageView2, tableView)
-        topY = setImageView(2, topY, record, cell, indexPath, imageView3, tableView)
-        topY = setImageView(3, topY, record, cell, indexPath, imageView4, tableView)
-        topY = setImageView(4, topY, record, cell, indexPath, imageView5, tableView)
-        topY = setImageView(5, topY, record, cell, indexPath, imageView6, tableView)
-        topY = setImageView(6, topY, record, cell, indexPath, imageView7, tableView)
-        topY = setImageView(7, topY, record, cell, indexPath, imageView8, tableView)
-        topY = setImageView(8, topY, record, cell, indexPath, imageView9, tableView)
-        topY = setImageView(9, topY, record, cell, indexPath, imageView10, tableView)
+        topY = setImageView(0, topY, record, videos, cell, indexPath, imageView1, tableView)
+        topY = setImageView(1, topY, record, videos, cell, indexPath, imageView2, tableView)
+        topY = setImageView(2, topY, record, videos, cell, indexPath, imageView3, tableView)
+        topY = setImageView(3, topY, record, videos, cell, indexPath, imageView4, tableView)
+        topY = setImageView(4, topY, record, videos, cell, indexPath, imageView5, tableView)
+        topY = setImageView(5, topY, record, videos, cell, indexPath, imageView6, tableView)
+        topY = setImageView(6, topY, record, videos, cell, indexPath, imageView7, tableView)
+        topY = setImageView(7, topY, record, videos, cell, indexPath, imageView8, tableView)
+        topY = setImageView(8, topY, record, videos, cell, indexPath, imageView9, tableView)
+        topY = setImageView(9, topY, record, videos, cell, indexPath, imageView10, tableView)
         
         for index in 0...9 {
             if record.mediaType[index] == "link" {
@@ -408,167 +520,193 @@ class WallRecordCell2: UITableViewCell {
         if record.signerID != 0 {
             let users = profiles.filter({ $0.uid == record.signerID })
             if users.count > 0 {
-                signerLabel.text = "\(users[0].firstName) \(users[0].lastName)"
-                signerLabel.font = signerFont
-                signerLabel.textAlignment = .right
-                signerLabel.contentMode = .top
-                signerLabel.textColor = signerLabel.tintColor
-                signerLabel.frame = CGRect(x: leftInsets, y: topY, width: self.bounds.width - 2 * leftInsets, height: signerLabelHeight)
-                self.addSubview(signerLabel)
+                if drawCell {
+                    signerLabel.text = "\(users[0].firstName) \(users[0].lastName)"
+                    signerLabel.font = signerFont
+                    signerLabel.textAlignment = .right
+                    signerLabel.contentMode = .top
+                    signerLabel.textColor = signerLabel.tintColor
+                    signerLabel.frame = CGRect(x: leftInsets, y: topY, width: self.bounds.width - 2 * leftInsets, height: signerLabelHeight)
+                    if drawCell { self.addSubview(signerLabel) }
+                    
+                    let signerTap = UITapGestureRecognizer()
+                    signerTap.add {
+                        self.delegate.openProfileController(id: record.signerID, name: "")
+                    }
+                    signerLabel.isUserInteractionEnabled = true
+                    signerLabel.addGestureRecognizer(signerTap)
+                }
+                
                 topY += signerLabelHeight
             }
         }
         
-        if record.postType != "postpone" {
-            likesButton.frame = CGRect(x: leftInsets/2, y: topY, width: likesButtonWidth, height: likesButtonHeight)
-            likesButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-            likesButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
-            
-            setLikesButton(record: record)
-            
-            self.addSubview(likesButton)
-            
-            var titleColor = UIColor.darkGray
-            var tintColor = UIColor.darkGray
-            
-            if #available(iOS 13.0, *) {
-                titleColor = .secondaryLabel
-                tintColor = .secondaryLabel
+        if record.postType != "postpone" && record.filter == "" {
+            if drawCell {
+                let view = UIView()
+                view.tag = 100
+                view.backgroundColor = .clear
+                view.frame = CGRect(x: 2, y: topY + 2, width: bounds.width - 4, height: likesButtonHeight - 4)
+                self.addSubview(view)
+                
+                let likeTap = UITapGestureRecognizer()
+                likeTap.add {
+                    self.delegate.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
+                }
+                view.isUserInteractionEnabled = true
+                view.addGestureRecognizer(likeTap)
+                
+                likesButton.frame = CGRect(x: leftInsets/2 - 2, y: 0, width: likesButtonWidth, height: likesButtonHeight - 4)
+                likesButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+                likesButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+                
+                setLikesButton(record: record)
+                
+                view.addSubview(likesButton)
+                
+                let titleColor = vkSingleton.shared.secondaryLabelColor
+                let tintColor = vkSingleton.shared.secondaryLabelColor
+                
+                repostsButton.frame = CGRect(x: likesButton.frame.maxX, y: 0, width: repotsButtonWidth, height: likesButtonHeight - 4)
+                repostsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+                repostsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
+                
+                repostsButton.setTitle("\(record.countReposts)", for: .normal)
+                repostsButton.setTitle("\(record.countReposts)", for: .selected)
+                repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
+                repostsButton.imageView?.tintColor = tintColor
+                repostsButton.setTitleColor(titleColor, for: .normal)
+                if record.userPeposted == 1 {
+                    repostsButton.setTitleColor(vkSingleton.shared.likeColor, for: .normal)
+                    repostsButton.imageView?.tintColor = vkSingleton.shared.likeColor
+                }
+                
+                view.addSubview(repostsButton)
+                
+                viewsButton.frame = CGRect(x: bounds.width - likesButtonWidth - leftInsets/2 + 2, y: 0, width: likesButtonWidth, height: likesButtonHeight - 4)
+                viewsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+                viewsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+                
+                viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.normal)
+                viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.selected)
+                viewsButton.setImage(UIImage(named: "views"), for: .normal)
+                viewsButton.setTitleColor(titleColor, for: .normal)
+                viewsButton.imageView?.tintColor = tintColor
+                viewsButton.isUserInteractionEnabled = false
+                
+                view.addSubview(viewsButton)
+                
+                if record.canComment == 1 || record.countComments > 0 {
+                    commentsButton.frame = CGRect(x: viewsButton.frame.minX - repotsButtonWidth, y: 0, width: repotsButtonWidth, height: likesButtonHeight - 4)
+                    commentsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+                    commentsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+                    commentsButton.setImage(UIImage(named: "message2"), for: .normal)
+                    commentsButton.setTitle("\(record.countComments)", for: .normal)
+                    commentsButton.setTitle("\(record.countComments)", for: .selected)
+                    
+                    commentsButton.setTitleColor(commentsButton.tintColor.withAlphaComponent(0.8), for: .normal)
+                    commentsButton.imageView?.tintColor = commentsButton.tintColor.withAlphaComponent(0.8) //UIColor(red: 124/255, green: 172/255, blue: 238/255, alpha: 1)
+                    
+                    view.addSubview(commentsButton)
+                }
             }
             
-            repostsButton.frame = CGRect(x: likesButton.frame.maxX, y: topY, width: repotsButtonWidth, height: likesButtonHeight)
-            repostsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-            repostsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
-            
-            repostsButton.setTitle("\(record.countReposts)", for: .normal)
-            repostsButton.setTitle("\(record.countReposts)", for: .selected)
-            repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
-            repostsButton.imageView?.tintColor = tintColor
-            repostsButton.setTitleColor(titleColor, for: .normal)
-            if record.userPeposted == 1 {
-                repostsButton.setTitleColor(.systemPurple, for: .normal)
-                repostsButton.imageView?.tintColor = .systemPurple
-            }
-            
-            self.addSubview(repostsButton)
-            
-            viewsButton.frame = CGRect(x: bounds.size.width - likesButtonWidth - leftInsets/2, y: topY, width: likesButtonWidth, height: likesButtonHeight)
-            viewsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-            viewsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
-            
-            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.normal)
-            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.selected)
-            viewsButton.setImage(UIImage(named: "views"), for: .normal)
-            viewsButton.setTitleColor(titleColor, for: .normal)
-            viewsButton.imageView?.tintColor = tintColor
-            viewsButton.isUserInteractionEnabled = false
-            
-            self.addSubview(viewsButton)
-            
-            
-            commentsButton.frame = CGRect(x: viewsButton.frame.minX - repotsButtonWidth, y: topY, width: repotsButtonWidth, height: likesButtonHeight)
-            commentsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-            commentsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
-            commentsButton.setImage(UIImage(named: "message2"), for: .normal)
-            commentsButton.setTitle("\(record.countComments)", for: .normal)
-            commentsButton.setTitle("\(record.countComments)", for: .selected)
-            
-            commentsButton.setTitleColor(commentsButton.tintColor.withAlphaComponent(0.8), for: .normal)
-            commentsButton.imageView?.tintColor = commentsButton.tintColor.withAlphaComponent(0.8) //UIColor(red: 124/255, green: 172/255, blue: 238/255, alpha: 1)
-            
-            self.addSubview(commentsButton)
+            return topY + likesButtonHeight
         }
         
-        return topY + likesButtonHeight
+        return topY + topInsets
     }
     
     func configurePoll(_ poll: Poll, topY: CGFloat) -> CGFloat {
         
-        let view = UIView()
-        view.backgroundColor = .clear
-        view.tag = 100
         var viewY: CGFloat = 5
         
-        var textColor = UIColor.black
-        var textColor2 = UIColor.darkGray
-        
-        if #available(iOS 13.0, *) {
-            textColor = .label
-            textColor2 = .secondaryLabel
-        }
-        
-        let qLabel = UILabel()
-        qLabel.font = qLabelFont
-        qLabel.text = "Опрос: \(poll.question)"
-        qLabel.textAlignment = .center
-        qLabel.backgroundColor = vkSingleton.shared.mainColor
-        qLabel.textColor = .white
-        qLabel.numberOfLines = 0
-        
-        let qLabelSize = getPollLabelSize(text: "Опрос: \(poll.question)", font: qLabelFont)
-        qLabel.frame = CGRect(x: 5, y: viewY, width: bounds.width - 2 * leftInsets, height: qLabelSize.height + 5)
-        view.addSubview(qLabel)
-        
-        if poll.anonymous == 1 {
-            let anonLabel = UILabel()
-            anonLabel.text = "Анонимный опрос"
-            anonLabel.textAlignment = .right
-            anonLabel.textColor = textColor2
-            anonLabel.font = UIFont(name: "Verdana", size: 10)!
-            anonLabel.frame = CGRect(x: 2 * leftInsets, y: viewY + qLabelSize.height + 5, width: bounds.width - 4 * leftInsets, height: 15)
-            view.addSubview(anonLabel)
-        }
-        viewY += qLabelSize.height + 25
-        
-        
-        for index in 0...poll.answers.count-1 {
-            let aLabel = UILabel()
-            aLabel.font = aLabelFont
-            aLabel.text = "\(index+1). \(poll.answers[index].text)"
-            aLabel.textColor = textColor
-            aLabel.numberOfLines = 0
-            aLabel.tag = index
+        if drawCell {
+            let view = UIView()
+            view.backgroundColor = .clear
+            view.tag = 100
             
-            let aLabelSize = getPollLabelSize(text: "\(index+1). \(poll.answers[index].text)", font: aLabelFont)
-            aLabel.frame = CGRect(x: 5, y: viewY, width: aLabelSize.width, height: aLabelSize.height + 5)
-            view.addSubview(aLabel)
+            let textColor = vkSingleton.shared.secondaryLabelColor
             
-            viewY += aLabelSize.height
+            let qLabel = UILabel()
+            qLabel.font = qLabelFont
+            qLabel.text = "Опрос: \(poll.question)"
+            qLabel.textAlignment = .center
+            qLabel.backgroundColor = vkSingleton.shared.mainColor
+            qLabel.textColor = .white
+            qLabel.numberOfLines = 0
             
-            let rLabel = UILabel()
-            rLabel.text = ""
-            rLabel.textAlignment = .right
-            rLabel.textColor = .clear
-            rLabel.font = UIFont(name: "Verdana-Bold", size: 10)!
-            rLabel.frame = CGRect(x: 5, y: viewY + 5, width: aLabelSize.width, height: 15)
-            view.addSubview(rLabel)
-            rateLabels.append(rLabel)
+            let qLabelSize = getPollLabelSize(text: "Опрос: \(poll.question)", font: qLabelFont)
+            qLabel.frame = CGRect(x: 5, y: viewY, width: bounds.width - 2 * leftInsets, height: qLabelSize.height + 5)
+            view.addSubview(qLabel)
+            
+            if poll.anonymous == 1 {
+                let anonLabel = UILabel()
+                anonLabel.text = "Анонимный опрос"
+                anonLabel.textAlignment = .right
+                anonLabel.textColor = textColor
+                anonLabel.font = UIFont(name: "Verdana", size: 10)!
+                anonLabel.frame = CGRect(x: 2 * leftInsets, y: viewY + qLabelSize.height + 5, width: bounds.width - 4 * leftInsets, height: 15)
+                view.addSubview(anonLabel)
+            }
+            viewY += qLabelSize.height + 25
             
             
-            viewY += 25
-            answerLabels.append(aLabel)
-        }
+            for index in 0...poll.answers.count-1 {
+                let aLabel = UILabel()
+                aLabel.font = aLabelFont
+                aLabel.text = "\(index+1). \(poll.answers[index].text)"
+                aLabel.textColor = .white
+                aLabel.numberOfLines = 0
+                aLabel.tag = index
+                
+                let aLabelSize = getPollLabelSize(text: "\(index+1). \(poll.answers[index].text)", font: aLabelFont)
+                aLabel.frame = CGRect(x: 5, y: viewY, width: aLabelSize.width, height: aLabelSize.height + 5)
+                view.addSubview(aLabel)
+                    
+                viewY += aLabelSize.height
+                
+                let rLabel = UILabel()
+                rLabel.text = ""
+                rLabel.textAlignment = .right
+                rLabel.textColor = .clear
+                rLabel.font = UIFont(name: "Verdana-Bold", size: 10)!
+                rLabel.frame = CGRect(x: 5, y: viewY + 5, width: aLabelSize.width, height: 15)
+                view.addSubview(rLabel)
+                rateLabels.append(rLabel)
+                
+                
+                viewY += 25
+                answerLabels.append(aLabel)
+            }
+            
+            totalLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
+            totalLabel.textAlignment = .right
+            totalLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            totalLabel.isEnabled = true
+            totalLabel.numberOfLines = 1
+            
+            totalLabel.frame = CGRect(x: 2 * leftInsets, y: viewY, width: bounds.width - 4 * leftInsets, height: 20)
+            view.addSubview(totalLabel)
+            viewY += 20
+            
+            view.frame = CGRect(x: 5, y: topY, width: bounds.width - 10, height: viewY)
+            view.layer.borderColor = vkSingleton.shared.mainColor.cgColor
+            view.layer.borderWidth = 1.0
+            self.addSubview(view)
         
-        totalLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
-        totalLabel.textAlignment = .right
-        if #available(iOS 13.0, *) {
-            totalLabel.textColor = .secondaryLabel
+            updatePoll()
         } else {
-            totalLabel.textColor = vkSingleton.shared.mainColor
+            let qLabelSize = getPollLabelSize(text: "Опрос: \(poll.question)", font: qLabelFont)
+            viewY += qLabelSize.height + 25
+            
+            for index in 0...poll.answers.count-1 {
+                let aLabelSize = getPollLabelSize(text: "\(index+1). \(poll.answers[index].text)", font: aLabelFont)
+                viewY += aLabelSize.height + 25
+            }
+            
+            viewY += 20
         }
-        totalLabel.isEnabled = true
-        totalLabel.numberOfLines = 1
-        
-        totalLabel.frame = CGRect(x: 2 * leftInsets, y: viewY, width: bounds.width - 4 * leftInsets, height: 20)
-        view.addSubview(totalLabel)
-        viewY += 20
-        
-        view.frame = CGRect(x: 5, y: topY, width: bounds.width - 10, height: viewY)
-        view.layer.borderColor = vkSingleton.shared.mainColor.cgColor
-        view.layer.borderWidth = 1.0
-        self.addSubview(view)
-        
-        updatePoll()
         
         return topY + viewY + verticalSpacingElements
     }
@@ -581,23 +719,14 @@ class WallRecordCell2: UITableViewCell {
                     
                     if self.poll.answerID == self.poll.answers[index].id {
                         answerLabels[index].backgroundColor = UIColor.purple.withAlphaComponent(0.75)
-                        answerLabels[index].textColor = UIColor.white
+                        answerLabels[index].textColor = .white
                         answerLabels[index].isEnabled = true
                     } else {
-                        if #available(iOS 13.0, *) {
-                            answerLabels[index].textColor = .label
-                        } else {
-                            answerLabels[index].textColor = .black
-                            answerLabels[index].isEnabled = false
-                        }
+                        answerLabels[index].textColor = .white
                     }
                 } else {
-                    answerLabels[index].backgroundColor = vkSingleton.shared.mainColor.withAlphaComponent(0.8)
-                    if #available(iOS 13.0, *) {
-                        answerLabels[index].textColor = .label
-                    } else {
-                        answerLabels[index].textColor = .black
-                    }
+                    answerLabels[index].backgroundColor = vkSingleton.shared.mainColor
+                    answerLabels[index].textColor = .white
                 }
             }
         }
@@ -607,11 +736,7 @@ class WallRecordCell2: UITableViewCell {
                 rateLabels[index].text = "\(self.poll.answers[index].votes.rateAdder()) (\(self.poll.answers[index].rate) %)"
                 
                 if self.poll.answerID != 0 {
-                    if #available(iOS 13.0, *) {
-                        rateLabels[index].textColor = .secondaryLabel
-                    } else {
-                        rateLabels[index].textColor = vkSingleton.shared.mainColor
-                    }
+                    rateLabels[index].textColor = vkSingleton.shared.secondaryLabelColor
                 } else {
                     rateLabels[index].textColor = UIColor.clear
                 }
@@ -625,17 +750,12 @@ class WallRecordCell2: UITableViewCell {
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
-        var titleColor = UIColor.darkGray
-        var tintColor = UIColor.darkGray
-        
-        if #available(iOS 13.0, *) {
-            titleColor = .secondaryLabel
-            tintColor = .secondaryLabel
-        }
+        var titleColor = vkSingleton.shared.secondaryLabelColor
+        var tintColor = vkSingleton.shared.secondaryLabelColor
         
         if record.userLikes == 1 {
-            titleColor = .systemPurple
-            tintColor = .systemPurple
+            titleColor = vkSingleton.shared.likeColor
+            tintColor = vkSingleton.shared.likeColor
         }
         
         likesButton.setTitleColor(titleColor, for: .normal)
@@ -643,151 +763,298 @@ class WallRecordCell2: UITableViewCell {
         likesButton.setImage(UIImage(named: "filled-like2"), for: .normal)
     }
     
-    func setImageView(_ index: Int, _ topY: CGFloat, _ record: Wall, _ cell: UITableViewCell, _ indexPath: IndexPath, _ imageView: UIImageView, _ tableView: UITableView) -> CGFloat {
+    func setImageView(_ index: Int, _ topY: CGFloat, _ record: Wall, _ videos: [Videos], _ cell: UITableViewCell, _ indexPath: IndexPath, _ imageView: UIImageView, _ tableView: UITableView) -> CGFloat {
         
         var imageHeight: CGFloat = 0.0
         var imageWidth: CGFloat = 0.0
         var topNew = topY
         
-        let subviews = imageView.subviews
-        for subview in subviews {
-            if subview is UIImageView {
-                subview.removeFromSuperview()
+        if drawCell {
+            let subviews = imageView.subviews
+            for subview in subviews {
+                if subview is UIImageView {
+                    subview.removeFromSuperview()
+                }
+                if subview is UILabel {
+                    subview.removeFromSuperview()
+                }
+                if subview is WKWebView {
+                    subview.removeFromSuperview()
+                }
+                if subview.tag == 1000 {
+                    subview.removeFromSuperview()
+                }
             }
-            if subview is UILabel {
-                subview.removeFromSuperview()
-            }
+            
+            imageView.layer.borderWidth = 0.0
+            imageView.layer.cornerRadius = 0.0
+            imageView.contentMode = .scaleAspectFill
+            
+            imageView.frame = CGRect(x: 5.0, y: topY, width: imageWidth, height: 0.0)
+            imageView.backgroundColor = vkSingleton.shared.backColor
+            imageView.image = nil
+            
+            self.addSubview(imageView)
         }
         
-        imageView.layer.borderWidth = 0.0
-        imageView.layer.cornerRadius = 0.0
-        imageView.contentMode = .scaleAspectFill
-        
-        imageView.frame = CGRect(x: 5.0, y: topY, width: imageWidth, height: 0.0)
-        imageView.backgroundColor = vkSingleton.shared.backColor
-        imageView.image = nil
-        
-        self.addSubview(imageView)
-        
         if record.mediaType[index] == "doc" {
-            if record.photoWidth[index] != 0 {
-                imageWidth = UIScreen.main.bounds.width - 20.0
-                imageHeight = imageWidth * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
+            if record.photoWidth[index] != 0 && record.photoHeight[index] != 0 {
+                let width = CGFloat(record.photoWidth[index])
+                let height = CGFloat(record.photoHeight[index])
+                
+                if width > height {
+                    imageWidth = UIScreen.main.bounds.width - 20.0
+                    imageHeight = imageWidth * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
+                } else {
+                    imageHeight = UIScreen.main.bounds.width - 20.0
+                    imageWidth = imageHeight * CGFloat(record.photoWidth[index]) / CGFloat(record.photoHeight[index])
+                }
             }
             
             if imageHeight > 4 {
-                imageView.frame = CGRect(x: 10.0, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
                 
-                let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
-                let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: imageView, indexPath: indexPath, tableView: tableView)
-                setImageToRow.addDependency(getCacheImage)
-                queue.addOperation(getCacheImage)
-                OperationQueue.main.addOperation(setImageToRow)
-                OperationQueue.main.addOperation {
-                    imageView.clipsToBounds = true
-                }
-                
-                if record.photoText[index] == "gif" {
-                    let gifImage = UIImageView()
-                    gifImage.image = UIImage(named: "gif")
-                    gifImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    gifImage.layer.cornerRadius = 10
-                    gifImage.clipsToBounds = true
-                    gifImage.frame = CGRect(x: imageWidth / 2 - 50, y: (imageHeight - 4) / 2 - 50, width: 100, height: 100)
-                    imageView.addSubview(gifImage)
+                if drawCell {
+                    imageView.frame = CGRect(x: 10, y: topY + 2, width: imageWidth, height: imageHeight - 4)
+                    if imageWidth < UIScreen.main.bounds.width - 20 {
+                        imageView.frame = CGRect(x: (UIScreen.main.bounds.width - 20 - imageWidth) / 2, y: topY + 2, width: imageWidth, height: imageHeight - 4)
+                    }
                     
-                    let gifSizeLabel = UILabel()
-                    gifSizeLabel.text = "Размер: \(record.size[index].getFileSizeToString())"
-                    gifSizeLabel.numberOfLines = 1
-                    gifSizeLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
-                    gifSizeLabel.textAlignment = .center
-                    gifSizeLabel.contentMode = .center
-                    gifSizeLabel.textColor = UIColor.black
-                    gifSizeLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    gifSizeLabel.layer.cornerRadius = 10
-                    gifSizeLabel.clipsToBounds = true
-                    gifSizeLabel.frame = CGRect(x: imageWidth - 10 - 120, y: imageHeight - 4 - 10 - 20, width: 120, height: 20)
-                    imageView.addSubview(gifSizeLabel)
+                    let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
+                    let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: imageView, indexPath: indexPath, tableView: tableView)
+                    setImageToRow.addDependency(getCacheImage)
+                    queue.addOperation(getCacheImage)
+                    OperationQueue.main.addOperation(setImageToRow)
+                    OperationQueue.main.addOperation {
+                        imageView.clipsToBounds = true
+                    }
                     
-                    if record.videoURL[index] != "" && record.size[index] < 100_000_000 {
-                        queue.addOperation {
-                            let url = URL(string: record.videoURL[index])
-                            if let data = try? Data(contentsOf: url!) {
-                                let setAnimatedImageToRow = SetAnimatedImageToRow.init(data: data, imageView: imageView, cell: cell, indexPath: indexPath, tableView: tableView)
-                                OperationQueue.main.addOperation(setAnimatedImageToRow)
-                                OperationQueue.main.addOperation {
-                                    imageView.bringSubviewToFront(gifSizeLabel)
-                                    gifImage.removeFromSuperview()
+                    if record.photoText[index] == "gif" {
+                        let loadingView = UIView()
+                        loadingView.tag = 1000
+                        loadingView.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
+                        loadingView.center = CGPoint(x: imageView.frame.width/2, y: imageView.frame.height/2)
+                        loadingView.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                        loadingView.clipsToBounds = true
+                        loadingView.layer.cornerRadius = 6
+                        if drawCell { imageView.addSubview(loadingView) }
+                        
+                        let activityIndicator = UIActivityIndicatorView()
+                        activityIndicator.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+                        activityIndicator.style = .white
+                        activityIndicator.center = CGPoint(x: loadingView.frame.width/2, y: loadingView.frame.height/2)
+                        if drawCell { loadingView.addSubview(activityIndicator) }
+                        activityIndicator.startAnimating()
+                        
+                        let gifSizeLabel = UILabel()
+                        gifSizeLabel.text = "GIF: \(record.size[index].getFileSizeToString())"
+                        gifSizeLabel.numberOfLines = 1
+                        gifSizeLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
+                        gifSizeLabel.textAlignment = .center
+                        gifSizeLabel.contentMode = .center
+                        gifSizeLabel.textColor = .white
+                        gifSizeLabel.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                        gifSizeLabel.layer.cornerRadius = 4
+                        gifSizeLabel.clipsToBounds = true
+                        let gifSizeWidth = gifSizeLabel.getTextWidth(maxWidth: 200)
+                        gifSizeLabel.frame = CGRect(x: imageWidth - 10 - gifSizeWidth, y: imageHeight - 4 - 10 - 20, width: gifSizeWidth, height: 20)
+                        if drawCell { imageView.addSubview(gifSizeLabel) }
+                        
+                        if record.videoURL[index] != "" && record.size[index] < 150_000_000 {
+                            queue.addOperation {
+                                let url = URL(string: record.videoURL[index])
+                                if let data = try? Data(contentsOf: url!) {
+                                    let setAnimatedImageToRow = SetAnimatedImageToRow.init(data: data, imageView: imageView, cell: cell, indexPath: indexPath, tableView: tableView)
+                                    OperationQueue.main.addOperation(setAnimatedImageToRow)
+                                    OperationQueue.main.addOperation {
+                                        imageView.bringSubviewToFront(gifSizeLabel)
+                                        activityIndicator.stopAnimating()
+                                        loadingView.removeFromSuperview()
+                                        
+                                        let gifTap = UITapGestureRecognizer()
+                                        gifTap.add {
+                                            let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                                            
+                                            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                                            alertController.addAction(cancelAction)
+                                            
+                                            let action1 = UIAlertAction(title: "Сохранить GIF на устройство", style: .default) { action in
+                                                
+                                                if let url = URL(string: record.videoURL[index]) {
+                                                    
+                                                    OperationQueue().addOperation {
+                                                        OperationQueue.main.addOperation {
+                                                            ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
+                                                        }
+                                                        
+                                                        self.delegate.saveGifToDevice(url: url)
+                                                    }
+                                                }
+                                            }
+                                            alertController.addAction(action1)
+                                            
+                                            self.delegate.present(alertController, animated: true)
+                                        }
+                                        imageView.isUserInteractionEnabled = true
+                                        imageView.addGestureRecognizer(gifTap)
+                                    }
                                 }
                             }
                         }
                     }
+                    
+                    self.addSubview(imageView)
                 }
+                
                 topNew = topY + imageHeight + 4.0
             }
         }
         
         if record.mediaType[index] == "video" {
             if record.photoURL[index] != "" {
-                imageWidth = UIScreen.main.bounds.width - 20.0
-                imageHeight = imageWidth * 240.0 / 320.0
+                if record.photoWidth[index] > record.photoHeight[index] && record.photoWidth[index] > 0 {
+                    imageWidth = UIScreen.main.bounds.width - 20.0
+                    imageHeight = imageWidth * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
+                } else if record.photoWidth[index] <= record.photoHeight[index] && record.photoHeight[index] > 0 {
+                    imageHeight = UIScreen.main.bounds.width - 20.0
+                    imageWidth = UIScreen.main.bounds.width - 20.0
+                } else {
+                    imageWidth = UIScreen.main.bounds.width - 20.0
+                    imageHeight = imageWidth * 240.0 / 320.0
+                }
             }
             
-            if imageHeight > 4 {
-                imageView.frame = CGRect(x: 10, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
+            if imageHeight > 0 {
+                let titleLabel = UILabel()
+                titleLabel.text = record.photoText[index]
+                titleLabel.textAlignment = .center
+                titleLabel.font = UIFont(name: "Verdana", size: 12.0)!
+                titleLabel.numberOfLines = 2
+                titleLabel.textColor = titleLabel.tintColor
+                let titleLabelHeight = fmin(titleLabel.getTextSize(maxWidth: UIScreen.main.bounds.width - 20).height, 30)
                 
-                let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
-                let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: imageView, indexPath: indexPath, tableView: tableView)
-                setImageToRow.addDependency(getCacheImage)
-                queue.addOperation(getCacheImage)
-                OperationQueue.main.addOperation(setImageToRow)
-                OperationQueue.main.addOperation {
+                if drawCell {
+                    imageView.frame = CGRect(x: 10 + (UIScreen.main.bounds.width - 20.0 - imageWidth) / 2, y: topY + 2, width: imageWidth, height: imageHeight)
+                    
+                    imageView.image = UIImage(named: "no-video")
                     imageView.clipsToBounds = true
-                    imageView.layer.borderColor = UIColor.black.cgColor
-                    imageView.layer.borderWidth = 1.0
                     imageView.layer.cornerRadius = 4.0
+                    
+                    let loadingView = UIView()
+                    loadingView.tag = 1000
+                    loadingView.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
+                    loadingView.center = CGPoint(x: imageView.frame.width/2, y: imageView.frame.height/2)
+                    loadingView.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                    loadingView.clipsToBounds = true
+                    loadingView.layer.cornerRadius = 6
+                    if drawCell { imageView.addSubview(loadingView) }
+                    
+                    let activityIndicator = UIActivityIndicatorView()
+                    activityIndicator.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+                    activityIndicator.style = .white
+                    activityIndicator.center = CGPoint(x: loadingView.frame.width/2, y: loadingView.frame.height/2)
+                    if drawCell { loadingView.addSubview(activityIndicator) }
+                    activityIndicator.startAnimating()
+                    
+                    let viewsLabel = UILabel()
+                    viewsLabel.text = "Просмотров: \(record.videoViews[index])"
+                    viewsLabel.numberOfLines = 1
+                    viewsLabel.font = UIFont(name: "Verdana-Bold", size: 11.0)!
+                    viewsLabel.textAlignment = .left
+                    let viewsLabelWidth = viewsLabel.getTextWidth(maxWidth: 300)
+                    viewsLabel.frame = CGRect(x: 15, y: topY + imageHeight, width: viewsLabelWidth, height: 20)
+                    self.addSubview(viewsLabel)
+                    
+                    let durationLabel = UILabel()
+                    if record.size[index] == 0 {
+                        durationLabel.text = "LIVE"
+                    } else {
+                        durationLabel.text = record.size[index].getVideoDurationToString()
+                    }
+                    durationLabel.numberOfLines = 1
+                    durationLabel.font = UIFont(name: "Verdana-Bold", size: 11.0)!
+                    durationLabel.textAlignment = .right
+                    let durationLabelWidth = durationLabel.getTextWidth(maxWidth: 200)
+                    durationLabel.frame = CGRect(x: UIScreen.main.bounds.width - 20 - durationLabelWidth + 5, y: topY + imageHeight, width: durationLabelWidth, height: 20)
+                    self.addSubview(durationLabel)
+                    
+                    if record.size[index] == 0 {
+                        durationLabel.textColor = .red
+                        durationLabel.alpha = 1.0
+                    } else {
+                        durationLabel.textColor = vkSingleton.shared.secondaryLabelColor
+                        durationLabel.alpha = 1.0
+                    }
+                    
+                    viewsLabel.textColor = vkSingleton.shared.secondaryLabelColor
+                    viewsLabel.alpha = 1.0
+                    
+                    titleLabel.frame = CGRect(x: 15, y: topY + imageHeight + 20, width: UIScreen.main.bounds.width - 20 - 15, height: titleLabelHeight)
+                    self.addSubview(titleLabel)
+                    
+                    let videoTap = UITapGestureRecognizer()
+                    videoTap.add {
+                        self.delegate.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
+                    }
+                    titleLabel.isUserInteractionEnabled = true
+                    titleLabel.addGestureRecognizer(videoTap)
+                    
+                    if let video = videos.filter({ $0.id == record.photoID[index] && $0.ownerID == record.photoOwnerID[index] }).first {
+                        
+                        let configuration = WKWebViewConfiguration()
+                        configuration.allowsInlineMediaPlayback = true
+                        configuration.mediaTypesRequiringUserActionForPlayback = []
+                        let frame = CGRect(x: 10, y: topY + 2.0, width: imageWidth, height: imageHeight)
+                        
+                        webView = WKWebView(frame: frame, configuration: configuration)
+                        webView.navigationDelegate = self
+                        webView.backgroundColor = vkSingleton.shared.backColor
+                        webView.layer.backgroundColor = vkSingleton.shared.backColor.cgColor
+                        webView.layer.cornerRadius = 4
+                        webView.clipsToBounds = true
+                        webView.isHidden = true
+                        webView.isOpaque = false
+                        self.addSubview(webView)
+                        
+                        if video.platform.contains("YouTube"), let str = video.player.components(separatedBy: "?").first, let newURL = URL(string: str) {
+                            webView.loadHTMLString(embedVideoHtmlYoutube(videoID: newURL.lastPathComponent, autoplay: 0, playsinline: 1, muted: true), baseURL: nil)
+                        } else if let url = URL(string: "\(video.player)&enablejsapi=1&&playsinline=0&autoplay=0") {
+                            let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 10)
+                            webView.load(request)
+                            
+                        }
+                    } else {
+                        let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
+                        let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: imageView, indexPath: indexPath, tableView: tableView)
+                        setImageToRow.addDependency(getCacheImage)
+                        queue.addOperation(getCacheImage)
+                        OperationQueue.main.addOperation(setImageToRow)
+                        OperationQueue.main.addOperation {
+                            activityIndicator.stopAnimating()
+                            loadingView.removeFromSuperview()
+                        }
+                        
+                        let videoImage = UIImageView()
+                        videoImage.image = UIImage(named: "video")
+                        imageView.addSubview(videoImage)
+                        videoImage.frame = CGRect(x: imageWidth / 2 - 30, y: (imageHeight) / 2 - 30, width: 60, height: 60)
+                        
+                        imageView.isUserInteractionEnabled = true
+                        imageView.addGestureRecognizer(videoTap)
+                        
+                        self.addSubview(imageView)
+                    }
                 }
                 
-                let videoImage = UIImageView()
-                videoImage.image = UIImage(named: "video")
-                imageView.addSubview(videoImage)
-                videoImage.frame = CGRect(x: imageWidth / 2 - 30, y: (imageHeight - 4) / 2 - 30, width: 60, height: 60)
-                
-                let durationLabel = UILabel()
-                durationLabel.text = record.size[index].getVideoDurationToString()
-                durationLabel.numberOfLines = 1
-                durationLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
-                durationLabel.textAlignment = .center
-                durationLabel.contentMode = .center
-                if #available(iOS 13.0, *) {
-                    durationLabel.textColor = .label
-                    durationLabel.backgroundColor = .secondarySystemBackground
-                } else {
-                    durationLabel.textColor = UIColor.black
-                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                }
-                durationLabel.layer.cornerRadius = 10
-                durationLabel.clipsToBounds = true
-                if let length = durationLabel.text?.length, length > 5 {
-                    durationLabel.frame = CGRect(x: imageWidth - 10 - 90, y: imageHeight - 4 - 10 - 20, width: 90, height: 20)
-                } else {
-                    durationLabel.frame = CGRect(x: imageWidth - 10 - 60, y: imageHeight - 4 - 10 - 20, width: 60, height: 20)
-                }
-                imageView.addSubview(durationLabel)
-                
-                topNew = topY + imageHeight + 4.0
+                topNew = topY + imageHeight + 30.0 + titleLabelHeight
             }
         }
-        
-        self.addSubview(imageView)
         
         return topNew
     }
     
     func setLinkLabel(_ index: Int, _ topY: CGFloat, _ record: Wall, _ cell: UITableViewCell, _ indexPath: IndexPath, _ imageView: UIImageView, _ linkLabel: UILabel, _ tableView: UITableView, _ viewController: UIViewController) -> CGFloat {
         
-        imageView.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
-        linkLabel.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
+        
         
         var imageWidth: CGFloat = 0
         var imageHeight: CGFloat = 0
@@ -808,13 +1075,18 @@ class WallRecordCell2: UITableViewCell {
                 imageHeight = linkImageSize
             }
             
-            let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
-            getCacheImage.completionBlock = {
-                OperationQueue.main.addOperation {
-                    imageView.image = getCacheImage.outputImage
+            if drawCell {
+                imageView.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
+                linkLabel.frame = CGRect(x: 0, y: 0, width: 0, height: 0)
+                
+                let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
+                getCacheImage.completionBlock = {
+                    OperationQueue.main.addOperation {
+                        imageView.image = getCacheImage.outputImage
+                    }
                 }
+                queue.addOperation(getCacheImage)
             }
-            queue.addOperation(getCacheImage)
         } else if record.linkURL[index].containsIgnoringCase(find: "itunes.apple.com") {
             imageWidth = linkImageSize * 0.7
             imageHeight = linkImageSize * 0.7
@@ -825,80 +1097,99 @@ class WallRecordCell2: UITableViewCell {
             imageView.image = UIImage(named: "url")
         }
         
-        imageView.contentMode = .scaleAspectFill
-        imageView.layer.borderColor = linkLabel.tintColor.cgColor
-        imageView.layer.borderWidth = 0.5
-        imageView.clipsToBounds = true
-        
-        imageView.frame = CGRect(x: leftInsets, y: topY + topLinkInsets, width: imageWidth, height: imageHeight)
-        
-        self.addSubview(imageView)
-        
-        var linkText = record.linkURL[index]
-        if record.linkText[index] != "" {
-            linkText = "\(record.linkText[index])\n\(record.linkURL[index])"
-            if record.linkText[index].length > 100 {
-                linkText = "\(record.linkText[index].prefix(100))...\n\(record.linkURL[index])"
+        if drawCell {
+            imageView.contentMode = .scaleAspectFill
+            imageView.layer.borderColor = linkLabel.tintColor.cgColor
+            imageView.layer.borderWidth = 0.5
+            imageView.clipsToBounds = true
+            
+            imageView.frame = CGRect(x: leftInsets, y: topY + topLinkInsets, width: imageWidth, height: imageHeight)
+            
+            if drawCell { self.addSubview(imageView) }
+            
+            var linkText = record.linkURL[index]
+            if record.linkText[index] != "" {
+                linkText = "\(record.linkText[index])\n\(record.linkURL[index])"
+                if record.linkText[index].length > 100 {
+                    linkText = "\(record.linkText[index].prefix(100))...\n\(record.linkURL[index])"
+                }
             }
+            
+            linkLabel.text = linkText
+            linkLabel.font = linkFont
+            linkLabel.adjustsFontSizeToFitWidth = true
+            linkLabel.minimumScaleFactor = 0.5
+            linkLabel.contentMode = .center
+            linkLabel.textAlignment = .center
+            linkLabel.sizeToFit()
+            linkLabel.numberOfLines = 0
+            linkLabel.clipsToBounds = true
+            linkLabel.layer.borderColor = linkLabel.tintColor.cgColor
+            linkLabel.layer.borderWidth = 0.5
+            
+            linkLabel.frame = CGRect(x: imageWidth + 2 * leftInsets, y: topY + topLinkInsets, width: self.bounds.width - imageWidth - 3 * leftInsets, height: imageHeight)
+            
+            linkLabel.lineBreakMode = .byWordWrapping
+            linkLabel.prepareTextForPublish2(viewController)
+            self.addSubview(linkLabel)
         }
-        
-        linkLabel.text = linkText
-        linkLabel.font = linkFont
-        linkLabel.adjustsFontSizeToFitWidth = true
-        linkLabel.minimumScaleFactor = 0.5
-        linkLabel.contentMode = .center
-        linkLabel.textAlignment = .center
-        linkLabel.sizeToFit()
-        linkLabel.numberOfLines = 0
-        linkLabel.clipsToBounds = true
-        linkLabel.layer.borderColor = linkLabel.tintColor.cgColor
-        linkLabel.layer.borderWidth = 0.5
-        
-        linkLabel.frame = CGRect(x: imageWidth + 2 * leftInsets, y: topY + topLinkInsets, width: self.bounds.width - imageWidth - 3 * leftInsets, height: imageHeight)
-        
-        linkLabel.lineBreakMode = .byWordWrapping
-        linkLabel.prepareTextForPublish2(viewController)
-        self.addSubview(linkLabel)
         
         return topY + 2 * topLinkInsets + imageHeight
     }
     
     func setAudioLabel(_ index: Int, _ topY: CGFloat, _ record: Wall, _ cell: UITableViewCell, _ indexPath: IndexPath, _ imageView: UIImageView, _ audioLabel: UILabel, _ audioNameLabel: UILabel, _ tableView: UITableView) -> CGFloat {
         
-        var topNew = topY
-        
-        imageView.frame = CGRect(x: leftInsets, y: topY + topLinkInsets, width: audioImageSize, height: 0.0)
-        audioNameLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: topY + 4, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 0)
-        audioLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: topY + 4 + audioNameLabel.frame.height, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 0)
-        
-        imageView.image = UIImage(named: "music")
-        audioNameLabel.font = UIFont(name: "Verdana-Bold", size: 13)!
-        audioLabel.font = UIFont(name: "Verdana", size: 13)!
+        var topNew: CGFloat = 0
         
         if record.mediaType[index] == "audio" {
             if record.audioTitle[index] != "" {
-                imageView.frame = CGRect(x: leftInsets, y: topY + topLinkInsets, width: audioImageSize, height: audioImageSize)
+                if drawCell {
+                    let view = UIView()
+                    view.tag = 100
+                    view.backgroundColor = .clear
+                    
+                    imageView.frame = CGRect(x: leftInsets, y: topY + topLinkInsets, width: audioImageSize, height: 0.0)
+                    audioNameLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: topY + 4, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 0)
+                    audioLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: topY + 4 + audioNameLabel.frame.height, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 0)
+                    
+                    imageView.image = UIImage(named: "music")
+                    audioNameLabel.font = UIFont(name: "Verdana-Bold", size: 13)!
+                    audioLabel.font = UIFont(name: "Verdana", size: 13)!
+                    
+                    imageView.frame = CGRect(x: leftInsets, y: topLinkInsets, width: audioImageSize, height: audioImageSize)
+                    
+                    audioNameLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: 4, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 16)
+                    audioNameLabel.text = record.audioArtist[index]
+                    audioNameLabel.textColor = vkSingleton.shared.labelColor
+                    
+                    audioLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: 20, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 16)
+                    audioLabel.text = record.audioTitle[index]
+                    audioLabel.textColor = audioLabel.tintColor
+                    
+                    imageView.isHidden = false
+                    audioNameLabel.isHidden = false
+                    audioLabel.isHidden = false
+                    
+                    view.addSubview(imageView)
+                    view.addSubview(audioNameLabel)
+                    view.addSubview(audioLabel)
                 
-                audioNameLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: topY + 4, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 16)
-                audioNameLabel.text = record.audioArtist[index]
+                    let audioTap = UITapGestureRecognizer()
+                    audioTap.add {
+                        self.delegate.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
+                    }
+                    view.isUserInteractionEnabled = true
+                    view.addGestureRecognizer(audioTap)
+                    
+                    view.frame = CGRect(x: 0, y: topY, width: bounds.size.width, height: 2 * topLinkInsets + audioImageSize)
+                    self.addSubview(view)
+                }
                 
-                audioLabel.frame = CGRect (x: 2 * leftInsets + audioImageSize, y: topY + 20, width: bounds.size.width - 3 * leftInsets - audioImageSize, height: 16)
-                audioLabel.text = record.audioTitle[index]
-                audioLabel.textColor = audioLabel.tintColor
-                
-                imageView.isHidden = false
-                audioNameLabel.isHidden = false
-                audioLabel.isHidden = false
-                
-                topNew = topY + 2 * topLinkInsets + audioImageSize
+                topNew = 2 * topLinkInsets + audioImageSize
             }
         }
         
-        self.addSubview(imageView)
-        self.addSubview(audioNameLabel)
-        self.addSubview(audioLabel)
-        
-        return topNew
+        return topY + topNew
     }
     
     func avatarImageViewFrame() {
@@ -906,7 +1197,7 @@ class WallRecordCell2: UITableViewCell {
         
         avatarImageView.frame = CGRect(origin: avatarImageOrigin, size: CGSize(width: avatarImageSize, height: avatarImageSize))
         
-        self.addSubview(avatarImageView)
+        if drawCell { self.addSubview(avatarImageView) }
     }
     
     func repostAvatarImageViewFrame() {
@@ -918,9 +1209,10 @@ class WallRecordCell2: UITableViewCell {
         if repostAvatarImageView.isHidden == true {
             height = 0.0
         }
+        
         repostAvatarImageView.frame = CGRect(origin: repostAvatarImageOrigin, size: CGSize(width: repostAvatarImageSize, height: height))
         
-        self.addSubview(repostAvatarImageView)
+        if drawCell { self.addSubview(repostAvatarImageView) }
     }
     
     func nameLabelFrame() {
@@ -931,7 +1223,7 @@ class WallRecordCell2: UITableViewCell {
         
         nameLabel.frame = CGRect(origin: nameLabelOrigin, size: CGSize(width: nameLabelWidth, height: nameLabelHeight))
     
-        self.addSubview(nameLabel)
+        if drawCell { self.addSubview(nameLabel) }
     }
     
     
@@ -943,7 +1235,7 @@ class WallRecordCell2: UITableViewCell {
         
         datePostLabel.frame = CGRect(origin: dateLabelOrigin, size: CGSize(width: dateLabelWidth, height: dateLabelHeight))
         
-        self.addSubview(datePostLabel)
+        if drawCell { self.addSubview(datePostLabel) }
     }
     
     func repostNameLabelFrame() {
@@ -959,7 +1251,7 @@ class WallRecordCell2: UITableViewCell {
         
         repostNameLabel.frame = CGRect(origin: repostNameLabelOrigin, size: CGSize(width: repostNameLabelWidth, height: height))
         
-        self.addSubview(repostNameLabel)
+        if drawCell { self.addSubview(repostNameLabel) }
     }
     
     func repostDateLabelFrame() {
@@ -975,7 +1267,7 @@ class WallRecordCell2: UITableViewCell {
         
         repostDateLabel.frame = CGRect(origin: repostDateLabelOrigin, size: CGSize(width: repostDateLabelWidth, height: height))
         
-        self.addSubview(repostDateLabel)
+        if drawCell { self.addSubview(repostDateLabel) }
     }
     
     func getTextSize(text: String, font: UIFont, readmore: Int) -> CGSize {
@@ -1019,7 +1311,7 @@ class WallRecordCell2: UITableViewCell {
         
         postTextLabel.frame = CGRect(x: leftInsets, y: topInsets + avatarImageSize + verticalSpacingElements, width: textLabelSize.width, height: textLabelSize.height)
         
-        self.addSubview(postTextLabel)
+        if drawCell { self.addSubview(postTextLabel) }
     }
     
     func getRepostTextSize(text: String, font: UIFont, readmore: Int) -> CGSize {
@@ -1044,6 +1336,7 @@ class WallRecordCell2: UITableViewCell {
         if text == "" {
             height = 5.0
         }
+        
         return CGSize(width: ceil(width), height: ceil(height))
     }
     
@@ -1052,7 +1345,7 @@ class WallRecordCell2: UITableViewCell {
         
         repostTextLabel.frame = CGRect(x: leftInsets, y: topInsets + avatarImageSize + verticalSpacingElements + postTextLabel.frame.height + readMoreButton.frame.height + verticalSpacingElements + repostAvatarImageSize + verticalSpacingElements, width: repostTextLabelSize.width, height: repostTextLabelSize.height)
         
-        self.addSubview(repostTextLabel)
+        if drawCell { self.addSubview(repostTextLabel) }
     }
     
     func readMoreButtonFrame() {
@@ -1067,7 +1360,7 @@ class WallRecordCell2: UITableViewCell {
         
         readMoreButton.frame = CGRect(origin: readMoreButtonOrigin, size: CGSize(width: readMoreButtonWidth, height: readMoreButtonHeight))
         
-        self.addSubview(readMoreButton)
+        if drawCell { self.addSubview(readMoreButton) }
     }
     
     func repostReadMoreButtonFrame() {
@@ -1082,300 +1375,31 @@ class WallRecordCell2: UITableViewCell {
         
         repostReadMoreButton.frame = CGRect(origin: repostReadMoreButtonOrigin, size: CGSize(width: repostReadMoreButtonWidth, height: repostReadMoreButtonHeight))
         
-        self.addSubview(repostReadMoreButton)
+        if drawCell { self.addSubview(repostReadMoreButton) }
+    }
+}
+
+extension WallRecordCell2: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        webView.isHidden = false
     }
     
-    func getRowHeight(record: Wall) -> CGFloat {
-        
-        var height: CGFloat = 0.0
-        let text = record.text.replacingOccurrences(of: "<br>", with: "\n", options: .regularExpression, range: nil)
-        var textHeight = getTextSize(text: text, font: textFont, readmore: record.readMore1).height
-        
-        if text == "" {
-            textHeight = 5.0
-        } else {
-            if readMoreButton.isHidden == false && record.readMore1 != 0 {
-                textHeight = textHeight + 21
-            }
-        }
-        
-        height = topInsets + avatarImageSize + verticalSpacingElements + textHeight
-        if record.repostOwnerID != 0 {
-            height = height + verticalSpacingElements + repostAvatarImageSize
-            
-            let text2 = record.repostText.replacingOccurrences(of: "<br>", with: "\n", options: .regularExpression, range: nil)
-            var textHeight2 = getRepostTextSize(text: text2, font: textFont, readmore: record.readMore2).height
-            
-            if text2 == "" {
-                textHeight2 = 5.0
-            } else {
-                if repostReadMoreButton.isHidden == false && record.readMore2 != 0 {
-                    textHeight2 = textHeight2 + 21
-                }
-            }
-            
-            height = height + verticalSpacingElements + textHeight2 + verticalSpacingElements
-        }
-        
-        var photos: [Photos] = []
-        let maxWidth = UIScreen.main.bounds.width - 20
-        for index in 0...9 {
-            if record.mediaType[index] == "photo" {
-                let photo = Photos(json: JSON.null)
-                photo.width = record.photoWidth[index]
-                photo.height = record.photoHeight[index]
-                photo.xxbigPhotoURL = record.photoURL[index]
-                photo.xbigPhotoURL = record.photoURL[index]
-                photo.bigPhotoURL = record.photoURL[index]
-                photo.smallPhotoURL = record.photoURL[index]
-                photo.pid = "\(record.photoID[index])"
-                photo.uid = "\(record.photoOwnerID[index])"
-                photo.createdTime = record.date
-                photos.append(photo)
-            }
-        }
-        
-        let aView = AttachmentsView()
-        aView.photos = photos
-        let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: true)
-        height += aHeight
-        
-        var imageWidth = [CGFloat] (repeating: 0, count: 10)
-        var imageHeight = [CGFloat] (repeating: 0, count: 10)
-        for index in 0...9 {
-            if record.mediaType[index] == "doc" {
-                if record.photoWidth[index] != 0 {
-                    imageWidth[index] = UIScreen.main.bounds.width - 20
-                    imageHeight[index] = imageWidth[index] * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
-                    
-                    if imageHeight[index] > 0 {
-                        height = height + imageHeight[index] + 4.0
-                    }
-                }
-            }
-            
-            if record.mediaType[index] == "video" {
-                if record.photoURL[index] != "" {
-                    imageWidth[index] = UIScreen.main.bounds.width - 20
-                    imageHeight[index] = imageWidth[index] * 240.0 / 320.0
-                    
-                    if imageHeight[index] > 0 {
-                        height = height + imageHeight[index] + 4.0
-                    }
-                }
-            }
-        }
-        
-        for index in 0...9 {
-            if record.mediaType[index] == "link" {
-                var imageHeight = linkImageSize
-                if record.photoURL[index] != "" {
-                    if record.photoWidth[index] > record.photoHeight[index] {
-                        imageHeight = linkImageSize * CGFloat(240) / CGFloat(320)
-                    }
-                } else {
-                    imageHeight = linkImageSize * 0.8
-                }
-                
-                height += 2 * topLinkInsets + imageHeight
-            }
-        }
-        
-        for index in 0...9 {
-            if record.mediaType[index] == "audio" {
-                if record.audioTitle[index] != "" {
-                    height = height + 2 * topLinkInsets + audioImageSize
-                }
-            }
-        }
-        
-        for index in 0...9 {
-            if record.mediaType[index] == "poll" {
-                if let poll = record.poll {
-                    let qLabelSize = getPollLabelSize(text: "Опрос: \(poll.question)", font: qLabelFont)
-                    var viewY: CGFloat = 5 + qLabelSize.height + 25
-                    
-                    for ind in 0...poll.answers.count-1 {
-                        let aLabelSize = getPollLabelSize(text: "\(ind+1). \(poll.answers[ind].text)", font: aLabelFont)
-                        viewY += aLabelSize.height + 25
-                    }
-                    
-                    viewY += 20
-                    height += viewY + verticalSpacingElements
-                }
-            }
-        }
-        
-        if record.signerID != 0 {
-            height += signerLabelHeight
-        }
-        
-        if record.postType != "postpone" {
-            height = height + likesButtonHeight + topInsets
-        } else {
-            height = height + 10
-        }
-        
-        return height
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        webView.isHidden = false
     }
-    
-    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        super.touchesBegan(touches, with: event)
-        
-        if let touch = touches.first {
-            position = touch.location(in: self)
-        }
-    }
-    
-    func getActionOnClickPosition(touch: CGPoint, record: Wall) -> String {
-        
-        var res = "show_record"
-        
-        if touch.y >= avatarImageView.frame.minY && touch.y < avatarImageView.frame.maxX {
-            res = "show_owner"
-        }
-        
-        if record.repostOwnerID != 0 {
-            if touch.y >= repostAvatarImageView.frame.minY && touch.y < repostAvatarImageView.frame.maxY {
-                res = "show_repost_owner"
-            }
-            
-            if touch.y >= repostTextLabel.frame.minY && touch.y < repostTextLabel.frame.maxY {
-                res = "show_repost_record"
+}
+
+extension WKWebView {
+    class func removeCache() {
+        guard #available(iOS 9.0, *) else {return}
+
+        HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
+
+        WKWebsiteDataStore.default().fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+            records.forEach { record in
+                WKWebsiteDataStore.default().removeData(ofTypes: record.dataTypes, for: [record], completionHandler: {})
+                print("WKWebsiteDataStore record deleted:", record)
             }
         }
-        
-        for index in 0...9 {
-            if record.mediaType[index] == "photo" {
-                if index == 0 && touch.y >= imageView1.frame.minY && touch.y < imageView1.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 1 && touch.y >= imageView2.frame.minY && touch.y < imageView2.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 2 && touch.y >= imageView3.frame.minY && touch.y < imageView3.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 3 && touch.y >= imageView4.frame.minY && touch.y < imageView4.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 4 && touch.y >= imageView5.frame.minY && touch.y < imageView5.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 5 && touch.y >= imageView6.frame.minY && touch.y < imageView6.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 6 && touch.y >= imageView7.frame.minY && touch.y < imageView7.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 7 && touch.y >= imageView8.frame.minY && touch.y < imageView8.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 8 && touch.y >= imageView9.frame.minY && touch.y < imageView9.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-                if index == 9 && touch.y >= imageView10.frame.minY && touch.y < imageView10.frame.maxY {
-                    res = "show_photo_\(index)"
-                    
-                }
-            }
-            
-            if record.mediaType[index] == "video" {
-                if record.photoURL[index] != "" {
-                    if index == 0 && touch.y >= imageView1.frame.minY && touch.y < imageView1.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 1 && touch.y >= imageView2.frame.minY && touch.y < imageView2.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 2 && touch.y >= imageView3.frame.minY && touch.y < imageView3.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 3 && touch.y >= imageView4.frame.minY && touch.y < imageView4.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 4 && touch.y >= imageView5.frame.minY && touch.y < imageView5.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 5 && touch.y >= imageView6.frame.minY && touch.y < imageView6.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 6 && touch.y >= imageView7.frame.minY && touch.y < imageView7.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 7 && touch.y >= imageView8.frame.minY && touch.y < imageView8.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 8 && touch.y >= imageView9.frame.minY && touch.y < imageView9.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                    if index == 9 && touch.y >= imageView10.frame.minY && touch.y < imageView10.frame.maxY {
-                        res = "show_video_\(index)"
-                        
-                    }
-                }
-            }
-            
-            if record.mediaType[index] == "audio" {
-                if record.audioTitle[index] != "" {
-                    if index == 0 && touch.y >= musicArtist1.frame.minY && touch.y < musicTitle1.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 1 && touch.y >= musicArtist2.frame.minY && touch.y < musicTitle2.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 2 && touch.y >= musicArtist3.frame.minY && touch.y < musicTitle3.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 3 && touch.y >= musicArtist4.frame.minY && touch.y < musicTitle4.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 4 && touch.y >= musicArtist5.frame.minY && touch.y < musicTitle5.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 5 && touch.y >= musicArtist6.frame.minY && touch.y < musicTitle6.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 6 && touch.y >= musicArtist7.frame.minY && touch.y < musicTitle7.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 7 && touch.y >= musicArtist8.frame.minY && touch.y < musicTitle8.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 8 && touch.y >= musicArtist9.frame.minY && touch.y < musicTitle9.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                    if index == 9 && touch.y >= musicArtist10.frame.minY && touch.y < musicTitle10.frame.maxY {
-                        res = "show_music_\(index)"
-                    }
-                }
-            }
-        }
-        
-        if record.signerID != 0 {
-            if touch.y >= signerLabel.frame.minY && touch.y < signerLabel.frame.maxY {
-                res = "show_signer_profile"
-            }
-        }
-        
-        return res
     }
 }

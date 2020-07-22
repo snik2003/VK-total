@@ -42,12 +42,11 @@ class ProfileController: InnerTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let myAttribute = [NSAttributedString.Key.foregroundColor: vkSingleton.shared.labelColor]
+        let myAttrString = NSAttributedString(string: "Обновляем данные", attributes: myAttribute)
+        self.refreshControl?.attributedTitle = myAttrString
         self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
-        if #available(iOS 13.0, *) {
-            self.refreshControl?.tintColor = .secondaryLabel
-        } else {
-            self.refreshControl?.tintColor = .gray
-        }
+        self.refreshControl?.tintColor = vkSingleton.shared.labelColor
         tableView.addSubview(refreshControl!)
         
         OperationQueue.main.addOperation {
@@ -384,12 +383,14 @@ class ProfileController: InnerTableViewController {
                     
                     let photos = Photos(json: JSON.null)
                     photos.uid = "\(user.uid)"
+                    photos.ownerID = "\(user.uid)"
                     let comps = user.avatarID.components(separatedBy: "_")
                     if comps.count > 1 {
                         photos.pid = comps[1]
                         
                         for index in 0...self.photos.count - 1 {
                             if photos.pid == self.photos[index].pid {
+                                photos.text = self.photos[index].text
                                 photos.xxbigPhotoURL = self.photos[index].xxbigPhotoURL
                                 photos.xbigPhotoURL = self.photos[index].xbigPhotoURL
                                 photos.bigPhotoURL = self.photos[index].bigPhotoURL
@@ -460,7 +461,9 @@ class ProfileController: InnerTableViewController {
                                     if record.mediaType[ind] == "photo" {
                                         let photos = Photos(json: JSON.null)
                                         photos.uid = "\(record.photoOwnerID[ind])"
+                                        photos.ownerID = "\(record.photoOwnerID[ind])"
                                         photos.pid = "\(record.photoID[ind])"
+                                        photos.text = record.photoText[ind]
                                         photos.xxbigPhotoURL = record.photoURL[ind]
                                         photos.xbigPhotoURL = record.photoURL[ind]
                                         photos.bigPhotoURL = record.photoURL[ind]
@@ -726,6 +729,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
         
         if wall[(indexPath?.section)! - 6].readMore1 == 1 {
             wall[(indexPath?.section)! - 6].readMore1 = 0
+            
             tableView.beginUpdates()
             tableView.reloadRows(at: [indexPath!], with: .automatic)
             tableView.endUpdates()
@@ -789,7 +793,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
                                 self.tableView.endUpdates()
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -839,7 +843,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
                                 self.tableView.endUpdates()
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -889,7 +893,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
                                 self.tableView.endUpdates()
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -939,7 +943,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
                                 self.tableView.endUpdates()
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -1003,7 +1007,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -1040,7 +1044,7 @@ extension ProfileController: UICollectionViewDelegate, UICollectionViewDataSourc
                             cell.setLikesButton(record: self.wall[index - 6])
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 

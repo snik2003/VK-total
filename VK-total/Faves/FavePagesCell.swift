@@ -53,10 +53,8 @@ class FavePagesCell: UITableViewCell {
             self.addSubview(descriptionLabel)
         }
         
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-            descriptionLabel.textColor = .secondaryLabel
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
+        descriptionLabel.textColor = vkSingleton.shared.labelColor
         
         avatarImage = UIImageView()
         avatarImage.tag = 100

@@ -84,11 +84,8 @@ class GroupDialogsCell: UITableViewCell {
         
         nameLabel.tag = 100
         nameLabel.text = name
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-        } else {
-            nameLabel.textColor = .black
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
+        
         if online == 1 {
             if onlineMobile == 1 {
                 let fullString = "\(name) "
@@ -117,12 +114,7 @@ class GroupDialogsCell: UITableViewCell {
         dateLabel.tag = 100
         dateLabel.text = mess.date.toStringLastTime()
         dateLabel.font = dateFont
-        if #available(iOS 13.0, *) {
-            dateLabel.textColor = .secondaryLabel
-        } else {
-            dateLabel.textColor = .darkGray
-        }
-        
+        dateLabel.textColor = vkSingleton.shared.secondaryLabelColor
         dateLabel.frame = CGRect(x: 2 * leftInsets + userAvatarSize, y: topInsets + 16, width: UIScreen.main.bounds.width - userAvatarSize - 3 * leftInsets, height: 17)
         self.addSubview(dateLabel)
         
@@ -184,11 +176,7 @@ class GroupDialogsCell: UITableViewCell {
             messLabel.text = mess.body.replacingOccurrences(of: "\n", with: " ").prepareTextForPublic()
             
             messLabel.numberOfLines = 2
-            if #available(iOS 13.0, *) {
-                messLabel.textColor = .secondaryLabel
-            } else {
-                messLabel.textColor = .darkGray
-            }
+            messLabel.textColor = vkSingleton.shared.secondaryLabelColor
         } else if mess.typeAttach.count > 0 {
             if mess.typeAttach == "photo" {
                 messLabel.text = "[Фотография]"
@@ -200,11 +188,35 @@ class GroupDialogsCell: UITableViewCell {
                 messLabel.text = "[Запись на стене]"
             } else if mess.typeAttach == "gift" {
                 messLabel.text = "[Подарок]"
+            } else if mess.typeAttach == "link" {
+                messLabel.text = "[Ссылка]"
             } else if mess.typeAttach == "doc" {
-                messLabel.text = "[Документ]"
+                if let attach = mess.attach.first, let doc = attach.docs.first {
+                    if doc.type == 3 {
+                        messLabel.text = "[GIF]"
+                    } else if doc.type == 4 {
+                        messLabel.text = "[Граффити]"
+                    } else if doc.type == 5 {
+                        messLabel.text = "[Голосовое сообщение]"
+                    } else if doc.type == 6 {
+                        messLabel.text = "[Видеозапись]"
+                    } else {
+                        messLabel.text = "[Документ]"
+                    }
+                } else {
+                    messLabel.text = "[Документ]"
+                }
             }
             messLabel.numberOfLines = 1
             messLabel.textColor = messLabel.tintColor
-        }
+        } else if mess.typeAttach.count == 0 && mess.fwdMessage.count > 0 {
+            if mess.fwdMessage.count == 1 {
+                messLabel.text = "[Пересланное сообщение]"
+            } else {
+                messLabel.text = "[Пересланные сообщения]"
+            }
+            messLabel.numberOfLines = 1
+            messLabel.textColor = messLabel.tintColor
+        } 
     }
 }

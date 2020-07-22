@@ -34,7 +34,7 @@ class NotificationCell: UITableViewCell {
     
     let linkColor = UIColor.init(red: 20/255, green: 120/255, blue: 246/255, alpha: 1)
     let parentColor = UIColor.brown
-    let feedbackColor = UIColor.purple
+    let feedbackColor = vkSingleton.shared.likeColor
     
     func getTextSize(text: String, font: UIFont) -> CGSize {
         let maxWidth = UIScreen.main.bounds.width - 4 * leftInsets - avatarSize
@@ -67,6 +67,8 @@ class NotificationCell: UITableViewCell {
         notLabel.contentMode = .top
         notLabel.textAlignment = .left
         notLabel.lineBreakMode = .byCharWrapping
+        
+        notLabel.textColor = vkSingleton.shared.labelColor
         
         let avatarImage = UIImageView()
         let smallImage = UIImageView()
@@ -416,21 +418,7 @@ class NotificationCell: UITableViewCell {
             avatarImage.clipsToBounds = true
             smallImage.image = UIImage(named: smallName)
             smallImage.layer.cornerRadius = 15
-            if #available(iOS 13.0, *) {
-                if AppConfig.shared.autoMode {
-                    if self.traitCollection.userInterfaceStyle == .dark {
-                        smallImage.layer.borderColor = vkSingleton.shared.backColor.cgColor
-                    } else {
-                        smallImage.layer.borderColor = UIColor.white.cgColor
-                    }
-                } else if AppConfig.shared.darkMode {
-                    smallImage.layer.borderColor = vkSingleton.shared.backColor.cgColor
-                } else {
-                    smallImage.layer.borderColor = UIColor.white.cgColor
-                }
-            } else {
-                smallImage.layer.borderColor = UIColor.white.cgColor
-            }
+            smallImage.layer.borderColor = vkSingleton.shared.backColor.cgColor
             smallImage.layer.borderWidth = 3.0
             smallImage.clipsToBounds = true
         }
@@ -476,6 +464,9 @@ class NotificationCell: UITableViewCell {
             dateLabel.text = not.date.toStringLastTime()
             dateLabel.contentMode = .center
             dateLabel.textAlignment = .right
+            
+            dateLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            
             
             var dateLabelY: CGFloat = 2 * topInsets +  notLabelSize.height
             if dateLabelY + 24 + topInsets < 2 * topAvatarInsets + avatarSize {

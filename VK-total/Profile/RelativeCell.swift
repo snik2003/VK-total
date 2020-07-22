@@ -36,6 +36,7 @@ class RelativeCell: UITableViewCell {
                 let typeLabel = UILabel()
                 typeLabel.tag = 200
                 typeLabel.text = delegate.relativesToString(type: rel.type, sex: user[0].sex)
+                typeLabel.textColor = vkSingleton.shared.labelColor
                 typeLabel.font = UIFont(name: "Verdana", size: 13)!
                 typeLabel.frame = CGRect(x: 50, y: topY, width: 70, height: 30)
                 self.addSubview(typeLabel)

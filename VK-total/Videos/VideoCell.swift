@@ -25,12 +25,15 @@ class VideoCell: UITableViewCell {
     var viewsLabel = UILabel()
     var durationLabel = UILabel()
     
-    var webView = WKWebView()
+    var webView: WKWebView!
     
     let titleLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 20, height: 0))
     let descriptionLabel = UILabel(frame: CGRect(x: 0, y: 0, width: 20, height: 0))
     
     var avatarImageView = UIImageView()
+    
+    var loadingView: UIView!
+    var activityIndicator: UIActivityIndicatorView!
     
     var nameLabel = UILabel()
     var datePostLabel = UILabel()
@@ -43,6 +46,7 @@ class VideoCell: UITableViewCell {
     
     var position: CGPoint = CGPoint.zero
     
+    var autoplay = 1;
     
     let avatarImageSize: CGFloat = 60.0
     
@@ -67,6 +71,7 @@ class VideoCell: UITableViewCell {
     
     let likesButtonWight: CGFloat = 80.0
     let likesButtonHeight: CGFloat = 40.0
+    
     
     override func layoutSubviews() {
         super.layoutSubviews()
@@ -115,15 +120,13 @@ class VideoCell: UITableViewCell {
             self.avatarImageView.clipsToBounds = true
         }
         
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-            datePostLabel.textColor = .secondaryLabel
-            durationLabel.textColor = .secondaryLabel
-            viewsLabel.textColor = .secondaryLabel
-            titleLabel.textColor = .label
-            descriptionLabel.textColor = .secondaryLabel
-            infoLikesLabel.textColor = .secondaryLabel
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
+        datePostLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        durationLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        viewsLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        titleLabel.textColor = vkSingleton.shared.labelColor
+        descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        infoLikesLabel.textColor = vkSingleton.shared.secondaryLabelColor
         
         nameLabel.text = name
         nameLabel.font = UIFont(name: "Verdana-Bold", size: 15)!
@@ -137,20 +140,66 @@ class VideoCell: UITableViewCell {
         
         var topY: CGFloat = topInsets + avatarImageSize + verticalSpacingElements
         
-        if let url = URL(string: record.player) {
-            let request = URLRequest(url: url)
-            webView.load(request)
+        var width = UIScreen.main.bounds.width - 2 * leftInsets
+        var height = width * CGFloat(240) / CGFloat(320)
+        
+        if record.width > record.height && record.width > 0 {
+            width = UIScreen.main.bounds.width - 2 * leftInsets
+            height = width * CGFloat(record.height) / CGFloat(record.width)
+        } else if record.width <= record.height && record.height > 0 {
+            height = UIScreen.main.bounds.width - 2 * leftInsets
+            width = UIScreen.main.bounds.width - 2 * leftInsets
         }
         
-        let width = UIScreen.main.bounds.width - 2 * leftInsets
-        let height = width * CGFloat(240) / CGFloat(320)
-        webView.frame = CGRect(x: leftInsets, y: topY, width: width, height: height)
+        let frame = CGRect(x: leftInsets + (UIScreen.main.bounds.width - 2 * leftInsets - width) / 2 , y: topY, width: width, height: height)
+        
+        let configuration = WKWebViewConfiguration()
+        configuration.allowsInlineMediaPlayback = true
+        configuration.mediaTypesRequiringUserActionForPlayback = []
+        
+        let imageView = UIImageView(frame: frame)
+        imageView.image = UIImage(named: "no-video")
+        imageView.clipsToBounds = true
+        imageView.layer.cornerRadius = 4.0
+        self.addSubview(imageView)
+        
+        loadingView = UIView()
+        loadingView.tag = 1000
+        loadingView.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
+        loadingView.center = CGPoint(x: imageView.frame.width/2, y: imageView.frame.height/2)
+        loadingView.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+        loadingView.clipsToBounds = true
+        loadingView.layer.cornerRadius = 6
+        imageView.addSubview(loadingView)
+        
+        activityIndicator = UIActivityIndicatorView()
+        activityIndicator.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+        activityIndicator.style = .white
+        activityIndicator.center = CGPoint(x: loadingView.frame.width/2, y: loadingView.frame.height/2)
+        activityIndicator.startAnimating()
+        loadingView.addSubview(activityIndicator)
+        
+        webView = WKWebView(frame: frame, configuration: configuration)
+        webView.navigationDelegate = self
         webView.backgroundColor = vkSingleton.shared.backColor
         webView.layer.backgroundColor = vkSingleton.shared.backColor.cgColor
         webView.layer.cornerRadius = 4
         webView.clipsToBounds = true
-        
+        webView.isHidden = true
+        webView.isOpaque = false
         self.addSubview(webView)
+        
+        if record.player.contains("youtube"), let str = record.player.components(separatedBy: "?").first, let newURL = URL(string: str) {
+        
+            webView.loadHTMLString(embedVideoHtmlYoutube(videoID: newURL.lastPathComponent, autoplay: autoplay, playsinline: 1, muted: false), baseURL: nil)
+            autoplay = 0
+    
+        } else if let url = URL(string: "\(record.player)&enablejsapi=1&&playsinline=0&autoplay=0") {
+            
+            let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 10)
+            webView.load(request)
+            autoplay = 0
+        }
         
         topY = topY + height + verticalSpacingElements
         
@@ -169,8 +218,8 @@ class VideoCell: UITableViewCell {
         durationLabel.textAlignment = .right
         durationLabel.isEnabled = false
         durationLabel.numberOfLines = 1
-        durationLabel.frame = CGRect(x: UIScreen.main.bounds.width / 2, y: topY, width: (UIScreen.main.bounds.width - 2 * leftInsets) / 2, height: viewsLabelHeight)
-        
+        let durationLabelWidth = durationLabel.getTextWidth(maxWidth: 200)
+        durationLabel.frame = CGRect(x: UIScreen.main.bounds.width - leftInsets - durationLabelWidth, y: topY, width: durationLabelWidth, height: viewsLabelHeight)
         self.addSubview(durationLabel)
         
         topY = topY + viewsLabelHeight
@@ -203,13 +252,8 @@ class VideoCell: UITableViewCell {
         configureInfoPanel(record, likes, topY, indexPath, cell, tableView)
         topY = topY + infoPanelHeight
         
-        var titleColor = UIColor.darkGray
-        var tintColor = UIColor.darkGray
-        
-        if #available(iOS 13.0, *) {
-            titleColor = .secondaryLabel
-            tintColor = .secondaryLabel
-        }
+        let titleColor = vkSingleton.shared.secondaryLabelColor
+        let tintColor = vkSingleton.shared.secondaryLabelColor
         
         likesButton.frame = CGRect(x: leftInsets, y: topY, width: likesButtonWight, height: likesButtonHeight)
         likesButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
@@ -229,23 +273,25 @@ class VideoCell: UITableViewCell {
         repostsButton.imageView?.tintColor = tintColor
         repostsButton.setTitleColor(titleColor, for: .normal)
         if record.userReposted == 1 {
-            repostsButton.setTitleColor(.systemPurple, for: .normal)
-            repostsButton.imageView?.tintColor = .systemPurple
+            repostsButton.setTitleColor(vkSingleton.shared.likeColor, for: .normal)
+            repostsButton.imageView?.tintColor = vkSingleton.shared.likeColor
         }
         
         self.addSubview(repostsButton)
         
-        commentsButton.frame = CGRect(x: (UIScreen.main.bounds.size.width - likesButtonWight) / 2.0, y: topY, width: likesButtonWight, height: likesButtonHeight)
-        commentsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-        commentsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
-        commentsButton.setImage(UIImage(named: "message2"), for: .normal)
-        commentsButton.setTitleColor(commentsButton.tintColor, for: .normal)
-        commentsButton.imageView?.tintColor = commentsButton.tintColor
-         
-        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
-        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
-         
-        self.addSubview(commentsButton)
+        if record.canComment == 1 || record.countComments > 0 {
+            commentsButton.frame = CGRect(x: (UIScreen.main.bounds.size.width - likesButtonWight) / 2.0, y: topY, width: likesButtonWight, height: likesButtonHeight)
+            commentsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+            commentsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+            commentsButton.setImage(UIImage(named: "message2"), for: .normal)
+            commentsButton.setTitleColor(commentsButton.tintColor, for: .normal)
+            commentsButton.imageView?.tintColor = commentsButton.tintColor
+             
+            commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
+            commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
+             
+            self.addSubview(commentsButton)
+        }
     }
     
     func configureInfoPanel(_ record: Videos, _ likes: [Likes], _ topY: CGFloat, _ indexPath: IndexPath, _ cell: UITableViewCell, _ tableView: UITableView) {
@@ -390,6 +436,10 @@ class VideoCell: UITableViewCell {
                 } else {
                     infoAvatar1.layer.borderColor = UIColor.white.cgColor
                 }
+            } else if AppConfig.shared.darkMode {
+                infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+            } else {
+                infoAvatar1.layer.borderColor = UIColor.white.cgColor
             }
             
             self.addSubview(infoAvatar1)
@@ -431,6 +481,12 @@ class VideoCell: UITableViewCell {
                     infoAvatar1.layer.borderColor = UIColor.white.cgColor
                     infoAvatar2.layer.borderColor = UIColor.white.cgColor
                 }
+            } else if AppConfig.shared.darkMode {
+                infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                infoAvatar2.layer.borderColor = vkSingleton.shared.backColor.cgColor
+            } else {
+                infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                infoAvatar2.layer.borderColor = UIColor.white.cgColor
             }
             
             self.addSubview(infoAvatar1)
@@ -485,6 +541,14 @@ class VideoCell: UITableViewCell {
                     infoAvatar2.layer.borderColor = UIColor.white.cgColor
                     infoAvatar3.layer.borderColor = UIColor.white.cgColor
                 }
+            } else if AppConfig.shared.darkMode {
+                infoAvatar1.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                infoAvatar2.layer.borderColor = vkSingleton.shared.backColor.cgColor
+                infoAvatar3.layer.borderColor = vkSingleton.shared.backColor.cgColor
+            } else {
+                infoAvatar1.layer.borderColor = UIColor.white.cgColor
+                infoAvatar2.layer.borderColor = UIColor.white.cgColor
+                infoAvatar3.layer.borderColor = UIColor.white.cgColor
             }
             
             self.addSubview(infoAvatar1)
@@ -498,17 +562,12 @@ class VideoCell: UITableViewCell {
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
-        var titleColor = UIColor.darkGray
-        var tintColor = UIColor.darkGray
-        
-        if #available(iOS 13.0, *) {
-            titleColor = .secondaryLabel
-            tintColor = .secondaryLabel
-        }
+        var titleColor = vkSingleton.shared.secondaryLabelColor
+        var tintColor = vkSingleton.shared.secondaryLabelColor
         
         if record.userLikes == 1 {
-            titleColor = .systemPurple
-            tintColor = .systemPurple
+            titleColor = vkSingleton.shared.likeColor
+            tintColor = vkSingleton.shared.likeColor
         }
         
         likesButton.setTitleColor(titleColor, for: .normal)
@@ -565,8 +624,16 @@ class VideoCell: UITableViewCell {
         
         var height: CGFloat = 0.0
         
-        let widthVideo = UIScreen.main.bounds.width - 2 * leftInsets
-        let heightVideo = widthVideo * CGFloat(240) / CGFloat(320)
+        var widthVideo = UIScreen.main.bounds.width - 2 * leftInsets
+        var heightVideo = widthVideo * CGFloat(240) / CGFloat(320)
+        
+        if record.width > record.height && record.width > 0 {
+            widthVideo = UIScreen.main.bounds.width - 2 * leftInsets
+            heightVideo = widthVideo * CGFloat(record.height) / CGFloat(record.width)
+        } else if record.width <= record.height && record.height > 0 {
+            heightVideo = UIScreen.main.bounds.width - 2 * leftInsets
+            widthVideo = UIScreen.main.bounds.width - 2 * leftInsets
+        }
         
         let titleSize = getTextSize(text: record.title.prepareTextForPublic(), font: titleFont)
         let descSize = getTextSize(text: record.description.prepareTextForPublic(), font: descriptionFont)
@@ -601,5 +668,58 @@ class VideoCell: UITableViewCell {
         }
         
         return res
+    }
+}
+
+extension VideoCell: WKNavigationDelegate {
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        webView.isHidden = false
+        activityIndicator.stopAnimating()
+        loadingView.removeFromSuperview()
+    }
+    
+    func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+        webView.isHidden = false
+        activityIndicator.stopAnimating()
+        loadingView.removeFromSuperview()
+    }
+}
+
+extension UITableViewCell {
+    
+    func embedVideoHtml(videoURL: String, autoplay: Int, playsinline: Int, muted: Bool) -> String {
+        
+        var parameters = ""
+        if muted { parameters = "\(parameters) muted" }
+        if autoplay == 1 { parameters = "\(parameters) autoplay" }
+        if playsinline == 1 { parameters = "\(parameters) playsinline" }
+        
+        print("<html><body style='margin:0px;padding:0px;'><iframe id='playerId' type='text/html' width='100%' height='100%' src='\(videoURL)&enablejsapi=1&&playsinline=\(playsinline)&autoplay=\(autoplay)' frameborder='0'></body></html>")
+        
+        if muted {
+            return """
+            <html><body style='margin:0px;padding:0px;'><iframe id='playerId' type='text/html' width='100%' height='100%' src='\(videoURL)&enablejsapi=1&&playsinline=\(playsinline)&autoplay=\(autoplay)' frameborder='0'></body></html>
+            """
+        }
+        
+        return """
+        <html><body style='margin:0px;padding:0px;'><iframe id='playerId' type='text/html' width='100%' height='100%' src='\(videoURL)&enablejsapi=1&playsinline=\(playsinline)&autoplay=\(autoplay)' frameborder='0'></body></html>
+        """
+    }
+    
+    func embedVideoHtmlYoutube(videoID: String, autoplay: Int, playsinline: Int, muted: Bool) -> String {
+        
+        var playString = ""
+        if autoplay == 1 { playString = "a.target.playVideo();" }
+        
+        if muted {
+            return """
+            <html><body style='margin:0px;padding:0px;'><script type='text/javascript' src='http://www.youtube.com/iframe_api'></script><script type='text/javascript'>function onYouTubeIframeAPIReady(){ytplayer=new YT.Player('playerId',{events:{onReady:onPlayerReady}})}function onPlayerReady(a){a.target.mute();\(playString)}</script><iframe id='playerId' type='text/html' width='100%' height='100%' src='http://www.youtube.com/embed/\(videoID)?enablejsapi=1&rel=0&&playsinline=\(playsinline)&autoplay=\(autoplay)&modestbranding=1&autohide=1&html5=1' frameborder='0'></body></html>
+            """
+        }
+        
+        return """
+        <html><body style='margin:0px;padding:0px;'><script type='text/javascript' src='http://www.youtube.com/iframe_api'></script><script type='text/javascript'>function onYouTubeIframeAPIReady(){ytplayer=new YT.Player('playerId',{events:{onReady:onPlayerReady}})}function onPlayerReady(a){\(playString)}</script><iframe id='playerId' type='text/html' width='100%' height='100%' src='http://www.youtube.com/embed/\(videoID)?enablejsapi=1&rel=0&&playsinline=\(playsinline)&autoplay=\(autoplay)' frameborder='0'></body></html>
+        """
     }
 }

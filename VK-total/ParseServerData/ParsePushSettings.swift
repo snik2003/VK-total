@@ -18,7 +18,7 @@ class ParsePushSettings: Operation {
         
         guard let json = try? JSON(data: data) else { print("json error"); return }
         
-        print(json)
+        //print(json)
         vkSingleton.shared.errorCode = json["error"]["error_code"].intValue
         vkSingleton.shared.errorMsg = json["error"]["error_msg"].stringValue
         

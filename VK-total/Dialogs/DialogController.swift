@@ -35,7 +35,7 @@ enum MediaType: String {
     case wall = "wall"
 }
 
-class DialogController: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+class DialogController: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, AVAudioRecorderDelegate {
     
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
@@ -121,33 +121,16 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                     220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
     var player = AVPlayer()
+    var audioPlayer = AVAudioPlayer()
+    var session = AVAudioSession.sharedInstance()
+    var audioRecorder: AVAudioRecorder!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        self.configureTableView()
-        self.tableView.separatorStyle = .none
-        
         self.navigationItem.hidesBackButton = true
         let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
         self.navigationItem.leftBarButtonItem = closeButton
-        
-        self.pickerController.delegate = self
-        self.pickerController2.delegate = self
-        
-        let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
-        layout.scrollDirection = .horizontal
-        layout.sectionInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
-        layout.itemSize = CGSize(width: 80, height: 80)
-        
-        collectionView = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 80), collectionViewLayout: layout)
-        collectionView.delegate = self
-        collectionView.dataSource = self
-        collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
-        collectionView.backgroundColor = self.tableView.backgroundColor
-        collectionView.showsVerticalScrollIndicator = false
-        collectionView.showsHorizontalScrollIndicator = true
-        getAttachments()
         
         searchBar.delegate = self
         searchBar.returnKeyType = .search
@@ -155,35 +138,6 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         searchBar.showsCancelButton = false
         searchBar.sizeToFit()
         searchBar.placeholder = ""
-        
-        if mode == .dialog {
-            self.view.addSubview(self.collectionView)
-            
-            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
-            getDialog()
-            
-            if userID == "-166099539" {
-                self.showFeedbackView()
-            }
-        }
-        
-        if mode == .attachments {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-            self.getHistoryAttachments(mediaType: media)
-        }
-        
-        if mode == .important {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-            self.getImportantMessages()
-        }
-        
-        if mode == .search {
-            if let user = users.filter({ $0.uid == userID }).first {
-                let titleItem = UIBarButtonItem(customView: self.setTitleView(user: user, status: ""))
-                self.navigationItem.rightBarButtonItem = titleItem
-                self.title = ""
-            }
-        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -193,12 +147,62 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
             
+            self.configureTableView()
+            self.tableView.separatorStyle = .none
+            
+            self.pickerController.delegate = self
+            self.pickerController2.delegate = self
+            
+            let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
+            layout.scrollDirection = .horizontal
+            layout.sectionInset = UIEdgeInsets(top: 0, left: 10, bottom: 0, right: 10)
+            layout.itemSize = CGSize(width: 80, height: 80)
+            
+            collectionView = UICollectionView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: 80), collectionViewLayout: layout)
+            collectionView.delegate = self
+            collectionView.dataSource = self
+            collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "photoCell")
+            collectionView.backgroundColor = self.tableView.backgroundColor
+            collectionView.showsVerticalScrollIndicator = false
+            collectionView.showsHorizontalScrollIndicator = true
+            
+            if mode == .dialog {
+                self.view.addSubview(self.collectionView)
+                
+                ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+                getDialog()
+                
+                if userID == "-166099539" {
+                    self.showFeedbackView()
+                }
+                
+                getAttachments()
+            }
+            
             if mode == .search {
                 let bounds = self.view.bounds
                 searchBar.layer.frame = CGRect(x: 0, y: navHeight, width: bounds.width, height: 50)
                 self.view.addSubview(searchBar)
                 tableView.layer.frame = CGRect(x: 0, y: navHeight + 50, width: bounds.width, height: bounds.height - navHeight - 50 - tabHeight)
                 self.view.addSubview(tableView)
+            }
+            
+            if mode == .attachments {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                self.getHistoryAttachments(mediaType: media)
+            }
+            
+            if mode == .important {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                self.getImportantMessages()
+            }
+            
+            if mode == .search {
+                if let user = users.filter({ $0.uid == userID }).first {
+                    let titleItem = UIBarButtonItem(customView: self.setTitleView(user: user, status: ""))
+                    self.navigationItem.rightBarButtonItem = titleItem
+                    self.title = ""
+                }
             }
         }
     }
@@ -236,38 +240,41 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
     func configureTableView() {
         
         tableView.backgroundColor = vkSingleton.shared.backColor
+        tableView.showsVerticalScrollIndicator = false
+        tableView.showsHorizontalScrollIndicator = false
         
         commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         
         if mode == .dialog {
             commentView.delegate = self
             commentView.textView.backgroundColor = .clear
-            commentView.textView.textColor = .black
-            commentView.textView.tintColor = vkSingleton.shared.mainColor
-            commentView.tintColor = vkSingleton.shared.mainColor
-            
-            if #available(iOS 13.0, *) {
-                if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
-                    commentView.textView.textColor = .label
-                    commentView.textView.tintColor = .label
-                    commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-                } else if AppConfig.shared.darkMode {
-                    commentView.textView.textColor = .label
-                    commentView.textView.tintColor = .label
-                    commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-                }
-            }
+            commentView.textView.textColor = vkSingleton.shared.labelColor
+            commentView.textView.tintColor = vkSingleton.shared.secondaryLabelColor
+            commentView.textView.changeKeyboardAppearanceMode()
+            commentView.tintColor = vkSingleton.shared.secondaryLabelColor
             
             commentView.sendImage = UIImage(named: "send")
             commentView.stickerImage = UIImage(named: "sticker")
             commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-            commentView.tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
+            commentView.tabHeight = 0
+            /*if #available(iOS 13.0, *) {
+                if !AppConfig.shared.autoMode {
+                    if vkSingleton.shared.deviceInterfaceStyle == .dark && !AppConfig.shared.darkMode {
+                        commentView.tabHeight = self.tabHeight
+                    } else if vkSingleton.shared.deviceInterfaceStyle == .light && AppConfig.shared.darkMode {
+                        commentView.tabHeight = self.tabHeight
+                    }
+                }
+            }*/
             
             commentView.accessoryImage = UIImage(named: "attachment")
             commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
             
-            commentView.fromGroupImage = UIImage(named: "mic")
-            commentView.fromGroupButton.addTarget(self, action: #selector(self.tapMicButton(sender:)), for: .touchUpInside)
+            setCommentFromGroupID(id: 0, controller: self)
+            
+            //commentView.fromGroupImage = UIImage(named: "mic")
+            //commentView.fromGroupButton.addTarget(self, action: #selector(self.tapMicButton(sender:)), for: .touchUpInside)
             
             self.view.addSubview(commentView)
         }
@@ -307,7 +314,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
     }
     
     @objc func tapMicButton(sender: UIButton) {
-        
+        self.recordVoiceMessage()
     }
     
     func didShowCommentView() {
@@ -331,18 +338,18 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         
         let view = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
         
-        let textView = UITextView(frame: CGRect(x: 10, y: 20, width: width-20, height: height-20))
+        let textView = UITextView(frame: CGRect(x: 10, y: 10, width: width - 20, height: height - 20))
         textView.text = feedbackText
         textView.textColor = .black
         textView.backgroundColor = .clear
         textView.font = feedFont
         textView.textAlignment = .center
+        textView.changeKeyboardAppearanceMode()
         view.addSubview(textView)
         
-        if #available(iOS 13.0, *) {
-            textView.textColor = .label
-        }
         
+        textView.textColor = vkSingleton.shared.labelColor
+    
         let startPoint = CGPoint(x: UIScreen.main.bounds.width - 34, y: 66)
         
         self.popover = Popover(options: [.type(.down),
@@ -995,6 +1002,26 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         return 1
     }
     
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        if indexPath.section == 1 {
+            if let height = estimatedHeightCache[indexPath] {
+                return height
+            } else {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! DialogCell
+                
+                cell.delegate = self
+                cell.drawCell = false
+                let height = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
+                estimatedHeightCache[indexPath] = height
+                return height
+            }
+        } else if indexPath.section == 2 {
+            return 30
+        }
+        
+        return 0.01
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         if indexPath.section == 1 {
@@ -1003,11 +1030,16 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! DialogCell
                 
-                let height = cell.getRowHeight(dialog: dialogs[indexPath.row], users: users)
+                cell.delegate = self
+                cell.drawCell = false
+                let height = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
                 estimatedHeightCache[indexPath] = height
                 return height
             }
+        } else if indexPath.section == 2 {
+            return 30
         }
+        
         return 0.01
     }
     
@@ -1098,20 +1130,18 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        
         let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell", for: indexPath) as! DialogCell
+        cell.backgroundColor = .clear
         
         if indexPath.section == 1 {
             cell.delegate = self
-            let topY = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
-            
-            if estimatedHeightCache[indexPath] != topY {
-                estimatedHeightCache[indexPath] = topY
-            }
+            cell.drawCell = true
+            let _ = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
             
             let tap = UITapGestureRecognizer(target: self, action: #selector(self.actionMessage(sender:)))
             tap.numberOfTapsRequired = 2
             cell.addGestureRecognizer(tap)
-            
             
             let longPress = UILongPressGestureRecognizer()
             longPress.add {
@@ -1179,12 +1209,28 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                             mess = "\(mess)[Видеозапись]"
                         } else if attach.type == "sticker" {
                             mess = "\(mess)[Стикер]"
-                        } else if attach.type == "gift" {
-                            mess = "\(mess)[Подарок]"
                         } else if attach.type == "wall" {
                             mess = "\(mess)[Запись на стене]"
+                        } else if attach.type == "gift" {
+                            mess = "\(mess)[Подарок]"
+                        } else if attach.type == "link" {
+                            mess = "\(mess)[Ссылка]"
                         } else if attach.type == "doc" {
-                            mess = "\(mess)[Документ]"
+                            if let doc = attach.docs.first {
+                                if doc.type == 3 {
+                                    mess = "\(mess)[GIF]"
+                                } else if doc.type == 4 {
+                                    mess = "\(mess)[Граффити]"
+                                } else if doc.type == 5 {
+                                    mess = "\(mess)[Голосовое сообщение]"
+                                } else if doc.type == 6 {
+                                    mess = "\(mess)[Видеозапись]"
+                                } else {
+                                    mess = "\(mess)[Документ]"
+                                }
+                            } else {
+                                mess = "\(mess)[Документ]"
+                            }
                         }
                     }
                     
@@ -1228,7 +1274,25 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                     
                     let action6 = UIAlertAction(title: "Переслать", style: .default){ action in
                         
-                        self.openDialogsController(attachments: "", image: nil, messIDs: [dialog.id], source: "forward_message")
+                        let alertController2 = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                        
+                        let cancelAction2 = UIAlertAction(title: "Отмена", style: .cancel)
+                        alertController2.addAction(cancelAction2)
+                        
+                        let action1 = UIAlertAction(title: "Переслать в текущий диалог", style: .default) { action in
+                            self.fwdMessagesID.append(dialog.id)
+                            self.setAttachments()
+                            self.configureStartView()
+                            self.collectionView.reloadData()
+                        }
+                        alertController2.addAction(action1)
+                        
+                        let action2 = UIAlertAction(title: "Переслать в другой диалог", style: .destructive) { action in
+                            self.openDialogsController(attachments: "", image: nil, messIDs: [dialog.id], source: "forward_message")
+                        }
+                        alertController2.addAction(action2)
+                        
+                        self.present(alertController2, animated: true)
                     }
                     alertController.addAction(action6)
                     
@@ -1307,7 +1371,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                     self.tableView.reloadData()
                 }
             } else {
-                self.showErrorMessage(title: "«Важные» сообщения", msg: "\nОшибка #\(error.errorCode): \(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
             self.setOfflineStatus(dependence: request)
         }
@@ -1333,7 +1397,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         if self.mode == .dialog {
             commentView.endEditing(true)
             
-            let width = self.view.bounds.width - 8
+            let width = self.view.bounds.width
             let height: CGFloat = 50
             let actionView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
             
@@ -1347,7 +1411,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             deleteButton.add(for: .touchUpInside) {
                 self.deleteMarkMessages()
             }
-            deleteButton.frame = CGRect(x: width * 0.625, y: height-40, width: width * 0.375, height: 30)
+            deleteButton.frame = CGRect(x: width * 0.625, y: height - 40, width: width * 0.375, height: 30)
             actionView.addSubview(deleteButton)
             
             resendButton.setTitle("Переслать (\(markMessages.count))", for: .normal)
@@ -1360,7 +1424,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             resendButton.add(for: .touchUpInside) {
                 self.forwardMarkMessages()
             }
-            resendButton.frame = CGRect(x: width * 0.25, y: height-40, width: width * 0.375, height: 30)
+            resendButton.frame = CGRect(x: width * 0.25, y: height - 40, width: width * 0.375, height: 30)
             actionView.addSubview(resendButton)
             
             let cancelButton = UIButton()
@@ -1378,12 +1442,12 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                     self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
                 }
             }
-            cancelButton.frame = CGRect(x: width * 0, y: height-40, width: width * 0.25, height: 30)
+            cancelButton.frame = CGRect(x: width * 0, y: height - 40, width: width * 0.25, height: 30)
             actionView.addSubview(cancelButton)
             
             self.mode = .edit
-            let startPoint = CGPoint(x: self.view.bounds.width/2,
-                                     y: self.view.bounds.height - 52)
+            let startPoint = CGPoint(x: self.view.bounds.width / 2, y: self.view.bounds.height)
+            
             self.popover = Popover(options: [.type(.up),
                                              .arrowSize(CGSize(width: 0, height: 0)),
                                              .showBlackOverlay(false),
@@ -1469,14 +1533,35 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         
         let action = UIAlertAction(title: "Переслать \(markMessages.count.messageAdder())", style: .destructive){ action in
             
-            self.openDialogsController(attachments: "", image: nil, messIDs: self.markMessages, source: "forward_message")
-            self.markMessages.removeAll(keepingCapacity: false)
-            self.mode = .dialog
-            self.popover.dismiss()
-            self.tableView.reloadData()
-            if self.tableView.numberOfSections > 1 {
-                self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+            let alertController2 = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+            
+            let cancelAction2 = UIAlertAction(title: "Отмена", style: .cancel)
+            alertController2.addAction(cancelAction2)
+            
+            let action1 = UIAlertAction(title: "Переслать в текущий диалог", style: .default) { action in
+                self.fwdMessagesID.append(contentsOf: self.markMessages)
+                self.markMessages.removeAll(keepingCapacity: false)
+                self.mode = .dialog
+                self.popover.dismiss()
+                self.setAttachments()
+                self.configureStartView()
+                self.collectionView.reloadData()
             }
+            alertController2.addAction(action1)
+            
+            let action2 = UIAlertAction(title: "Переслать в другой диалог", style: .destructive) { action in
+                self.openDialogsController(attachments: "", image: nil, messIDs: self.markMessages, source: "forward_message")
+                self.markMessages.removeAll(keepingCapacity: false)
+                self.mode = .dialog
+                self.popover.dismiss()
+                self.tableView.reloadData()
+                if self.tableView.numberOfSections > 1 {
+                    self.tableView.scrollToRow(at: IndexPath(row: 0, section: 2), at: .bottom, animated: false)
+                }
+            }
+            alertController2.addAction(action2)
+            
+            self.present(alertController2, animated: true)
         }
         alertController.addAction(action)
         
@@ -2638,6 +2723,29 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
                     }
                     alertController.addAction(action1)
                     
+                    if typeOf[index] == "wall" {
+                        let action2 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
+                            
+                            self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                            deleteView.removeFromSuperview()
+                        }
+                        alertController.addAction(action2)
+                    } else if typeOf[index] == "photo" {
+                        let action2 = UIAlertAction(title: "Открыть фотографию", style: .default) { action in
+                            
+                            self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                            deleteView.removeFromSuperview()
+                        }
+                        alertController.addAction(action2)
+                    } else if typeOf[index] == "video" {
+                        let action2 = UIAlertAction(title: "Открыть видеозапись", style: .default) { action in
+                            
+                            self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                            deleteView.removeFromSuperview()
+                        }
+                        alertController.addAction(action2)
+                    }
+                    
                     present(alertController, animated: true)
                 }
             }
@@ -2685,7 +2793,7 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
             
             let imageView = UIImageView()
             imageView.image = photo
-            imageView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
+            imageView.layer.borderColor = vkSingleton.shared.secondaryLabelColor.cgColor
             imageView.layer.borderWidth = 1.0
             imageView.contentMode = .scaleAspectFill
             imageView.clipsToBounds = true
@@ -2737,11 +2845,7 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
                 loadLabel.textAlignment = .center
                 loadLabel.contentMode = .center
                 loadLabel.text = "Загрузка..."
-                if #available(iOS 13.0, *) {
-                    loadLabel.textColor = .label
-                } else {
-                    loadLabel.textColor = UIColor.white
-                }
+                loadLabel.textColor = vkSingleton.shared.labelColor
                 loadLabel.frame = CGRect(x: 0, y: 0, width: width, height: height)
                 cell.addSubview(loadLabel)
             }
@@ -2763,11 +2867,7 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
             countLabel.text = "вложено\n\(fwdMessagesID.count.messageAdder())"
             countLabel.font = UIFont(name: "Verdana-Bold", size: 12)
             countLabel.backgroundColor = UIColor.clear
-            if #available(iOS 13.0, *) {
-                countLabel.textColor = .label
-            } else {
-                countLabel.textColor = UIColor.white
-            }
+            countLabel.textColor = vkSingleton.shared.labelColor
             countLabel.textAlignment = .center
             countLabel.adjustsFontSizeToFitWidth = true
             countLabel.minimumScaleFactor = 0.5

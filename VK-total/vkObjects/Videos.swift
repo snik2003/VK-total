@@ -29,6 +29,8 @@ class Videos {
     var userReposted = 0
     var countReposts = 0
     var accessKey = ""
+    var width = 0
+    var height = 0
     
     init(json: JSON) {
         self.id = json["id"].intValue
@@ -53,5 +55,8 @@ class Videos {
         self.countReposts = json["reposts"]["count"].intValue
         
         self.accessKey = json["access_key"].stringValue
+        
+        self.width = json["width"].intValue
+        self.height = json["height"].intValue
     }
 }

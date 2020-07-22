@@ -54,7 +54,7 @@ class CommentCell2: UITableViewCell {
         self.backgroundColor = vkSingleton.shared.backColor
         
         for subview in self.subviews {
-            if subview.tag == 100 {
+            if subview.tag == 100 || subview is AttachmentsView {
                 subview.removeFromSuperview()
             }
         }
@@ -79,7 +79,7 @@ class CommentCell2: UITableViewCell {
         self.groups = groups
         
         for subview in self.subviews {
-            if subview.tag == 100 {
+            if subview.tag == 100 || subview is AttachmentsView {
                 subview.removeFromSuperview()
             }
         }
@@ -104,11 +104,7 @@ class CommentCell2: UITableViewCell {
         
         let separator = UILabel()
         separator.tag = 100
-        if #available(iOS 13.0, *) {
-            separator.backgroundColor = .separator
-        } else {
-            separator.backgroundColor = UIColor.lightGray
-        }
+        separator.backgroundColor = vkSingleton.shared.separatorColor
         separator.frame = CGRect(x: avatarHeight + 2 * leftInsets, y: topY + topInsets, width: UIScreen.main.bounds.width - avatarHeight - 3 * leftInsets, height: separatorHeight)
         self.addSubview(separator)
         
@@ -130,7 +126,9 @@ class CommentCell2: UITableViewCell {
                 if comment.attach[index].type == "photo" {
                     let photo = Photos(json: JSON.null)
                     photo.uid = "\(comment.attach[index].ownerID)"
+                    photo.ownerID = "\(comment.attach[index].ownerID)"
                     photo.pid = "\(comment.attach[index].id)"
+                    photo.text = comment.attach[index].text
                     photo.xxbigPhotoURL = comment.attach[index].photoURL
                     photo.xbigPhotoURL = comment.attach[index].photoURL
                     photo.bigPhotoURL = comment.attach[index].photoURL
@@ -251,21 +249,12 @@ class CommentCell2: UITableViewCell {
                     durationLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                     durationLabel.textAlignment = .center
                     durationLabel.contentMode = .center
-                    
-                    if #available(iOS 13.0, *) {
-                        durationLabel.textColor = .label
-                        durationLabel.backgroundColor = .secondarySystemBackground
-                    } else {
-                        durationLabel.textColor = UIColor.black
-                        durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    }
-                    durationLabel.layer.cornerRadius = 10
+                    durationLabel.textColor = .white
+                    durationLabel.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                    durationLabel.layer.cornerRadius = 4
                     durationLabel.clipsToBounds = true
-                    if let length = durationLabel.text?.length, length > 5 {
-                        durationLabel.frame = CGRect(x: width - 10 - 90, y: height - 4 - 10 - 20, width: 90, height: 20)
-                    } else {
-                        durationLabel.frame = CGRect(x: width - 10 - 60, y: height - 4 - 10 - 20, width: 60, height: 20)
-                    }
+                    let durationLabelWidth = durationLabel.getTextWidth(maxWidth: 200)
+                    durationLabel.frame = CGRect(x: width - 10 - durationLabelWidth, y: height - 4 - 10 - 20, width: durationLabelWidth, height: 20)
                     photoImage.addSubview(durationLabel)
                     
                     self.addSubview(photoImage)
@@ -305,11 +294,7 @@ class CommentCell2: UITableViewCell {
                 if comment.attach[index].type == "doc" && comment.attach[index].ext == "gif" {
                     
                     let photoImage = UIImageView()
-                    if #available(iOS 13.0, *) {
-                        photoImage.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.5)
-                    } else {
-                        photoImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    }
+                    photoImage.backgroundColor = vkSingleton.shared.secondaryLabelColor.withAlphaComponent(0.5)
                     photoImage.tag = 100
                     
                     let getCacheImage = GetCacheImage(url: comment.attach[index].photoURL, lifeTime: .avatarImage)
@@ -325,49 +310,47 @@ class CommentCell2: UITableViewCell {
                     var width: CGFloat = 0.0
                     var height: CGFloat = 0.0
                     if CGFloat(comment.attach[index].photoWidth) < UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX {
-                        
                         width = CGFloat(comment.attach[index].photoWidth)
                         height = CGFloat(comment.attach[index].photoHeight)
                     } else {
                         width = UIScreen.main.bounds.width - 5 * leftInsets - avatarHeight - leftX
-                        
                         height = width * CGFloat(comment.attach[index].photoHeight) / CGFloat(comment.attach[index].photoWidth)
                     }
                     
                     photoImage.frame = CGRect(x: photoX, y: topY + vertInsets, width: width, height: height)
                     photoImage.isHidden = false
                     
-                    let gifImage = UIImageView()
-                    gifImage.image = UIImage(named: "gif")
-                    if #available(iOS 13.0, *) {
-                        gifImage.backgroundColor = UIColor.tertiaryLabel
-                    } else {
-                        gifImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    }
-                    gifImage.layer.cornerRadius = 10
-                    gifImage.clipsToBounds = true
-                    gifImage.frame = CGRect(x: width / 2 - 30, y: (height) / 2 - 30, width: 60, height: 60)
-                    photoImage.addSubview(gifImage)
+                    let loadingView = UIView()
+                    loadingView.tag = 100
+                    loadingView.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
+                    loadingView.center = CGPoint(x: photoImage.frame.width/2, y: photoImage.frame.height/2)
+                    loadingView.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                    loadingView.clipsToBounds = true
+                    loadingView.layer.cornerRadius = 8.5
+                    photoImage.addSubview(loadingView)
+                    
+                    let activityIndicator = UIActivityIndicatorView()
+                    activityIndicator.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+                    activityIndicator.style = .white
+                    activityIndicator.center = CGPoint(x: loadingView.frame.width/2, y: loadingView.frame.height/2)
+                    loadingView.addSubview(activityIndicator)
+                    activityIndicator.startAnimating()
                     
                     let gifSizeLabel = UILabel()
-                    gifSizeLabel.text = "Размер: \(comment.attach[index].size.getFileSizeToString())"
+                    gifSizeLabel.text = "GIF: \(comment.attach[index].size.getFileSizeToString())"
                     gifSizeLabel.numberOfLines = 1
                     gifSizeLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                     gifSizeLabel.textAlignment = .center
                     gifSizeLabel.contentMode = .center
-                    if #available(iOS 13.0, *) {
-                        gifSizeLabel.textColor = .label
-                        gifSizeLabel.backgroundColor = .tertiaryLabel
-                    } else {
-                        gifSizeLabel.textColor = UIColor.black
-                        gifSizeLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    }
-                    gifSizeLabel.layer.cornerRadius = 10
+                    gifSizeLabel.textColor = .white
+                    gifSizeLabel.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                    gifSizeLabel.layer.cornerRadius = 4
                     gifSizeLabel.clipsToBounds = true
-                    gifSizeLabel.frame = CGRect(x: width - 5 - 120, y: height - 5 - 20, width: 120, height: 20)
+                    let gifSizeWidth = gifSizeLabel.getTextWidth(maxWidth: 200)
+                    gifSizeLabel.frame = CGRect(x: width - 5 - gifSizeWidth, y: height - 5 - 20, width: gifSizeWidth, height: 20)
                     photoImage.addSubview(gifSizeLabel)
                     
-                    if comment.attach[index].videoURL != "" && comment.attach[index].size < 50_000_000 {
+                    if comment.attach[index].videoURL != "" && comment.attach[index].size < 150_000_000 {
                         OperationQueue().addOperation {
                             let url = URL(string: comment.attach[index].videoURL)
                             if let data = try? Data(contentsOf: url!) {
@@ -375,7 +358,8 @@ class CommentCell2: UITableViewCell {
                                 OperationQueue.main.addOperation(setAnimatedImageToRow)
                                 OperationQueue.main.addOperation {
                                     photoImage.bringSubviewToFront(gifSizeLabel)
-                                    gifImage.removeFromSuperview()
+                                    activityIndicator.stopAnimating()
+                                    loadingView.removeFromSuperview()
                                 }
                             }
                         }
@@ -467,10 +451,7 @@ class CommentCell2: UITableViewCell {
                     artistLabel.font = UIFont(name: "Verdana-Bold", size: 13)!
                     audioLabel.font = UIFont(name: "Verdana", size: 13)!
                     
-                    if #available(iOS 13.0, *) {
-                        artistLabel.textColor = .label
-                    }
-                    
+                    artistLabel.textColor = vkSingleton.shared.labelColor
                     audioLabel.textColor = audioLabel.tintColor
                     
                     if comment.attach[index].title != "" {
@@ -522,17 +503,12 @@ class CommentCell2: UITableViewCell {
         likesButton.setTitle("\(comment.countLikes)", for: UIControl.State.normal)
         likesButton.setTitle("\(comment.countLikes)", for: UIControl.State.selected)
         
-        var titleColor = UIColor.darkGray
-        var tintColor = UIColor.darkGray
-        
-        if #available(iOS 13.0, *) {
-            titleColor = .secondaryLabel
-            tintColor = .secondaryLabel
-        }
+        var titleColor = vkSingleton.shared.secondaryLabelColor
+        var tintColor = vkSingleton.shared.secondaryLabelColor
         
         if comment.userLikes == 1 {
-            titleColor = .systemPurple
-            tintColor = .systemPurple
+            titleColor = vkSingleton.shared.likeColor
+            tintColor = vkSingleton.shared.likeColor
         }
         
         likesButton.setTitleColor(titleColor, for: .normal)
@@ -578,6 +554,7 @@ class CommentCell2: UITableViewCell {
     
         commentLabel.tag = 100
         commentLabel.text = comment.text
+        commentLabel.textColor = vkSingleton.shared.labelColor
         commentLabel.prepareTextForPublish2(self.delegate)
         commentLabel.font = commFont
         commentLabel.textAlignment = .left
@@ -643,6 +620,8 @@ class CommentCell2: UITableViewCell {
         }
         
         dateLabel.text = "\(text)"
+        dateLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        
         if replyText != "" {
             dateLabel.text = "\(text) \(replyText)"
             let fullString = "\(text) \(replyText)"
@@ -688,6 +667,7 @@ class CommentCell2: UITableViewCell {
         nameLabel.text = name
         nameLabel.font = nameFont
         nameLabel.textAlignment = .left
+        nameLabel.textColor = vkSingleton.shared.labelColor
         nameLabel.contentMode = .center
         nameLabel.adjustsFontSizeToFitWidth = true
         nameLabel.minimumScaleFactor = 0.5
@@ -735,7 +715,9 @@ class CommentCell2: UITableViewCell {
                 if comment.attach[index].type == "photo" {
                     let photo = Photos(json: JSON.null)
                     photo.uid = "\(comment.attach[index].ownerID)"
+                    photo.ownerID = "\(comment.attach[index].ownerID)"
                     photo.pid = "\(comment.attach[index].id)"
+                    photo.text = comment.attach[index].text
                     photo.xxbigPhotoURL = comment.attach[index].photoURL
                     photo.xbigPhotoURL = comment.attach[index].photoURL
                     photo.bigPhotoURL = comment.attach[index].photoURL
@@ -869,7 +851,6 @@ class CommentCell2: UITableViewCell {
     
     func tapAudioAttach(comment: Comments, index: Int) {
         
-        ViewControllerUtils().showActivityIndicator(uiView: self.delegate.view)
         self.delegate.getITunesInfo2(artist: comment.attach[index].artist, title: comment.attach[index].title)
     }
 }

@@ -31,27 +31,23 @@ class ReloadDialogsController: Operation {
                 newGroup.uid = "-\(group.gid)"
                 newGroup.firstName = group.name
                 newGroup.maxPhotoOrigURL = group.photo200
+                newGroup.photo100 = group.photo100
                 controller.users.append(newGroup)
             }
         }
         
-        for dialog in parseDialogs.outputData {
-            controller.dialogs.append(dialog)
-        }
-        
-        /*if let item = controller.tabBarController?.tabBar.items?[3] {
-            if parseDialogs.unread > 0 {
-                item.badgeValue = "\(parseDialogs.unread)"
-            } else {
-                item.badgeValue = nil
-            }
-        }*/
+        controller.menuDialogs.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_all-dialogs")
+        controller.users.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_dialogs-users")
         
         controller.totalCount = parseDialogs.count
         controller.offset += controller.count
         controller.tableView.reloadData()
         controller.tableView.separatorStyle = .none
         controller.refreshControl?.endRefreshing()
+        
+        let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(controller.tapBarButtonItem(sender:)))
+        controller.navigationItem.rightBarButtonItem = barButton
+        
         ViewControllerUtils().hideActivityIndicator()
     }
 }

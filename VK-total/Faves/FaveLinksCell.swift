@@ -88,10 +88,8 @@ class FaveLinksCell: UITableViewCell {
         descriptionLabel.frame = CGRect(x: 60, y: 5 + nameLabelSize.height, width: descriptionLabelSize.width, height: descriptionLabelSize.height)
         self.addSubview(descriptionLabel)
         
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-            descriptionLabel.textColor = .secondaryLabel
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
+        descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
         
         urlLabel = UILabel()
         urlLabel.tag = 100

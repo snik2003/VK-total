@@ -39,12 +39,11 @@ class GroupDialogsController: InnerTableViewController {
             getGroupLongPollServer(groupID: id)
         }
         
+        let myAttribute = [NSAttributedString.Key.foregroundColor: vkSingleton.shared.labelColor]
+        let myAttrString = NSAttributedString(string: "Обновляем данные", attributes: myAttribute)
+        self.refreshControl?.attributedTitle = myAttrString
         self.refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: .valueChanged)
-        if #available(iOS 13.0, *) {
-            self.refreshControl?.tintColor = .secondaryLabel
-        } else {
-            self.refreshControl?.tintColor = .gray
-        }
+        self.refreshControl?.tintColor = vkSingleton.shared.labelColor
         tableView.addSubview(refreshControl!)
         
         OperationQueue.main.addOperation {
@@ -53,11 +52,20 @@ class GroupDialogsController: InnerTableViewController {
             self.navigationItem.leftBarButtonItem = closeButton
             
             self.tableView.separatorStyle = .none
+            self.tableView.showsVerticalScrollIndicator = false
+            self.tableView.showsHorizontalScrollIndicator = false
+        
             self.tableView.register(GroupDialogsCell.self, forCellReuseIdentifier: "dialogCell")
         }
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
         
-        refresh()
-        
+        if isFirstAppear {
+            isFirstAppear = false
+            refresh()
+        }
     }
     
     override func didReceiveMemoryWarning() {
@@ -81,8 +89,11 @@ class GroupDialogsController: InnerTableViewController {
         let opq = OperationQueue()
         isRefresh = true
     
-        ViewControllerUtils().showActivityIndicator(uiView: self.view)
-    
+        if let aView = self.tableView.superview {
+            ViewControllerUtils().showActivityIndicator(uiView: aView)
+        } else {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+        }
     
         let url = "/method/messages.getDialogs"
         let parameters = [
@@ -192,24 +203,13 @@ class GroupDialogsController: InnerTableViewController {
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     

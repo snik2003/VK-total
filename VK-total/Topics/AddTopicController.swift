@@ -54,6 +54,7 @@ class AddTopicController: InnerViewController, UIImagePickerControllerDelegate, 
         super.viewDidLoad()
         
         pickerController.delegate = self
+        
         textView.delegate = self
         
         let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
@@ -71,16 +72,20 @@ class AddTopicController: InnerViewController, UIImagePickerControllerDelegate, 
         self.view.addSubview(collectionView)
         
         titleView.placeholder = "Название темы для обсуждения..."
+        titleView.textColor = vkSingleton.shared.secondaryLabelColor
         titleView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         titleView.layer.borderWidth = 1.0
         titleView.layer.cornerRadius = 5
-        titleView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
+        titleView.backgroundColor = .clear
+        titleView.changeKeyboardAppearanceMode()
         
         textView.placeholder = "Текст первого сообщения в обсуждении..."
+        textView.textColor = vkSingleton.shared.secondaryLabelColor
         textView.layer.borderColor = vkSingleton.shared.mainColor.cgColor
         textView.layer.borderWidth = 1.0
         textView.layer.cornerRadius = 5
-        textView.backgroundColor = UIColor.init(red: 242/255, green: 242/255, blue: 242/255, alpha: 0.75)
+        textView.backgroundColor = .clear
+        textView.changeKeyboardAppearanceMode()
         
         //startConfigureView()
         
@@ -102,6 +107,13 @@ class AddTopicController: InnerViewController, UIImagePickerControllerDelegate, 
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
         }
+        
+        toolView.backgroundColor = vkSingleton.shared.mainColor
+        
+        fromGroupSwitch.backgroundColor = vkSingleton.shared.backColor
+        fromGroupSwitch.onTintColor = vkSingleton.shared.mainColor
+        fromGroupSwitch.tintColor = vkSingleton.shared.mainColor
+        fromGroupLabel.textColor = vkSingleton.shared.labelColor
     }
     
     func setAttachments() {
@@ -292,7 +304,7 @@ class AddTopicController: InnerViewController, UIImagePickerControllerDelegate, 
         usersController.userID = vkSingleton.shared.userID
         usersController.type = "friends"
         usersController.source = "add_topic_mention"
-        usersController.title = "Упомянуть в записи"
+        usersController.title = "Упомянуть в тексте"
         
         usersController.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(usersController.tapCancelButton(sender:)))
@@ -308,7 +320,7 @@ class AddTopicController: InnerViewController, UIImagePickerControllerDelegate, 
         groupsController.userID = vkSingleton.shared.userID
         groupsController.type = ""
         groupsController.source = "add_topic_mention"
-        groupsController.title = "Упомянуть в записи"
+        groupsController.title = "Упомянуть в тексте"
         
         groupsController.navigationItem.hidesBackButton = true
         let cancelButton = UIBarButtonItem(title: "Отмена", style: .plain, target: self, action: #selector(groupsController.tapCancelButton(sender:)))
@@ -335,8 +347,8 @@ class AddTopicController: InnerViewController, UIImagePickerControllerDelegate, 
     
     @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any])
     {
-// Local variable inserted by Swift 4.2 migrator.
-let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
+        // Local variable inserted by Swift 4.2 migrator.
+        let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
 
         if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
             
@@ -477,6 +489,29 @@ extension AddTopicController: UICollectionViewDelegate, UICollectionViewDataSour
                     self.collectionView.reloadData()
                 }
                 alertController.addAction(action1)
+                
+                if typeOf[index] == "wall" {
+                    let action2 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
+                        
+                        self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                        deleteView.removeFromSuperview()
+                    }
+                    alertController.addAction(action2)
+                } else if typeOf[index] == "photo" {
+                    let action2 = UIAlertAction(title: "Открыть фотографию", style: .default) { action in
+                        
+                        self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                        deleteView.removeFromSuperview()
+                    }
+                    alertController.addAction(action2)
+                } else if typeOf[index] == "video" {
+                    let action2 = UIAlertAction(title: "Открыть видеозапись", style: .default) { action in
+                        
+                        self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                        deleteView.removeFromSuperview()
+                    }
+                    alertController.addAction(action2)
+                }
                 
                 present(alertController, animated: true)
             }

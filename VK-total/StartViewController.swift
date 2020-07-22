@@ -8,11 +8,29 @@
 
 import UIKit
 
-class StartViewController: InnerViewController {
+class StartViewController: UIViewController {
 
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        if #available(iOS 13.0, *) {
+            if traitCollection.userInterfaceStyle == .dark {
+                vkSingleton.shared.deviceInterfaceStyle = .dark
+            } else {
+                vkSingleton.shared.deviceInterfaceStyle = .light
+            }
+        }
+            
+        vkSingleton.shared.configureColors(controller: self)
+        
+        OperationQueue.main.addOperation {
+            self.view.backgroundColor = vkSingleton.shared.backColor
+        }
+    }
+    
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
         
     }
     
@@ -20,6 +38,11 @@ class StartViewController: InnerViewController {
         super.viewDidAppear(animated)
         
         performSegue(withIdentifier: "goLoginForm", sender: self)
+    }
+    
+    override func viewDidLayoutSubviews() {
+        vkSingleton.shared.configureColors(controller: self)
+        super.viewDidLayoutSubviews()
     }
     
     override func didReceiveMemoryWarning() {

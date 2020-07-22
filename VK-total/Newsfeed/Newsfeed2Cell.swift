@@ -9,6 +9,7 @@
 import UIKit
 import FLAnimatedImage
 import SwiftyJSON
+import WebKit
 
 class Newsfeed2Cell: UITableViewCell {
 
@@ -218,6 +219,8 @@ class Newsfeed2Cell: UITableViewCell {
     var totalLabel = UILabel()
     var poll: Poll!
     
+    var webView: WKWebView!
+    
     override func layoutSubviews() {
         super.layoutSubviews()
         
@@ -227,7 +230,7 @@ class Newsfeed2Cell: UITableViewCell {
         readMoreButtonFrame()
     }
     
-    func configureCell(record: News, profiles: [NewsProfiles], groups: [NewsGroups], indexPath: IndexPath, tableView: UITableView, cell: UITableViewCell, viewController: UIViewController) -> CGFloat {
+    func configureCell(record: News, profiles: [NewsProfiles], groups: [NewsGroups], videos: [Videos], indexPath: IndexPath, tableView: UITableView, cell: UITableViewCell, viewController: UIViewController) -> CGFloat {
         
         self.backgroundColor = vkSingleton.shared.backColor
         
@@ -235,7 +238,7 @@ class Newsfeed2Cell: UITableViewCell {
             if subview.tag == 100 {
                 subview.removeFromSuperview()
             }
-            if subview is UIImageView || subview is UILabel || subview is UIButton {
+            if subview is UIImageView || subview is UILabel || subview is UIButton || subview is WKWebView {
                 subview.removeFromSuperview()
             }
         }
@@ -274,14 +277,13 @@ class Newsfeed2Cell: UITableViewCell {
             self.avatarImageView.clipsToBounds = true
         }
         
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-            repostNameLabel.textColor = .label
-            datePostLabel.textColor = .secondaryLabel
-            repostDateLabel.textColor = .secondaryLabel
-            postTextLabel.textColor = .label
-            repostTextLabel.textColor = .label
-        }
+        
+        nameLabel.textColor = vkSingleton.shared.labelColor
+        repostNameLabel.textColor = vkSingleton.shared.labelColor
+        datePostLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        repostDateLabel.textColor = vkSingleton.shared.secondaryLabelColor
+        postTextLabel.textColor = vkSingleton.shared.labelColor
+        repostTextLabel.textColor = vkSingleton.shared.labelColor
         
         
         nameLabel.text = name
@@ -378,16 +380,18 @@ class Newsfeed2Cell: UITableViewCell {
         var photos: [Photos] = []
         let maxWidth = UIScreen.main.bounds.width - 20
         for index in 0...9 {
-            if record.mediaType[index] == "photo" {
+            if record.mediaType[index] == "photo" && record.photoID[index] != 0 {
                 let photo = Photos(json: JSON.null)
                 photo.width = record.photoWidth[index]
                 photo.height = record.photoHeight[index]
+                photo.text = record.photoText[index]
                 photo.xxbigPhotoURL = record.photoURL[index]
                 photo.xbigPhotoURL = record.photoURL[index]
                 photo.bigPhotoURL = record.photoURL[index]
                 photo.smallPhotoURL = record.photoURL[index]
                 photo.pid = "\(record.photoID[index])"
                 photo.uid = "\(record.photoOwnerID[index])"
+                photo.ownerID = "\(record.photoOwnerID[index])"
                 photo.createdTime = record.date
                 photos.append(photo)
             }
@@ -404,16 +408,16 @@ class Newsfeed2Cell: UITableViewCell {
         
         topY += aHeight
         
-        topY = setImageView(0, topY, record, cell, indexPath, imageView1, tableView)
-        topY = setImageView(1, topY, record, cell, indexPath, imageView2, tableView)
-        topY = setImageView(2, topY, record, cell, indexPath, imageView3, tableView)
-        topY = setImageView(3, topY, record, cell, indexPath, imageView4, tableView)
-        topY = setImageView(4, topY, record, cell, indexPath, imageView5, tableView)
-        topY = setImageView(5, topY, record, cell, indexPath, imageView6, tableView)
-        topY = setImageView(6, topY, record, cell, indexPath, imageView7, tableView)
-        topY = setImageView(7, topY, record, cell, indexPath, imageView8, tableView)
-        topY = setImageView(8, topY, record, cell, indexPath, imageView9, tableView)
-        topY = setImageView(9, topY, record, cell, indexPath, imageView10, tableView)
+        topY = setImageView(0, topY, record, videos, cell, indexPath, imageView1, tableView)
+        topY = setImageView(1, topY, record, videos, cell, indexPath, imageView2, tableView)
+        topY = setImageView(2, topY, record, videos, cell, indexPath, imageView3, tableView)
+        topY = setImageView(3, topY, record, videos, cell, indexPath, imageView4, tableView)
+        topY = setImageView(4, topY, record, videos, cell, indexPath, imageView5, tableView)
+        topY = setImageView(5, topY, record, videos, cell, indexPath, imageView6, tableView)
+        topY = setImageView(6, topY, record, videos, cell, indexPath, imageView7, tableView)
+        topY = setImageView(7, topY, record, videos, cell, indexPath, imageView8, tableView)
+        topY = setImageView(8, topY, record, videos, cell, indexPath, imageView9, tableView)
+        topY = setImageView(9, topY, record, videos, cell, indexPath, imageView10, tableView)
         
         for index in 0...9 {
             if record.mediaType[index] == "link" {
@@ -456,53 +460,71 @@ class Newsfeed2Cell: UITableViewCell {
         }
         
         
-        likesButton.frame = CGRect(x: leftInsets/2, y: topY, width: likesButtonWidth, height: likesButtonHeight)
-        
-        setLikesButton(record: record)
-        
-        var titleColor = UIColor.darkGray
-        var tintColor = UIColor.darkGray
-        
-        if #available(iOS 13.0, *) {
-            titleColor = .secondaryLabel
-            tintColor = .secondaryLabel
+        if let vc = delegate as? Newsfeed2Controller, vc.filters == "post" {
+            likesButton.frame = CGRect(x: leftInsets/2, y: topY, width: likesButtonWidth, height: likesButtonHeight)
+            
+            setLikesButton(record: record)
+            
+            var titleColor = UIColor.darkGray
+            var tintColor = UIColor.darkGray
+            
+            titleColor = vkSingleton.shared.secondaryLabelColor
+            tintColor = vkSingleton.shared.secondaryLabelColor
+            
+            repostsButton.frame = CGRect(x: likesButton.frame.maxX, y: topY, width: repostsButtonWidth, height: likesButtonHeight)
+            repostsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+            repostsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
+            
+            repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
+            repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
+            repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
+            repostsButton.imageView?.tintColor = tintColor
+            repostsButton.setTitleColor(titleColor, for: .normal)
+            if record.userReposted == 1 {
+                repostsButton.setTitleColor(vkSingleton.shared.likeColor, for: .normal)
+                repostsButton.imageView?.tintColor = vkSingleton.shared.likeColor
+            }
+            
+            viewsButton.frame = CGRect(x: bounds.size.width - likesButtonWidth - leftInsets/2, y: topY, width: likesButtonWidth, height: likesButtonHeight)
+            viewsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
+            viewsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
+            
+            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.normal)
+            viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.selected)
+            viewsButton.setImage(UIImage(named: "views"), for: .normal)
+            viewsButton.setTitleColor(titleColor, for: .normal)
+            viewsButton.imageView?.tintColor = tintColor
+            
+            self.addSubview(viewsButton)
+            
+            if record.canComment == 1 || record.countComments > 0 {
+                commentsButton.frame = CGRect(x: viewsButton.frame.minX - repostsButtonWidth, y: topY, width: repostsButtonWidth, height: likesButtonHeight)
+                
+                commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
+                commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
+                
+                commentsButton.setTitleColor(commentsButton.tintColor.withAlphaComponent(0.8), for: .normal)
+                commentsButton.imageView?.tintColor = commentsButton.tintColor.withAlphaComponent(0.8)
+                
+                commentsButton.isHidden = false
+            } else {
+                commentsButton.isHidden = true
+            }
+                
+            likesButton.isHidden = false
+            repostsButton.isHidden = false
+            viewsButton.isHidden = false
+            
+            return topY + likesButtonHeight
+            
+        } else  {
+            likesButton.isHidden = true
+            repostsButton.isHidden = true
+            commentsButton.isHidden = true
+            viewsButton.isHidden = true
         }
         
-        repostsButton.frame = CGRect(x: likesButton.frame.maxX, y: topY, width: repostsButtonWidth, height: likesButtonHeight)
-        repostsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-        repostsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 8)
-        
-        repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.normal)
-        repostsButton.setTitle("\(record.countReposts)", for: UIControl.State.selected)
-        repostsButton.setImage(UIImage(named: "repost3"), for: .normal)
-        repostsButton.imageView?.tintColor = tintColor
-        repostsButton.setTitleColor(titleColor, for: .normal)
-        if record.userReposted == 1 {
-            repostsButton.setTitleColor(UIColor.systemPurple, for: .normal)
-            repostsButton.imageView?.tintColor = UIColor.systemPurple
-        }
-        
-        viewsButton.frame = CGRect(x: bounds.size.width - likesButtonWidth - leftInsets/2, y: topY, width: likesButtonWidth, height: likesButtonHeight)
-        viewsButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 14)!
-        viewsButton.imageEdgeInsets = UIEdgeInsets(top: 0, left: 0, bottom: 0, right: 12)
-        
-        viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.normal)
-        viewsButton.setTitle("\(record.countViews.getCounterToString())", for: UIControl.State.selected)
-        viewsButton.setImage(UIImage(named: "views"), for: .normal)
-        viewsButton.setTitleColor(titleColor, for: .normal)
-        viewsButton.imageView?.tintColor = tintColor
-        
-        self.addSubview(viewsButton)
-        
-        commentsButton.frame = CGRect(x: viewsButton.frame.minX - repostsButtonWidth, y: topY, width: repostsButtonWidth, height: likesButtonHeight)
-        
-        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.normal)
-        commentsButton.setTitle("\(record.countComments)", for: UIControl.State.selected)
-        
-        commentsButton.setTitleColor(commentsButton.tintColor.withAlphaComponent(0.8), for: .normal)
-        commentsButton.imageView?.tintColor = commentsButton.tintColor.withAlphaComponent(0.8)
-        
-        return topY + likesButtonHeight
+        return topY + topInsets
     }
     
     func configurePoll(_ poll: Poll, topY: CGFloat) -> CGFloat {
@@ -539,7 +561,7 @@ class Newsfeed2Cell: UITableViewCell {
             let aLabel = UILabel()
             aLabel.font = aLabelFont
             aLabel.text = "\(index+1). \(poll.answers[index].text)"
-            aLabel.textColor = UIColor.black
+            aLabel.textColor = .white
             aLabel.numberOfLines = 0
             aLabel.tag = index
             
@@ -591,23 +613,14 @@ class Newsfeed2Cell: UITableViewCell {
                     
                     if self.poll.answerID == self.poll.answers[index].id {
                         answerLabels[index].backgroundColor = UIColor.purple.withAlphaComponent(0.75)
-                        answerLabels[index].textColor = UIColor.white
+                        answerLabels[index].textColor = .white
                         answerLabels[index].isEnabled = true
                     } else {
-                        if #available(iOS 13.0, *) {
-                            answerLabels[index].textColor = .label
-                        } else {
-                            answerLabels[index].textColor = .black
-                            answerLabels[index].isEnabled = false
-                        }
+                        answerLabels[index].textColor = .white
                     }
                 } else {
                     answerLabels[index].backgroundColor = vkSingleton.shared.mainColor.withAlphaComponent(0.8)
-                    if #available(iOS 13.0, *) {
-                        answerLabels[index].textColor = .label
-                    } else {
-                        answerLabels[index].textColor = .black
-                    }
+                    answerLabels[index].textColor = .white
                 }
             }
         }
@@ -617,11 +630,7 @@ class Newsfeed2Cell: UITableViewCell {
                 rateLabels[index].text = "\(self.poll.answers[index].votes.rateAdder()) (\(self.poll.answers[index].rate) %)"
                 
                 if self.poll.answerID != 0 {
-                    if #available(iOS 13.0, *) {
-                        rateLabels[index].textColor = .secondaryLabel
-                    } else {
-                        rateLabels[index].textColor = vkSingleton.shared.mainColor
-                    }
+                    rateLabels[index].textColor = vkSingleton.shared.secondaryLabelColor
                 } else {
                     rateLabels[index].textColor = UIColor.clear
                 }
@@ -635,17 +644,12 @@ class Newsfeed2Cell: UITableViewCell {
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.normal)
         likesButton.setTitle("\(record.countLikes)", for: UIControl.State.selected)
         
-        var titleColor = UIColor.darkGray
-        var tintColor = UIColor.darkGray
-        
-        if #available(iOS 13.0, *) {
-            titleColor = .secondaryLabel
-            tintColor = .secondaryLabel
-        }
+        var titleColor = vkSingleton.shared.secondaryLabelColor
+        var tintColor = vkSingleton.shared.secondaryLabelColor
         
         if record.userLikes == 1 {
-            titleColor = .systemPurple
-            tintColor = .systemPurple
+            titleColor = vkSingleton.shared.likeColor
+            tintColor = vkSingleton.shared.likeColor
         }
         
         likesButton.setTitleColor(titleColor, for: .normal)
@@ -653,7 +657,7 @@ class Newsfeed2Cell: UITableViewCell {
         likesButton.setImage(UIImage(named: "filled-like2"), for: .normal)
     }
     
-    func setImageView(_ index: Int, _ topY: CGFloat, _ record: News, _ cell: UITableViewCell, _ indexPath: IndexPath, _ imageView: UIImageView, _ tableView: UITableView) -> CGFloat {
+    func setImageView(_ index: Int, _ topY: CGFloat, _ record: News, _ videos: [Videos], _ cell: UITableViewCell, _ indexPath: IndexPath, _ imageView: UIImageView, _ tableView: UITableView) -> CGFloat {
         
         var imageHeight: CGFloat = 0.0
         var imageWidth: CGFloat = 0.0
@@ -667,6 +671,9 @@ class Newsfeed2Cell: UITableViewCell {
             if subview is UILabel {
                 subview.removeFromSuperview()
             }
+            if subview.tag == 1000 {
+                subview.removeFromSuperview()
+            }
         }
         
         imageView.layer.borderWidth = 0.0
@@ -678,13 +685,24 @@ class Newsfeed2Cell: UITableViewCell {
         imageView.image = nil
         
         if record.mediaType[index] == "doc" {
-            if record.photoWidth[index] != 0 {
-                imageWidth = UIScreen.main.bounds.width - 20.0
-                imageHeight = imageWidth * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
+            if record.photoWidth[index] != 0 && record.photoHeight[index] != 0 {
+                let width = CGFloat(record.photoWidth[index])
+                let height = CGFloat(record.photoHeight[index])
+                
+                if width > height {
+                    imageWidth = UIScreen.main.bounds.width - 20.0
+                    imageHeight = imageWidth * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
+                } else {
+                    imageHeight = UIScreen.main.bounds.width - 20.0
+                    imageWidth = imageHeight * CGFloat(record.photoWidth[index]) / CGFloat(record.photoHeight[index])
+                }
             }
             
             if imageHeight > 4 {
-                imageView.frame = CGRect(x: 10.0, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
+                imageView.frame = CGRect(x: 10, y: topY + 2, width: imageWidth, height: imageHeight - 4)
+                if imageWidth < UIScreen.main.bounds.width - 20 {
+                    imageView.frame = CGRect(x: (UIScreen.main.bounds.width - 20 - imageWidth) / 2, y: topY + 2, width: imageWidth, height: imageHeight - 4)
+                }
                 
                 let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
                 let setImageToRow = SetImageToRowOfTableView(cell: cell, imageView: imageView, indexPath: indexPath, tableView: tableView)
@@ -696,36 +714,37 @@ class Newsfeed2Cell: UITableViewCell {
                 }
                 
                 if record.photoText[index] == "gif" {
-                    let gifImage = UIImageView()
-                    gifImage.image = UIImage(named: "gif")
-                    if #available(iOS 13.0, *) {
-                        gifImage.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.5)
-                    } else {
-                        gifImage.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    }
-                    gifImage.layer.cornerRadius = 10
-                    gifImage.clipsToBounds = true
-                    gifImage.frame = CGRect(x: imageWidth / 2 - 50, y: (imageHeight - 4) / 2 - 50, width: 100, height: 100)
-                    imageView.addSubview(gifImage)
+                    let loadingView = UIView()
+                    loadingView.tag = 1000
+                    loadingView.frame = CGRect(x: 0, y: 0, width: 40, height: 40)
+                    loadingView.center = CGPoint(x: imageView.frame.width/2, y: imageView.frame.height/2)
+                    loadingView.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                    loadingView.clipsToBounds = true
+                    loadingView.layer.cornerRadius = 6
+                    imageView.addSubview(loadingView)
+                    
+                    let activityIndicator = UIActivityIndicatorView()
+                    activityIndicator.frame = CGRect(x: 0, y: 0, width: 30, height: 30)
+                    activityIndicator.style = .white
+                    activityIndicator.center = CGPoint(x: loadingView.frame.width/2, y: loadingView.frame.height/2)
+                    loadingView.addSubview(activityIndicator)
+                    activityIndicator.startAnimating()
                     
                     let gifSizeLabel = UILabel()
-                    gifSizeLabel.text = "Размер: \(record.size[index].getFileSizeToString())"
+                    gifSizeLabel.text = "GIF: \(record.size[index].getFileSizeToString())"
                     gifSizeLabel.numberOfLines = 1
                     gifSizeLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
                     gifSizeLabel.textAlignment = .center
                     gifSizeLabel.contentMode = .center
-                    gifSizeLabel.textColor = UIColor.black
-                    if #available(iOS 13.0, *) {
-                        gifSizeLabel.backgroundColor = UIColor.secondaryLabel.withAlphaComponent(0.5)
-                    } else {
-                        gifSizeLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                    }
-                    gifSizeLabel.layer.cornerRadius = 10
+                    gifSizeLabel.textColor = .white
+                    gifSizeLabel.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+                    gifSizeLabel.layer.cornerRadius = 4
                     gifSizeLabel.clipsToBounds = true
-                    gifSizeLabel.frame = CGRect(x: imageWidth - 10 - 120, y: imageHeight - 4 - 10 - 20, width: 120, height: 20)
+                    let gifSizeWidth = gifSizeLabel.getTextWidth(maxWidth: 200)
+                    gifSizeLabel.frame = CGRect(x: imageWidth - 10 - gifSizeWidth, y: imageHeight - 4 - 10 - 20, width: gifSizeWidth, height: 20)
                     imageView.addSubview(gifSizeLabel)
                     
-                    if record.videoURL[index] != "" && record.size[index] < 50_000_000 {
+                    if record.videoURL[index] != "" && record.size[index] < 150_000_000 {
                         queue.addOperation {
                             let url = URL(string: record.videoURL[index])
                             if let data = try? Data(contentsOf: url!) {
@@ -733,7 +752,8 @@ class Newsfeed2Cell: UITableViewCell {
                                 OperationQueue.main.addOperation(setAnimatedImageToRow)
                                 OperationQueue.main.addOperation {
                                     imageView.bringSubviewToFront(gifSizeLabel)
-                                    gifImage.removeFromSuperview()
+                                    activityIndicator.stopAnimating()
+                                    loadingView.removeFromSuperview()
                                 }
                             }
                         }
@@ -764,34 +784,71 @@ class Newsfeed2Cell: UITableViewCell {
                     imageView.layer.cornerRadius = 4.0
                 }
                 
-                let videoImage = UIImageView()
-                videoImage.image = UIImage(named: "video")
-                imageView.addSubview(videoImage)
-                videoImage.frame = CGRect(x: imageWidth / 2 - 30, y: imageHeight / 2 - 30, width: 60, height: 60)
-                
                 let durationLabel = UILabel()
                 durationLabel.text = record.size[index].getVideoDurationToString()
                 durationLabel.numberOfLines = 1
-                durationLabel.font = UIFont(name: "Verdana-Bold", size: 12.0)!
-                durationLabel.textAlignment = .center
-                durationLabel.contentMode = .center
-                if #available(iOS 13.0, *) {
-                    durationLabel.textColor = .label
-                    durationLabel.backgroundColor = .secondarySystemBackground
-                } else {
-                    durationLabel.textColor = UIColor.black
-                    durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-                }
-                durationLabel.layer.cornerRadius = 10
-                durationLabel.clipsToBounds = true
-                if let length = durationLabel.text?.length, length > 5 {
-                    durationLabel.frame = CGRect(x: imageWidth - 10 - 90, y: imageHeight - 4 - 10 - 20, width: 90, height: 20)
-                } else {
-                    durationLabel.frame = CGRect(x: imageWidth - 10 - 60, y: imageHeight - 4 - 10 - 20, width: 60, height: 20)
-                }
-                imageView.addSubview(durationLabel)
+                durationLabel.font = UIFont(name: "Verdana-Bold", size: 11.0)!
+                durationLabel.textAlignment = .right
+                let durationLabelWidth = durationLabel.getTextWidth(maxWidth: 200)
+                durationLabel.frame = CGRect(x: imageWidth - durationLabelWidth + 5, y: topY + imageHeight + 1, width: durationLabelWidth, height: 15)
+                self.addSubview(durationLabel)
                 
-                topNew = topY + imageHeight + 4.0
+                let titleLabel = UILabel()
+                titleLabel.text = record.photoText[index]
+                titleLabel.numberOfLines = 1
+                titleLabel.textAlignment = .left
+                titleLabel.font = UIFont(name: "Verdana-Bold", size: 11.0)!
+                titleLabel.textColor = titleLabel.tintColor
+                titleLabel.frame = CGRect(x: 15, y: topY + imageHeight + 1, width: imageWidth - 15 - durationLabelWidth, height: 15)
+                self.addSubview(titleLabel)
+                
+                durationLabel.textColor = vkSingleton.shared.secondaryLabelColor
+                
+                let videoTap = UITapGestureRecognizer()
+                videoTap.add {
+                    self.delegate.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
+                }
+                titleLabel.isUserInteractionEnabled = true
+                titleLabel.addGestureRecognizer(videoTap)
+                
+                var count = 0
+                for index2 in 0...9 { if record.mediaType[index2] == "video" { count += 1 } }
+                
+                if let video = videos.filter({ $0.id == record.photoID[index] && $0.ownerID == record.photoOwnerID[index] }).first, count == 1 {
+                    
+                    let configuration = WKWebViewConfiguration()
+                    configuration.allowsInlineMediaPlayback = true
+                    configuration.mediaTypesRequiringUserActionForPlayback = []
+                    let frame = CGRect(x: 10, y: topY + 2.0, width: imageWidth, height: imageHeight - 4.0)
+                    
+                    webView = WKWebView(frame: frame, configuration: configuration)
+                    webView.navigationDelegate = self
+                    webView.backgroundColor = vkSingleton.shared.backColor
+                    webView.layer.backgroundColor = vkSingleton.shared.backColor.cgColor
+                    webView.layer.cornerRadius = 4
+                    webView.clipsToBounds = true
+                    webView.isOpaque = false
+                    self.addSubview(webView)
+                    
+                    if video.platform.contains("YouTube"), let str = video.player.components(separatedBy: "?").first, let newURL = URL(string: str) {
+                        webView.loadHTMLString(embedVideoHtmlYoutube(videoID: newURL.lastPathComponent, autoplay: 0, playsinline: 1, muted: true), baseURL: nil)
+                    } else if let url = URL(string: "\(video.player)&enablejsapi=1&&playsinline=0&autoplay=0") {
+                        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 10)
+                        webView.load(request)
+                    }
+                } else {
+                    let videoImage = UIImageView()
+                    videoImage.image = UIImage(named: "video")
+                    imageView.addSubview(videoImage)
+                    videoImage.frame = CGRect(x: imageWidth / 2 - 30, y: (imageHeight - 4) / 2 - 30, width: 60, height: 60)
+                    
+                    imageView.isUserInteractionEnabled = true
+                    imageView.addGestureRecognizer(videoTap)
+                    
+                    self.addSubview(imageView)
+                }
+                
+                topNew = topY + imageHeight + 24.0
             }
         }
         
@@ -1088,9 +1145,9 @@ class Newsfeed2Cell: UITableViewCell {
             }
         }
         
-        height = topInsets + avatarImageSize + verticalSpacingElements + textHeight
+        height = topInsets + avatarImageSize + verticalSpacingElements + textHeight + 2 * verticalSpacingElements
         if record.repostOwnerID != 0 {
-            height = height + verticalSpacingElements + repostAvatarImageSize
+            height = height + verticalSpacingElements + repostAvatarImageSize + 2 * verticalSpacingElements
             
             let text2 = record.repostText.replacingOccurrences(of: "<br>", with: "\n", options: .regularExpression, range: nil)
             var textHeight2 = getRepostTextSize(text: text2, font: textFont, readmore: record.readMore2).height
@@ -1109,16 +1166,18 @@ class Newsfeed2Cell: UITableViewCell {
         var photos: [Photos] = []
         let maxWidth = UIScreen.main.bounds.width - 20
         for index in 0...9 {
-            if record.mediaType[index] == "photo" {
+            if record.mediaType[index] == "photo" && record.photoID[index] != 0 {
                 let photo = Photos(json: JSON.null)
                 photo.width = record.photoWidth[index]
                 photo.height = record.photoHeight[index]
+                photo.text = record.photoText[index]
                 photo.xxbigPhotoURL = record.photoURL[index]
                 photo.xbigPhotoURL = record.photoURL[index]
                 photo.bigPhotoURL = record.photoURL[index]
                 photo.smallPhotoURL = record.photoURL[index]
                 photo.pid = "\(record.photoID[index])"
                 photo.uid = "\(record.photoOwnerID[index])"
+                photo.ownerID = "\(record.photoOwnerID[index])"
                 photo.createdTime = record.date
                 photos.append(photo)
             }
@@ -1133,9 +1192,14 @@ class Newsfeed2Cell: UITableViewCell {
         var imageHeight = [CGFloat] (repeating: 0, count: 10)
         for index in 0...9 {
             if record.mediaType[index] == "doc" {
-                if record.photoWidth[index] != 0 {
-                    imageWidth[index] = UIScreen.main.bounds.width - 20
-                    imageHeight[index] = imageWidth[index] * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
+                if record.photoWidth[index] != 0 && record.photoHeight[index] != 0 {
+                    if record.photoWidth[index] > record.photoHeight[index] {
+                        imageWidth[index] = UIScreen.main.bounds.width - 20.0
+                        imageHeight[index] = imageWidth[index] * CGFloat(record.photoHeight[index]) / CGFloat(record.photoWidth[index])
+                    } else {
+                        imageHeight[index] = UIScreen.main.bounds.width - 20.0
+                        imageWidth[index] = imageHeight[index] * CGFloat(record.photoWidth[index]) / CGFloat(record.photoHeight[index])
+                    }
                     
                     if imageHeight[index] > 0 {
                         height = height + imageHeight[index] + 4.0
@@ -1149,7 +1213,7 @@ class Newsfeed2Cell: UITableViewCell {
                     imageHeight[index] = imageWidth[index] * 240.0 / 320.0
                     
                     if imageHeight[index] > 0 {
-                        height = height + imageHeight[index] + 4.0
+                        height = height + imageHeight[index] + 24.0
                     }
                 }
             }
@@ -1199,9 +1263,11 @@ class Newsfeed2Cell: UITableViewCell {
             height += signerLabelHeight
         }
         
-        height = height + likesButtonHeight + topInsets
+        if let vc = delegate as? Newsfeed2Controller, vc.filters == "post" {
+            return height + likesButtonHeight
+        }
         
-        return height
+        return height + topInsets
     }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -1318,7 +1384,7 @@ class Newsfeed2Cell: UITableViewCell {
                     }
                 }
             }
-            
+        
             if record.mediaType[index] == "audio" {
                 if record.audioTitle[index] != "" {
                     if index == 0 && touch.y >= musicArtist1.frame.minY && touch.y < musicTitle1.frame.maxY {
@@ -1363,4 +1429,8 @@ class Newsfeed2Cell: UITableViewCell {
         
         return res
     }
+}
+
+extension Newsfeed2Cell: WKNavigationDelegate {
+    
 }

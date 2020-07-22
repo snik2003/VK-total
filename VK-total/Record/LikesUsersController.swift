@@ -28,13 +28,18 @@ class LikesUsersController: InnerViewController, UITableViewDelegate, UITableVie
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        tableView.delegate = self
-        tableView.dataSource = self
+        self.view.backgroundColor = vkSingleton.shared.backColor
+        self.tableView.delegate = self
+        self.tableView.dataSource = self
+        self.tableView.backgroundColor = vkSingleton.shared.backColor
+        self.tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+        self.tableView.sectionIndexTrackingBackgroundColor = vkSingleton.shared.backColor
+        self.tableView.separatorColor = vkSingleton.shared.separatorColor
         
-        segmentedControl.selectedSegmentIndex = 0
-        if #available(iOS 13, *) {} else {
-            segmentedControl.tintColor = vkSingleton.shared.mainColor
-            segmentedControl.backgroundColor = vkSingleton.shared.backColor
+        OperationQueue.main.addOperation {
+            self.segmentedControl.selectedSegmentIndex = 0
+            self.segmentedControl.tintColor = vkSingleton.shared.mainColor
+            self.segmentedControl.backgroundColor = vkSingleton.shared.backColor
         }
         
         for like in likes {
@@ -91,31 +96,20 @@ class LikesUsersController: InnerViewController, UITableViewDelegate, UITableVie
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = .white
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = .white
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "userCell", for: indexPath)
+        cell.backgroundColor = .clear
         
         let user = users[indexPath.row]
         
@@ -127,13 +121,14 @@ class LikesUsersController: InnerViewController, UITableViewDelegate, UITableVie
             queue.addOperation(getCacheImage)
             OperationQueue.main.addOperation(setImageToRow)
             OperationQueue.main.addOperation {
-                cell.imageView?.layer.cornerRadius = 19
+                cell.imageView?.layer.cornerRadius = 20
                 cell.imageView?.clipsToBounds = true
             }
         }
         
         cell.textLabel?.attributedText = nil
         cell.textLabel?.text = "\(user.firstName) \(user.lastName) "
+        cell.textLabel?.textColor = vkSingleton.shared.labelColor
         if user.onlineStatus == 1 {
             if user.onlineMobile == 1 {
                 let fullString = "\(user.firstName) \(user.lastName) "
@@ -142,7 +137,7 @@ class LikesUsersController: InnerViewController, UITableViewDelegate, UITableVie
                 let fullString = "\(user.firstName) \(user.lastName) ●"
                 let rangeOfColoredString = (fullString as NSString).range(of: "●")
                 let attributedString = NSMutableAttributedString(string: fullString)
-                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: cell.textLabel?.tintColor], range: rangeOfColoredString)
+                attributedString.setAttributes([NSAttributedString.Key.foregroundColor: cell.textLabel!.tintColor], range: rangeOfColoredString)
                 cell.textLabel?.attributedText = attributedString
             }
         }
@@ -244,43 +239,105 @@ extension UILabel {
     }
     
     func setSourceOfRecord(text: String, source: String, delegate: UIViewController) {
+        
         let attachment = NSTextAttachment()
+        let mutableAttributedString = NSMutableAttributedString(string: " ")
         
         if source == "iphone" || source == "ipad" {
             attachment.image = UIImage(named: "iphone")?.withRenderingMode(.alwaysTemplate)
             attachment.bounds = CGRect(x: 0, y: -2, width: 15, height: 15)
+            
+            let attachmentStr = NSAttributedString(attachment: attachment)
+            mutableAttributedString.append(attachmentStr)
+
+            let textString = NSAttributedString(string: text, attributes: [.font: self.font])
+            mutableAttributedString.append(textString)
+            
+            self.attributedText = mutableAttributedString
         } else if source == "android" {
             attachment.image = UIImage(named: "android")?.withRenderingMode(.alwaysTemplate)
             attachment.bounds = CGRect(x: 0, y: -3, width: 15, height: 15)
+            
+            let attachmentStr = NSAttributedString(attachment: attachment)
+            mutableAttributedString.append(attachmentStr)
+
+            let textString = NSAttributedString(string: text, attributes: [.font: self.font])
+            mutableAttributedString.append(textString)
+            
+            self.attributedText = mutableAttributedString
         } else if source == "wphone" {
             attachment.image = UIImage(named: "wphone")?.withRenderingMode(.alwaysTemplate)
             attachment.bounds = CGRect(x: 0, y: -3, width: 15, height: 15)
+            
+            let attachmentStr = NSAttributedString(attachment: attachment)
+            mutableAttributedString.append(attachmentStr)
+
+            let textString = NSAttributedString(string: text, attributes: [.font: self.font])
+            mutableAttributedString.append(textString)
+            
+            self.attributedText = mutableAttributedString
         } else if source == "instagram" {
             attachment.image = UIImage(named: "instagram2")?.withRenderingMode(.alwaysTemplate)
             attachment.bounds = CGRect(x: 0, y: -3, width: 15, height: 15)
+            
+            let attachmentStr = NSAttributedString(attachment: attachment)
+            mutableAttributedString.append(attachmentStr)
+
+            let textString = NSAttributedString(string: text, attributes: [.font: self.font])
+            mutableAttributedString.append(textString)
+            
+            self.attributedText = mutableAttributedString
         } else if source == "facebook" {
             attachment.image = UIImage(named: "facebook2")?.withRenderingMode(.alwaysTemplate)
             attachment.bounds = CGRect(x: 0, y: -3, width: 15, height: 15)
+            
+            let attachmentStr = NSAttributedString(attachment: attachment)
+            mutableAttributedString.append(attachmentStr)
+
+            let textString = NSAttributedString(string: text, attributes: [.font: self.font])
+            mutableAttributedString.append(textString)
+            
+            self.attributedText = mutableAttributedString
         } else if source == "twitter" {
             attachment.image = UIImage(named: "twitter2")?.withRenderingMode(.alwaysTemplate)
             attachment.bounds = CGRect(x: 0, y: -3, width: 15, height: 15)
+            
+            let attachmentStr = NSAttributedString(attachment: attachment)
+            mutableAttributedString.append(attachmentStr)
+
+            let textString = NSAttributedString(string: text, attributes: [.font: self.font])
+            mutableAttributedString.append(textString)
+            
+            self.attributedText = mutableAttributedString
         } else if source == "windows" {
             attachment.image = UIImage(named: "windows")?.withRenderingMode(.alwaysTemplate)
             attachment.bounds = CGRect(x: 0, y: -3, width: 15, height: 15)
+            
+            let attachmentStr = NSAttributedString(attachment: attachment)
+            mutableAttributedString.append(attachmentStr)
+
+            let textString = NSAttributedString(string: text, attributes: [.font: self.font])
+            mutableAttributedString.append(textString)
+            
+            self.attributedText = mutableAttributedString
         } else {
-            if vkSingleton.shared.userID == "357365563" {
-                delegate.showInfoMessage(title: "Источник записи", msg: "Неопознанный источник записи: \(source)")
+            if let controller = delegate as? Record2Controller {
+                if vkSingleton.shared.userID == "357365563" || vkSingleton.shared.userID == "34051891" {
+                    controller.showInfoMessage(title: "Источник записи", msg: "Неопознанный источник записи: \(source)")
+                }
             }
         }
-        
-        let attachmentStr = NSAttributedString(attachment: attachment)
-        
-        let mutableAttributedString = NSMutableAttributedString(string: " ")
-        mutableAttributedString.append(attachmentStr)
-        
-        let textString = NSAttributedString(string: text, attributes: [.font: self.font])
-        mutableAttributedString.append(textString)
-        
-        self.attributedText = mutableAttributedString
+    }
+    
+    func getTextWidth(maxWidth: CGFloat) -> CGFloat {
+        let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
+        let rect = self.text!.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: self.font], context: nil)
+        return rect.size.width + 10
+    }
+    
+    func getTextSize(maxWidth: CGFloat) -> CGSize {
+        let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
+        let rect = self.text!.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: self.font], context: nil)
+        return rect.size
     }
 }

@@ -11,7 +11,7 @@ import Alamofire
 import SwiftyJSON
 import WebKit
 
-class LoginFormController: InnerViewController {
+class LoginFormController: UIViewController {
 
     @IBOutlet weak var scrollView: UIScrollView!
     
@@ -25,26 +25,29 @@ class LoginFormController: InnerViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         readAppConfig()
+        vkSingleton.shared.configureColors(controller: self)
+        
+        OperationQueue.main.addOperation {
+            self.view.backgroundColor = vkSingleton.shared.backColor
+        }
     }
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        
         if exitAccount == true {
             if self.getNumberOfAccounts() > 0 {
                 let controller = self.storyboard?.instantiateViewController(withIdentifier: "AddAccountController") as! AddAccountController
-                
+                controller.readAccountsFromRealm()
                 self.present(controller, animated: true)
             } else {
                 vkAutorize()
             }
         } else {
             if changeAccount == false {
-                if userDefaults.string(forKey: "vkUserID") != nil {
-                    vkSingleton.shared.userID = userDefaults.string(forKey: "vkUserID")!
+                if let userID = userDefaults.string(forKey: "vkUserID") {
+                    vkSingleton.shared.userID = userID
                 }
                 
                 readAppConfig()
@@ -60,10 +63,11 @@ class LoginFormController: InnerViewController {
             if vkSingleton.shared.userID == "" {
                 vkAutorize()
             } else {
-                vkSingleton.shared.accessToken = getAccessTokenFromRealm(userID: Int(vkSingleton.shared.userID)!)
+                if let userID = Int(vkSingleton.shared.userID) {
+                    vkSingleton.shared.accessToken = getAccessTokenFromRealm(userID: userID)
+                }
                 
-                
-                if vkSingleton.shared.accessToken != "" {
+                if !vkSingleton.shared.accessToken.isEmpty {
                     performSegue(withIdentifier: "goTabbar", sender: nil)
                 } else {
                     vkAutorize()
@@ -78,7 +82,8 @@ class LoginFormController: InnerViewController {
     func vkAutorize() {
         webview = WKWebView(frame: self.view.frame)
         webview.navigationDelegate = self
-        webview.backgroundColor = UIColor.white
+        webview.backgroundColor = vkSingleton.shared.backColor
+        webview.isOpaque = false
         self.view.addSubview(webview)
         
         if vkSingleton.shared.vkAppID.count > 0 {
@@ -103,11 +108,11 @@ class LoginFormController: InnerViewController {
             ]
 
             print("vkAppID = \(vkSingleton.shared.vkAppID[num])")
-            let request = URLRequest(url: urlComponents.url!)
-            //let userAgent = UAString()
-            //request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-
-            webview.load(request)
+            
+            if let url = urlComponents.url {
+                let request = URLRequest(url: url)
+                webview.load(request)
+            }
         }
     }
     
@@ -144,6 +149,8 @@ class LoginFormController: InnerViewController {
             vkSingleton.shared.accessToken = ""
             vkSingleton.shared.userID = ""
             changeAccount = true
+            
+            modalTransitionStyle = .flipHorizontal
         }
     }
     
@@ -167,7 +174,6 @@ extension LoginFormController: WKNavigationDelegate {
         
         guard let url = navigationResponse.response.url, url.path == "/blank.html", let fragment = url.fragment  else {
             decisionHandler(.allow)
-
             return
         }
         
@@ -197,10 +203,18 @@ extension LoginFormController: WKNavigationDelegate {
             
             if self.getNumberOfAccounts() > 0 {
                 let controller = self.storyboard?.instantiateViewController(withIdentifier: "AddAccountController") as! AddAccountController
-                
+                controller.readAccountsFromRealm()
                 self.present(controller, animated: true)
             } else {
                 vkAutorize()
+            }
+        }
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if segue.identifier == "goTabbar" {
+            if let controller = segue.destination as? VkTabbarController {
+                controller.modalTransitionStyle = .flipHorizontal
             }
         }
     }

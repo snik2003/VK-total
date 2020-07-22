@@ -16,7 +16,7 @@ class SwitchCell: UITableViewCell {
     @IBOutlet weak var descriptionLabel: UILabel!
     
     func getTextSize(text: String, font: UIFont) -> CGSize {
-        let maxWidth = UIScreen.main.bounds.width - 40 - 40
+        let maxWidth = UIScreen.main.bounds.width - 40 - 20
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
         let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
@@ -34,13 +34,5 @@ class SwitchCell: UITableViewCell {
         
         let height = getTextSize(text: text, font: font).height
         return height + 45
-    }
-}
-
-extension UISwitch {
-    open override func layoutSubviews() {
-        super.layoutSubviews()
-        
-        
     }
 }

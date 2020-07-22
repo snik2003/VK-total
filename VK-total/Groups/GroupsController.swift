@@ -43,12 +43,18 @@ class GroupsController: InnerTableViewController, UISearchBarDelegate {
             
             if #available(iOS 13.0, *) {
                 let searchField = self.searchBar.searchTextField
-                searchField.backgroundColor = .separator
-                searchField.textColor = .label
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
             } else {
+                self.searchBar.changeKeyboardAppearanceMode()
                 if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
-                    searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                    searchField.textColor = .black
+                    searchField.backgroundColor = vkSingleton.shared.separatorColor
+                    searchField.textColor = vkSingleton.shared.labelColor
+                    searchField.changeKeyboardAppearanceMode()
+                } else if let searchField = self.searchBar.value(forKey: "searchField") as? UITextField {
+                    searchField.backgroundColor = vkSingleton.shared.separatorColor
+                    searchField.textColor = vkSingleton.shared.labelColor
+                    searchField.changeKeyboardAppearanceMode()
                 }
             }
         }
@@ -138,6 +144,7 @@ class GroupsController: InnerTableViewController, UISearchBarDelegate {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "groupCell", for: indexPath)
+        cell.backgroundColor = .clear
         
         var group = groups[indexPath.row]
         if isSearching {

@@ -55,6 +55,7 @@ class PhotoAlbumsListCell: UITableViewCell {
                 
                 self.addSubview(coverImage[ind]!)
                 
+                
                 nameLabel[ind] = UILabel()
                 nameLabel[ind]?.text = albums[index].title
                 nameLabel[ind]?.font = UIFont(name: "Verdana", size: 12)!
@@ -78,6 +79,10 @@ class PhotoAlbumsListCell: UITableViewCell {
                 
                 countLabel.frame = CGRect(x: 0, y: height - 15, width: width, height: 15)
                 coverImage[ind]?.addSubview(countLabel)
+                
+                
+                nameLabel[ind]?.textColor = vkSingleton.shared.labelColor
+                countLabel.textColor = vkSingleton.shared.labelColor
                 
                 if ind == 0 {
                     tap1 = UITapGestureRecognizer()

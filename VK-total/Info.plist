@@ -21,10 +21,13 @@
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>vk6363391</string>
+			<string>com.vk</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>vk</string>
+				<string>vktotal</string>
+			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
@@ -45,6 +48,8 @@
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
+		<key>NSAllowsArbitraryLoadsForMedia</key>
+		<true/>
 	</dict>
 	<key>NSCalendarsUsageDescription</key>
 	<string>$(PRODUCT_NAME) calendar events</string>
@@ -57,7 +62,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>$(PRODUCT_NAME) location use</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>This app requires to access your microphone to record video with your voice send via chat</string>
+	<string>Вы сможете записывать голосовые сообщения и отправлять их в личных диалогах.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Вы сможете добавлять медиафайлы из галереи устройства и сохранять их, отправлять в личных сообщениях или прикреплять к своим записям и комментариям.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
@@ -77,7 +82,7 @@
 		<string>armv7</string>
 	</array>
 	<key>UIStatusBarStyle</key>
-	<string>UIStatusBarStyleDefault</string>
+	<string>UIStatusBarStyleDarkContent</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>

@@ -9,7 +9,7 @@
 import Foundation
 import SwiftyJSON
 
-class DialogAttach {
+class DialogAttach: Codable {
     var type = ""
     var photos: [PhotoAttach] = []
     var videos: [VideoAttach] = []
@@ -25,7 +25,7 @@ class DialogAttach {
     }
 }
 
-class PhotoAttach {
+class PhotoAttach: Codable {
     var id = 0
     var albumID = 0
     var ownerID = 0
@@ -55,7 +55,7 @@ class PhotoAttach {
     }
 }
 
-class VideoAttach {
+class VideoAttach: Codable {
     var id = 0
     var ownerID = 0
     var title = ""
@@ -79,7 +79,7 @@ class VideoAttach {
     }
 }
 
-class AudioAttach {
+class AudioAttach: Codable {
     var id = 0
     var ownerID = 0
     var artist = ""
@@ -101,7 +101,7 @@ class AudioAttach {
     }
 }
 
-class StickerAttach {
+class StickerAttach: Codable {
     var id = 0
     var productID = 0
     var width = 0
@@ -120,7 +120,7 @@ class StickerAttach {
     }
 }
 
-class WallAttach {
+class WallAttach: Codable {
     var id = 0
     var fromID = 0
     var date = 0
@@ -136,7 +136,7 @@ class WallAttach {
     }
 }
 
-class GiftAttach {
+class GiftAttach: Codable {
     var id = 0
     var thumb48 = ""
     var thumb96 = ""
@@ -150,29 +150,51 @@ class GiftAttach {
     }
 }
 
-class DocAttach {
+class DocAttach: Codable {
     var id = 0
     var ownerID = 0
     var title = ""
     var size = 0
-    var ext = 0
+    var ext = ""
     var url = ""
     var date = 0
     var type = 0
+    var linkMP3 = ""
+    var linkOGG = ""
+    var duration = 0
+    var accessKey = ""
+    var link = ""
+    var width = 0
+    var height = 0
     
     init(json: JSON) {
         self.id = json["id"].intValue
         self.ownerID = json["owner_id"].intValue
         self.title = json["title"].stringValue
         self.size = json["size"].intValue
-        self.ext = json["ext"].intValue
+        self.ext = json["ext"].stringValue
         self.url = json["url"].stringValue
         self.date = json["date"].intValue
         self.type = json["type"].intValue
+        self.accessKey = json["access_key"].stringValue
+        
+        self.linkMP3 = json["preview"]["audio_msg"]["link_mp3"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.linkOGG = json["preview"]["audio_msg"]["link_ogg"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.duration = json["preview"]["audio_msg"]["duration"].intValue
+        
+        self.link = json["preview"]["graffiti"]["src"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.width = json["preview"]["graffiti"]["width"].intValue
+        self.height = json["preview"]["graffiti"]["height"].intValue
+        
+        if self.link.isEmpty {
+            self.link = json["preview"]["photo"]["sizes"][0]["src"].stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            self.width = json["preview"]["photo"]["sizes"][0]["width"].intValue
+            self.height = json["preview"]["photo"]["sizes"][0]["height"].intValue
+        }
     }
 }
 
-class LinkAttach {
+class LinkAttach: Codable {
     var title = ""
     var url = ""
     

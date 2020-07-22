@@ -8,6 +8,7 @@
 
 import UIKit
 import BEMCheckBox
+import SCLAlertView
 import LocalAuthentication
 
 class OptionsController: InnerTableViewController {
@@ -16,18 +17,21 @@ class OptionsController: InnerTableViewController {
     var passDigits = AppConfig.shared.passwordDigits
     var touchID = AppConfig.shared.touchID
     
+    var autoMode = AppConfig.shared.autoMode
+    var darkMode = AppConfig.shared.darkMode
+    
     var changeStatus = false
     
     let descriptions: [String] = [
-        "Вы можете установить пароль для доступа в приложение (простой пароль из 4 цифр)",
+        "При активации опции автоматического переключения темы, приложение будет использовать цветовую тему системы.\n\nДля ручного управления цветовой темой отключите опцию автопереключения.",
         "Чтобы получать уведомления о происходящих с вашим аакаунтом событиях, когда приложение закрыто, включите данный параметр.",
         "Передавать в пуш-уведомлении текст присланного сообщения.",
-        "На каждый статус «онлайн», приложение будет сразу выставлять вам статус «оффлайн». Таким образом, ваш статус всегда будет «заходил только что».",
+        "К сожалению, режим «Невидимка» имеет огрниченные возможности. Проведение некоторых операций (таких, как отправка личного сообщения, загрузка всех диалогов в приложение, публикация новой записи или репост чужой записи) изменяет ваш статус ВКонтакте на «онлайн».\n\nЕсли у вас активирован режим «Невидимка», то приложение сразу выставит вам статус «заходил только что».",
         "Если вы хотите оставаться в статусе «оффлайн» при запуске приложения, выключите этот параметр.",
         "Автоматически помечать сообщения как прочитанные при открытии конкретного диалога.",
-        "Сообщать вашему собеседнику/группе о том, что вы набираете текст.",
+        "Сообщать вашему собеседнику о том, что вы набираете текст.",
         "Вы можете включить звуковые эффекты при появлении информационных сообщений или нажатии на кнопки.",
-        "При активации опции автоматического переключения темы, приложение будет использовать цветовую тему системы. Для ручного управления цветовой темой отключите опцию автопереключения.\n\nДля изменения цветовой темы перезапустите приложение после сохранения настроек."
+        "Вы можете установить пароль для доступа в приложение (простой пароль из 4 цифр)"
     ]
     
     override func viewDidLoad() {
@@ -38,10 +42,13 @@ class OptionsController: InnerTableViewController {
         //self.navigationItem.hidesBackButton = true
         
         readAppConfig()
-        
-        tableView.reloadData()
     }
 
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        tableView.reloadData()
+    }
+    
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         
@@ -55,8 +62,7 @@ class OptionsController: InnerTableViewController {
     
     override func numberOfSections(in tableView: UITableView) -> Int {
         
-        if #available(iOS 13.0, *) { return 9 }
-        return 8
+        return 9
     }
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
@@ -68,8 +74,11 @@ class OptionsController: InnerTableViewController {
             AppConfig.shared.passwordDigits = passDigits
             AppConfig.shared.touchID = touchID
             
-            print("device token = \(vkSingleton.shared.deviceToken)")
+            AppConfig.shared.autoMode = autoMode
+            AppConfig.shared.darkMode = darkMode
             saveAppConfig()
+            
+            print("device token = \(vkSingleton.shared.deviceToken)")
             if AppConfig.shared.pushNotificationsOn {
                 registerDeviceOnPush()
             } else {
@@ -82,8 +91,10 @@ class OptionsController: InnerTableViewController {
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
-            if passwordOn && touchAuthenticationAvailable() {
-                return 2
+            if #available(iOS 13.0, *) {
+                if !autoMode {
+                    return 2
+                }
             }
             return 1
         }
@@ -94,7 +105,7 @@ class OptionsController: InnerTableViewController {
             return 1
         }
         if section == 8 {
-            if !AppConfig.shared.autoMode {
+            if passwordOn && touchAuthenticationAvailable() {
                 return 2
             }
             return 1
@@ -111,15 +122,15 @@ class OptionsController: InnerTableViewController {
         
         if indexPath.section == 0 {
             if indexPath.row == 0 {
-                let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
-                
-                if passwordOn {
-                    return cell.getRowHeight(text: "", font: cell.descriptionLabel.font)
-                } else {
+                if #available(iOS 13.0, *) {
+                    let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
                     return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
+                } else {
+                    let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
+                    return cell.getRowHeight(text: "Чтобы сменить цветовую тему, потребуется перезапустить приложение.", font: cell.descriptionLabel.font)
                 }
             }
-            return 40
+            return 50
         }
         
         if indexPath.section == 1 {
@@ -165,37 +176,39 @@ class OptionsController: InnerTableViewController {
             
             return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
         }
+        
         if indexPath.section == 8 {
             if indexPath.row == 0 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
                 
-                return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
+                if passwordOn {
+                    return cell.getRowHeight(text: "", font: cell.descriptionLabel.font)
+                } else {
+                    return cell.getRowHeight(text: descriptions[index], font: cell.descriptionLabel.font)
+                }
             }
             return 50
         }
+        
         return 0
     }
     
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
-        if section == 0 {
-            return 10
+        if section == 0 || section == 1 || section == 3 || section == 5 || section == 7 || section == 8 {
+            return 7
         }
-        if section == 1 {
-            return 10
-        }
+        
         if section == 4 {
             return 0
         }
-        if section == 3 || section == 5 || section == 7 || section == 8 {
-            return 10
-        }
+        
         return 7
     }
     
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         if section == tableView.numberOfSections - 1 {
-            return 10
+            return 7
         }
         return 0
     }
@@ -225,23 +238,62 @@ class OptionsController: InnerTableViewController {
             switch indexPath.row {
             case 0:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+                cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+                cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
                 
-                cell.nameLabel.text = "Защита экрана паролем"
-                cell.descriptionLabel.text = descriptions[index]
-                if cell.descriptionLabel.text != "" {
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
+                
+                if #available(iOS 13.0, *) {
+                    cell.nameLabel.text = "Автопереключение темы"
+                    cell.descriptionLabel.text = descriptions[index]
+                    
+                    if cell.descriptionLabel.text != "" {
+                        cell.descriptionLabel.isHidden = false
+                    }
+                    
+                    cell.pushSwitch.isOn = autoMode
+                    cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
+                } else {
+                    cell.nameLabel.text = "Тёмная тема"
+                    cell.descriptionLabel.text = "Чтобы сменить цветовую тему, потребуется перезапустить приложение."
                     cell.descriptionLabel.isHidden = false
+                    
+                    cell.pushSwitch.isOn = darkMode
+                    cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
                 }
-                cell.pushSwitch.isOn = passwordOn
-                cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
+                
+                cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
                 
                 return cell
             case 1:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
                 
-                cell.simpleCheck.on = touchID
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
+                
+                cell.simpleCheck.on = darkMode
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
-                cell.nameLabel.text = "Использовать TouchID"
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
+                cell.nameLabel.text = "Тёмная тема"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             default:
@@ -253,8 +305,15 @@ class OptionsController: InnerTableViewController {
             switch indexPath.row {
             case 0:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+                cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+                cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
                 
-                cell.nameLabel.text = "Push-уведомления"
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
+                
+                cell.nameLabel.text = "Пуш-уведомления"
                 cell.descriptionLabel.text = descriptions[index]
                 if cell.descriptionLabel.text != "" {
                     cell.descriptionLabel.isHidden = false
@@ -262,81 +321,235 @@ class OptionsController: InnerTableViewController {
                 cell.pushSwitch.isOn = AppConfig.shared.pushNotificationsOn
                 cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
                 
+                cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                
                 return cell
             case 1:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushNewMessage
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Новые сообщения"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             case 2:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushComment
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Новые комментарии"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             case 3:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushNewFriends
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Заявки в друзья"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             case 4:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.animationDuration = 2
                 cell.simpleCheck.on = AppConfig.shared.pushNots
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Ответы"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             case 5:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.on = AppConfig.shared.pushLikes
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Лайки"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             case 6:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.on = AppConfig.shared.pushMentions
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Упоминания"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             case 7:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.on = AppConfig.shared.pushFromGroups
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Уведомления от групп"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             case 8:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
                 
                 cell.simpleCheck.on = AppConfig.shared.pushNewPosts
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
                 cell.nameLabel.text = "Новые записи"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             default:
@@ -346,6 +559,13 @@ class OptionsController: InnerTableViewController {
             }
         case 2:
             let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
             
             cell.nameLabel.text = "Передавать текст сообщения"
             cell.descriptionLabel.text = descriptions[index]
@@ -355,9 +575,18 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.isOn = AppConfig.shared.showStartMessage
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
+            cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+            
             return cell
         case 3:
             let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
             
             cell.nameLabel.text = "Режим «Невидимка»"
             cell.descriptionLabel.text = descriptions[index]
@@ -367,9 +596,18 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.isOn = AppConfig.shared.setOfflineStatus
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
+            cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+            
             return cell
         case 4:
             let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
             
             cell.nameLabel.adjustsFontSizeToFitWidth = true
             cell.nameLabel.minimumScaleFactor = 0.3
@@ -381,9 +619,18 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.isOn = AppConfig.shared.checkUnreadMessageWhileStart
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
+            cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+            
             return cell
         case 5:
             let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
             
             cell.nameLabel.text = "Читать сообщения"
             cell.descriptionLabel.text = descriptions[index]
@@ -393,9 +640,18 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.isOn = AppConfig.shared.readMessageInDialog
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
+            cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+            
             return cell
         case 6:
             let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
             
             cell.nameLabel.text = "Отображать набор текста"
             cell.descriptionLabel.text = descriptions[index]
@@ -405,9 +661,18 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.isOn = AppConfig.shared.showTextEditInDialog
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
+            cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+            
             return cell
         case 7:
             let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
             
             cell.nameLabel.text = "Звуковые эффекты"
             cell.descriptionLabel.text = descriptions[index]
@@ -417,30 +682,59 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.isOn = AppConfig.shared.soundEffectsOn
             cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
             
+            cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
+            
             return cell
         case 8:
             switch indexPath.row {
             case 0:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+                cell.backgroundColor = vkSingleton.shared.backColor
+                cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+                cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+                cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
                 
-                cell.nameLabel.text = "Автопереключение темы"
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
+                
+                cell.nameLabel.text = "Защита экрана паролем"
                 cell.descriptionLabel.text = descriptions[index]
-                
                 if cell.descriptionLabel.text != "" {
                     cell.descriptionLabel.isHidden = false
                 }
-                
-                cell.pushSwitch.isOn = AppConfig.shared.autoMode
+                cell.pushSwitch.isOn = passwordOn
                 cell.pushSwitch.addTarget(self, action: #selector(self.valueChangedSwitch(sender:)), for: .valueChanged)
+                
+                cell.pushSwitch.setCurrentStateForVoiceOver(name: cell.nameLabel.text!, indexPath: indexPath)
                 
                 return cell
             case 1:
                 let cell = tableView.dequeueReusableCell(withIdentifier: "simpleCell", for: indexPath) as! SimpleCell
+                cell.backgroundColor = vkSingleton.shared.backColor
                 
-                cell.simpleCheck.on = AppConfig.shared.darkMode
+                cell.nameLabel.textColor = vkSingleton.shared.labelColor
+                
+                cell.simpleCheck.onTintColor = vkSingleton.shared.mainColor
+                cell.simpleCheck.onCheckColor = vkSingleton.shared.mainColor
+                
+                cell.simpleCheck.on = touchID
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
-                cell.nameLabel.text = "Тёмная тема"
+                cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
+                cell.nameLabel.text = "Использовать TouchID"
+                cell.nameLabel.accessibilityLabel = "Использовать тач айди"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
+                
+                cell.simpleCheck.setCurrentStateForVoiceOver(name: "Использовать тач айди", indexPath: indexPath)
+                cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                
+                let tap = UITapGestureRecognizer()
+                tap.add {
+                    cell.simpleCheck.on = !cell.simpleCheck.on
+                    cell.nameLabel.setCurrentStateForVoiceOver(checkBox: cell.simpleCheck)
+                    self.checkBoxValueChanged(sender: cell.simpleCheck)
+                }
+                cell.nameLabel.isUserInteractionEnabled = true
+                cell.nameLabel.addGestureRecognizer(tap)
                 
                 return cell
             default:
@@ -456,13 +750,28 @@ class OptionsController: InnerTableViewController {
     }
     
     @objc func valueChangedSwitch(sender: UISwitch) {
+        
         let position = sender.convert(CGPoint.zero, to: self.tableView)
         
         if let indexPath = self.tableView.indexPathForRow(at: position) {
+            sender.setCurrentStateForVoiceOver(name: sender.accessibilityLabel!, indexPath: indexPath)
             
             if indexPath.section == 0 {
-                passwordOn = sender.isOn
-                tableView.reloadData()
+                if #available(iOS 13.0, *) {
+                    autoMode = sender.isOn
+                    tableView.reloadData()
+                    
+                    if AppConfig.shared.autoMode != sender.isOn {
+                        showChangeModeMessage(title: "Внимание!", msg: "Чтобы сменить цветовую тему,\nпотребуется перезапустить приложение\n", indexPath: indexPath, newValue: sender.isOn)
+                    }
+                } else {
+                    darkMode = sender.isOn
+                    tableView.reloadData()
+                    
+                    if AppConfig.shared.darkMode != sender.isOn {
+                        showChangeModeMessage(title: "Внимание!", msg: "Чтобы сменить цветовую тему,\nпотребуется перезапустить приложение\n", indexPath: indexPath, newValue: sender.isOn)
+                    }
+                }
             }
             
             if indexPath.section == 1 {
@@ -495,23 +804,36 @@ class OptionsController: InnerTableViewController {
             }
             
             if indexPath.section == 8 {
-                AppConfig.shared.autoMode = sender.isOn
+                passwordOn = sender.isOn
                 tableView.reloadData()
-                if AppConfig.shared.autoMode {
-                    tableView.scrollToRow(at: IndexPath(row: 0, section: 8), at: .bottom, animated: true)
-                } else {
+                
+                if passwordOn {
                     tableView.scrollToRow(at: IndexPath(row: 1, section: 8), at: .bottom, animated: true)
+                } else {
+                    tableView.scrollToRow(at: IndexPath(row: 0, section: 8), at: .bottom, animated: true)
                 }
             }
+            
         }
     }
 
+    @objc func checkboxClick(sender: BEMCheckBox) {
+        sender.on = !sender.on
+    }
+    
     @objc func checkBoxValueChanged(sender: BEMCheckBox) {
         let position = sender.convert(CGPoint.zero, to: self.tableView)
         
         if let indexPath = self.tableView.indexPathForRow(at: position) {
-            if indexPath.section == 0 && indexPath.row == 1 {
-                touchID = sender.on
+            
+            sender.setCurrentStateForVoiceOver(name: sender.accessibilityLabel!, indexPath: indexPath)
+            
+            if indexPath.section == 0 {
+                darkMode = sender.on
+                tableView.reloadData()
+                if AppConfig.shared.darkMode != sender.on {
+                    showChangeModeMessage(title: "Внимание!", msg: "Чтобы сменить цветовую тему,\nпотребуется перезапустить приложение\n", indexPath: indexPath, newValue: sender.on)
+                }
             }
             
             if indexPath.section == 1 {
@@ -537,8 +859,8 @@ class OptionsController: InnerTableViewController {
                 }
             }
             
-            if indexPath.section == 8 {
-                AppConfig.shared.darkMode = sender.on
+            if indexPath.section == 8 && indexPath.row == 1 {
+                touchID = sender.on
             }
             
             tableView.reloadData()
@@ -555,5 +877,117 @@ class OptionsController: InnerTableViewController {
     
     func touchAuthenticationAvailable() -> Bool {
         return LAContext().canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
+    }
+    
+    func showChangeModeMessage(title: String, msg: String, indexPath: IndexPath, newValue: Bool) {
+        
+        OperationQueue.main.addOperation {
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            titleColor = vkSingleton.shared.labelColor
+            backColor = vkSingleton.shared.backColor
+            
+            let appearance = SCLAlertView.SCLAppearance(
+                kWindowWidth: UIScreen.main.bounds.width - 40,
+                kTitleFont: UIFont(name: "Verdana", size: 13)!,
+                kTextFont: UIFont(name: "Verdana", size: 12)!,
+                kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
+                showCloseButton: false,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
+            )
+            
+            let alert = SCLAlertView(appearance: appearance)
+            
+            alert.addButton("Перезапустить приложение", action: {
+                if indexPath.section == 0 && indexPath.row == 0 {
+                    if #available(iOS 13.0, *) {
+                        UserDefaults.standard.setValue(newValue, forKey: "vktotal_autoMode")
+                        AppConfig.shared.autoMode = newValue
+                    } else {
+                        UserDefaults.standard.setValue(newValue, forKey: "vktotal_darkMode")
+                        AppConfig.shared.darkMode = newValue
+                    }
+                } else if indexPath.section == 0 && indexPath.row == 1 {
+                    UserDefaults.standard.setValue(newValue, forKey: "vktotal_darkMode")
+                    AppConfig.shared.darkMode = newValue
+                }
+                
+                let storyboard = UIStoryboard(name: "Main", bundle: nil)
+                let window = UIApplication.shared.keyWindow
+                
+                if let controller  = storyboard.instantiateViewController(withIdentifier: "LoginFormController") as? LoginFormController {
+                    
+                    controller.view.backgroundColor = vkSingleton.shared.backColor
+                    controller.changeAccount = true
+                    
+                    UIView.transition(with: window!, duration: 0.9, options: .transitionFlipFromLeft, animations: {
+                        window?.rootViewController = controller
+                        window?.makeKeyAndVisible()
+                    }, completion: nil)
+                }
+            })
+            
+            alert.addButton("Отмена", action: {
+                if indexPath.section == 0 && indexPath.row == 0 {
+                    if #available(iOS 13.0, *) {
+                        self.autoMode = !newValue
+                    } else {
+                        self.darkMode = !newValue
+                    }
+                } else if indexPath.section == 0 && indexPath.row == 1 {
+                    self.darkMode = !newValue
+                }
+                
+                self.tableView.reloadData()
+            })
+            
+            alert.showInfo(title, subTitle: msg)
+            self.playSoundEffect(vkSingleton.shared.errorSound)
+        }
+    }
+}
+
+extension UISwitch {
+    func setCurrentStateForVoiceOver(name: String, indexPath: IndexPath) {
+        self.isAccessibilityElement = true
+        
+        self.accessibilityLabel = name
+        self.accessibilityIdentifier = "\(indexPath.section)-\(indexPath.row)"
+    }
+}
+
+extension BEMCheckBox {
+    func setCurrentStateForVoiceOver(name: String, indexPath: IndexPath) {
+        self.isAccessibilityElement = true
+        
+        self.accessibilityLabel = name
+        self.accessibilityIdentifier = "\(indexPath.section)-\(indexPath.row)"
+        
+        if self.on {
+            self.accessibilityValue = "Включено"
+            self.accessibilityHint = "Коснитесь дважды, чтобы выключить пуш-уведомления для \(name)"
+        } else {
+            self.accessibilityValue = "Выключено"
+            self.accessibilityHint = "Коснитесь дважды, чтобы включить пуш-уведомления для \(name)"
+        }
+    }
+}
+
+extension UILabel {
+    func setCurrentStateForVoiceOver(checkBox: BEMCheckBox) {
+        self.isAccessibilityElement = true
+        
+        self.accessibilityTraits = [.button]
+        
+        if checkBox.on {
+            self.accessibilityValue = "Включено"
+            self.accessibilityHint = "Коснитесь дважды, чтобы выключить пуш-уведомления для \(checkBox.accessibilityLabel!)"
+        } else {
+            self.accessibilityValue = "Выключено"
+            self.accessibilityHint = "Коснитесь дважды, чтобы включить пуш-уведомления для \(checkBox.accessibilityLabel!)"
+        }
     }
 }

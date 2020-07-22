@@ -14,9 +14,17 @@ class ParseDialogsUsers: Operation {
     var outputData: [DialogsUsers] = []
     
     override func main() {
-        guard let getServerDataOperation = dependencies.first as? GetServerDataOperation, let data = getServerDataOperation.data else { return }
+        guard let getServerDataOperation = dependencies.first as? GetServerDataOperation, let data = getServerDataOperation.data else {
+            ViewControllerUtils().hideActivityIndicator()
+            return
+        }
             
-        guard let json = try? JSON(data: data) else { print("json error"); return }
+        guard let json = try? JSON(data: data) else {
+            print("json error");
+            ViewControllerUtils().hideActivityIndicator()
+            return
+        }
+        
         //print(json)
             
         let dialogsUsers: [DialogsUsers] = json["response"].compactMap { DialogsUsers(json: $0.1) }

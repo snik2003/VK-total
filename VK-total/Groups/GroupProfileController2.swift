@@ -12,7 +12,7 @@ import SwiftyJSON
 import Popover
 import WebKit
 
-class GroupProfileController2: InnerViewController, UITableViewDelegate, UITableViewDataSource {
+class GroupProfileController2: InnerViewController, UITableViewDelegate, UITableViewDataSource, WKNavigationDelegate {
 
     @IBOutlet weak var tableView: UITableView!
     let refreshControl = UIRefreshControl()
@@ -31,6 +31,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     var wall = [Wall]()
     var groups = [WallGroups]()
     var profiles = [WallProfiles]()
+    var videos = [Videos]()
     
     var postponedWall = [Wall]()
     var postponedGroups = [WallGroups]()
@@ -38,8 +39,12 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     
     var countersSection = [InfoInProfile]()
     var offset = 0
-    let count = 40
+    var viewCount = 0
+    let count = 30
+    
     var isRefresh = false
+    
+    var spinner: UIActivityIndicatorView!
     
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
@@ -79,22 +84,36 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
             self.barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
             self.navigationItem.rightBarButtonItem = self.barButton
             
-            self.tableView.delegate = self
-            self.tableView.dataSource = self
-            self.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
-            
-            self.refreshControl.attributedTitle = NSAttributedString(string: "Обновляем данные")
+            let myAttribute = [NSAttributedString.Key.foregroundColor: vkSingleton.shared.labelColor]
+            let myAttrString = NSAttributedString(string: "Обновляем данные", attributes: myAttribute)
+            self.refreshControl.attributedTitle = myAttrString
             self.refreshControl.addTarget(self, action: #selector(self.pullToRefresh), for: UIControl.Event.valueChanged)
-            if #available(iOS 13.0, *) {
-                self.refreshControl.tintColor = .secondaryLabel
-            } else {
-                self.refreshControl.tintColor = .gray
-            }
+            self.refreshControl.tintColor = vkSingleton.shared.labelColor
             self.tableView.addSubview(self.refreshControl)
             
+            self.spinner = UIActivityIndicatorView(style: .white)
+            self.spinner.color = vkSingleton.shared.labelColor
+            self.spinner.stopAnimating()
+            self.spinner.hidesWhenStopped = true
+            self.spinner.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: 60)
+            self.tableView.tableFooterView = self.spinner
+            
+            self.tableView.delegate = self
+            self.tableView.dataSource = self
             self.tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "wallRecordCell2")
+            self.tableView.showsVerticalScrollIndicator = false
+            
+            self.tableView.backgroundColor = vkSingleton.shared.backColor
+            self.tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+            self.tableView.sectionIndexTrackingBackgroundColor = vkSingleton.shared.backColor
+            self.tableView.separatorColor = vkSingleton.shared.separatorColor
+            
             self.tableView.separatorStyle = .none
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
         }
         
         refresh()
@@ -122,15 +141,19 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     
     @objc func pullToRefresh() {
         offset = 0
+        viewCount = 0
+        spinner.stopAnimating()
+        tableView.tableFooterView = spinner
+        
+        estimatedHeightCache.removeAll(keepingCapacity: false)
         refresh()
     }
     
     @objc func refresh() {
         let opq = OperationQueue()
         opq.maxConcurrentOperationCount = 1
-        isRefresh = true
         
-        estimatedHeightCache.removeAll(keepingCapacity: false)
+        isRefresh = true
         
         // получаем объект с сервера ВК
         let url1 = "/method/groups.getById"
@@ -167,12 +190,61 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         
         // парсим объект
         let parseGroupWall = ParseGroupWall()
+        parseGroupWall.completionBlock = {
+            var videoIDs = ""
+            for wall in parseGroupWall.wall {
+                for index in 0...9 {
+                    if wall.mediaType[index] == "video" {
+                        if videoIDs == "" {
+                            if wall.photoAccessKey[index] == "" {
+                                videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                            } else {
+                                videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                            }
+                        } else {
+                            if wall.photoAccessKey[index] == "" {
+                                videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                            } else {
+                                videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if videoIDs != "" {
+                let url = "/method/video.get"
+                let parameters = [
+                    "access_token": vkSingleton.shared.accessToken,
+                    "owner_id": "-\(self.groupID)",
+                    "videos": videoIDs,
+                    "extended": "0",
+                    "fields": "id, first_name, last_name, photo_100",
+                    "v": vkSingleton.shared.version
+                ]
+                
+                let getServerDataOperation5 = GetServerDataOperation(url: url, parameters: parameters)
+                getServerDataOperation5.completionBlock = {
+                    guard let data = getServerDataOperation5.data else { return }
+                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    //print(json)
+                    
+                    let wallVideos = json["response"]["items"].compactMap({ Videos(json: $0.1) })
+                    if self.offset == 0 {
+                        self.videos = wallVideos
+                    } else {
+                        self.videos.append(contentsOf: wallVideos)
+                    }
+                }
+                opq.addOperation(getServerDataOperation5)
+            }
+        }
         parseGroupWall.addDependency(getServerDataOperation2)
         opq.addOperation(parseGroupWall)
         
         let url3 = "/method/wall.get"
         let parameters3 = [
-            "owner_id": "-\(groupID)",
+            "owner_id": "-\(self.groupID)",
             "domain": "",
             "access_token": vkSingleton.shared.accessToken,
             "count": "100",
@@ -213,7 +285,6 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         }
         opq.addOperation(getServerDataOperation4)
         
-        // обновляем данные на UI
         let reloadTableController = ReloadGroupProfileController2(controller: self)
         reloadTableController.addDependency(parseGroupWall)
         reloadTableController.addDependency(parseGroupProfile)
@@ -231,14 +302,29 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         return 1
     }
     
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        if let height = estimatedHeightCache[indexPath] {
+            return height
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
+            cell.delegate = self
+            cell.drawCell = false
+            
+            let height = cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+            estimatedHeightCache[indexPath] = height
+            return height
+        }
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
             cell.delegate = self
+            cell.drawCell = false
             
-            let height = cell.getRowHeight(record: wall[indexPath.section])
+            let height = cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             estimatedHeightCache[indexPath] = height
             return height
         }
@@ -256,25 +342,13 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -282,7 +356,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2", for: indexPath) as! WallRecordCell2
         cell.delegate = self
         
-        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
@@ -307,99 +381,21 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     }
     
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
-        if indexPath.section == tableView.numberOfSections - 1 && indexPath.section == offset - 1 {
+        if isRefresh && tableView.numberOfSections == viewCount && indexPath.section == tableView.numberOfSections - 2 {
             isRefresh = false
         }
     }
     
     func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         
-        if isRefresh == false {
-            OperationQueue.main.addOperation {
-                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-            }
-            self.refresh()
-        }
-    }
-    
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let record = wall[indexPath.section]
-            
-        if let visibleIndexPath = tableView.indexPathsForVisibleRows {
-            for index in visibleIndexPath {
-                if index == indexPath {
-                    if let cell = tableView.cellForRow(at: indexPath) as? WallRecordCell2 {
-                    
-                        let action = cell.getActionOnClickPosition(touch: cell.position, record: record)
-                        
-                        if action == "show_record" {
-                            
-                            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
-                        }
-                        
-                        if action == "show_repost_record" {
-                            
-                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
-                        }
-                        
-                        if action == "show_owner" {
-                            
-                            self.openProfileController(id: record.fromID, name: "")
-                        }
-                        
-                        if action == "show_repost_owner" {
-                            
-                            self.openProfileController(id: record.repostOwnerID, name: "")
-                        }
-                        
-                        for index in 0...9 {
-                            if action == "show_photo_\(index)" {
-                                let photoViewController = self.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
-                                
-                                var newIndex = 0
-                                for ind in 0...9 {
-                                    if record.mediaType[ind] == "photo" {
-                                        let photos = Photos(json: JSON.null)
-                                        photos.uid = "\(record.photoOwnerID[ind])"
-                                        photos.pid = "\(record.photoID[ind])"
-                                        photos.xxbigPhotoURL = record.photoURL[ind]
-                                        photos.xbigPhotoURL = record.photoURL[ind]
-                                        photos.bigPhotoURL = record.photoURL[ind]
-                                        photos.photoURL = record.photoURL[ind]
-                                        photos.width = record.photoWidth[ind]
-                                        photos.height = record.photoHeight[ind]
-                                        photoViewController.photos.append(photos)
-                                        if ind == index {
-                                            photoViewController.numPhoto = newIndex
-                                        }
-                                        newIndex += 1
-                                    }
-                                }
-                                
-                                photoViewController.delegate = self
-                                
-                                self.navigationController?.pushViewController(photoViewController, animated: true)
-                            }
-                            
-                            if action == "show_video_\(index)" {
-                                
-                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
-                                
-                            }
-                            
-                            if action == "show_music_\(index)" {
-                                
-                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
-                            }
-                        }
-                        
-                        if action == "show_signer_profile" {
-                            self.openProfileController(id: record.signerID, name: "")
-                        }
-                    }
-                }
+        let y = scrollView.contentOffset.y + scrollView.bounds.size.height - scrollView.contentInset.bottom
+        let h = scrollView.contentSize.height
+        
+        if y >= (h - 30.0) {
+            if viewCount >= offset {
+                if !isRefresh { refresh() }
+            } else {
+                tableView.tableFooterView = nil
             }
         }
     }
@@ -411,13 +407,12 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore1 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -430,13 +425,12 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell2") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore2 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: profiles, groups: groups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -505,7 +499,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -566,7 +560,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -620,7 +614,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -659,7 +653,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -754,7 +748,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                                     self.profileView.updateMembersLabel(profile: self.groupProfile[0])
                                 }
                             } else {
-                                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                                error.showErrorMessage(controller: self)
                             }
                         }
                         
@@ -803,7 +797,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                                     self.profileView.updateMembersLabel(profile: self.groupProfile[0])
                                 }
                             } else {
-                                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                                error.showErrorMessage(controller: self)
                             }
                         }
                         
@@ -878,7 +872,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                                 self.profileView.updateMembersLabel(profile: self.groupProfile[0])
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -914,7 +908,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                 collectionView.register(UICollectionViewCell.self, forCellWithReuseIdentifier: "counterCell")
                 collectionView.backgroundColor = vkSingleton.shared.backColor
                 collectionView.showsVerticalScrollIndicator = false
-                collectionView.showsHorizontalScrollIndicator = true
+                collectionView.showsHorizontalScrollIndicator = false
                 profileView.addSubview(collectionView)
                 collectionView.reloadData()
                 profileView.addSeparator4(height + 65)
@@ -1057,11 +1051,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         let nameLabel = UILabel()
         nameLabel.attributedText = nil
         nameLabel.text = "\(user.firstName) \(user.lastName)"
-        if #available(iOS 13.0, *) {
-            nameLabel.textColor = .label
-        } else {
-            nameLabel.textColor = .black
-        }
+        nameLabel.textColor = vkSingleton.shared.labelColor
         
         if user.online == 1 {
             if user.onlineMobile == 1 {
@@ -1087,12 +1077,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         if contact.desc != "" {
             let label = UILabel()
             label.text = "\(contact.desc)"
-            if #available(iOS 13.0, *) {
-                label.textColor = .secondaryLabel
-            } else {
-                label.textColor = .black
-                label.alpha = 0.6
-            }
+            label.textColor = vkSingleton.shared.secondaryLabelColor
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -1104,12 +1089,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         if contact.phone != "" {
             let label = UILabel()
             label.text = "\(contact.phone)"
-            if #available(iOS 13.0, *) {
-                label.textColor = .secondaryLabel
-            } else {
-                label.textColor = .black
-                label.alpha = 0.6
-            }
+            label.textColor = vkSingleton.shared.secondaryLabelColor
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -1121,12 +1101,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         if contact.email != "" {
             let label = UILabel()
             label.text = "\(contact.email)"
-            if #available(iOS 13.0, *) {
-                label.textColor = .secondaryLabel
-            } else {
-                label.textColor = .black
-                label.alpha = 0.6
-            }
+            label.textColor = vkSingleton.shared.secondaryLabelColor
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -1180,7 +1155,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                 let contactsView = UIView()
             
                 let width = UIScreen.main.bounds.width - 2 * 10
-                var height: CGFloat = 30
+                var height: CGFloat = 20
                 
                 for contact in profile.contacts {
                     let user = users.filter({ $0.uid == "\(contact.userID)" })
@@ -1192,7 +1167,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
                 }
                 
                 
-                height += 10
+                height += 20
                 contactsView.frame = CGRect(x: 0, y: 0, width: width - 20, height: height)
                 let startPoint = CGPoint(x: UIScreen.main.bounds.width - 30, y: 70)
                 
@@ -1223,12 +1198,9 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         let descView = UIView(frame: CGRect(x: 0, y: 0, width: width - 20, height: height))
         descView.backgroundColor = vkSingleton.shared.backColor
         
-        let textView = UILabel(frame: CGRect(x: 10, y: 20, width: width - 40, height: height - 20))
+        let textView = UILabel(frame: CGRect(x: 10, y: 10, width: width - 40, height: height - 20))
         textView.text = profile.description
-        
-        if #available(iOS 13.0, *) {
-            textView.textColor = .label
-        }
+        textView.textColor = vkSingleton.shared.labelColor
         
         textView.prepareTextForPublish2(self)
         textView.backgroundColor = .clear
@@ -1555,10 +1527,8 @@ extension GroupProfileController2: UICollectionViewDelegate, UICollectionViewDat
         nameLabel.frame = CGRect(x: 0, y: 36, width: cell.bounds.width, height: 14)
         
         
-        if #available(iOS 13.0, *) {
-            countLabel.textColor = .label
-            nameLabel.textColor = .secondaryLabel
-        }
+        countLabel.textColor = vkSingleton.shared.labelColor
+        nameLabel.textColor = vkSingleton.shared.secondaryLabelColor
         
         cell.addSubview(countLabel)
         cell.addSubview(nameLabel)
@@ -1568,17 +1538,22 @@ extension GroupProfileController2: UICollectionViewDelegate, UICollectionViewDat
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
+        var isAdmin = false
+        if self.groupProfile[0].isAdmin == 1 {
+            isAdmin = true
+        }
+        
         if countersSection[indexPath.row].comment == "photosCount" {
             
             if groupProfile.count > 0 {
-                self.openPhotosListController(ownerID: "-\(groupProfile[0].gid)", title: "Фотографии", type: "photos")
+                self.openPhotosListController(ownerID: "-\(groupProfile[0].gid)", title: "Фотографии", type: "photos", isAdmin: isAdmin)
             }
         }
         
         if countersSection[indexPath.row].comment == "albumsCount" {
             
             if groupProfile.count > 0 {
-                self.openPhotosListController(ownerID: "-\(groupProfile[0].gid)", title: "Фотографии", type: "albums")
+                self.openPhotosListController(ownerID: "-\(groupProfile[0].gid)", title: "Фотографии", type: "albums", isAdmin: isAdmin)
             }
         }
         

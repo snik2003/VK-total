@@ -51,11 +51,11 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
         
         let currentPhoto = photos[numPhoto]
         
-        var code = "var a = API.photos.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"photos\":\"\(currentPhoto.uid)_\(currentPhoto.pid)_\(currentPhoto.photoAccessKey)\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+        var code = "var a = API.photos.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"photos\":\"\(currentPhoto.ownerID)_\(currentPhoto.pid)_\(currentPhoto.photoAccessKey)\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
         
-        code = "\(code) var b = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.uid)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"likes\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+        code = "\(code) var b = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.ownerID)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"likes\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
         
-        code = "\(code) var c = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.uid)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"copies\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+        code = "\(code) var c = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.ownerID)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"copies\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
         
         code = "\(code) return [a,b,c];"
         
@@ -81,10 +81,12 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 let leftSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
                 let rightSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
                 let upSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
+                let downSwipe = UISwipeGestureRecognizer(target: self, action: #selector(self.handleSwipes(sender:)))
                 
                 leftSwipe.direction = .left
                 rightSwipe.direction = .right
                 upSwipe.direction = .up
+                downSwipe.direction = .down
                 
                 self.singleTap = UITapGestureRecognizer(target: self, action: #selector(self.tapHandle(sender:)))
                 self.singleTap.numberOfTapsRequired = 1
@@ -94,17 +96,32 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 self.reposts = reposts
                 
                 if self.photo.count > 0 {
+                    for photo in self.photos {
+                        if photo.pid == self.photo[0].photoID {
+                            photo.text = self.photo[0].text
+                            photo.uid = self.photo[0].userID
+                            photo.ownerID = self.photo[0].ownerID
+                        }
+                    }
+                    
                     let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
                     self.navigationItem.rightBarButtonItem = barButton
                 }
                 
                 self.title = "Фото \(self.numPhoto + 1)/\(self.photos.count)"
+                
+                self.tableView.backgroundColor = vkSingleton.shared.backColor
+                self.tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+                self.tableView.sectionIndexTrackingBackgroundColor = vkSingleton.shared.backColor
+                self.tableView.separatorColor = vkSingleton.shared.separatorColor
+                
                 self.tableView.reloadData()
                 ViewControllerUtils().hideActivityIndicator()
                 
                 self.view.addGestureRecognizer(leftSwipe)
                 self.view.addGestureRecognizer(rightSwipe)
                 self.view.addGestureRecognizer(upSwipe)
+                self.view.addGestureRecognizer(downSwipe)
                 self.view.addGestureRecognizer(self.singleTap)
             }
         }
@@ -117,6 +134,17 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
         if firstAppear {
             firstAppear = false
             tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+        }
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        
+        if let nav = self.navigationController, nav.isNavigationBarHidden {
+            self.navigationController?.setNavigationBarHidden(false, animated: false)
+            self.tabBarController?.tabBar.isHidden = false
+            self.tableView.reloadData()
         }
     }
     
@@ -185,16 +213,14 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             }
             alertController.addAction(action7)
             
-            if photo.userID == vkSingleton.shared.userID {
+            if photo.ownerID == vkSingleton.shared.userID || photo.userID == vkSingleton.shared.userID || photo.userID == "100" {
                 let action3 = UIAlertAction(title: "Удалить фотографию", style: .destructive) { action in
                     
                     var titleColor = UIColor.black
                     var backColor = UIColor.white
                     
-                    if #available(iOS 13.0, *) {
-                        titleColor = .label
-                        backColor = vkSingleton.shared.backColor
-                    }
+                    titleColor = vkSingleton.shared.labelColor
+                    backColor = vkSingleton.shared.backColor
                     
                     let appearance = SCLAlertView.SCLAppearance(
                         kTitleTop: 32.0,
@@ -212,7 +238,7 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                     
                     alertView.addButton("Да, я уверен") {
                         
-                        self.deletePhotoFromSite(ownerID: photo.userID, photoID: photo.photoID, delegate: self.delegate)
+                        self.deletePhotoFromSite(ownerID: photo.ownerID, photoID: photo.photoID, delegate: self.delegate)
                     }
                     alertView.addButton("Отмена, я передумал") {
                         
@@ -222,7 +248,223 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                     
                 }
                 alertController.addAction(action3)
+                
+                if let albumID = Int(photo.albumID), albumID > 0 {
+                    let alertController2 = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
                     
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                    alertController2.addAction(cancelAction)
+                    
+                    let action2 = UIAlertAction(title: "Изменить порядок фото в альбоме", style: .default) { action in
+                        let action1 = UIAlertAction(title: "Переместить фото в начало альбома", style: .default) { action in
+                            ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+                            
+                            let url = "/method/photos.get"
+                            let parameters = [
+                                "access_token": vkSingleton.shared.accessToken,
+                                "owner_id": photo.ownerID,
+                                "album_id": albumID,
+                                "rev": 1,
+                                "count": 10,
+                                "v": vkSingleton.shared.version
+                            ] as [String : Any]
+                             
+                            let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+                            getServerDataOperation.completionBlock = {
+                                guard let data = getServerDataOperation.data else {
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    return
+                                }
+                                 
+                                guard let json = try? JSON(data: data) else {
+                                    print("json error")
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    return
+                                }
+                                 
+                                //print(json)
+                                let error = ErrorJson(json: JSON.null)
+                                error.errorCode = json["error"]["error_code"].intValue
+                                error.errorMsg = json["error"]["error_msg"].stringValue
+                                 
+                                if error.errorCode == 0 {
+                                    let photos = json["response"]["items"].compactMap { Photos(json: $0.1) }
+                                    if let photo1 = photos.first {
+                                        print("last id = \(photo1.pid)")
+                                        let url2 = "/method/photos.reorderPhotos"
+                                        let parameters2 = [
+                                            "access_token": vkSingleton.shared.accessToken,
+                                            "owner_id": photo.ownerID,
+                                            "photo_id": photo.photoID,
+                                            "after": photo1.pid,
+                                            "v": vkSingleton.shared.version
+                                        ] as [String : Any]
+                                        
+                                        let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                                        getServerDataOperation2.completionBlock = {
+                                            guard let data = getServerDataOperation2.data else {
+                                                ViewControllerUtils().hideActivityIndicator()
+                                                return
+                                            }
+                                            
+                                            guard let json2 = try? JSON(data: data) else {
+                                                print("json error")
+                                                ViewControllerUtils().hideActivityIndicator()
+                                                return
+                                            }
+                                            
+                                            //print(json)
+                                            let error = ErrorJson(json: JSON.null)
+                                            error.errorCode = json2["error"]["error_code"].intValue
+                                            error.errorMsg = json2["error"]["error_msg"].stringValue
+                                            
+                                            if error.errorCode == 0 {
+                                                OperationQueue.main.addOperation {
+                                                    ViewControllerUtils().hideActivityIndicator()
+                                                    self.showSuccessMessage(title: "Внимание!", msg: "Фотография успешно перенесена в начало альбома.")
+                                                    
+                                                    if let window = UIApplication.shared.keyWindow, let appDelegate = UIApplication.shared.delegate as? AppDelegate, let currentVC = appDelegate.topViewControllerWithRootViewController(rootViewController: window.rootViewController), let controllers = currentVC.navigationController?.viewControllers {
+                                                        
+                                                        for controller in controllers {
+                                                            if let vc = controller as? PhotoAlbumController {
+                                                                vc.offset = 0
+                                                                vc.getPhotos()
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            } else {
+                                                ViewControllerUtils().hideActivityIndicator()
+                                                error.showErrorMessage(controller: self)
+                                            }
+                                        }
+                                        OperationQueue().addOperation(getServerDataOperation2)
+                                    } else {
+                                        ViewControllerUtils().hideActivityIndicator()
+                                        self.showErrorMessage(title: "Внимание!", msg: "Ошибка перенесения фотографии в начало альбома.")
+                                    }
+                                } else {
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    error.showErrorMessage(controller: self)
+                                }
+                            }
+                            OperationQueue().addOperation(getServerDataOperation)
+                        }
+                        alertController2.addAction(action1)
+                        
+                        let action2 = UIAlertAction(title: "Переместить фото в конец альбома", style: .default) { action in
+                            ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+                            
+                            let url = "/method/photos.reorderPhotos"
+                            let parameters = [
+                                "access_token": vkSingleton.shared.accessToken,
+                                "owner_id": photo.ownerID,
+                                "photo_id": photo.photoID,
+                                "after": 111,
+                                "v": vkSingleton.shared.version
+                            ] as [String : Any]
+                            
+                            let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+                            getServerDataOperation.completionBlock = {
+                                guard let data = getServerDataOperation.data else {
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    return
+                                }
+                                
+                                guard let json = try? JSON(data: data) else {
+                                    print("json error")
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    return
+                                }
+                                
+                                //print(json)
+                                let error = ErrorJson(json: JSON.null)
+                                error.errorCode = json["error"]["error_code"].intValue
+                                error.errorMsg = json["error"]["error_msg"].stringValue
+                                
+                                if error.errorCode == 0 {
+                                    OperationQueue.main.addOperation {
+                                        ViewControllerUtils().hideActivityIndicator()
+                                        self.showSuccessMessage(title: "Внимание!", msg: "Фотография успешно перенесена в конец альбома.")
+                                        
+                                        if let window = UIApplication.shared.keyWindow, let appDelegate = UIApplication.shared.delegate as? AppDelegate, let currentVC = appDelegate.topViewControllerWithRootViewController(rootViewController: window.rootViewController), let controllers = currentVC.navigationController?.viewControllers {
+                                            
+                                            for controller in controllers {
+                                                if let vc = controller as? PhotoAlbumController {
+                                                    vc.offset = 0
+                                                    vc.getPhotos()
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    error.showErrorMessage(controller: self)
+                                }
+                            }
+                            OperationQueue().addOperation(getServerDataOperation)
+                        }
+                        alertController2.addAction(action2)
+                        
+                        self.present(alertController2, animated: true)
+                    }
+                    alertController.addAction(action2)
+                    
+                    let action3 = UIAlertAction(title: "Сделать фото обложкой альбома", style: .default) { action in
+                        
+                        ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+                        
+                        let url = "/method/photos.makeCover"
+                        let parameters = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "owner_id": photo.ownerID,
+                            "photo_id": photo.photoID,
+                            "album_id": photo.albumID,
+                            "v": vkSingleton.shared.version
+                        ]
+                        
+                        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+                        getServerDataOperation.completionBlock = {
+                            guard let data = getServerDataOperation.data else {
+                                ViewControllerUtils().hideActivityIndicator()
+                                return
+                            }
+                            
+                            guard let json = try? JSON(data: data) else {
+                                print("json error")
+                                ViewControllerUtils().hideActivityIndicator()
+                                return
+                            }
+                            
+                            //print(json)
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            
+                            if error.errorCode == 0 {
+                                OperationQueue.main.addOperation {
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    self.showSuccessMessage(title: "Внимание!", msg: "Фотография успешно установлена как обложка альбома, в котором она содержится.")
+                                    
+                                    if let window = UIApplication.shared.keyWindow, let appDelegate = UIApplication.shared.delegate as? AppDelegate, let currentVC = appDelegate.topViewControllerWithRootViewController(rootViewController: window.rootViewController), let controllers = currentVC.navigationController?.viewControllers {
+                                        
+                                        for controller in controllers {
+                                            if let vc = controller as? PhotosListController {
+                                                vc.offset = 0
+                                                vc.getPhotos()
+                                            }
+                                        }
+                                    }
+                                }
+                            } else {
+                                ViewControllerUtils().hideActivityIndicator()
+                                error.showErrorMessage(controller: self)
+                            }
+                        }
+                        OperationQueue().addOperation(getServerDataOperation)
+                    }
+                    alertController.addAction(action3)
+                }
             }
             
             let action4 = UIAlertAction(title: "Скопировать ссылку", style: .default) { action in
@@ -243,11 +485,10 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             alertController.addAction(action5)
             
             let action6 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
-                
+                    
                 self.reportOnObject(ownerID: photo.userID, itemID: photo.photoID, type: "photo")
             }
             alertController.addAction(action6)
-            
             
             self.present(alertController, animated: true)
         }
@@ -282,6 +523,7 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
         switch indexPath.row {
         case 0:
             let cell = tableView.dequeueReusableCell(withIdentifier: "photoCell", for: indexPath) as! PhotoImageCell
+            cell.backgroundColor = .clear
             cell.delegate = self
             
             if photos.count > 0 {
@@ -333,6 +575,27 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                     cell.photoImage.frame = CGRect(x: leftPhoto, y: 0, width: widthPhoto, height: cell.scrollView.bounds.height)
                 }
                 
+                if !photo.text.isEmpty {
+                    let text = photo.text.prepareTextForPublic().replacingOccurrences(of: "\n\n", with: "\n")
+                    cell.label.text = text
+                    cell.label.textColor = cell.label.tintColor
+                    cell.label.numberOfLines = 5
+                    cell.label.tag = 1
+                    cell.label.isHidden = navigationController?.isNavigationBarHidden == true
+                    
+                    let labelTap = UITapGestureRecognizer()
+                    labelTap.add {
+                        if let ownerID = Int(photo.ownerID), let photoID = Int(photo.pid) {
+                            self.openWallRecord(ownerID: ownerID, postID: photoID, accessKey: photo.photoAccessKey, type: "photo", scrollToComment: false)
+                        }
+                    }
+                    cell.label.isUserInteractionEnabled = true
+                    cell.label.addGestureRecognizer(labelTap)
+                } else {
+                    cell.label.tag = 0
+                    cell.label.isHidden = true
+                }
+                
                 let doubleTap = UITapGestureRecognizer(target: cell, action: #selector(cell.doubleTapAction(sender:)))
                 doubleTap.numberOfTapsRequired = 2
                 cell.addGestureRecognizer(doubleTap)
@@ -342,6 +605,7 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             return cell
         case 1:
             let cell = tableView.dequeueReusableCell(withIdentifier: "likesCell", for: indexPath)
+            cell.backgroundColor = .clear
             
             let likesButton: UIButton = cell.viewWithTag(1) as! UIButton
             let commentsButton: UIButton = cell.viewWithTag(2) as! UIButton
@@ -353,21 +617,18 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 likesButton.setTitle("\(curPhoto.likesCount)", for: UIControl.State.normal)
                 likesButton.setTitle("\(curPhoto.likesCount)", for: UIControl.State.selected)
                 
-                var titleColor = UIColor.darkGray
-                var tintColor = UIColor.darkGray
-                
-                if #available(iOS 13.0, *) {
-                    titleColor = .secondaryLabel
-                    tintColor = .secondaryLabel
-                }
+                var titleColor = vkSingleton.shared.secondaryLabelColor
+                var tintColor = vkSingleton.shared.secondaryLabelColor
                 
                 if curPhoto.userLikesThisPhoto == 1 {
-                    titleColor = UIColor.systemPurple.withAlphaComponent(0.8)
-                    tintColor = UIColor.systemPurple.withAlphaComponent(0.8)
+                    titleColor = vkSingleton.shared.likeColor.withAlphaComponent(0.8)
+                    tintColor = vkSingleton.shared.likeColor.withAlphaComponent(0.8)
                 }
                 
                 likesButton.setTitleColor(titleColor, for: .normal)
                 likesButton.tintColor = tintColor
+                
+                likesListButton.tintColor = vkSingleton.shared.secondaryLabelColor
                 
                 commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControl.State.normal)
                 commentsButton.setTitle("\(curPhoto.commentsCount)", for: UIControl.State.selected)
@@ -375,12 +636,15 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 commentsButton.setTitleColor(commentsButton.tintColor.withAlphaComponent(0.8), for: .normal)
                 commentsButton.imageView?.tintColor = commentsButton.tintColor.withAlphaComponent(0.8)
                 
-                commentsButton.isEnabled = true
-                likesListButton.isEnabled = true
-                likesListButton.isUserInteractionEnabled = curPhoto.likesCount > 0
                 likesButton.isHidden = false
+                likesListButton.isHidden = curPhoto.likesCount == 0
                 commentsButton.isHidden = false
-                likesListButton.isHidden = false
+                
+                likesListButton.isEnabled = true
+                commentsButton.isEnabled = true
+                
+                likesListButton.isUserInteractionEnabled = true
+                commentsButton.isUserInteractionEnabled = true //curPhoto.commentsCount > 0
             }
             
             return cell
@@ -424,6 +688,10 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
     
     @objc func handleSwipes(sender: UISwipeGestureRecognizer) {
         
+        if sender.direction == .down {
+            self.tapHandle(sender: self.singleTap)
+        }
+        
         if sender.direction == .up {
             self.navigationController?.setNavigationBarHidden(false, animated: false)
             self.tabBarController?.tabBar.isHidden = false
@@ -436,6 +704,10 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 numPhoto -= 1
                 start = true
                 ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+            } else if numPhoto == 0 {
+                self.navigationController?.setNavigationBarHidden(false, animated: false)
+                self.tabBarController?.tabBar.isHidden = false
+                self.navigationController?.popViewController(animated: true)
             }
         }
         
@@ -444,6 +716,10 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 numPhoto += 1
                 start = true
                 ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+            } else if numPhoto == photos.count-1 {
+                self.navigationController?.setNavigationBarHidden(false, animated: false)
+                self.tabBarController?.tabBar.isHidden = false
+                self.navigationController?.popViewController(animated: true)
             }
         }
         
@@ -454,11 +730,11 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
             }
             
-            var code = "var a = API.photos.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"photos\":\"\(currentPhoto.uid)_\(currentPhoto.pid)_\(currentPhoto.photoAccessKey)\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+            var code = "var a = API.photos.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"photos\":\"\(currentPhoto.ownerID)_\(currentPhoto.pid)_\(currentPhoto.photoAccessKey)\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
             
-            code = "\(code) var b = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.uid)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"likes\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+            code = "\(code) var b = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.ownerID)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"likes\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
             
-            code = "\(code) var c = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.uid)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"copies\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+            code = "\(code) var c = API.likes.getList({\"type\":\"photo\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(currentPhoto.ownerID)\",\"item_id\":\"\(currentPhoto.pid)\",\"filter\":\"copies\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
             
             code = "\(code) return [a,b,c];"
             
@@ -522,17 +798,17 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 let parameters = [
                     "access_token": vkSingleton.shared.accessToken,
                     "type": "photo",
-                    "owner_id": "\(photo1.userID)",
+                    "owner_id": "\(photo1.ownerID)",
                     "item_id": "\(photo1.photoID)",
                     "v": vkSingleton.shared.version
                 ]
                 
                 let request = GetServerDataOperation(url: url, parameters: parameters)
-                
                 request.completionBlock = {
                     guard let data = request.data else { return }
                     
                     guard let json = try? JSON(data: data) else { print("json error"); return }
+                    //print(json)
                     
                     let error = ErrorJson(json: JSON.null)
                     error.errorCode = json["error"]["error_code"].intValue
@@ -548,10 +824,9 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                             self.tableView.endUpdates()
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
-                
                 likeQueue.addOperation(request)
             } else {
                 let likeQueue = OperationQueue()
@@ -561,17 +836,17 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                 let parameters = [
                     "access_token": vkSingleton.shared.accessToken,
                     "type": "photo",
-                    "owner_id": "\(photo1.userID)",
+                    "owner_id": "\(photo1.ownerID)",
                     "item_id": "\(photo1.photoID)",
                     "v": vkSingleton.shared.version
                 ]
                 
                 let request = GetServerDataOperation(url: url, parameters: parameters)
-                
                 request.completionBlock = {
                     guard let data = request.data else { return }
                     
                     guard let json = try? JSON(data: data) else { print("json error"); return }
+                    //print(json)
                     
                     let error = ErrorJson(json: JSON.null)
                     error.errorCode = json["error"]["error_code"].intValue
@@ -587,10 +862,9 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                             self.tableView.endUpdates()
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
-                
                 likeQueue.addOperation(request)
             }
         }
@@ -608,7 +882,7 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
     @IBAction func commentsButtonClick() {
         
         if photo.count > 0 {
-            self.openWallRecord(ownerID: Int(photo[0].userID)!, postID: Int(photo[0].photoID)!, accessKey: photos[numPhoto].photoAccessKey, type: "photo", scrollToComment: false)
+            self.openWallRecord(ownerID: Int(photo[0].ownerID)!, postID: Int(photo[0].photoID)!, accessKey: photos[numPhoto].photoAccessKey, type: "photo", scrollToComment: true)
         }
     }
 }

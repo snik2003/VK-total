@@ -31,18 +31,25 @@ class GroupsListController: InnerViewController, UITableViewDelegate, UITableVie
         
         if #available(iOS 13.0, *) {
             let searchField = searchBar.searchTextField
-            searchField.backgroundColor = .separator
-            searchField.textColor = .label
+            searchField.backgroundColor = vkSingleton.shared.separatorColor
+            searchField.textColor = vkSingleton.shared.labelColor
         } else {
+            searchBar.changeKeyboardAppearanceMode()
             if let searchField = searchBar.value(forKey: "_searchField") as? UITextField {
-                searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                searchField.textColor = .black
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
+            } else if let searchField = searchBar.value(forKey: "searchField") as? UITextField {
+                searchField.backgroundColor = vkSingleton.shared.separatorColor
+                searchField.textColor = vkSingleton.shared.labelColor
+                searchField.changeKeyboardAppearanceMode()
             }
         }
         
         OperationQueue.main.addOperation {
             self.tableView.delegate = self
             self.tableView.dataSource = self
+            self.tableView.backgroundColor = vkSingleton.shared.backColor
             
             self.searchBar.delegate = self
             self.searchBar.returnKeyType = .search
@@ -66,7 +73,11 @@ class GroupsListController: InnerViewController, UITableViewDelegate, UITableVie
             
             self.tableView.separatorStyle = .none
             if self.type != "search" {
-                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                if let aView = self.tableView.superview {
+                    ViewControllerUtils().showActivityIndicator(uiView: aView)
+                } else {
+                    ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                }
             }
         }
         
@@ -146,7 +157,11 @@ class GroupsListController: InnerViewController, UITableViewDelegate, UITableVie
     
     func refreshSearch() {
         OperationQueue.main.addOperation {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+            }
         }
         
         let text = searchBar.text!
@@ -198,33 +213,26 @@ class GroupsListController: InnerViewController, UITableViewDelegate, UITableVie
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "groupsCell", for: indexPath)
+        cell.backgroundColor = .clear
         
         let group = groupsList[indexPath.row]
         
         cell.textLabel?.text = group.name
+        
+        cell.textLabel?.textColor = vkSingleton.shared.labelColor
+        cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
         
         if group.deactivated != "" {
             if group.deactivated == "deleted" {

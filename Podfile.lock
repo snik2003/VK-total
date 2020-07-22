@@ -14,6 +14,7 @@ PODS:
     - Realm (= 3.21.0)
   - SCLAlertView (0.8)
   - SmileLock (3.0.7)
+  - Swifter (1.4.7)
   - SwiftMessages (7.0.1):
     - SwiftMessages/App (= 7.0.1)
   - SwiftMessages/App (7.0.1)
@@ -38,13 +39,14 @@ DEPENDENCIES:
   - RealmSwift (~> 3.0)
   - SCLAlertView (~> 0.8)
   - SmileLock (~> 3.0)
+  - Swifter (~> 1.4.7)
   - SwiftMessages
   - SwiftyJSON (~> 4.0)
   - SWRevealViewController (~> 2.3)
   - YandexMobileMetrica/Dynamic (= 3.7.1)
 
 SPEC REPOS:
-  https://github.com/cocoapods/specs.git:
+  trunk:
     - Alamofire
     - BEMCheckBox
     - BTNavigationDropdownMenu
@@ -57,6 +59,7 @@ SPEC REPOS:
     - RealmSwift
     - SCLAlertView
     - SmileLock
+    - Swifter
     - SwiftMessages
     - SwiftyJSON
     - SWRevealViewController
@@ -75,11 +78,12 @@ SPEC CHECKSUMS:
   RealmSwift: 3183cc1ad48378fbcd634311b22c0e6c44021152
   SCLAlertView: 6a77bb2edfc65e04dbe57725546cb4107a506b85
   SmileLock: 46b847b3ad963e3140d083b53f09036a4d210537
+  Swifter: 2327ef5d872c638aebab79646ce494af508b0c8f
   SwiftMessages: b577dc7043be8b299857ab35bb663dbff6483bd0
   SwiftyJSON: 6faa0040f8b59dead0ee07436cbf76b73c08fd08
   SWRevealViewController: 6d3fd97f70112fd7cef9de14df4260eacce4c63a
   YandexMobileMetrica: 95e93ee5af38520c9e470533dc8df6cf72fa171d
 
-PODFILE CHECKSUM: f52d20e0b085203f3a1cc845bcb8f7337461cf0f
+PODFILE CHECKSUM: 90279c1f0e876073f446c1d1c42842ac476bc1c1
 
-COCOAPODS: 1.6.1
+COCOAPODS: 1.9.2

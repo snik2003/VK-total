@@ -301,7 +301,9 @@ class GroupProfileController: InnerViewController, UITableViewDelegate, UITableV
                                     if record.mediaType[ind] == "photo" {
                                         let photos = Photos(json: JSON.null)
                                         photos.uid = "\(record.photoOwnerID[ind])"
+                                        photos.ownerID = "\(record.photoOwnerID[ind])"
                                         photos.pid = "\(record.photoID[ind])"
+                                        photos.text = record.photoText[ind]
                                         photos.xxbigPhotoURL = record.photoURL[ind]
                                         photos.xbigPhotoURL = record.photoURL[ind]
                                         photos.bigPhotoURL = record.photoURL[ind]

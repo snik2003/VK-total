@@ -58,10 +58,10 @@ class ChangeProfileInfoController: InnerViewController, UITextFieldDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        textColor = vkSingleton.shared.labelColor
+        fieldBackgroundColorDisabled = vkSingleton.shared.separatorColor
+        
         if #available(iOS 13.0, *) {
-            textColor = .label
-            fieldBackgroundColorDisabled = .separator
-            
             if AppConfig.shared.autoMode {
                 if self.traitCollection.userInterfaceStyle == .dark {
                     selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
@@ -85,6 +85,16 @@ class ChangeProfileInfoController: InnerViewController, UITextFieldDelegate {
                 shadowColor = .darkGray
                 textColor = .black
             }
+        } else if AppConfig.shared.darkMode {
+            selectedBackgroundColor = vkSingleton.shared.mainColor
+            dropBackgroundColor = UIColor(red: 67/255, green: 67/255, blue: 67/255, alpha: 1)
+            shadowColor = .lightGray
+            textColor = .white
+        } else {
+            selectedBackgroundColor = vkSingleton.shared.mainColor
+            dropBackgroundColor = UIColor(red: 233/255, green: 238/255, blue: 255/255, alpha: 1)
+            shadowColor = .darkGray
+            textColor = .black
         }
         
         OperationQueue.main.addOperation {
@@ -108,21 +118,25 @@ class ChangeProfileInfoController: InnerViewController, UITextFieldDelegate {
             self.maidenField.layer.cornerRadius = 4
             self.maidenField.layer.borderColor = self.textColor.cgColor
             self.maidenField.layer.borderWidth = 0.8
+            self.maidenField.changeKeyboardAppearanceMode()
             
             self.screenNameField.backgroundColor = self.fieldBackgroundColor
             self.screenNameField.layer.cornerRadius = 4
             self.screenNameField.layer.borderColor = self.textColor.cgColor
             self.screenNameField.layer.borderWidth = 0.8
+            self.screenNameField.changeKeyboardAppearanceMode()
             
             self.homeTownField.backgroundColor = self.fieldBackgroundColor
             self.homeTownField.layer.cornerRadius = 4
             self.homeTownField.layer.borderColor = self.textColor.cgColor
             self.homeTownField.layer.borderWidth = 0.8
+            self.homeTownField.changeKeyboardAppearanceMode()
             
             self.bdateField.backgroundColor = self.fieldBackgroundColor
             self.bdateField.layer.cornerRadius = 4
             self.bdateField.layer.borderColor = self.textColor.cgColor
             self.bdateField.layer.borderWidth = 0.8
+            self.bdateField.changeKeyboardAppearanceMode()
             
             self.sexLabel.backgroundColor = self.fieldBackgroundColor
             self.sexLabel.layer.cornerRadius = 4
@@ -341,7 +355,7 @@ class ChangeProfileInfoController: InnerViewController, UITextFieldDelegate {
                         }
                     }
                 } else {
-                    self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                    error.showErrorMessage(controller: self)
                 }
             }
             OperationQueue().addOperation(request)

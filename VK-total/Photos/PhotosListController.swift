@@ -13,6 +13,8 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
 
     var delegate: UIViewController!
     
+    var isAdmin = false
+    
     var ownerID = ""
     var offset = 0
     var count = 200
@@ -31,7 +33,7 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
     var selectButton: UIBarButtonItem!
     
     @IBOutlet weak var segmentedControl: UISegmentedControl!
-    var tableView = UITableView()
+    var tableView: UITableView!
     
     let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -39,47 +41,99 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
         return queue
     }()
     
+    var navHeight: CGFloat {
+           if #available(iOS 13.0, *) {
+               return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           } else {
+               return UIApplication.shared.statusBarFrame.size.height +
+                   (self.navigationController?.navigationBar.frame.height ?? 0.0)
+           }
+       }
+    var tabHeight: CGFloat = 49
+    var firstAppear = true
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        OperationQueue.main.addOperation {
-            self.configureTableView()
-            
-            if self.source != "" && self.source != "change_avatar" {
-                self.selectButton = UIBarButtonItem(title: "Вложить", style: .done, target: self, action: #selector(self.tapSelectButton(sender:)))
-                self.navigationItem.rightBarButtonItem = self.selectButton
-                self.selectButton.isEnabled = false
-            }
-            
-            self.tableView.separatorStyle = .none
-            
-            if #available(iOS 13, *) {} else {
-                self.segmentedControl.tintColor = vkSingleton.shared.mainColor
-                self.segmentedControl.backgroundColor = vkSingleton.shared.backColor
-            }
-            
-            ViewControllerUtils().showActivityIndicator(uiView: self.view.superview!)
+        if self.source == "" && selectIndex == 1 && (ownerID == vkSingleton.shared.userID || isAdmin) {
+            let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(self.tapBarButtonItem))
+            self.navigationItem.rightBarButtonItem = addButton
+        } else if self.source == "move_photo_in_album" {
+            self.selectButton = UIBarButtonItem(title: "Выбрать", style: .done, target: self, action: #selector(self.tapSelectButton(sender:)))
+            self.navigationItem.rightBarButtonItem = self.selectButton
+            self.selectButton.isEnabled = false
+        } else if self.source != "" && self.source != "change_avatar" {
+            self.selectButton = UIBarButtonItem(title: "Вложить", style: .done, target: self, action: #selector(self.tapSelectButton(sender:)))
+            self.navigationItem.rightBarButtonItem = self.selectButton
+            self.selectButton.isEnabled = false
         }
         
-        getPhotos()
+        
+        
+        OperationQueue.main.addOperation {
+            self.segmentedControl.tintColor = vkSingleton.shared.mainColor
+            self.segmentedControl.backgroundColor = vkSingleton.shared.backColor
+            self.view.backgroundColor = vkSingleton.shared.backColor
+        }
+        
         StoreReviewHelper.checkAndAskForReview()
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
+            configureTableView()
+            
+            ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+            getPhotos()
+        }
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         
     }
     
+    @objc func tapBarButtonItem() {
+        playSoundEffect(vkSingleton.shared.buttonSound)
+        
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        let action = UIAlertAction(title: "Создать новый альбом", style: .default) { action in
+            let albumVC = AlbumSettingsController()
+            albumVC.delegate = self
+            albumVC.mode = .create
+            albumVC.ownerID = self.ownerID
+            self.navigationController?.pushViewController(albumVC, animated: true)
+        }
+        alertController.addAction(action)
+        
+        self.present(alertController, animated: true)
+    }
+    
     func configureTableView() {
+        let frame = CGRect(x: 0, y: segmentedControl.frame.maxY + 10.0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - segmentedControl.bounds.height - 20 - navHeight - tabHeight)
+        tableView = UITableView(frame: frame)
         tableView.backgroundColor = vkSingleton.shared.backColor
+        tableView.sectionIndexBackgroundColor = vkSingleton.shared.backColor
+        tableView.sectionIndexTrackingBackgroundColor = vkSingleton.shared.backColor
+        tableView.separatorColor = vkSingleton.shared.separatorColor
         
         tableView.delegate = self
         tableView.dataSource = self
         
         tableView.register(PhotosListCell.self, forCellReuseIdentifier: "photoCell")
         tableView.register(PhotoAlbumsListCell.self, forCellReuseIdentifier: "albumCell")
-        tableView.frame = CGRect(x: 0, y: segmentedControl.frame.maxY + 10.0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - segmentedControl.bounds.height - 20 - 64)
         
+        self.tableView.separatorStyle = .none
         self.view.addSubview(tableView)
     }
     
@@ -134,11 +188,16 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
     {
         switch sender.selectedSegmentIndex {
         case 0:
+            if source == "" { self.navigationItem.rightBarButtonItem = nil }
             selectIndex = 0
             tableView.separatorStyle = .none
             heightRow = (UIScreen.main.bounds.width * 0.333) * CGFloat(240) /
                 CGFloat(320)
         case 1:
+            if source == "" && (ownerID == vkSingleton.shared.userID || isAdmin) {
+                let addButton = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(self.tapBarButtonItem))
+                self.navigationItem.rightBarButtonItem = addButton
+            }
             selectIndex = 1
             tableView.separatorStyle = .none
             heightRow = (UIScreen.main.bounds.width * 0.5) * CGFloat(240) / CGFloat(320) + 30
@@ -237,7 +296,6 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
         }
     }
     
-    
     @objc func tapSelectButton(sender: UIBarButtonItem) {
         if source == "add_message_photo" {
             
@@ -246,7 +304,7 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                     for photo in self.photos {
                         if let id = Int(photo.pid) {
                             if let photoImage = markPhotos[id] {
-                                let attachment = "photo\(photo.uid)_\(photo.pid)"
+                                let attachment = "photo\(photo.ownerID)_\(photo.pid)"
                                 vc.attach.append(attachment)
                                 vc.isLoad.append(false)
                                 vc.typeOf.append("photo")
@@ -267,17 +325,22 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                     for photo in self.photos {
                         if let id = Int(photo.pid) {
                             if let photoImage = markPhotos[id] {
-                                let attachment = "photo\(photo.uid)_\(photo.pid)"
-                                vc.attach.append(attachment)
-                                vc.isLoad.append(false)
-                                vc.typeOf.append("photo")
-                                vc.photos.append(photoImage)
+                                loadWallPhotosToServer(ownerID: Int(vkSingleton.shared.userID)!, image: photoImage, filename: "photo.jpg") { attachment in
+                                
+                                    OperationQueue.main.addOperation {
+                                        vc.attach.append(attachment)
+                                        vc.isLoad.append(false)
+                                        vc.typeOf.append("photo")
+                                        vc.photos.append(photoImage)
+                                    
+                                        vc.setAttachments()
+                                        vc.configureStartView()
+                                        self.navigationController?.popViewController(animated: true)
+                                    }
+                                }
                             }
                         }
                     }
-                    vc.setAttachments()
-                    vc.configureStartView()
-                    self.navigationController?.popViewController(animated: true)
                 } else {
                     self.showInfoMessage(title: "Внимание!", msg: "Вы превысили максимальное количество вложений: \(vc.maxCountAttach)")
                 }
@@ -289,7 +352,7 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                 for photo in self.photos {
                     if let id = Int(photo.pid) {
                         if let photoImage = markPhotos[id] {
-                            let attachment = "photo\(photo.uid)_\(photo.pid)"
+                            let attachment = "photo\(photo.ownerID)_\(photo.pid)"
                             vc.attach.append(attachment)
                             vc.isLoad.append(false)
                             vc.typeOf.append("photo")
@@ -311,7 +374,7 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                 for photo in self.photos {
                     if let id = Int(photo.pid) {
                         if let photoImage = markPhotos[id] {
-                            let attachment = "photo\(photo.uid)_\(photo.pid)"
+                            let attachment = "photo\(photo.ownerID)_\(photo.pid)"
                             vc.attach.append(attachment)
                             vc.isLoad.append(false)
                             vc.typeOf.append("photo")
@@ -333,7 +396,7 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                 for photo in self.photos {
                     if let id = Int(photo.pid) {
                         if let photoImage = markPhotos[id] {
-                            let attachment = "photo\(photo.uid)_\(photo.pid)"
+                            let attachment = "photo\(photo.ownerID)_\(photo.pid)"
                             vc.attach.append(attachment)
                             vc.isLoad.append(false)
                             vc.typeOf.append("photo")
@@ -347,6 +410,26 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                 self.navigationController?.popViewController(animated: true)
             } else {
                 self.showInfoMessage(title: "Внимание!", msg: "Вы превысили максимальное количество вложений: \(vc.maxCountAttach)")
+            }
+        }
+        
+        if source == "move_photo_in_album", let vc = delegate as? PhotoAlbumController {
+            if let ownerID = Int(vc.ownerID), ownerID > 0 {
+                if markPhotos.count <= vc.maxCountUpload {
+                    vc.uploadPhotos = markPhotos
+                    self.navigationController?.popToViewController(vc, animated: true)
+                    vc.uploadPhotosFromProfile()
+                } else {
+                    self.showErrorMessage(title: "Внимание!", msg: "Вы превысили максимальное количество фотографий для переноса в альбом: \(vc.maxCountUpload)")
+                }
+            } else if let ownerID = Int(vc.ownerID), ownerID < 0 {
+                if markPhotos.count <= 1 {
+                    vc.uploadPhotos = markPhotos
+                    self.navigationController?.popToViewController(vc, animated: true)
+                    vc.uploadPhotosFromProfile()
+                } else {
+                    self.showErrorMessage(title: "Внимание!", msg: "В альбом сообщества за один раз можно загрузить только одну фотографию")
+                }
             }
         }
     }
@@ -375,6 +458,25 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                 }
             } else if source == "" {
                 self.openPhotoViewController(numPhoto: 3 * indexPath.row, photos: photos)
+            } else if source == "move_photo_in_album" {
+                let photo = photos[3 * indexPath.row]
+                
+                if let id = Int(photo.pid) {
+                    if markPhotos[id] != nil {
+                        markPhotos[id] = nil
+                    } else {
+                        markPhotos[id] = cell.photoView[0]?.image!
+                    }
+                    tableView.reloadRows(at: [indexPath], with: .automatic)
+                }
+                
+                if markPhotos.count > 0 {
+                    selectButton.isEnabled = true
+                    selectButton.title = "Выбрать (\(markPhotos.count))"
+                } else {
+                    selectButton.isEnabled = false
+                    selectButton.title = "Выбрать"
+                }
             } else {
                 let photo = photos[3 * indexPath.row]
                 
@@ -422,6 +524,25 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                 }
             } else if source == "" {
                 self.openPhotoViewController(numPhoto: 3 * indexPath.row + 1, photos: photos)
+            } else if source == "move_photo_in_album" {
+                let photo = photos[3 * indexPath.row + 1]
+                
+                if let id = Int(photo.pid) {
+                    if markPhotos[id] != nil {
+                        markPhotos[id] = nil
+                    } else {
+                        markPhotos[id] = cell.photoView[1]?.image!
+                    }
+                    tableView.reloadRows(at: [indexPath], with: .automatic)
+                }
+                
+                if markPhotos.count > 0 {
+                    selectButton.isEnabled = true
+                    selectButton.title = "Выбрать (\(markPhotos.count))"
+                } else {
+                    selectButton.isEnabled = false
+                    selectButton.title = "Выбрать"
+                }
             } else {
                 let photo = photos[3 * indexPath.row + 1]
                 
@@ -469,6 +590,25 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
                 }
             } else if source == "" {
                 self.openPhotoViewController(numPhoto: 3 * indexPath.row + 2, photos: photos)
+            } else if source == "move_photo_in_album" {
+                let photo = photos[3 * indexPath.row + 2]
+                
+                if let id = Int(photo.pid) {
+                    if markPhotos[id] != nil {
+                        markPhotos[id] = nil
+                    } else {
+                        markPhotos[id] = cell.photoView[2]?.image!
+                    }
+                    tableView.reloadRows(at: [indexPath], with: .automatic)
+                }
+                
+                if markPhotos.count > 0 {
+                    selectButton.isEnabled = true
+                    selectButton.title = "Выбрать (\(markPhotos.count))"
+                } else {
+                    selectButton.isEnabled = false
+                    selectButton.title = "Выбрать"
+                }
             } else {
                 let photo = photos[3 * indexPath.row + 2]
                 

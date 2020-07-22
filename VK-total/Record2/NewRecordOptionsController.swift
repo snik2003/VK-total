@@ -89,6 +89,39 @@ class NewRecordOptionsController: InnerViewController {
         }
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        onlyFriendsLabel.textColor = vkSingleton.shared.labelColor
+        inTimeLabel.textColor = vkSingleton.shared.labelColor
+        postFromMeLabel.textColor = vkSingleton.shared.labelColor
+        addMySignLabel.textColor = vkSingleton.shared.labelColor
+        
+        onlyFriendsSwitch.backgroundColor = vkSingleton.shared.backColor
+        onlyFriendsSwitch.onTintColor = vkSingleton.shared.mainColor
+        onlyFriendsSwitch.tintColor = vkSingleton.shared.mainColor
+        
+        inTimeSwitch.backgroundColor = vkSingleton.shared.backColor
+        inTimeSwitch.onTintColor = vkSingleton.shared.mainColor
+        inTimeSwitch.tintColor = vkSingleton.shared.mainColor
+        
+        onlyFriendsSwitch.backgroundColor = vkSingleton.shared.backColor
+        onlyFriendsSwitch.onTintColor = vkSingleton.shared.mainColor
+        onlyFriendsSwitch.tintColor = vkSingleton.shared.mainColor
+        
+        postFromMeSwitch.backgroundColor = vkSingleton.shared.backColor
+        postFromMeSwitch.onTintColor = vkSingleton.shared.mainColor
+        postFromMeSwitch.tintColor = vkSingleton.shared.mainColor
+        
+        addMySignSwitch.backgroundColor = vkSingleton.shared.backColor
+        addMySignSwitch.onTintColor = vkSingleton.shared.mainColor
+        addMySignSwitch.tintColor = vkSingleton.shared.mainColor
+        
+        datePicker.backgroundColor = vkSingleton.shared.backColor
+        datePicker.tintColor = vkSingleton.shared.labelColor
+        datePicker.setValue(vkSingleton.shared.labelColor, forKeyPath: "textColor")
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         

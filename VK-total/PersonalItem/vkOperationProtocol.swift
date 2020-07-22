@@ -105,6 +105,8 @@ protocol VkOperationProtocol {
     
     func removeFromChat(chatID: String, userID: String, controller: DialogController)
     
+    func loadPhotosAlbumToServer(ownerID: Int, albumID: Int, image: UIImage, caption: String, filename: String, completion: @escaping (Int, ErrorJson) -> Void)
+    
     func loadWallPhotosToServer(ownerID: Int, image: UIImage, filename: String, completion: @escaping (String) -> Void)
     
     func loadDocsToServer(ownerID: Int, image: UIImage, filename: String, imageData: Data, completion: @escaping (String) -> Void)
@@ -657,7 +659,7 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 223 {
                 self.showErrorMessage(title: "Ошибка", msg: "\nПревышен лимит комментариев на стене.\n")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -755,7 +757,7 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 211 {
                 self.showErrorMessage(title: "Ошибка", msg: "\nНет доступа к комментариям на этой стене.\n")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -804,7 +806,7 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 211 {
                 self.showErrorMessage(title: "Ошибка", msg: "\nНет доступа к комментариям на этой стене.\n")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -899,7 +901,7 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 801 {
                 self.showErrorMessage(title: "Ошибка", msg: "\nКомментарии этой видеозаписи закрыты его владельцем.\n")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -973,7 +975,7 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 211 {
                 self.showErrorMessage(title: "Ошибка", msg: "\nНет доступа к комментариям на этой стене.\n")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1014,7 +1016,7 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 211 {
                 self.showErrorMessage(title: "Ошибка", msg: "\nНет доступа к комментариям на этой стене.\n")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1062,7 +1064,7 @@ extension UIViewController: VkOperationProtocol {
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1102,7 +1104,7 @@ extension UIViewController: VkOperationProtocol {
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1135,7 +1137,7 @@ extension UIViewController: VkOperationProtocol {
                 controller.offset = 0
                 controller.getTopicComments()
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1169,7 +1171,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.tableView.reloadRows(at: [IndexPath(row: 0, section: 1)], with: .fade)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+               error.showErrorMessage(controller: self)
             }
         }
         
@@ -1203,7 +1205,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.tableView.reloadRows(at: [IndexPath(row: 0, section: 1)], with: .fade)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1234,13 +1236,13 @@ extension UIViewController: VkOperationProtocol {
             if error.errorCode == 0 {
                 controller.topics[0].isClosed = 1
                 OperationQueue.main.addOperation {
-                    controller.tableView.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - 44)
+                    controller.tableView.frame = CGRect(x: 0, y: controller.navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - controller.navHeight - controller.tabHeight)
                     controller.view.addSubview(controller.tableView)
                     controller.commentView.removeFromSuperview()
                     controller.tableView.reloadRows(at: [IndexPath(row: 0, section: 1)], with: .fade)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1274,20 +1276,30 @@ extension UIViewController: VkOperationProtocol {
                     controller.commentView = DCCommentView.init(scrollView: controller.tableView, frame: controller.view.bounds, color: vkSingleton.shared.backColor)
                     controller.commentView.delegate = controller
                     controller.commentView.textView.backgroundColor = .clear
-                    controller.commentView.textView.textColor = .black
-                    controller.commentView.textView.tintColor = vkSingleton.shared.mainColor
-                    controller.commentView.tintColor = vkSingleton.shared.mainColor
+                    controller.commentView.textView.textColor = vkSingleton.shared.labelColor
+                    controller.commentView.textView.tintColor = vkSingleton.shared.secondaryLabelColor
+                    controller.commentView.textView.changeKeyboardAppearanceMode()
+                    controller.commentView.tintColor = vkSingleton.shared.labelColor
                     
+                    controller.commentView.sendImage = UIImage(named: "send")
+                    controller.commentView.stickerImage = UIImage(named: "sticker")
+                    controller.commentView.stickerButton.addTarget(controller, action: #selector(controller.tapStickerButton(sender:)), for: .touchUpInside)
+                    
+                    controller.commentView.tabHeight = 0
                     if #available(iOS 13.0, *) {
-                        if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
-                            controller.commentView.textView.textColor = .label
-                            controller.commentView.textView.tintColor = .label
-                            controller.commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-                        } else if AppConfig.shared.darkMode {
-                            controller.commentView.textView.textColor = .label
-                            controller.commentView.textView.tintColor = .label
-                            controller.commentView.tintColor = UIColor(white: 0.8, alpha: 1)
+                        if !AppConfig.shared.autoMode {
+                            if vkSingleton.shared.deviceInterfaceStyle == .dark && !AppConfig.shared.darkMode {
+                                controller.commentView.tabHeight = controller.tabHeight
+                            } else if vkSingleton.shared.deviceInterfaceStyle == .light && AppConfig.shared.darkMode {
+                                controller.commentView.tabHeight = controller.tabHeight
+                            }
                         }
+                    }
+                    
+                    if vkSingleton.shared.commentFromGroup > 0 && vkSingleton.shared.commentFromGroup == abs(Int(controller.groupID)!) {
+                        controller.setCommentFromGroupID(id: vkSingleton.shared.commentFromGroup, controller: controller)
+                    } else {
+                        controller.setCommentFromGroupID(id: 0, controller: controller)
                     }
                     
                     controller.commentView.accessoryImage = UIImage(named: "attachment")
@@ -1297,7 +1309,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.tableView.reloadRows(at: [IndexPath(row: 0, section: 1)], with: .fade)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1332,7 +1344,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.tableView.reloadRows(at: [IndexPath(row: 0, section: 1)], with: .fade)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1377,7 +1389,7 @@ extension UIViewController: VkOperationProtocol {
                     
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1425,7 +1437,7 @@ extension UIViewController: VkOperationProtocol {
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1455,9 +1467,8 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                self.showSuccessMessage(title: "Избранные ссылки", msg: "\nСообщество «\(group.name)» успешно добавлено в «Избранное»\n")
-                
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1486,9 +1497,8 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                 self.showSuccessMessage(title: "Избранные ссылки", msg: "\nСообщество «\(group.name)» успешно удалено из «Избранное»\n")
-                
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1518,9 +1528,8 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                 self.showSuccessMessage(title: "Избранные ссылки", msg: "Ссылка \n«\(link)»\n успешно добавлена в «Избранное»")
-                
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1554,7 +1563,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.refresh()
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1585,7 +1594,7 @@ extension UIViewController: VkOperationProtocol {
                 controller.userProfile[0].isHiddenFromFeed = 1
                 self.showSuccessMessage(title: "Лента новостей", msg: "Новости от пользователя «\(name)» больше не будут показываться в вашей ленте новостей.")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1616,7 +1625,7 @@ extension UIViewController: VkOperationProtocol {
                 controller.userProfile[0].isHiddenFromFeed = 0
                 self.showSuccessMessage(title: "Лента новостей", msg: "Новости от пользователя «\(name)» теперь будут показываться в вашей ленте новостей.")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1647,7 +1656,7 @@ extension UIViewController: VkOperationProtocol {
                 controller.groupProfile[0].isHiddenFromFeed = 1
                 self.showSuccessMessage(title: "Лента новостей", msg: "Новости от сообщества «\(name)» больше не будут показываться в вашей ленте новостей.")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1678,7 +1687,7 @@ extension UIViewController: VkOperationProtocol {
                 controller.groupProfile[0].isHiddenFromFeed = 0
                 self.showSuccessMessage(title: "Лента новостей", msg: "Новости от сообщества «\(name)» теперь будут показываться в вашей ленте новостей.")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1709,9 +1718,8 @@ extension UIViewController: VkOperationProtocol {
             
             if error.errorCode == 0 {
                 self.showSuccessMessage(title: "Фотографии", msg: "Фотография успешно скопирована в альбом «Сохраненные фотографии»")
-                
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1771,7 +1779,7 @@ extension UIViewController: VkOperationProtocol {
                 }
                 //self.showSuccessMessage(title: "Удаление фотографии", msg: "Удаление фотографии успешно завершено")
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1808,7 +1816,7 @@ extension UIViewController: VkOperationProtocol {
                 }
                 self.setOfflineStatus(dependence: request)
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1886,7 +1894,7 @@ extension UIViewController: VkOperationProtocol {
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -1941,7 +1949,7 @@ extension UIViewController: VkOperationProtocol {
                     delegate.openWallRecord(ownerID: Int(ownerID)!, postID: postID, accessKey: "", type: "post", scrollToComment: false)
                 }
             } else {
-                delegate.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: delegate)
             }
         }
         
@@ -1980,7 +1988,7 @@ extension UIViewController: VkOperationProtocol {
             if error.errorCode == 0 {
                 controller.getRecord()
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -2012,7 +2020,7 @@ extension UIViewController: VkOperationProtocol {
             if error.errorCode == 0 {
                 self.showSuccessMessage(title: "Жалоба на пользователя", msg: "Ваша жалоба на пользователя успешно отправлена.")
             } else {
-                self.showErrorMessage(title: "Жалоба на пользователя", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -2082,7 +2090,7 @@ extension UIViewController: VkOperationProtocol {
             if error.errorCode == 0 {
                 self.showSuccessMessage(title: title, msg: text)
             } else {
-                self.showErrorMessage(title: title, msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2139,7 +2147,7 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 702 {
                 self.showErrorMessage(title: "Изменение полномочий", msg: "#702: Достигнут лимит на количество руководителей в сообществе.")
             } else {
-                self.showErrorMessage(title: "Изменение полномочий", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -2175,10 +2183,8 @@ extension UIViewController: VkOperationProtocol {
             error.errorCode = json["error"]["error_code"].intValue
             error.errorMsg = json["error"]["error_msg"].stringValue
             
-            if error.errorCode == 0 {
-                
-            } else {
-                self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
+            if error.errorCode != 0 {
+                error.showErrorMessage(controller: self)
             }
             controller.markMessages.removeAll(keepingCapacity: false)
             self.setOfflineStatus(dependence: request)
@@ -2216,10 +2222,8 @@ extension UIViewController: VkOperationProtocol {
             error.errorCode = json["error"]["error_code"].intValue
             error.errorMsg = json["error"]["error_msg"].stringValue
             
-            if error.errorCode == 0 {
-                
-            } else {
-                self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
+            if error.errorCode != 0 {
+                error.showErrorMessage(controller: self)
             }
             controller.markMessages.removeAll(keepingCapacity: false)
             self.setOfflineStatus(dependence: request)
@@ -2234,15 +2238,18 @@ extension UIViewController: VkOperationProtocol {
             "access_token": vkSingleton.shared.accessToken,
             "random_id": "",
             "peer_id": controller.userID,
-            "message": message,
             "v": vkSingleton.shared.version
         ]
         
-        if attachment != "" {
+        if !message.isEmpty {
+            parameters["message"] = message
+        }
+        
+        if !attachment.isEmpty {
             parameters["attachment"] = attachment
         }
         
-        if fwdMessages != "" {
+        if !fwdMessages.isEmpty {
             parameters["forward_messages"] = fwdMessages
         }
         
@@ -2251,7 +2258,6 @@ extension UIViewController: VkOperationProtocol {
         }
         
         let request = GetServerDataOperation(url: url, parameters: parameters)
-        
         request.completionBlock = {
             guard let data = request.data else { return }
             
@@ -2282,7 +2288,7 @@ extension UIViewController: VkOperationProtocol {
                 if stickerID > 0 {
                     self.showErrorMessage(title: "Ошибка при отправке стикера", msg: "Данный набор стикеров необходимо активировать в полной версии сайта (https://vk.com/stickers?tab=free).")
                 } else {
-                    self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
+                    error.showErrorMessage(controller: self)
                 }
             }
             self.setOfflineStatus(dependence: request)
@@ -2297,16 +2303,19 @@ extension UIViewController: VkOperationProtocol {
             "access_token": vkSingleton.shared.accessToken,
             "random_id": "",
             "peer_id": controller.userID,
-            "message": message,
             "group_id": controller.groupID,
             "v": vkSingleton.shared.version
         ]
         
-        if attachment != "" {
+        if !message.isEmpty {
+            parameters["message"] = message
+        }
+        
+        if !attachment.isEmpty {
             parameters["attachment"] = attachment
         }
         
-        if fwdMessages != "" {
+        if !fwdMessages.isEmpty {
             parameters["forward_messages"] = fwdMessages
         }
         
@@ -2314,8 +2323,9 @@ extension UIViewController: VkOperationProtocol {
             parameters["sticker_id"] = stickerID
         }
         
-        let request = GetServerDataOperation(url: url, parameters: parameters)
+        //print(parameters)
         
+        let request = GetServerDataOperation(url: url, parameters: parameters)
         request.completionBlock = {
             guard let data = request.data else { return }
             
@@ -2346,7 +2356,7 @@ extension UIViewController: VkOperationProtocol {
                 if stickerID > 0 {
                     self.showErrorMessage(title: "Ошибка при отправке стикера", msg: "Данный набор стикеров необходимо активировать в полной версии сайта (https://vk.com/stickers?tab=free).")
                 } else {
-                    self.showErrorMessage(title: "Отправка сообщения", msg: "#\(error.errorCode): \(error.errorMsg)")
+                    error.showErrorMessage(controller: self)
                 }
             }
             self.setOfflineStatus(dependence: request)
@@ -2396,7 +2406,7 @@ extension UIViewController: VkOperationProtocol {
                 } else if error.errorCode == 920 {
                     self.showErrorMessage(title: "Ошибка редактирования", msg: "#920: Невозможно отредактировать сообщение такого типа.")
                 } else {
-                    self.showErrorMessage(title: "Ошибка редактирования", msg: "#\(error.errorCode): \(error.errorMsg)")
+                    error.showErrorMessage(controller: self)
                 }
                 self.setOfflineStatus(dependence: request)
             }
@@ -2444,7 +2454,7 @@ extension UIViewController: VkOperationProtocol {
                 } else if error.errorCode == 920 {
                     self.showErrorMessage(title: "Ошибка редактирования", msg: "#920: Невозможно отредактировать сообщение такого типа.")
                 } else {
-                    self.showErrorMessage(title: "Ошибка редактирования", msg: "#\(error.errorCode): \(error.errorMsg)")
+                   error.showErrorMessage(controller: self)
                 }
                 self.setOfflineStatus(dependence: request)
             }
@@ -2576,10 +2586,68 @@ extension UIViewController: VkOperationProtocol {
             } else if error.errorCode == 103 {
                 self.showErrorMessage(title: "Ошибка приглашения", msg: "#103: Превышен лимит!")
             } else {
-                self.showErrorMessage(title: "Ошибка приглашения", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
+        OperationQueue().addOperation(request)
+    }
+    
+    func getAccountCounters(account: AccountVK, counters: @escaping (String,Int,Int,Int)->()) {
+        
+        var code = "var a = API.account.getCounters({\"access_token\":\"\(account.token)\",\"filter\":\"friends,messages\",\"v\": \"\(vkSingleton.shared.version)\"});\n"
+        
+        code = "\(code) var b = API.notifications.get({\"count\":\"100\",\"start_time\":\"\(Date().timeIntervalSince1970 - 15552000)\",\"access_token\":\"\(account.token)\",\"v\": \"\(vkSingleton.shared.version)\"});\n"
+        
+        code = "\(code) var c = API.groups.getInvites({\"count\":\"100\",\"extended\":\"0\",\"access_token\":\"\(account.token)\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
+        
+        code = "\(code) return [a,b,c];"
+        
+        let url = "/method/execute"
+        let parameters = [
+            "access_token": account.token,
+            "code": code,
+            "v": vkSingleton.shared.version
+        ]
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            //print(json)
+            
+            if error.errorCode == 0 {
+                OperationQueue.main.addOperation {
+                    let counter1 = json["response"][0]["friends"].intValue
+                    let counter2 = json["response"][0]["messages"].intValue
+                    
+                    var counter3 = 0
+                    
+                    let notData = json["response"][1]["items"].compactMap { Notifications(json: $0.1) }
+                    let lastViewed = json["response"][1]["last_viewed"].intValue
+                    for not in notData {
+                        if not.date > lastViewed {
+                            counter3 += not.feedback.count
+                        }
+                    }
+                    
+                    let groups = json["response"][2]["items"].compactMap { Groups(json: $0.1) }
+                    counter3 += groups.count
+                    
+                    counters(account.token,counter1,counter2,counter3)
+                }
+            } else {
+                OperationQueue.main.addOperation {
+                    ViewControllerUtils().hideActivityIndicator()
+                    print("errorCode = \(error.errorCode), errorMsg = \(error.errorMsg)")
+                }
+            }
+        }
         OperationQueue().addOperation(request)
     }
     
@@ -2593,7 +2661,6 @@ extension UIViewController: VkOperationProtocol {
         ]
         
         let request = GetServerDataOperation(url: url, parameters: parameters)
-        
         request.completionBlock = {
             guard let data = request.data else { return }
             
@@ -2664,7 +2731,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.tableView.reloadData()
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2699,7 +2766,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.tableView.reloadData()
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2714,11 +2781,6 @@ extension UIViewController: VkOperationProtocol {
         ]
         
         let request = GetServerDataOperation(url: url, parameters: parameters)
-        /*request.completionBlock = {
-            guard let data = request.data else { return }
-            guard let json = try? JSON(data: data) else { print("json error"); return }
-            print(json)
-        }*/
         OperationQueue().addOperation(request)
     }
     
@@ -2742,14 +2804,14 @@ extension UIViewController: VkOperationProtocol {
             let error = ErrorJson(json: JSON.null)
             error.errorCode = json["error"]["error_code"].intValue
             error.errorMsg = json["error"]["error_msg"].stringValue
-            print(json)
+            //print(json)
             
             if error.errorCode == 0 {
                 OperationQueue.main.addOperation {
                     controller.pullToRefresh()
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2775,7 +2837,7 @@ extension UIViewController: VkOperationProtocol {
             let error = ErrorJson(json: JSON.null)
             error.errorCode = json["error"]["error_code"].intValue
             error.errorMsg = json["error"]["error_msg"].stringValue
-            print(json)
+            //print(json)
             
             if error.errorCode == 0 {
                 OperationQueue.main.addOperation {
@@ -2784,7 +2846,7 @@ extension UIViewController: VkOperationProtocol {
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2809,7 +2871,7 @@ extension UIViewController: VkOperationProtocol {
             let error = ErrorJson(json: JSON.null)
             error.errorCode = json["error"]["error_code"].intValue
             error.errorMsg = json["error"]["error_msg"].stringValue
-            print(json)
+            //print(json)
             
             if error.errorCode == 0 {
                 OperationQueue.main.addOperation {
@@ -2818,7 +2880,7 @@ extension UIViewController: VkOperationProtocol {
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2855,7 +2917,7 @@ extension UIViewController: VkOperationProtocol {
                     }
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2888,7 +2950,7 @@ extension UIViewController: VkOperationProtocol {
                     controller.getDialog()
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         OperationQueue().addOperation(request)
@@ -2926,7 +2988,7 @@ extension UIViewController: VkOperationProtocol {
                 if error.errorCode == 919 {
                     self.showErrorMessage(title: "Ошибка получения ссылки", msg: "Вам недоступны ссылки для приглашения в этот чат.")
                 } else {
-                    self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                    error.showErrorMessage(controller: self)
                 }
             }
         }
@@ -2954,12 +3016,10 @@ extension UIViewController: VkOperationProtocol {
                 let error = ErrorJson(json: JSON.null)
                 error.errorCode = json["error"]["error_code"].intValue
                 error.errorMsg = json["error"]["error_msg"].stringValue
-                print(json)
+                //print(json)
                 
-                if error.errorCode == 0 {
-                    
-                } else {
-                    self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                if error.errorCode != 0 {
+                    error.showErrorMessage(controller: self)
                 }
             }
             OperationQueue().addOperation(request)
@@ -2991,7 +3051,7 @@ extension UIViewController: VkOperationProtocol {
             if error.errorCode == 0 {
                 self.showSuccessMessage(title: "Изменение фото профиля", msg: "Изменение главной фотографии профиля завершено. Обновите экран.")
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -3023,7 +3083,7 @@ extension UIViewController: VkOperationProtocol {
             if error.errorCode == 0 {
                 self.showSuccessMessage(title: "Изменение фото профиля", msg: "Изменение главной фотографии профиля завершено. Обновите экран.")
             } else {
-                self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -3084,7 +3144,7 @@ extension UIViewController: VkOperationProtocol {
                         } else {
                             OperationQueue.main.addOperation {
                                 ViewControllerUtils().hideActivityIndicator()
-                                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                                error.showErrorMessage(controller: self)
                             }
                         }
                     }
@@ -3094,11 +3154,86 @@ extension UIViewController: VkOperationProtocol {
             } else {
                 OperationQueue.main.addOperation {
                     ViewControllerUtils().hideActivityIndicator()
-                    self.showErrorMessage(title: "Ошибка", msg: "#\(error.errorCode): \(error.errorMsg)")
+                    error.showErrorMessage(controller: self)
                 }
             }
         }
         
+        OperationQueue().addOperation(request)
+    }
+    
+    func loadPhotosAlbumToServer(ownerID: Int, albumID: Int, image: UIImage, caption: String, filename: String, completion: @escaping (Int, ErrorJson) -> Void) {
+        let url = "/method/photos.getUploadServer"
+        var parameters: [String: Any] = [
+            "access_token": vkSingleton.shared.accessToken,
+            "album_id": albumID,
+            "v": vkSingleton.shared.version
+        ]
+        
+        if ownerID < 0 {
+            parameters["group_id"] = "\(abs(ownerID))"
+        }
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            
+            if error.errorCode == 0 {
+                let uploadURL = json["response"]["upload_url"].stringValue
+                
+                self.myImageUploadRequest(url: uploadURL, image: image, filename: filename, squareCrop: "") { json2 in
+                    print("json2 = \(json2)")
+                    
+                    let error2 = ErrorJson(json: JSON.null)
+                    error2.errorCode = json2["error"]["error_code"].intValue
+                    error2.errorMsg = json2["error"]["error_msg"].stringValue
+                    
+                    if error2.errorCode == 0 {
+                        let photos = json2["photos_list"].stringValue
+                        let server = json2["server"].intValue
+                        let hash = json2["hash"].stringValue
+                        
+                        let url2 = "/method/photos.save"
+                        var parameters2: [String : Any] = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "album_id": albumID,
+                            "photos_list": photos,
+                            "server": server,
+                            "hash": hash,
+                            "caption": caption,
+                            "v": vkSingleton.shared.version
+                            ]
+                        
+                        if ownerID < 0 {
+                            parameters2["group_id"] = "\(abs(ownerID))"
+                        }
+                        
+                        let request2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                        request2.completionBlock = {
+                            guard let data = request2.data else { return }
+                            guard let json3 = try? JSON(data: data) else { print("json error"); return }
+                            
+                            let error3 = ErrorJson(json: JSON.null)
+                            error3.errorCode = json3["error"]["error_code"].intValue
+                            error3.errorMsg = json3["error"]["error_msg"].stringValue
+                            
+                            completion(error3.errorCode, error3)
+                        }
+                        OperationQueue().addOperation(request2)
+                    }
+                    
+                    completion(error2.errorCode, error2)
+                }
+            } else {
+                completion(error.errorCode, error)
+            }
+        }
         OperationQueue().addOperation(request)
     }
     
@@ -3154,6 +3289,8 @@ extension UIViewController: VkOperationProtocol {
                         guard let data = request.data else { return }
                         
                         let json3 = try! JSON(data: data)
+                        //print(json3)
+                        
                         let error = ErrorJson(json: JSON.null)
                         error.errorCode = json3["error"]["error_code"].intValue
                         error.errorMsg = json3["error"]["error_msg"].stringValue
@@ -3161,21 +3298,95 @@ extension UIViewController: VkOperationProtocol {
                         if error.errorCode == 0 {
                             let id = json3["response"][0]["id"].intValue
                             let owner = json3["response"][0]["owner_id"].intValue
-                            let attach = "photo\(owner)_\(id)"
+                            let accessKey = json3["response"][0]["access_key"].stringValue
+                            let attach = "photo\(owner)_\(id)_\(accessKey)"
                             
                             completion(attach)
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
                     OperationQueue().addOperation(request)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
+        OperationQueue().addOperation(request)
+    }
+    
+    func loadVoiceMessageToServer(fileData: Data, fileName: String, completion: @escaping (String) -> Void) {
+        let url = "/method/docs.getMessagesUploadServer"
+        let parameters: [String: Any] = [
+            "access_token": vkSingleton.shared.accessToken,
+            "peer_id": vkSingleton.shared.userID,
+            "type": "audio_message",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            
+            if error.errorCode == 0 {
+                let uploadURL = json["response"]["upload_url"].stringValue
+                
+                self.myGifUploadRequest(url: uploadURL, imageData: data, filename: fileName) { json2 in
+                    
+                    let error = json2["error_descr"].stringValue
+                    if error.isEmpty {
+                        let file = json2["file"].stringValue
+                        print("json2 = \(json2)")
+                        
+                        let url2 = "/method/docs.save"
+                        let parameters2 = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "file": file,
+                            "v": vkSingleton.shared.version
+                        ]
+                        
+                        let request2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                        
+                        request2.completionBlock = {
+                            guard let data = request2.data else { return }
+                            
+                            let json3 = try! JSON(data: data)
+                            print("json3 = \(json3)")
+                            
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json3["error"]["error_code"].intValue
+                            error.errorMsg = json3["error"]["error_msg"].stringValue
+                            
+                            if error.errorCode == 0 {
+                                let id = json3["response"][0]["id"].intValue
+                                let owner = json3["response"][0]["owner_id"].intValue
+                                let attach = "doc\(owner)_\(id)"
+                                
+                                completion(attach)
+                            } else {
+                                completion("")
+                                self.showErrorMessage(title: "Внимание!", msg: "Ошибка загрузки файла\nголосового сообщения на сервер:\n\n\(error.errorMsg)")
+                            }
+                        }
+                        OperationQueue().addOperation(request2)
+                    } else {
+                        completion("")
+                        self.showErrorMessage(title: "Внимание!", msg: "Ошибка загрузки файла\nголосового сообщения на сервер:\n\n\(error)")
+                    }
+                }
+            } else {
+                completion("")
+                self.showErrorMessage(title: "Внимание!", msg: "Ошибка загрузки файла\nголосового сообщения на сервер:\n\n\(error.errorMsg)")
+            }
+        }
         OperationQueue().addOperation(request)
     }
     
@@ -3232,14 +3443,14 @@ extension UIViewController: VkOperationProtocol {
                             
                             completion(attach)
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
                     OperationQueue().addOperation(request)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -3294,14 +3505,14 @@ extension UIViewController: VkOperationProtocol {
                                 vc.getDialog()
                             }
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
                     OperationQueue().addOperation(request)
                 }
             } else {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
         }
         
@@ -3337,7 +3548,7 @@ extension UIViewController {
             error.errorMsg = json["error"]["error_msg"].stringValue
             
             if error.errorCode != 0 {
-                self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                error.showErrorMessage(controller: self)
             }
             completion(json)
         }
@@ -3368,6 +3579,7 @@ extension UIViewController {
             error.errorMsg = json["error"]["error_msg"].stringValue
             
             if error.errorCode != 0 {
+                ViewControllerUtils().hideActivityIndicator()
                 self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
             }
             completion(json)
@@ -3394,15 +3606,16 @@ extension UIViewController {
             mimetype = "image/gif"
         }
         
+        if filepath.hasSuffix("m4a") {
+            filename = "voice.mp3"
+            mimetype = "audio/mp3"
+        }
         
         body.appendString(string: "--\(boundary)\r\n")
         body.appendString(string: "Content-Disposition: form-data; name=\"\(filePathKey!)\"; filename=\"\(filename)\"\r\n")
         body.appendString(string: "Content-Type: \(mimetype)\r\n\r\n")
         body.append(imageDataKey as Data)
         body.appendString(string: "\r\n")
-        
-        
-        
         body.appendString(string: "--\(boundary)--\r\n")
         
         return body

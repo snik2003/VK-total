@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.XIB" version="3.0" toolsVersion="16096" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES">
+    <device id="retina6_1" orientation="portrait" appearance="light"/>
+    <dependencies>
+        <deployment identifier="iOS"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="16087"/>
+        <capability name="Named colors" minToolsVersion="9.0"/>
+        <capability name="Safe area layout guides" minToolsVersion="9.0"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <placeholder placeholderIdentifier="IBFilesOwner" id="-1" userLabel="File's Owner" customClass="AlbumSettingsController" customModule="VK_total" customModuleProvider="target">
+            <connections>
+                <outlet property="commentOnCell" destination="TCJ-u7-rK9" id="126-gg-x4Z"/>
+                <outlet property="commentOnLabel" destination="puP-O3-2vb" id="Zhr-Ch-evs"/>
+                <outlet property="descriptionCell" destination="Yvj-zQ-M22" id="F2R-gd-kbf"/>
+                <outlet property="descriptionTextView" destination="Ub9-HC-IhJ" id="b0v-f2-jwf"/>
+                <outlet property="privacyCommentCell" destination="lWb-xO-aPM" id="EU2-bn-a9z"/>
+                <outlet property="privacyCommentLabel" destination="yFy-Kb-iaX" id="Njd-6M-ptu"/>
+                <outlet property="privacyViewCell" destination="amp-TB-i4I" id="P56-as-jEC"/>
+                <outlet property="privacyViewLabel" destination="ZCW-Ht-q4j" id="sa3-Xp-iI3"/>
+                <outlet property="tableView" destination="k0F-mq-ky9" id="r5K-Kj-0uk"/>
+                <outlet property="titleCell" destination="w3E-fh-C7w" id="3bj-Kl-KQh"/>
+                <outlet property="titleField" destination="Oe1-dY-mXL" id="4vg-d6-HPg"/>
+                <outlet property="uploadCell" destination="FPc-vw-Rom" id="bi0-aw-erq"/>
+                <outlet property="uploadLabel" destination="dAq-KB-L1Y" id="tlE-zs-r26"/>
+                <outlet property="view" destination="i5M-Pr-FkT" id="sfx-zR-JGt"/>
+            </connections>
+        </placeholder>
+        <placeholder placeholderIdentifier="IBFirstResponder" id="-2" customClass="UIResponder"/>
+        <view clearsContextBeforeDrawing="NO" contentMode="scaleToFill" id="i5M-Pr-FkT">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="896"/>
+            <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+            <subviews>
+                <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" style="plain" separatorStyle="none" allowsSelection="NO" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="28" sectionFooterHeight="28" translatesAutoresizingMaskIntoConstraints="NO" id="k0F-mq-ky9">
+                    <rect key="frame" x="0.0" y="44" width="414" height="818"/>
+                    <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                    <connections>
+                        <outlet property="dataSource" destination="-1" id="EsM-Jr-sWM"/>
+                        <outlet property="delegate" destination="-1" id="c7k-4o-wWL"/>
+                    </connections>
+                </tableView>
+            </subviews>
+            <color key="backgroundColor" name="appMainBackColor"/>
+            <constraints>
+                <constraint firstItem="k0F-mq-ky9" firstAttribute="top" secondItem="fnl-2z-Ty3" secondAttribute="top" id="OeT-R8-dcI"/>
+                <constraint firstItem="fnl-2z-Ty3" firstAttribute="trailing" secondItem="k0F-mq-ky9" secondAttribute="trailing" id="XdV-jT-wQP"/>
+                <constraint firstItem="k0F-mq-ky9" firstAttribute="leading" secondItem="fnl-2z-Ty3" secondAttribute="leading" id="qww-cH-OQu"/>
+                <constraint firstItem="fnl-2z-Ty3" firstAttribute="bottom" secondItem="k0F-mq-ky9" secondAttribute="bottom" id="ves-Lh-6ZX"/>
+            </constraints>
+            <viewLayoutGuide key="safeArea" id="fnl-2z-Ty3"/>
+            <point key="canvasLocation" x="132" y="92"/>
+        </view>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="titleCell" id="w3E-fh-C7w">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="70"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="w3E-fh-C7w" id="X0b-SZ-3fM">
+                <rect key="frame" x="0.0" y="0.0" width="414" height="70"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Название альбома:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" enabled="NO" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Rjr-Gw-C1O">
+                        <rect key="frame" x="15" y="14" width="384" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="s9M-Dt-rXm"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <textField opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="Oe1-dY-mXL">
+                        <rect key="frame" x="15" y="34" width="384" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="22" id="4vt-DE-rg5"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
+                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences" returnKeyType="done"/>
+                        <connections>
+                            <outlet property="delegate" destination="-1" id="BW4-2z-GhF"/>
+                        </connections>
+                    </textField>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="Rjr-Gw-C1O" firstAttribute="leading" secondItem="X0b-SZ-3fM" secondAttribute="leading" constant="15" id="FVh-F1-7sC"/>
+                    <constraint firstAttribute="trailing" secondItem="Oe1-dY-mXL" secondAttribute="trailing" constant="15" id="Hrd-bN-bvz"/>
+                    <constraint firstItem="Rjr-Gw-C1O" firstAttribute="top" secondItem="X0b-SZ-3fM" secondAttribute="top" constant="14" id="KFE-W2-jxi"/>
+                    <constraint firstItem="Oe1-dY-mXL" firstAttribute="top" secondItem="Rjr-Gw-C1O" secondAttribute="bottom" id="SIs-kU-DOM"/>
+                    <constraint firstItem="Oe1-dY-mXL" firstAttribute="leading" secondItem="X0b-SZ-3fM" secondAttribute="leading" constant="15" id="VTL-Re-PES"/>
+                    <constraint firstAttribute="trailing" secondItem="Rjr-Gw-C1O" secondAttribute="trailing" constant="15" id="cq0-GJ-nIv"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <point key="canvasLocation" x="809" y="-185"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="descriptionCell" id="Yvj-zQ-M22">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="100"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="Yvj-zQ-M22" id="Zhj-sc-aQu">
+                <rect key="frame" x="0.0" y="0.0" width="414" height="100"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Описание альбома:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" enabled="NO" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Y3r-la-isS">
+                        <rect key="frame" x="15" y="4" width="384" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="Bgj-2h-yWl"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <textView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" textAlignment="natural" translatesAutoresizingMaskIntoConstraints="NO" id="Ub9-HC-IhJ">
+                        <rect key="frame" x="15" y="24" width="384" height="62"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor" cocoaTouchSystemColor="whiteColor"/>
+                        <color key="textColor" systemColor="labelColor" cocoaTouchSystemColor="darkTextColor"/>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
+                        <textInputTraits key="textInputTraits" autocapitalizationType="sentences" autocorrectionType="no" smartInsertDeleteType="no"/>
+                        <connections>
+                            <outlet property="delegate" destination="-1" id="Is9-to-WMZ"/>
+                        </connections>
+                    </textView>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="trailing" secondItem="Y3r-la-isS" secondAttribute="trailing" constant="15" id="1te-lU-q2T"/>
+                    <constraint firstAttribute="trailing" secondItem="Ub9-HC-IhJ" secondAttribute="trailing" constant="15" id="5Xf-8O-weP"/>
+                    <constraint firstItem="Y3r-la-isS" firstAttribute="top" secondItem="Zhj-sc-aQu" secondAttribute="top" constant="4" id="DaI-ul-iy4"/>
+                    <constraint firstItem="Ub9-HC-IhJ" firstAttribute="leading" secondItem="Zhj-sc-aQu" secondAttribute="leading" constant="15" id="aTr-v2-cTf"/>
+                    <constraint firstItem="Y3r-la-isS" firstAttribute="leading" secondItem="Zhj-sc-aQu" secondAttribute="leading" constant="15" id="mpx-2v-xnI"/>
+                    <constraint firstItem="Ub9-HC-IhJ" firstAttribute="top" secondItem="Y3r-la-isS" secondAttribute="bottom" id="w7K-PF-z84"/>
+                    <constraint firstAttribute="bottom" secondItem="Ub9-HC-IhJ" secondAttribute="bottom" constant="14" id="zvn-Ex-QnQ"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <point key="canvasLocation" x="809" y="-113"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="privacyViewCell" id="amp-TB-i4I">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="amp-TB-i4I" id="6EX-1f-blm">
+                <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Кто может просматривать альбом:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="MNc-qV-aRj">
+                        <rect key="frame" x="15" y="4" width="384" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="E1f-Pl-slw"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" clipsSubviews="YES" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="ZCW-Ht-q4j">
+                        <rect key="frame" x="15" y="24" width="384" height="22"/>
+                        <color key="backgroundColor" red="0.99991267920000004" green="1" blue="0.99988144639999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="22" id="j4P-RA-Xpz"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="MNc-qV-aRj" firstAttribute="leading" secondItem="6EX-1f-blm" secondAttribute="leading" constant="15" id="Rrz-Rr-nxq"/>
+                    <constraint firstItem="MNc-qV-aRj" firstAttribute="top" secondItem="6EX-1f-blm" secondAttribute="top" constant="4" id="eav-V2-0R2"/>
+                    <constraint firstAttribute="trailing" secondItem="MNc-qV-aRj" secondAttribute="trailing" constant="15" id="fPX-Bd-5rY"/>
+                    <constraint firstItem="ZCW-Ht-q4j" firstAttribute="top" secondItem="MNc-qV-aRj" secondAttribute="bottom" id="pD6-OE-0vh"/>
+                    <constraint firstAttribute="trailing" secondItem="ZCW-Ht-q4j" secondAttribute="trailing" constant="15" id="uTK-A1-PF1"/>
+                    <constraint firstItem="ZCW-Ht-q4j" firstAttribute="leading" secondItem="6EX-1f-blm" secondAttribute="leading" constant="15" id="xUU-Zl-3kw"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <point key="canvasLocation" x="809" y="-35"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="privacyCommentCell" id="lWb-xO-aPM">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="lWb-xO-aPM" id="jRy-gT-CLN">
+                <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Кто может комментировать альбом:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Xo8-hu-hIv">
+                        <rect key="frame" x="15" y="4" width="384" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="3DD-8p-seI"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" clipsSubviews="YES" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="yFy-Kb-iaX">
+                        <rect key="frame" x="15" y="24" width="384" height="22"/>
+                        <color key="backgroundColor" red="0.99991267920000004" green="1" blue="0.99988144639999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="22" id="Z6B-rP-Eaj"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="Xo8-hu-hIv" firstAttribute="top" secondItem="jRy-gT-CLN" secondAttribute="top" constant="4" id="adb-SV-pis"/>
+                    <constraint firstItem="Xo8-hu-hIv" firstAttribute="leading" secondItem="jRy-gT-CLN" secondAttribute="leading" constant="15" id="gyk-1c-auG"/>
+                    <constraint firstAttribute="trailing" secondItem="yFy-Kb-iaX" secondAttribute="trailing" constant="15" id="hYY-xm-tEG"/>
+                    <constraint firstItem="yFy-Kb-iaX" firstAttribute="top" secondItem="Xo8-hu-hIv" secondAttribute="bottom" id="tGM-Zv-LJT"/>
+                    <constraint firstItem="yFy-Kb-iaX" firstAttribute="leading" secondItem="jRy-gT-CLN" secondAttribute="leading" constant="15" id="tyB-xx-9wy"/>
+                    <constraint firstAttribute="trailing" secondItem="Xo8-hu-hIv" secondAttribute="trailing" constant="15" id="xxc-ay-DkG"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <point key="canvasLocation" x="809" y="31"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="uploadCell" id="FPc-vw-Rom">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="FPc-vw-Rom" id="Vap-A8-rit">
+                <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Кто может загружать фото в альбом:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="Mz4-N3-8bS">
+                        <rect key="frame" x="15" y="4" width="384" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="LsY-E2-Er8"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" clipsSubviews="YES" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="dAq-KB-L1Y">
+                        <rect key="frame" x="15" y="24" width="384" height="22"/>
+                        <color key="backgroundColor" red="0.99991267920000004" green="1" blue="0.99988144639999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="22" id="PBv-Gn-fpK"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="Mz4-N3-8bS" firstAttribute="top" secondItem="Vap-A8-rit" secondAttribute="top" constant="4" id="3Af-19-6RU"/>
+                    <constraint firstItem="Mz4-N3-8bS" firstAttribute="leading" secondItem="Vap-A8-rit" secondAttribute="leading" constant="15" id="8Hw-Sc-Hme"/>
+                    <constraint firstItem="dAq-KB-L1Y" firstAttribute="leading" secondItem="Vap-A8-rit" secondAttribute="leading" constant="15" id="Pf9-Dh-JPK"/>
+                    <constraint firstAttribute="trailing" secondItem="dAq-KB-L1Y" secondAttribute="trailing" constant="15" id="SNU-6z-bnk"/>
+                    <constraint firstItem="dAq-KB-L1Y" firstAttribute="top" secondItem="Mz4-N3-8bS" secondAttribute="bottom" id="cvd-Qf-ko9"/>
+                    <constraint firstAttribute="trailing" secondItem="Mz4-N3-8bS" secondAttribute="trailing" constant="15" id="zYo-Oa-XYt"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <point key="canvasLocation" x="809" y="92"/>
+        </tableViewCell>
+        <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" preservesSuperviewLayoutMargins="YES" selectionStyle="default" indentationWidth="10" reuseIdentifier="commentOnCell" id="TCJ-u7-rK9">
+            <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" preservesSuperviewLayoutMargins="YES" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="TCJ-u7-rK9" id="OWg-OX-gHW">
+                <rect key="frame" x="0.0" y="0.0" width="414" height="60"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Отключено ли комментирование альбома:" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumScaleFactor="0.5" enabled="NO" translatesAutoresizingMaskIntoConstraints="NO" id="uYL-wG-Mc4">
+                        <rect key="frame" x="15" y="4" width="384" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="20" id="jIc-3D-Kpd"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="11"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                    <label opaque="NO" clipsSubviews="YES" contentMode="center" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="puP-O3-2vb">
+                        <rect key="frame" x="15" y="24" width="384" height="22"/>
+                        <color key="backgroundColor" red="0.99991267920000004" green="1" blue="0.99988144639999998" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="22" id="x8F-ai-1hl"/>
+                        </constraints>
+                        <fontDescription key="fontDescription" name="Verdana" family="Verdana" pointSize="13"/>
+                        <nil key="textColor"/>
+                        <nil key="highlightedColor"/>
+                    </label>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="uYL-wG-Mc4" firstAttribute="top" secondItem="OWg-OX-gHW" secondAttribute="top" constant="4" id="1VK-gG-WHz"/>
+                    <constraint firstItem="uYL-wG-Mc4" firstAttribute="leading" secondItem="OWg-OX-gHW" secondAttribute="leading" constant="15" id="7bQ-Op-dSb"/>
+                    <constraint firstAttribute="trailing" secondItem="puP-O3-2vb" secondAttribute="trailing" constant="15" id="CTn-oS-uOs"/>
+                    <constraint firstItem="puP-O3-2vb" firstAttribute="top" secondItem="uYL-wG-Mc4" secondAttribute="bottom" id="So8-z2-Gly"/>
+                    <constraint firstItem="puP-O3-2vb" firstAttribute="leading" secondItem="OWg-OX-gHW" secondAttribute="leading" constant="15" id="Ynk-Yi-j7M"/>
+                    <constraint firstAttribute="trailing" secondItem="uYL-wG-Mc4" secondAttribute="trailing" constant="15" id="b5h-kQ-H9p"/>
+                </constraints>
+            </tableViewCellContentView>
+            <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+            <point key="canvasLocation" x="809" y="159"/>
+        </tableViewCell>
+    </objects>
+    <resources>
+        <namedColor name="appMainBackColor">
+            <color red="0.91399997472763062" green="0.93500000238418579" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+        </namedColor>
+    </resources>
+</document>

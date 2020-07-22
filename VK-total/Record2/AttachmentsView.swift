@@ -81,7 +81,13 @@ class AttachmentsView: UIView {
                         photoImage.isUserInteractionEnabled = true
                         photoImage.addGestureRecognizer(tap)
                         tap.add {
-                            self.delegate.openPhotoViewController(numPhoto: 0, photos: self.photos)
+                            if let controller = self.delegate as? DialogController {
+                                if controller.mode != .edit {
+                                    self.delegate.openPhotoViewController(numPhoto: 0, photos: self.photos)
+                                }
+                            } else {
+                                self.delegate.openPhotoViewController(numPhoto: 0, photos: self.photos)
+                            }
                         }
                         
                         maxSize = width
@@ -137,7 +143,13 @@ class AttachmentsView: UIView {
                         photoImage.isUserInteractionEnabled = true
                         photoImage.addGestureRecognizer(tap)
                         tap.add {
-                            self.delegate.openPhotoViewController(numPhoto: 0, photos: self.photos)
+                            if let controller = self.delegate as? DialogController {
+                                if controller.mode != .edit {
+                                    self.delegate.openPhotoViewController(numPhoto: 0, photos: self.photos)
+                                }
+                            } else {
+                                self.delegate.openPhotoViewController(numPhoto: 0, photos: self.photos)
+                            }
                         }
                     }
                     topY += height + 2.5
@@ -208,7 +220,13 @@ class AttachmentsView: UIView {
                                 photoImage1.isUserInteractionEnabled = true
                                 photoImage1.addGestureRecognizer(tap1)
                                 tap1.add {
-                                    self.delegate.openPhotoViewController(numPhoto: index, photos: self.photos)
+                                    if let controller = self.delegate as? DialogController {
+                                        if controller.mode != .edit {
+                                            self.delegate.openPhotoViewController(numPhoto: index, photos: self.photos)
+                                        }
+                                    } else {
+                                        self.delegate.openPhotoViewController(numPhoto: index, photos: self.photos)
+                                    }
                                 }
                                 
                                 let photoImage2 = UIImageView()
@@ -245,7 +263,13 @@ class AttachmentsView: UIView {
                                 photoImage2.isUserInteractionEnabled = true
                                 photoImage2.addGestureRecognizer(tap2)
                                 tap2.add {
-                                    self.delegate.openPhotoViewController(numPhoto: index+1, photos: self.photos)
+                                    if let controller = self.delegate as? DialogController {
+                                        if controller.mode != .edit {
+                                            self.delegate.openPhotoViewController(numPhoto: index+1, photos: self.photos)
+                                        }
+                                    } else {
+                                        self.delegate.openPhotoViewController(numPhoto: index+1, photos: self.photos)
+                                    }
                                 }
                             }
                             topY += height1 + 2.5
@@ -319,7 +343,13 @@ class AttachmentsView: UIView {
                             photoImage1.isUserInteractionEnabled = true
                             photoImage1.addGestureRecognizer(tap1)
                             tap1.add {
-                                self.delegate.openPhotoViewController(numPhoto: index, photos: self.photos)
+                                if let controller = self.delegate as? DialogController {
+                                    if controller.mode != .edit {
+                                        self.delegate.openPhotoViewController(numPhoto: index, photos: self.photos)
+                                    }
+                                } else {
+                                    self.delegate.openPhotoViewController(numPhoto: index, photos: self.photos)
+                                }
                             }
                             
                             let photoImage2 = UIImageView()
@@ -356,7 +386,13 @@ class AttachmentsView: UIView {
                             photoImage2.isUserInteractionEnabled = true
                             photoImage2.addGestureRecognizer(tap2)
                             tap2.add {
-                                self.delegate.openPhotoViewController(numPhoto: index+1, photos: self.photos)
+                                if let controller = self.delegate as? DialogController {
+                                    if controller.mode != .edit {
+                                        self.delegate.openPhotoViewController(numPhoto: index+1, photos: self.photos)
+                                    }
+                                } else {
+                                    self.delegate.openPhotoViewController(numPhoto: index+1, photos: self.photos)
+                                }
                             }
                         }
                         topY += height1 + 2.5

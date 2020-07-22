@@ -274,7 +274,7 @@ class GroupProfileCell: UITableViewCell {
         activityLabel.isHidden = false
         
         var title = "Вы администратор"
-        var titleColor = UIColor.white
+        let titleColor = UIColor.white
         var backColor = UIColor.lightGray
         
         if profile.isAdmin == 0 {

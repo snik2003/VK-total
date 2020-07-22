@@ -13,6 +13,9 @@ class PersonalController: InnerTableViewController {
 
     @IBOutlet weak var addAAccountButton: UIBarButtonItem!
     
+    @IBOutlet var labels: [UILabel]!
+    @IBOutlet var images: [UIImageView]!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -23,8 +26,16 @@ class PersonalController: InnerTableViewController {
         
         //self.revealViewController().panGestureRecognizer()
         self.revealViewController().tapGestureRecognizer()*/
+        
+        for index in 0...labels.count - 1 {
+            labels[index].textColor = vkSingleton.shared.labelColor
+        }
+        
+        for index in 0...images.count - 1 {
+            images[index].tintColor = vkSingleton.shared.labelColor
+        }
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
     }
@@ -50,13 +61,8 @@ class PersonalController: InnerTableViewController {
         label.text = "Личное"
         if section == 1 { label.text = "Служебное" }
         
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-            label.textColor = .label
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-            label.textColor = .black
-        }
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
+        label.textColor = vkSingleton.shared.labelColor
         
         //viewHeader.addSubview(label)
         return viewHeader
@@ -64,12 +70,7 @@ class PersonalController: InnerTableViewController {
     
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -87,7 +88,7 @@ class PersonalController: InnerTableViewController {
         
         // show photos list
         if indexPath.section == 0 && indexPath.row == 2 {
-            self.openPhotosListController(ownerID: vkSingleton.shared.userID, title: "Мои фотографии", type: "photos")
+            self.openPhotosListController(ownerID: vkSingleton.shared.userID, title: "Мои фотографии", type: "photos", isAdmin: false)
         }
         
         // show videos list

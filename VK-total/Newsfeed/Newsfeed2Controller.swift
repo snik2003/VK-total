@@ -10,6 +10,7 @@ import UIKit
 import AVFoundation
 import Alamofire
 import SwiftyJSON
+import SCLAlertView
 import BTNavigationDropdownMenu
 
 class Newsfeed2Controller: InnerTableViewController {
@@ -17,21 +18,24 @@ class Newsfeed2Controller: InnerTableViewController {
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
     var selectedMenu = 0
-    let itemsMenu = ["Интересное", "Новости", "Друзья", "Сообщества", "Фотографии"]
+    let itemsMenu = ["Лента новостей", "Новости друзей", "Новости сообществ", "Интересные записи", "Фотографии друзей", "Видеозаписи друзей", "Аудиозаписи друзей"]
     
     var userID = vkSingleton.shared.userID
-    var news = [News]()
-    var newsProfiles = [NewsProfiles]()
-    var newsGroups = [NewsGroups]()
+    var news = [Wall]()
+    var newsProfiles = [WallProfiles]()
+    var newsGroups = [WallGroups]()
+    var videos = [Videos]()
     
     var filters = "post"
-    var sourceIDs = "recommend"
+    var sourceIDs = ""
     var startFrom = ""
     var offset = 0
-    let count = 100
-    var isRefresh = false
+    let count = 32
+    let leftCellCount = 3
+    var viewCount = 0
     
-    var menuView: BTNavigationDropdownMenu!
+    var firstAppear = true
+    var isRefresh = false
     
     let queue: OperationQueue = {
         let queue = OperationQueue()
@@ -39,32 +43,39 @@ class Newsfeed2Controller: InnerTableViewController {
         return queue
     }()
     
+    var menuView: BTNavigationDropdownMenu!
+    
     var player = AVPlayer()
+    
+    var spinner: UIActivityIndicatorView!
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        menuView = BTNavigationDropdownMenu(title: itemsMenu[0], items: itemsMenu)
-        menuView.cellBackgroundColor = vkSingleton.shared.backColor
-        menuView.cellSelectionColor = vkSingleton.shared.backColor
-        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
-        menuView.cellSeparatorColor = vkSingleton.shared.separatorColor
+        tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "recordCell")
+        tableView.showsVerticalScrollIndicator = false
         
-        if #available(iOS 13.0, *) {
-            if !AppConfig.shared.autoMode {
-                if AppConfig.shared.darkMode {
-                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
-                } else {
-                    menuView.cellBackgroundColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                    menuView.cellSelectionColor = vkSingleton.shared.backColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                    menuView.cellTextLabelColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                    menuView.cellSeparatorColor = UIColor.separator.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
-                }
-            }
-        }
+        let myAttribute = [NSAttributedString.Key.foregroundColor: vkSingleton.shared.labelColor]
+        let myAttrString = NSAttributedString(string: "Обновляем данные", attributes: myAttribute)
+        refreshControl?.attributedTitle = myAttrString
+        refreshControl?.addTarget(self, action: #selector(self.pullToRefresh), for: .valueChanged)
+        refreshControl?.tintColor = vkSingleton.shared.labelColor
+        tableView.addSubview(refreshControl!)
+        
+        spinner = UIActivityIndicatorView(style: .white)
+        spinner.color = vkSingleton.shared.labelColor
+        spinner.stopAnimating()
+        spinner.hidesWhenStopped = true
+        spinner.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.size.width, height: 60)
+        tableView.tableFooterView = spinner
+        
+        menuView = BTNavigationDropdownMenu(title: itemsMenu[view.tag], items: itemsMenu)
+        menuView.cellBackgroundColor = vkSingleton.shared.separatorColor2
+        menuView.cellSelectionColor = vkSingleton.shared.separatorColor2
+        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
+        menuView.cellSeparatorColor = vkSingleton.shared.mainColor
+        
+        menuView.checkMarkImage = UIImage(named: "checkmark")
         
         menuView.cellTextLabelAlignment = .center
         menuView.selectedCellTextLabelColor = .systemRed
@@ -73,41 +84,83 @@ class Newsfeed2Controller: InnerTableViewController {
         navigationItem.titleView = menuView
         
         menuView.didSelectItemAtIndexHandler = {[weak self] (indexPath: Int) -> () in
+            self?.menuView.isUserInteractionEnabled = false
             self?.selectedMenu = indexPath
+            self?.view.tag = indexPath
+            
+            if let aView = self?.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            }
+            
             switch indexPath {
             case 0:
-                self?.filters = "post"
-                self?.sourceIDs = "recommend"
-                self?.startFrom = ""
-                self?.offset = 0
-                self?.refresh()
-                break
-            case 1:
                 self?.filters = "post"
                 self?.sourceIDs = ""
                 self?.startFrom = ""
                 self?.offset = 0
+                self?.viewCount = 0
+                self?.spinner.stopAnimating()
+                self?.tableView.tableFooterView = self?.spinner
                 self?.refresh()
                 break
-            case 2:
+            case 1:
                 self?.filters = "post"
                 self?.sourceIDs = "friends,following"
                 self?.startFrom = ""
                 self?.offset = 0
+                self?.viewCount = 0
+                self?.spinner.stopAnimating()
+                self?.tableView.tableFooterView = self?.spinner
                 self?.refresh()
                 break
-            case 3:
+            case 2:
                 self?.filters = "post"
                 self?.sourceIDs = "groups,pages"
                 self?.startFrom = ""
                 self?.offset = 0
+                self?.viewCount = 0
+                self?.spinner.stopAnimating()
+                self?.tableView.tableFooterView = self?.spinner
+                self?.refresh()
+                break
+            case 3:
+                self?.filters = "post"
+                self?.sourceIDs = "recommend"
+                self?.startFrom = ""
+                self?.offset = 0
+                self?.viewCount = 0
+                self?.spinner.stopAnimating()
+                self?.tableView.tableFooterView = nil
                 self?.refresh()
                 break
             case 4:
                 self?.filters = "wall_photo"
-                self?.sourceIDs = "friends"
+                self?.sourceIDs = "friends,following"
                 self?.startFrom = ""
                 self?.offset = 0
+                self?.viewCount = 0
+                self?.spinner.stopAnimating()
+                self?.tableView.tableFooterView = self?.spinner
+                self?.refresh()
+                break
+            case 5:
+                self?.filters = "video"
+                self?.sourceIDs = "friends,following"
+                self?.startFrom = ""
+                self?.offset = 0
+                self?.viewCount = 0
+                self?.spinner.stopAnimating()
+                self?.tableView.tableFooterView = self?.spinner
+                self?.refresh()
+                break
+            case 6:
+                self?.filters = "audio"
+                self?.sourceIDs = "friends,following"
+                self?.startFrom = ""
+                self?.offset = 0
+                self?.viewCount = 0
+                self?.spinner.stopAnimating()
+                self?.tableView.tableFooterView = self?.spinner
                 self?.refresh()
                 break
             default:
@@ -115,26 +168,44 @@ class Newsfeed2Controller: InnerTableViewController {
             }
         }
         
-        self.refreshControl?.addTarget(self, action: #selector(self.refreshButtonClick), for: UIControl.Event.valueChanged)
-        if #available(iOS 13.0, *) {
-            self.refreshControl?.tintColor = .secondaryLabel
-        } else {
-            self.refreshControl?.tintColor = .gray
-        }
-        tableView.addSubview(refreshControl!)
-        
-        refresh()
+        menuView.isUserInteractionEnabled = false
     }
 
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        menuView.hide()
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            
+            if let aView = self.tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: view)
+            }
+            
+            refresh()
+        }
     }
     
-    @objc func refreshButtonClick()
-    {
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        
+        if let menuView = navigationItem.titleView as? BTNavigationDropdownMenu {
+            menuView.hide()
+        }
+    }
+    
+    @objc func pullToRefresh() {
         startFrom = ""
         offset = 0
+        viewCount = 0
+        spinner.startAnimating()
+        
         refresh()
     }
     
@@ -142,6 +213,7 @@ class Newsfeed2Controller: InnerTableViewController {
         let opq = OperationQueue()
         var url: String
         var parameters: Parameters
+        
         isRefresh = true
         
         estimatedHeightCache.removeAll(keepingCapacity: false)
@@ -149,13 +221,13 @@ class Newsfeed2Controller: InnerTableViewController {
         OperationQueue.main.addOperation {
             self.refreshControl?.beginRefreshing()
             self.tableView.separatorStyle = .none
-            ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
         }
         
         if startFrom == "" && offset == 0 {
             news.removeAll(keepingCapacity: false)
             newsProfiles.removeAll(keepingCapacity: false)
             newsGroups.removeAll(keepingCapacity: false)
+            videos.removeAll(keepingCapacity: false)
             tableView.reloadData()
         }
         
@@ -168,7 +240,7 @@ class Newsfeed2Controller: InnerTableViewController {
                 "filters": filters,
                 "max_photos": "10",
                 "star_from": "\(startFrom)",
-                "count": "\(count)",
+                "count": "100",
                 "fields": "id,first_name,last_name,photo_100,photo_200,first_name_gen",
                 "v": vkSingleton.shared.version
             ]
@@ -195,14 +267,65 @@ class Newsfeed2Controller: InnerTableViewController {
         // парсим объект с данными
         let parseNewsfeed = ParseNewsfeed(filters: filters, source: sourceIDs)
         parseNewsfeed.addDependency(getServerDataOperation)
+        parseNewsfeed.completionBlock = {
+            var videoIDs = ""
+            for wall in parseNewsfeed.news {
+                for index in 0...9 {
+                    if wall.mediaType[index] == "video" {
+                        if videoIDs == "" {
+                            if wall.photoAccessKey[index] == "" {
+                                videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                            } else {
+                                videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                            }
+                        } else {
+                            if wall.photoAccessKey[index] == "" {
+                                videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                            } else {
+                                videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if videoIDs != "" {
+                let url2 = "/method/video.get"
+                let parameters2 = [
+                    "access_token": vkSingleton.shared.accessToken,
+                    "owner_id": vkSingleton.shared.userID,
+                    "videos": videoIDs,
+                    "extended": "0",
+                    "fields": "id, first_name, last_name, photo_100",
+                    "v": vkSingleton.shared.version
+                ]
+                
+                let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                getServerDataOperation2.completionBlock = {
+                    guard let data = getServerDataOperation2.data else { return }
+                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    
+                    if self.filters == "video" {
+                    //    print(json)
+                    }
+                    
+                    let newsVideos = json["response"]["items"].compactMap({ Videos(json: $0.1) })
+                    for video in newsVideos {
+                        if video.id != 0 { self.videos.append(video) }
+                    }
+                    
+                    let reloadTableController = ReloadNewsfeed2Controller(controller: self)
+                    reloadTableController.addDependency(parseNewsfeed)
+                    OperationQueue.main.addOperation(reloadTableController)
+                }
+                OperationQueue().addOperation(getServerDataOperation2)
+            } else {
+                let reloadTableController = ReloadNewsfeed2Controller(controller: self)
+                reloadTableController.addDependency(parseNewsfeed)
+                OperationQueue.main.addOperation(reloadTableController)
+            }
+        }
         opq.addOperation(parseNewsfeed)
-        
-        self.setOfflineStatus(dependence: getServerDataOperation)
-        
-        // обновляем данные на UI
-        let reloadTableController = ReloadNewsfeed2Controller(controller: self)
-        reloadTableController.addDependency(parseNewsfeed)
-        OperationQueue.main.addOperation(reloadTableController)
     }
     
     override func didReceiveMemoryWarning() {
@@ -217,15 +340,30 @@ class Newsfeed2Controller: InnerTableViewController {
         return 1
     }
     
+    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        if let height = estimatedHeightCache[indexPath] {
+            return height
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
+            cell.delegate = self
+            cell.drawCell = false
+            
+            let height = cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+            estimatedHeightCache[indexPath] = height
+            return height
+        }
+    }
+    
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Newsfeed2Cell
+            let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
             cell.delegate = self
+            cell.drawCell = false
             
-            let height = cell.getRowHeight(record: news[indexPath.section])
+            let height = cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             estimatedHeightCache[indexPath] = height
             return height
         }
@@ -245,34 +383,27 @@ class Newsfeed2Controller: InnerTableViewController {
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell", for: indexPath) as! Newsfeed2Cell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell", for: indexPath) as! WallRecordCell2
         cell.delegate = self
         
-        estimatedHeightCache[indexPath] = cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
+        cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
+        cell.repostReadMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap2(sender:)), for: .touchUpInside)
+        cell.likesButton.addTarget(self, action: #selector(self.likePost(sender:)), for: .touchUpInside)
+
         cell.repostsButton.addTarget(self, action: #selector(self.tapRepostButton(sender:)), for: .touchUpInside)
         cell.commentsButton.addTarget(self, action: #selector(self.tapCommentsButton(sender:)), for: .touchUpInside)
         
@@ -288,6 +419,7 @@ class Newsfeed2Controller: InnerTableViewController {
         tableView.beginUpdates()
         tableView.endUpdates()
         
+        cell.selectionStyle = .none
         return cell
     }
     
@@ -296,15 +428,14 @@ class Newsfeed2Controller: InnerTableViewController {
         
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if news[indexPath.section].readMore1 == 1 {
-                news[indexPath.section].readMore1 = 0
-                let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Newsfeed2Cell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: news[indexPath.section])
+                news[indexPath.section].readMore1 = 0
+                estimatedHeightCache[indexPath] = cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -314,125 +445,40 @@ class Newsfeed2Controller: InnerTableViewController {
         
         if let indexPath = self.tableView.indexPathForRow(at: buttonPosition) {
             if news[indexPath.section].readMore2 == 1 {
-                news[indexPath.section].readMore2 = 0
-                let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! Newsfeed2Cell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "recordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: news[indexPath.section])
+                news[indexPath.section].readMore2 = 0
+                estimatedHeightCache[indexPath] = cell.configureCell(record: news[indexPath.section], profiles: newsProfiles, groups: newsGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        
-        if indexPath.section == tableView.numberOfSections - 1 && indexPath.section == offset - 1 {
+        if isRefresh && tableView.numberOfSections >= count && indexPath.section == tableView.numberOfSections - 2 {
             isRefresh = false
         }
     }
     
     override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         
-        if isRefresh == false {
-            refresh()
-        }
-    }
-    
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let y = scrollView.contentOffset.y + scrollView.bounds.size.height - scrollView.contentInset.bottom
+        let h = scrollView.contentSize.height
         
-        if let visibleIndexPath = tableView.indexPathsForVisibleRows {
-            for index in visibleIndexPath {
-                if index == indexPath {
-                    if filters != "wall_photo" {
-                        let record = news[indexPath.section]
-                        
-                        let cell = tableView.cellForRow(at: indexPath) as! Newsfeed2Cell
-                        
-                        let action = cell.getActionOnClickPosition(touch: cell.position, record: record)
-                        
-                        if action == "show_record" {
-                            
-                            self.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post", scrollToComment: false)
-                        }
-                        
-                        if action == "show_repost_record" {
-                            
-                            self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
-                        }
-                        
-                        if action == "show_owner" {
-                            
-                            self.openProfileController(id: record.sourceID, name: "")
-                        }
-                        
-                        if action == "show_repost_owner" {
-                            
-                            self.openProfileController(id: record.repostOwnerID, name: "")
-                        }
-                        
-                        for index in 0...9 {
-                            if action == "show_photo_\(index)" {
-                                let photoViewController = self.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
-                                
-                                var newIndex = 0
-                                for ind in 0...9 {
-                                    if record.mediaType[ind] == "photo" {
-                                        let photos = Photos(json: JSON.null)
-                                        photos.uid = "\(record.photoOwnerID[ind])"
-                                        photos.pid = "\(record.photoID[ind])"
-                                        photos.xxbigPhotoURL = record.photoURL[ind]
-                                        photos.xbigPhotoURL = record.photoURL[ind]
-                                        photos.bigPhotoURL = record.photoURL[ind]
-                                        photos.photoURL = record.photoURL[ind]
-                                        photos.width = record.photoWidth[ind]
-                                        photos.height = record.photoHeight[ind]
-                                        photoViewController.photos.append(photos)
-                                        if ind == index {
-                                            photoViewController.numPhoto = newIndex
-                                        }
-                                        newIndex += 1
-                                    }
-                                }
-                                
-                                self.navigationController?.pushViewController(photoViewController, animated: true)
-                            }
-                            
-                            if action == "show_video_\(index)" {
-                                
-                                self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
-                                
-                            }
-                            
-                            if action == "show_music_\(index)" {
-                                
-                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                                self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
-                            }
-                        }
-                        
-                        if action == "show_signer_profile" {
-                            self.openProfileController(id: record.signerID, name: "")
-                        }
-                        
-                    } else {
-                        let record = news[indexPath.section]
-                        let cell = tableView.cellForRow(at: indexPath) as! Newsfeed2Cell
-                        
-                        let action = cell.getActionOnClickPosition(touch: cell.position, record: record)
-                        
-                        if action == "show_owner" {
-                            
-                            self.openProfileController(id: record.sourceID, name: "")
-                        }
-                        
-                        if action == "show_photo" {
-                            
-                        }
-                    }
+        if y >= (h - 30.0) {
+            if viewCount >= offset {
+                if sourceIDs == "recommend" {
+                    tableView.tableFooterView = nil
+                    if !menuView.isShown { menuView.show() }
+                } else if !isRefresh {
+                    refresh()
                 }
+            } else {
+                tableView.tableFooterView = nil
+                if !menuView.isShown { menuView.show() }
             }
         }
     }
@@ -444,7 +490,7 @@ class Newsfeed2Controller: InnerTableViewController {
         if let index = indexPath?.section {
             let record = news[index]
             
-            self.openWallRecord(ownerID: record.sourceID, postID: record.postID, accessKey: "", type: "post", scrollToComment: true)
+            self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
         }
     }
     
@@ -452,7 +498,7 @@ class Newsfeed2Controller: InnerTableViewController {
         let position: CGPoint = sender.location(in: self.tableView)
         let indexPath = self.tableView.indexPathForRow(at: position)
         
-        if let cell = tableView.cellForRow(at: indexPath!) as? Newsfeed2Cell, let label = sender.view as? UILabel {
+        if let cell = tableView.cellForRow(at: indexPath!) as? WallRecordCell2, let label = sender.view as? UILabel {
             cell.delegate = self
             
             let num = label.tag
@@ -501,7 +547,7 @@ class Newsfeed2Controller: InnerTableViewController {
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -562,7 +608,7 @@ class Newsfeed2Controller: InnerTableViewController {
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -592,8 +638,8 @@ class Newsfeed2Controller: InnerTableViewController {
                 let parameters = [
                     "access_token": vkSingleton.shared.accessToken,
                     "type": "post",
-                    "owner_id": "\(record.sourceID)",
-                    "item_id": "\(record.postID)",
+                    "owner_id": "\(record.ownerID)",
+                    "item_id": "\(record.id)",
                     "v": vkSingleton.shared.version
                 ]
                 
@@ -613,12 +659,12 @@ class Newsfeed2Controller: InnerTableViewController {
                         self.news[index].userLikes = 1
                         OperationQueue.main.addOperation {
                             self.playSoundEffect(vkSingleton.shared.likeSound)
-                            if let cell = self.tableView.cellForRow(at: indexPath!) as? Newsfeed2Cell {
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? WallRecordCell2 {
                                 cell.setLikesButton(record: self.news[index])
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -631,8 +677,8 @@ class Newsfeed2Controller: InnerTableViewController {
                 let parameters = [
                     "access_token": vkSingleton.shared.accessToken,
                     "type": "post",
-                    "owner_id": "\(record.sourceID)",
-                    "item_id": "\(record.postID)",
+                    "owner_id": "\(record.ownerID)",
+                    "item_id": "\(record.id)",
                     "v": vkSingleton.shared.version
                 ]
                 
@@ -652,12 +698,12 @@ class Newsfeed2Controller: InnerTableViewController {
                         self.news[index].userLikes = 0
                         OperationQueue.main.addOperation {
                             self.playSoundEffect(vkSingleton.shared.unlikeSound)
-                            if let cell = self.tableView.cellForRow(at: indexPath!) as? Newsfeed2Cell {
+                            if let cell = self.tableView.cellForRow(at: indexPath!) as? WallRecordCell2 {
                                 cell.setLikesButton(record: self.news[index])
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -681,7 +727,7 @@ class Newsfeed2Controller: InnerTableViewController {
             alertController.addAction(cancelAction)
             
             
-            if record.canRepost == 1 && record.userReposted == 0 {
+            if record.canRepost == 1 && record.userPeposted == 0 {
                 let action1 = UIAlertAction(title: "Опубликовать на своей стене", style: .default) { action in
                     
                     let newRecordController = self.storyboard?.instantiateViewController(withIdentifier: "NewRecordController") as! NewRecordController
@@ -691,21 +737,21 @@ class Newsfeed2Controller: InnerTableViewController {
                     newRecordController.message = ""
                     newRecordController.title = "Репост записи"
                     
-                    newRecordController.repostOwnerID = record.sourceID
-                    newRecordController.repostItemID = record.postID
+                    newRecordController.repostOwnerID = record.ownerID
+                    newRecordController.repostItemID = record.id
                     
                     newRecordController.delegate2 = self
                     
-                    if record.sourceID > 0 {
+                    if record.ownerID > 0 {
                         newRecordController.repostTitle = "Репост записи со стены пользователя"
                     }
                     
-                    if record.sourceID < 0 {
+                    if record.ownerID < 0 {
                         newRecordController.repostTitle = "Репост записи со стены сообщества"
                     }
                     
                     if let image = UIApplication.shared.screenShot {
-                        let attachment = "wall\(record.sourceID)_\(record.postID)"
+                        let attachment = "wall\(record.ownerID)_\(record.id)"
                         
                         newRecordController.attachments = attachment
                         newRecordController.attach.append(attachment)
@@ -721,14 +767,14 @@ class Newsfeed2Controller: InnerTableViewController {
             
             let action3 = UIAlertAction(title: "Переслать ссылку на запись", style: .default){ action in
                 
-                let attachment = "https://vk.com/wall\(record.sourceID)_\(record.postID)"
+                let attachment = "https://vk.com/wall\(record.ownerID)_\(record.id)"
                 self.openDialogsController(attachments: attachment, image: nil, messIDs: [], source: "add_attach_message")
             }
             alertController.addAction(action3)
             
             let action2 = UIAlertAction(title: "Переслать сообщением", style: .default){ action in
                 
-                let attachment = "wall\(record.sourceID)_\(record.postID)"
+                let attachment = "wall\(record.ownerID)_\(record.id)"
                 let image = UIApplication.shared.screenShot
                 self.openDialogsController(attachments: attachment, image: image, messIDs: [], source: "add_attach_message")
             }
@@ -736,5 +782,44 @@ class Newsfeed2Controller: InnerTableViewController {
             
             self.present(alertController, animated: true)
         }
+    }
+}
+
+extension UITableView {
+    func scrollToBottom(animated: Bool) {
+        OperationQueue.main.addOperation {
+            guard self.numberOfSections > 0 else { return }
+
+            // Make an attempt to use the bottom-most section with at least one row
+            var section = max(self.numberOfSections - 1, 0)
+            var row = max(self.numberOfRows(inSection: section) - 1, 0)
+            var indexPath = IndexPath(row: row, section: section)
+
+            // Ensure the index path is valid, otherwise use the section above (sections can
+            // contain 0 rows which leads to an invalid index path)
+            while !self.indexPathIsValid(indexPath) {
+                section = max(section - 1, 0)
+                row = max(self.numberOfRows(inSection: section) - 1, 0)
+                indexPath = IndexPath(row: row, section: section)
+
+                // If we're down to the last section, attempt to use the first row
+                if indexPath.section == 0 {
+                    indexPath = IndexPath(row: 0, section: 0)
+                    break
+                }
+            }
+
+            // In the case that [0, 0] is valid (perhaps no data source?), ensure we don't encounter an
+            // exception here
+            guard self.indexPathIsValid(indexPath) else { return }
+
+            self.scrollToRow(at: indexPath, at: .bottom, animated: animated)
+        }
+    }
+
+    func indexPathIsValid(_ indexPath: IndexPath) -> Bool {
+        let section = indexPath.section
+        let row = indexPath.row
+        return section < self.numberOfSections && row < self.numberOfRows(inSection: section)
     }
 }

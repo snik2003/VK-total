@@ -44,12 +44,11 @@ class CountersInfoTableViewController: InnerTableViewController, UISearchBarDele
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let myAttribute = [NSAttributedString.Key.foregroundColor: vkSingleton.shared.labelColor]
+        let myAttrString = NSAttributedString(string: "Обновляем данные", attributes: myAttribute)
+        self.refreshControl?.attributedTitle = myAttrString
         self.refreshControl?.addTarget(self, action: #selector(CountersInfoTableViewController.refresh), for: UIControl.Event.valueChanged)
-        if #available(iOS 13.0, *) {
-            self.refreshControl?.tintColor = .secondaryLabel
-        } else {
-            self.refreshControl?.tintColor = .gray
-        }
+        self.refreshControl?.tintColor = vkSingleton.shared.labelColor
         tableView.addSubview(self.refreshControl!)
 
         OperationQueue.main.addOperation {
@@ -66,12 +65,18 @@ class CountersInfoTableViewController: InnerTableViewController, UISearchBarDele
                 
                 if #available(iOS 13.0, *) {
                     let searchField = self.searchBar.searchTextField
-                    searchField.backgroundColor = UIColor.separator
-                    searchField.textColor = .label
+                    searchField.backgroundColor = vkSingleton.shared.separatorColor
+                    searchField.textColor = vkSingleton.shared.labelColor
                 } else {
+                    self.searchBar.changeKeyboardAppearanceMode()
                     if let searchField = self.searchBar.value(forKey: "_searchField") as? UITextField {
-                        searchField.backgroundColor = UIColor(white: 0, alpha: 0.2)
-                        searchField.textColor = .black
+                        searchField.backgroundColor = vkSingleton.shared.separatorColor
+                        searchField.textColor = vkSingleton.shared.labelColor
+                        searchField.changeKeyboardAppearanceMode()
+                    } else if let searchField = self.searchBar.value(forKey: "searchField") as? UITextField {
+                        searchField.backgroundColor = vkSingleton.shared.separatorColor
+                        searchField.textColor = vkSingleton.shared.labelColor
+                        searchField.changeKeyboardAppearanceMode()
                     }
                 }
             }

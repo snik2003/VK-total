@@ -43,6 +43,7 @@ class Record {
     var audioArtist: [String] = ["", "", "", "", "", "", "", "", "", ""]
     var audioTitle: [String] = ["", "", "", "", "", "", "", "", "", ""]
     var size = [Int] (repeating: 0, count: 10)
+    var videoViews = [Int] (repeating: 0, count: 10)
     var canPin: Int = 0
     var canDelete: Int = 0
     var canEdit: Int = 0
@@ -119,6 +120,7 @@ class Record {
                     self.photoHeight[index] = json["attachments"][index]["video"]["height"].intValue
                     self.photoText[index] = json["attachments"][index]["video"]["title"].stringValue
                     self.size[index] = json["attachments"][index]["video"]["duration"].intValue
+                    self.videoViews[index] = json["attachments"][index]["video"]["views"].intValue
                 }
                 
                 if self.mediaType[index] == "link" {
@@ -197,6 +199,7 @@ class Record {
                     self.photoHeight[index] = json["copy_history"][0]["attachments"][index]["video"]["height"].intValue
                     self.photoText[index] = json["copy_history"][0]["attachments"][index]["video"]["title"].stringValue
                     self.size[index] = json["copy_history"][0]["attachments"][index]["video"]["duration"].intValue
+                    self.videoViews[index] = json["copy_history"][0]["attachments"][index]["video"]["views"].intValue
                 }
                 
                 if self.mediaType[index] == "link" {

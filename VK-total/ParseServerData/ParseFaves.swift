@@ -41,6 +41,7 @@ class ParseFaves: Operation {
             let newFrom = json["response"]["next_from"].stringValue
             
             
+            
             nextFrom = newFrom
             wall = newsData
             profiles = profilesData

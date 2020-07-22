@@ -24,12 +24,11 @@ class NotificationsController: InnerTableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let myAttribute = [NSAttributedString.Key.foregroundColor: vkSingleton.shared.labelColor]
+        let myAttrString = NSAttributedString(string: "Обновляем данные", attributes: myAttribute)
+        self.refreshControl?.attributedTitle = myAttrString
         self.refreshControl?.addTarget(self, action: #selector(self.updateNotifications), for: UIControl.Event.valueChanged)
-        if #available(iOS 13.0, *) {
-            self.refreshControl?.tintColor = .secondaryLabel
-        } else {
-            self.refreshControl?.tintColor = .gray
-        }
+        self.refreshControl?.tintColor = vkSingleton.shared.labelColor
         tableView.addSubview(refreshControl!)
         
         self.refreshControl?.beginRefreshing()
@@ -108,22 +107,13 @@ class NotificationsController: InnerTableViewController {
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let view = UIView()
-        
-        if #available(iOS 13.0, *) {
-            view.backgroundColor = .separator
-        } else {
-            view.backgroundColor = UIColor.lightText
-        }
+        view.backgroundColor = vkSingleton.shared.separatorColor
         
         if section == 0 && newNots > 0 {
             
             let label = UILabel()
-            if #available(iOS 13.0, *) {
-                label.textColor = .label
-                label.backgroundColor = .separator
-            } else {
-                label.textColor = .black
-            }
+            label.textColor = vkSingleton.shared.labelColor
+            label.backgroundColor = vkSingleton.shared.separatorColor
             label.text = "Непросмотренные уведомления (\(newNots))"
             label.textAlignment = .center
             label.contentMode = .center
@@ -229,7 +219,7 @@ class NotificationsController: InnerTableViewController {
                         self.tableView.reloadData()
                     }
                 } else {
-                    self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                    error.showErrorMessage(controller: self)
                 }
             }
             

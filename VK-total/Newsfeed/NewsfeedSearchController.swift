@@ -18,23 +18,38 @@ class NewsfeedSearchController: InnerTableViewController {
     var wall = [Wall]()
     var wallProfiles = [WallProfiles]()
     var wallGroups = [WallGroups]()
+    var videos = [Videos]()
     
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
     var player = AVPlayer()
     
+    var firstAppear = true
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        OperationQueue.main.addOperation {
-            self.tableView.separatorStyle = .none
-            self.tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "wallRecordCell")
-            ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
-        }
-        
-        getSearch()
+        tableView.separatorStyle = .none
+        tableView.showsVerticalScrollIndicator = false
+        tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "wallRecordCell")
     }
 
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            
+            if let aView = tableView.superview {
+                ViewControllerUtils().showActivityIndicator(uiView: aView)
+            } else {
+                ViewControllerUtils().showActivityIndicator(uiView: view)
+            }
+            
+            getSearch()
+        }
+    }
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         
@@ -60,13 +75,76 @@ class NewsfeedSearchController: InnerTableViewController {
         
         let parseWall = ParseUserWall()
         parseWall.addDependency(getServerDataOperation)
+        parseWall.completionBlock = {
+            OperationQueue.main.addOperation {
+                var videoIDs = ""
+                for wall in parseWall.wall {
+                    for index in 0...9 {
+                        if wall.mediaType[index] == "video" {
+                            if videoIDs == "" {
+                                if wall.photoAccessKey[index] == "" {
+                                    videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                                } else {
+                                    videoIDs = "\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                                }
+                            } else {
+                                if wall.photoAccessKey[index] == "" {
+                                    videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])"
+                                } else {
+                                    videoIDs = "\(videoIDs),\(wall.photoOwnerID[index])_\(wall.photoID[index])_\(wall.photoAccessKey[index])"
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if videoIDs != "" {
+                    let url2 = "/method/video.get"
+                    let parameters2 = [
+                        "access_token": vkSingleton.shared.accessToken,
+                        "owner_id": vkSingleton.shared.userID,
+                        "videos": videoIDs,
+                        "extended": "0",
+                        "fields": "id, first_name, last_name, photo_100",
+                        "v": vkSingleton.shared.version
+                    ]
+                    
+                    let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                    getServerDataOperation2.completionBlock = {
+                        guard let data = getServerDataOperation2.data else { return }
+                        guard let json = try? JSON(data: data) else { print("json error"); return }
+                        //print(json)
+                        
+                        let newsVideos = json["response"]["items"].compactMap({ Videos(json: $0.1) })
+                        for video in newsVideos {
+                            if video.id != 0 { self.videos.append(video) }
+                        }
+                        
+                        OperationQueue.main.addOperation {
+                            self.wall = parseWall.wall
+                            self.wallProfiles = parseWall.profiles
+                            self.wallGroups = parseWall.groups
+                            
+                            self.tableView.separatorStyle = .none
+                            self.tableView.reloadData()
+                            ViewControllerUtils().hideActivityIndicator()
+                        }
+                    }
+                    OperationQueue().addOperation(getServerDataOperation2)
+                } else {
+                    OperationQueue.main.addOperation {
+                        self.wall = parseWall.wall
+                        self.wallProfiles = parseWall.profiles
+                        self.wallGroups = parseWall.groups
+                        
+                        self.tableView.separatorStyle = .none
+                        self.tableView.reloadData()
+                        ViewControllerUtils().hideActivityIndicator()
+                    }
+                }
+            }
+        }
         opq.addOperation(parseWall)
-        
-        self.setOfflineStatus(dependence: getServerDataOperation)
-        
-        let reloadTableController = ReloadNewsfeedSearchController(controller: self)
-        reloadTableController.addDependency(parseWall)
-        OperationQueue.main.addOperation(reloadTableController)
     }
     
     override func numberOfSections(in tableView: UITableView) -> Int {
@@ -79,14 +157,31 @@ class NewsfeedSearchController: InnerTableViewController {
         return 1
     }
 
-    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+    override func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        
         if let height = estimatedHeightCache[indexPath] {
             return height
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
             cell.delegate = self
+            cell.drawCell = false
             
-            let height = cell.getRowHeight(record: wall[indexPath.section])
+            let height = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+            estimatedHeightCache[indexPath] = height
+            return height
+        }
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        
+        if let height = estimatedHeightCache[indexPath] {
+            return height
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
+            cell.delegate = self
+            cell.drawCell = false
+            
+            let height = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             estimatedHeightCache[indexPath] = height
             return height
         }
@@ -105,25 +200,13 @@ class NewsfeedSearchController: InnerTableViewController {
     
     override func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -132,7 +215,7 @@ class NewsfeedSearchController: InnerTableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell", for: indexPath) as! WallRecordCell2
         cell.delegate = self
         
-        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
@@ -155,85 +238,6 @@ class NewsfeedSearchController: InnerTableViewController {
         
         return cell
     }
-
-    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        let record = wall[indexPath.section]
-        
-        if let visibleIndexPath = tableView.indexPathsForVisibleRows {
-            for index in visibleIndexPath {
-                if index == indexPath {
-                    let cell = tableView.cellForRow(at: indexPath) as! WallRecordCell2
-                    
-                    let action = cell.getActionOnClickPosition(touch: cell.position, record: record)
-                    
-                    if action == "show_record" {
-                        
-                        self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: false)
-                    }
-                    
-                    if action == "show_repost_record" {
-                        
-                        self.openWallRecord(ownerID: record.repostOwnerID, postID: record.repostID, accessKey: "", type: "post", scrollToComment: false)
-                    }
-                    
-                    if action == "show_owner" {
-                        
-                        self.openProfileController(id: record.ownerID, name: "")
-                    }
-                    
-                    if action == "show_repost_owner" {
-                        
-                        self.openProfileController(id: record.repostOwnerID, name: "")
-                    }
-                    
-                    for index in 0...9 {
-                        if action == "show_photo_\(index)" {
-                            let photoViewController = self.storyboard?.instantiateViewController(withIdentifier: "photoViewController") as! PhotoViewController
-                            
-                            var newIndex = 0
-                            for ind in 0...9 {
-                                if record.mediaType[ind] == "photo" {
-                                    let photos = Photos(json: JSON.null)
-                                    photos.uid = "\(record.photoOwnerID[ind])"
-                                    photos.pid = "\(record.photoID[ind])"
-                                    photos.xxbigPhotoURL = record.photoURL[ind]
-                                    photos.xbigPhotoURL = record.photoURL[ind]
-                                    photos.bigPhotoURL = record.photoURL[ind]
-                                    photos.photoURL = record.photoURL[ind]
-                                    photos.width = record.photoWidth[ind]
-                                    photos.height = record.photoHeight[ind]
-                                    photoViewController.photos.append(photos)
-                                    if ind == index {
-                                        photoViewController.numPhoto = newIndex
-                                    }
-                                    newIndex += 1
-                                }
-                            }
-                            
-                            self.navigationController?.pushViewController(photoViewController, animated: true)
-                        }
-                        
-                        if action == "show_video_\(index)" {
-                            
-                            self.openVideoController(ownerID: "\(record.photoOwnerID[index])", vid: "\(record.photoID[index])", accessKey: record.photoAccessKey[index], title: "Видеозапись", scrollToComment: false)
-                            
-                        }
-                        
-                        if action == "show_music_\(index)" {
-                            
-                            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-                            self.getITunesInfo2(artist: record.audioArtist[index], title: record.audioTitle[index])
-                        }
-                    }
-                    
-                    if action == "show_signer_profile" {
-                        self.openProfileController(id: record.signerID, name: "")
-                    }
-                }
-            }
-        }
-    }
     
     @IBAction func readMoreButtonTap1(sender: UIButton) {
         let buttonPosition: CGPoint = sender.convert(CGPoint.zero, to: self.tableView)
@@ -242,13 +246,12 @@ class NewsfeedSearchController: InnerTableViewController {
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore1 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -260,13 +263,12 @@ class NewsfeedSearchController: InnerTableViewController {
             if wall[indexPath.section].readMore2 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore2 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }
@@ -322,7 +324,7 @@ class NewsfeedSearchController: InnerTableViewController {
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -383,7 +385,7 @@ class NewsfeedSearchController: InnerTableViewController {
                         } else if error.errorCode == 252 {
                             self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
                         } else {
-                            self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                            error.showErrorMessage(controller: self)
                         }
                     }
                     
@@ -437,7 +439,7 @@ class NewsfeedSearchController: InnerTableViewController {
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 
@@ -476,7 +478,7 @@ class NewsfeedSearchController: InnerTableViewController {
                             }
                         }
                     } else {
-                        self.showErrorMessage(title: "Ошибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                        error.showErrorMessage(controller: self)
                     }
                 }
                 

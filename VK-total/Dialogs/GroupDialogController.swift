@@ -100,7 +100,18 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             getGroupLongPollServer(groupID: id)
         }
         
-        OperationQueue.main.addOperation {
+        self.navigationItem.hidesBackButton = true
+        let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
+        self.navigationItem.leftBarButtonItem = closeButton
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        if firstAppear {
+            firstAppear = false
+            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            
             self.configureTableView()
             self.tableView.separatorStyle = .none
             
@@ -120,22 +131,11 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             self.collectionView.showsVerticalScrollIndicator = false
             self.collectionView.showsHorizontalScrollIndicator = true
             self.view.addSubview(self.collectionView)
-            self.getAttachments()
             
-            self.navigationItem.hidesBackButton = true
-            let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
-            self.navigationItem.leftBarButtonItem = closeButton
-        }
-        
-        getDialog()
-    }
-    
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        
-        if firstAppear {
-            firstAppear = false
-            tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
+            getDialog()
+            
+            self.getAttachments()
         }
     }
     
@@ -185,29 +185,22 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
     
     func configureTableView() {
         tableView.backgroundColor = vkSingleton.shared.backColor
+        tableView.showsVerticalScrollIndicator = false
+        tableView.showsHorizontalScrollIndicator = false
+        
         commentView = DCCommentView.init(scrollView: self.tableView, frame: self.view.bounds, color: vkSingleton.shared.backColor)
         commentView.delegate = self
         commentView.textView.backgroundColor = .clear
-        commentView.textView.textColor = .black
-        commentView.textView.tintColor = vkSingleton.shared.mainColor
-        commentView.tintColor = vkSingleton.shared.mainColor
-        
-        if #available(iOS 13.0, *) {
-            if AppConfig.shared.autoMode && self.traitCollection.userInterfaceStyle == .dark {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            } else if AppConfig.shared.darkMode {
-                commentView.textView.textColor = .label
-                commentView.textView.tintColor = .label
-                commentView.tintColor = UIColor(white: 0.8, alpha: 1)
-            }
-        }
+        commentView.textView.textColor = vkSingleton.shared.labelColor
+        commentView.textView.tintColor = vkSingleton.shared.secondaryLabelColor
+        commentView.textView.changeKeyboardAppearanceMode()
+        commentView.tintColor = vkSingleton.shared.secondaryLabelColor
         
         commentView.sendImage = UIImage(named: "send")
         commentView.stickerImage = UIImage(named: "sticker")
         commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
-        commentView.tabHeight = self.tabBarController?.tabBar.frame.height ?? 49.0
+        
+        commentView.tabHeight = 0
         
         if let gid = Int(self.groupID) {
             setCommentFromGroupID(id: gid, controller: self)
@@ -222,7 +215,7 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
         tableView.allowsSelection = true
         tableView.allowsMultipleSelection = false
         
-        tableView.register(GroupDialogCell.self, forCellReuseIdentifier: "dialogCell")
+        tableView.register(DialogCell.self, forCellReuseIdentifier: "dialogCell")
         self.view.addSubview(commentView)
     }
     
@@ -249,9 +242,6 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
         let opq = OperationQueue()
         
         estimatedHeightCache.removeAll(keepingCapacity: false)
-        OperationQueue.main.addOperation {
-            ViewControllerUtils().showActivityIndicator(uiView: self.commentView)
-        }
         
         let url = "/method/messages.getHistory"
         var parameters = [
@@ -546,19 +536,41 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
         return 1
     }
     
+    func tableView(_ tableView: UITableView, estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat {
+        
+        if indexPath.section == 1 {
+            if let height = estimatedHeightCache[indexPath] {
+                return height
+            } else {
+                let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! DialogCell
+                
+                cell.drawCell = false
+                let height = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
+                
+                estimatedHeightCache[indexPath] = height
+                return height
+            }
+        }
+        
+        return 0.01
+    }
+    
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         if indexPath.section == 1 {
             if let height = estimatedHeightCache[indexPath] {
                 return height
             } else {
-                let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! GroupDialogCell
+                let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! DialogCell
                 
-                let height = cell.getRowHeight(dialog: dialogs[indexPath.row], users: users)
+                cell.drawCell = false
+                let height = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
+                
                 estimatedHeightCache[indexPath] = height
                 return height
             }
         }
+        
         return 0.01
     }
     
@@ -635,11 +647,13 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell", for: indexPath) as! GroupDialogCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell", for: indexPath) as! DialogCell
         
         if indexPath.section == 1 {
             cell.delegate = self
-            cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
+            cell.drawCell = true
+            
+            let _ = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
             
             let longPress = UILongPressGestureRecognizer(target: self, action: #selector(self.actionMessage(sender:)))
             longPress.minimumPressDuration = 0.6
@@ -708,7 +722,21 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
                         } else if attach.type == "wall" {
                             mess = "\(mess)[Запись на стене]"
                         } else if attach.type == "doc" {
-                            mess = "\(mess)[Документ]"
+                            if let doc = attach.docs.first {
+                                if doc.type == 3 {
+                                    mess = "\(mess)[GIF]"
+                                } else if doc.type == 4 {
+                                    mess = "\(mess)[Фотография]"
+                                } else if doc.type == 5 {
+                                    mess = "\(mess)[Голосовое сообщение]"
+                                } else if doc.type == 6 {
+                                    mess = "\(mess)[Видеозапись]"
+                                } else {
+                                    mess = "\(mess)[Документ]"
+                                }
+                            } else {
+                                mess = "\(mess)[Документ]"
+                            }
                         }
                     }
                     
@@ -1207,7 +1235,7 @@ extension GroupDialogController {
             }
             alertController.addAction(action1)
             
-            let action3 = UIAlertAction(title: "Мои видеозаписи", style: .default){ action in
+            /*let action3 = UIAlertAction(title: "Мои видеозаписи", style: .default){ action in
                 let videoController = self.storyboard?.instantiateViewController(withIdentifier: "VideoListController") as! VideoListController
                 
                 videoController.ownerID = vkSingleton.shared.userID
@@ -1218,7 +1246,7 @@ extension GroupDialogController {
                 
                 self.navigationController?.pushViewController(videoController, animated: true)
             }
-            alertController.addAction(action3)
+            alertController.addAction(action3)*/
             
             self.present(alertController, animated: true)
         } else {
@@ -1306,8 +1334,9 @@ extension GroupDialogController {
     }
     
     @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-// Local variable inserted by Swift 4.2 migrator.
-let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
+
+        // Local variable inserted by Swift 4.2 migrator.
+        let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
 
         
         if picker == pickerController {
@@ -1446,6 +1475,29 @@ extension GroupDialogController: UICollectionViewDelegate, UICollectionViewDataS
                         self.collectionView.reloadData()
                     }
                     alertController.addAction(action1)
+                    
+                    if typeOf[index] == "wall" {
+                        let action2 = UIAlertAction(title: "Открыть запись на стене", style: .default) { action in
+                            
+                            self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                            deleteView.removeFromSuperview()
+                        }
+                        alertController.addAction(action2)
+                    } else if typeOf[index] == "photo" {
+                        let action2 = UIAlertAction(title: "Открыть фотографию", style: .default) { action in
+                            
+                            self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                            deleteView.removeFromSuperview()
+                        }
+                        alertController.addAction(action2)
+                    } else if typeOf[index] == "video" {
+                        let action2 = UIAlertAction(title: "Открыть видеозапись", style: .default) { action in
+                            
+                            self.openBrowserController(url: "https://vk.com/\(self.attach[index])")
+                            deleteView.removeFromSuperview()
+                        }
+                        alertController.addAction(action2)
+                    }
                     
                     present(alertController, animated: true)
                 }

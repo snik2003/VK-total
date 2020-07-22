@@ -15,6 +15,7 @@ class PostponedWallController: InnerViewController, UITableViewDelegate, UITable
     var wall = [Wall]()
     var wallProfiles = [WallProfiles]()
     var wallGroups = [WallGroups]()
+    var videos = [Videos]()
     
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     var ownerID = ""
@@ -82,8 +83,9 @@ class PostponedWallController: InnerViewController, UITableViewDelegate, UITable
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
             cell.delegate = self
+            cell.drawCell = false
             
-            let height = cell.getRowHeight(record: wall[indexPath.section])
+            let height = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
             estimatedHeightCache[indexPath] = height
             return height
         }
@@ -102,25 +104,13 @@ class PostponedWallController: InnerViewController, UITableViewDelegate, UITable
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         let viewHeader = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewHeader.backgroundColor = .separator
-        } else {
-            viewHeader.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewHeader.backgroundColor = vkSingleton.shared.separatorColor
         return viewHeader
     }
     
     func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
         let viewFooter = UIView()
-        
-        if #available(iOS 13.0, *) {
-            viewFooter.backgroundColor = .separator
-        } else {
-            viewFooter.backgroundColor = UIColor(displayP3Red: 242/255, green: 242/255, blue: 242/255, alpha: 1)
-        }
-        
+        viewFooter.backgroundColor = vkSingleton.shared.separatorColor
         return viewFooter
     }
     
@@ -129,7 +119,7 @@ class PostponedWallController: InnerViewController, UITableViewDelegate, UITable
         let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell", for: indexPath) as! WallRecordCell2
         cell.delegate = self
         
-        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
+        estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
         
         cell.selectionStyle = .none
         cell.readMoreButton.addTarget(self, action: #selector(self.readMoreButtonTap1(sender:)), for: .touchUpInside)
@@ -154,13 +144,12 @@ class PostponedWallController: InnerViewController, UITableViewDelegate, UITable
             if wall[indexPath.section].readMore1 == 1 {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "wallRecordCell") as! WallRecordCell2
                 cell.delegate = self
+                cell.drawCell = false
                 
                 wall[indexPath.section].readMore1 = 0
-                estimatedHeightCache[indexPath] = cell.getRowHeight(record: wall[indexPath.section])
+                estimatedHeightCache[indexPath] = cell.configureCell(record: wall[indexPath.section], profiles: wallProfiles, groups: wallGroups, videos: videos, indexPath: indexPath, tableView: tableView, cell: cell, viewController: self)
                 
-                tableView.beginUpdates()
-                tableView.reloadRows(at: [indexPath], with: .none)
-                tableView.endUpdates()
+                tableView.reloadData()
             }
         }
     }

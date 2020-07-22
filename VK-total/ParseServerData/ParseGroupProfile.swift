@@ -18,6 +18,7 @@ class ParseGroupProfile: Operation {
         
         guard let json = try? JSON(data: data) else { print("json error"); return }
         //print(json)
+        
         let profile: [GroupProfile] = json["response"].compactMap { GroupProfile(json: $0.1) }
         outputData = profile
     }

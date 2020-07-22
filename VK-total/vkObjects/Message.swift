@@ -9,7 +9,7 @@
 import Foundation
 import SwiftyJSON
 
-class Message: Equatable {
+class Message: Equatable, Codable {
     static func == (lhs: Message, rhs: Message) -> Bool {
         if lhs.id == rhs.id, lhs.userID == rhs.userID, lhs.chatID == rhs.chatID {
             return true
@@ -33,6 +33,7 @@ class Message: Equatable {
     var in_read = 0
     var out_read = 0
     var attach: [DialogAttach] = []
+    var fwdMessage: [Message] = []
     
     // доп.поля для групповой беседы
     var chatID = 0
@@ -85,38 +86,260 @@ class Message: Equatable {
         
         for index in 0...9 {
             let att = DialogAttach(json: JSON.null)
-            att.type = json["attachments"][index]["type"].stringValue
+            att.type = json["message"]["attachments"][index]["type"].stringValue
             
             if att.type == "photo" {
                 let photos = PhotoAttach(json: JSON.null)
-                photos.id = json["attachments"][index]["photo"]["id"].intValue
-                photos.albumID = json["attachments"][index]["photo"]["album_id"].intValue
-                photos.ownerID = json["attachments"][index]["photo"]["owner_id"].intValue
-                photos.userID = json["attachments"][index]["photo"]["user_id"].intValue
-                photos.date = json["attachments"][index]["photo"]["date"].intValue
-                photos.width = json["attachments"][index]["photo"]["width"].intValue
-                photos.height = json["attachments"][index]["photo"]["height"].intValue
-                photos.text = json["attachments"][index]["photo"]["text"].stringValue
-                photos.photo604 = json["attachments"][index]["photo"]["photo_604"].stringValue
-                photos.photo807 = json["attachments"][index]["photo"]["photo_807"].stringValue
-                photos.accessKey = json["attachments"][index]["photo"]["access_key"].stringValue
+                photos.id = json["message"]["attachments"][index]["photo"]["id"].intValue
+                photos.albumID = json["message"]["attachments"][index]["photo"]["album_id"].intValue
+                photos.ownerID = json["message"]["attachments"][index]["photo"]["owner_id"].intValue
+                photos.userID = json["message"]["attachments"][index]["photo"]["user_id"].intValue
+                photos.date = json["message"]["attachments"][index]["photo"]["date"].intValue
+                photos.width = json["message"]["attachments"][index]["photo"]["width"].intValue
+                photos.height = json["message"]["attachments"][index]["photo"]["height"].intValue
+                photos.text = json["message"]["attachments"][index]["photo"]["text"].stringValue
+                photos.photo604 = json["message"]["attachments"][index]["photo"]["photo_604"].stringValue
+                photos.photo807 = json["message"]["attachments"][index]["photo"]["photo_807"].stringValue
+                photos.accessKey = json["message"]["attachments"][index]["photo"]["access_key"].stringValue
                 att.photos.append(photos)
                 attach.append(att)
             }
             
             if att.type == "video" {
                 let video = VideoAttach(json: JSON.null)
-                video.id = json["attachments"][index]["video"]["id"].intValue
-                video.ownerID = json["attachments"][index]["video"]["owner_id"].intValue
-                video.title = json["attachments"][index]["video"]["title"].stringValue
-                video.description = json["attachments"][index]["video"]["description"].stringValue
-                video.date = json["attachments"][index]["video"]["date"].intValue
-                video.duration = json["attachments"][index]["video"]["duration"].intValue
-                video.photo320 = json["attachments"][index]["video"]["photo_320"].stringValue
-                video.isPrivate = json["attachments"][index]["video"]["is_private"].intValue
-                video.accessKey = json["attachments"][index]["video"]["access_key"].stringValue
+                video.id = json["message"]["attachments"][index]["video"]["id"].intValue
+                video.ownerID = json["message"]["attachments"][index]["video"]["owner_id"].intValue
+                video.title = json["message"]["attachments"][index]["video"]["title"].stringValue
+                video.description = json["message"]["attachments"][index]["video"]["description"].stringValue
+                video.date = json["message"]["attachments"][index]["video"]["date"].intValue
+                video.duration = json["message"]["attachments"][index]["video"]["duration"].intValue
+                video.photo320 = json["message"]["attachments"][index]["video"]["photo_320"].stringValue
+                video.isPrivate = json["message"]["attachments"][index]["video"]["is_private"].intValue
+                video.accessKey = json["message"]["attachments"][index]["video"]["access_key"].stringValue
                 att.videos.append(video)
                 attach.append(att)
+            }
+            
+            if att.type == "doc" {
+                let doc = DocAttach(json: JSON.null)
+                doc.id = json["message"]["attachments"][index]["doc"]["id"].intValue
+                doc.ownerID = json["message"]["attachments"][index]["doc"]["owner_id"].intValue
+                doc.title = json["message"]["attachments"][index]["doc"]["title"].stringValue
+                doc.size = json["message"]["attachments"][index]["doc"]["size"].intValue
+                doc.ext = json["message"]["attachments"][index]["doc"]["ext"].stringValue
+                doc.url = json["message"]["attachments"][index]["doc"]["url"].stringValue
+                doc.date = json["message"]["attachments"][index]["doc"]["date"].intValue
+                doc.type = json["message"]["attachments"][index]["doc"]["type"].intValue
+                doc.accessKey = json["message"]["attachments"][index]["doc"]["access_key"].stringValue
+                
+                doc.linkMP3 = json["message"]["attachments"][index]["doc"]["preview"]["audio_msg"]["link_mp3"].stringValue
+                doc.linkOGG = json["message"]["attachments"][index]["doc"]["preview"]["audio_msg"]["link_ogg"].stringValue
+                doc.duration = json["message"]["attachments"][index]["doc"]["preview"]["audio_msg"]["duration"].intValue
+                
+                att.docs.append(doc)
+                attach.append(att)
+            }
+            
+            if att.type == "audio" {
+                let audio = AudioAttach(json: JSON.null)
+                audio.id = json["message"]["attachments"][index]["audio"]["id"].intValue
+                audio.ownerID = json["message"]["attachments"][index]["audio"]["owner_id"].intValue
+                audio.artist = json["message"]["attachments"][index]["audio"]["artist"].stringValue
+                audio.title = json["message"]["attachments"][index]["audio"]["title"].stringValue
+                audio.duration = json["message"]["attachments"][index]["audio"]["duration"].intValue
+                audio.url = json["message"]["attachments"][index]["audio"]["url"].intValue
+                audio.albumID = json["message"]["attachments"][index]["audio"]["album_id"].intValue
+                audio.accessKey = json["message"]["attachments"][index]["audio"]["access_key"].stringValue
+                att.audio.append(audio)
+                attach.append(att)
+            }
+            
+            if att.type == "sticker" {
+                let sticker = StickerAttach(json: JSON.null)
+                sticker.id = json["message"]["attachments"][index]["sticker"]["id"].intValue
+                sticker.productID = json["message"]["attachments"][index]["sticker"]["product_id"].intValue
+                sticker.width = json["message"]["attachments"][index]["sticker"]["width"].intValue
+                sticker.height = json["message"]["attachments"][index]["sticker"]["height"].intValue
+                sticker.photo256 = json["message"]["attachments"][index]["sticker"]["photo_256"].stringValue
+                sticker.photo128 = json["message"]["attachments"][index]["sticker"]["photo_128"].stringValue
+                att.stickers.append(sticker)
+                attach.append(att)
+            }
+            
+            if att.type == "wall" {
+                let wall = WallAttach(json: JSON.null)
+                wall.id = json["message"]["attachments"][index]["wall"]["id"].intValue
+                wall.fromID = json["message"]["attachments"][index]["wall"]["from_id"].intValue
+                wall.date = json["message"]["attachments"][index]["wall"]["date"].intValue
+                wall.text = json["message"]["attachments"][index]["wall"]["text"].stringValue
+                wall.postType = json["message"]["attachments"][index]["wall"]["post_type"].stringValue
+                att.wall.append(wall)
+                attach.append(att)
+            }
+            
+            if att.type == "gift" {
+                let gift = GiftAttach(json: JSON.null)
+                gift.id = json["message"]["attachments"][index]["gift"]["id"].intValue
+                gift.thumb48 = json["message"]["attachments"][index]["gift"]["thumb_48"].stringValue
+                gift.thumb96 = json["message"]["attachments"][index]["gift"]["thumb_96"].stringValue
+                gift.thumb256 = json["message"]["attachments"][index]["gift"]["thumb_256"].stringValue
+                att.gift.append(gift)
+                attach.append(att)
+            }
+            
+            if att.type == "link" {
+                let link = LinkAttach(json: JSON.null)
+                link.title = json["message"]["attachments"][index]["link"]["title"].stringValue
+                if link.title == "" {
+                    link.title = json["message"]["attachments"][index]["link"]["description"].stringValue
+                    if link.title == "" {
+                        link.title = json["message"]["attachments"][index]["link"]["caption"].stringValue
+                        if link.title == "" {
+                            link.title = json["message"]["attachments"][index]["link"]["photo"]["text"].stringValue
+                        }
+                    }
+                }
+                link.url = json["message"]["attachments"][index]["link"]["url"].stringValue
+                att.link.append(link)
+                attach.append(att)
+            }
+        }
+        
+        for index1 in 0...19 {
+            var userID = json["message"]["fwd_messages"][index1]["user_id"].intValue
+            if userID == 0 { userID = json["message"]["fwd_messages"][index1]["from_id"].intValue }
+            
+            if userID != 0 {
+                let mess = Message(json: JSON.null)
+                mess.userID = userID
+                mess.date = json["message"]["fwd_messages"][index1]["date"].intValue
+                mess.body = json["message"]["fwd_messages"][index1]["body"].stringValue
+                
+                if mess.body == "" {
+                    mess.body = json["message"]["fwd_messages"][index1]["text"].stringValue
+                }
+                
+                for index2 in 0...9 {
+                    let att = DialogAttach(json: JSON.null)
+                    att.type = json["message"]["fwd_messages"][index1]["attachments"][index2]["type"].stringValue
+                    
+                    if att.type == "photo" {
+                        let photos = PhotoAttach(json: JSON.null)
+                        photos.id = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["id"].intValue
+                        photos.albumID = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["album_id"].intValue
+                        photos.ownerID = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["owner_id"].intValue
+                        photos.userID = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["user_id"].intValue
+                        photos.date = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["date"].intValue
+                        photos.width = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["width"].intValue
+                        photos.height = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["height"].intValue
+                        photos.text = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["text"].stringValue
+                        photos.photo604 = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["photo_604"].stringValue
+                        photos.photo807 = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["photo_807"].stringValue
+                        photos.accessKey = json["message"]["fwd_messages"][index1]["attachments"][index2]["photo"]["access_key"].stringValue
+                        att.photos.append(photos)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "video" {
+                        let video = VideoAttach(json: JSON.null)
+                        video.id = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["id"].intValue
+                        video.ownerID = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["owner_id"].intValue
+                        video.title = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["title"].stringValue
+                        video.description = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["description"].stringValue
+                        video.date = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["date"].intValue
+                        video.duration = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["duration"].intValue
+                        video.photo320 = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["photo_320"].stringValue
+                        video.isPrivate = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["is_private"].intValue
+                        video.accessKey = json["message"]["fwd_messages"][index1]["attachments"][index2]["video"]["access_key"].stringValue
+                        att.videos.append(video)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "audio" {
+                        let audio = AudioAttach(json: JSON.null)
+                        audio.id = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["id"].intValue
+                        audio.ownerID = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["owner_id"].intValue
+                        audio.artist = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["artist"].stringValue
+                        audio.title = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["title"].stringValue
+                        audio.duration = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["duration"].intValue
+                        audio.url = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["url"].intValue
+                        audio.albumID = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["album_id"].intValue
+                        audio.accessKey = json["message"]["fwd_messages"][index1]["attachments"][index2]["audio"]["access_key"].stringValue
+                        att.audio.append(audio)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "sticker" {
+                        let sticker = StickerAttach(json: JSON.null)
+                        sticker.id = json["message"]["fwd_messages"][index1]["attachments"][index2]["sticker"]["id"].intValue
+                        sticker.productID = json["message"]["fwd_messages"][index1]["attachments"][index2]["sticker"]["product_id"].intValue
+                        sticker.width = json["message"]["fwd_messages"][index1]["attachments"][index2]["sticker"]["width"].intValue
+                        sticker.height = json["message"]["fwd_messages"][index1]["attachments"][index2]["sticker"]["height"].intValue
+                        sticker.photo256 = json["message"]["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_256"].stringValue
+                        sticker.photo128 = json["message"]["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_128"].stringValue
+                        att.stickers.append(sticker)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "wall" {
+                        let wall = WallAttach(json: JSON.null)
+                        wall.id = json["message"]["fwd_messages"][index1]["attachments"][index2]["wall"]["id"].intValue
+                        wall.fromID = json["message"]["fwd_messages"][index1]["attachments"][index2]["wall"]["from_id"].intValue
+                        wall.date = json["message"]["fwd_messages"][index1]["attachments"][index2]["wall"]["date"].intValue
+                        wall.text = json["message"]["fwd_messages"][index1]["attachments"][index2]["wall"]["text"].stringValue
+                        wall.postType = json["message"]["fwd_messages"][index1]["attachments"][index2]["wall"]["post_type"].stringValue
+                        att.wall.append(wall)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "gift" {
+                        let gift = GiftAttach(json: JSON.null)
+                        gift.id = json["message"]["fwd_messages"][index1]["attachments"][index2]["gift"]["id"].intValue
+                        gift.thumb48 = json["message"]["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_48"].stringValue
+                        gift.thumb96 = json["message"]["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_96"].stringValue
+                        gift.thumb256 = json["message"]["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_256"].stringValue
+                        att.gift.append(gift)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "doc" {
+                        let doc = DocAttach(json: JSON.null)
+                        doc.id = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["id"].intValue
+                        doc.ownerID = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["owner_id"].intValue
+                        doc.title = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["title"].stringValue
+                        doc.size = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["size"].intValue
+                        doc.ext = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["ext"].stringValue
+                        doc.url = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["url"].stringValue
+                        doc.date = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["date"].intValue
+                        doc.type = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["type"].intValue
+                        doc.accessKey = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["access_key"].stringValue
+                        
+                        doc.linkMP3 = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["link_mp3"].stringValue
+                        doc.linkOGG = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["link_ogg"].stringValue
+                        doc.duration = json["message"]["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["duration"].intValue
+                        
+                        att.docs.append(doc)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "link" {
+                        let link = LinkAttach(json: JSON.null)
+                        link.title = json["message"]["fwd_messages"][index1]["attachments"][index2]["link"]["title"].stringValue
+                        if link.title == "" {
+                            link.title = json["message"]["fwd_messages"][index1]["attachments"][index2]["link"]["description"].stringValue
+                            if link.title == "" {
+                                link.title = json["message"]["fwd_messages"][index1]["attachments"][index2]["link"]["caption"].stringValue
+                                if link.title == "" {
+                                    link.title = json["message"]["fwd_messages"][index1]["attachments"][index2]["link"]["photo"]["text"].stringValue
+                                }
+                            }
+                        }
+                        link.url = json["message"]["fwd_messages"][index1]["attachments"][index2]["link"]["url"].stringValue
+                        att.link.append(link)
+                        mess.attach.append(att)
+                    }
+                }
+                fwdMessage.append(mess)
             }
         }
     }
@@ -191,6 +414,228 @@ class Message: Equatable {
                 video.accessKey = json["attachments"][index]["video"]["access_key"].stringValue
                 att.videos.append(video)
                 attach.append(att)
+            }
+            
+            if att.type == "doc" {
+                let doc = DocAttach(json: JSON.null)
+                doc.id = json["attachments"][index]["doc"]["id"].intValue
+                doc.ownerID = json["attachments"][index]["doc"]["owner_id"].intValue
+                doc.title = json["attachments"][index]["doc"]["title"].stringValue
+                doc.size = json["attachments"][index]["doc"]["size"].intValue
+                doc.ext = json["attachments"][index]["doc"]["ext"].stringValue
+                doc.url = json["attachments"][index]["doc"]["url"].stringValue
+                doc.date = json["attachments"][index]["doc"]["date"].intValue
+                doc.type = json["attachments"][index]["doc"]["type"].intValue
+                doc.accessKey = json["attachments"][index]["doc"]["access_key"].stringValue
+                doc.linkMP3 = json["attachments"][index]["doc"]["preview"]["audio_msg"]["link_mp3"].stringValue
+                doc.linkOGG = json["attachments"][index]["doc"]["preview"]["audio_msg"]["link_ogg"].stringValue
+                doc.duration = json["attachments"][index]["doc"]["preview"]["audio_msg"]["duration"].intValue
+                att.docs.append(doc)
+                attach.append(att)
+            }
+            
+            if att.type == "audio" {
+                let audio = AudioAttach(json: JSON.null)
+                audio.id = json["attachments"][index]["audio"]["id"].intValue
+                audio.ownerID = json["attachments"][index]["audio"]["owner_id"].intValue
+                audio.artist = json["attachments"][index]["audio"]["artist"].stringValue
+                audio.title = json["attachments"][index]["audio"]["title"].stringValue
+                audio.duration = json["attachments"][index]["audio"]["duration"].intValue
+                audio.url = json["attachments"][index]["audio"]["url"].intValue
+                audio.albumID = json["attachments"][index]["audio"]["album_id"].intValue
+                audio.accessKey = json["attachments"][index]["audio"]["access_key"].stringValue
+                att.audio.append(audio)
+                attach.append(att)
+            }
+            
+            if att.type == "sticker" {
+                let sticker = StickerAttach(json: JSON.null)
+                sticker.id = json["attachments"][index]["sticker"]["id"].intValue
+                sticker.productID = json["attachments"][index]["sticker"]["product_id"].intValue
+                sticker.width = json["attachments"][index]["sticker"]["width"].intValue
+                sticker.height = json["attachments"][index]["sticker"]["height"].intValue
+                sticker.photo256 = json["attachments"][index]["sticker"]["photo_256"].stringValue
+                sticker.photo128 = json["attachments"][index]["sticker"]["photo_128"].stringValue
+                att.stickers.append(sticker)
+                attach.append(att)
+            }
+            
+            if att.type == "wall" {
+                let wall = WallAttach(json: JSON.null)
+                wall.id = json["attachments"][index]["wall"]["id"].intValue
+                wall.fromID = json["attachments"][index]["wall"]["from_id"].intValue
+                wall.date = json["attachments"][index]["wall"]["date"].intValue
+                wall.text = json["attachments"][index]["wall"]["text"].stringValue
+                wall.postType = json["attachments"][index]["wall"]["post_type"].stringValue
+                att.wall.append(wall)
+                attach.append(att)
+            }
+            
+            if att.type == "gift" {
+                let gift = GiftAttach(json: JSON.null)
+                gift.id = json["attachments"][index]["gift"]["id"].intValue
+                gift.thumb48 = json["attachments"][index]["gift"]["thumb_48"].stringValue
+                gift.thumb96 = json["attachments"][index]["gift"]["thumb_96"].stringValue
+                gift.thumb256 = json["attachments"][index]["gift"]["thumb_256"].stringValue
+                att.gift.append(gift)
+                attach.append(att)
+            }
+            
+            if att.type == "link" {
+                let link = LinkAttach(json: JSON.null)
+                link.title = json["attachments"][index]["link"]["title"].stringValue
+                if link.title == "" {
+                    link.title = json["attachments"][index]["link"]["description"].stringValue
+                    if link.title == "" {
+                        link.title = json["attachments"][index]["link"]["caption"].stringValue
+                        if link.title == "" {
+                            link.title = json["attachments"][index]["link"]["photo"]["text"].stringValue
+                        }
+                    }
+                }
+                link.url = json["attachments"][index]["link"]["url"].stringValue
+                att.link.append(link)
+                attach.append(att)
+            }
+        }
+        
+        for index1 in 0...19 {
+            let mess = Message(json: JSON.null)
+            mess.userID = json["fwd_messages"][index1]["user_id"].intValue
+            
+            if mess.userID == 0 {
+                mess.userID = json["fwd_messages"][index1]["from_id"].intValue
+            }
+            
+            if mess.userID != 0 {
+                mess.date = json["fwd_messages"][index1]["date"].intValue
+                mess.body = json["fwd_messages"][index1]["body"].stringValue
+                
+                if mess.body == "" {
+                    mess.body = json["fwd_messages"][index1]["text"].stringValue
+                }
+                
+                for index2 in 0...9 {
+                    let att = DialogAttach(json: JSON.null)
+                    att.type = json["fwd_messages"][index1]["attachments"][index2]["type"].stringValue
+                    
+                    if att.type == "photo" {
+                        let photos = PhotoAttach(json: JSON.null)
+                        photos.id = json["fwd_messages"][index1]["attachments"][index2]["photo"]["id"].intValue
+                        photos.albumID = json["fwd_messages"][index1]["attachments"][index2]["photo"]["album_id"].intValue
+                        photos.ownerID = json["fwd_messages"][index1]["attachments"][index2]["photo"]["owner_id"].intValue
+                        photos.userID = json["fwd_messages"][index1]["attachments"][index2]["photo"]["user_id"].intValue
+                        photos.date = json["fwd_messages"][index1]["attachments"][index2]["photo"]["date"].intValue
+                        photos.width = json["fwd_messages"][index1]["attachments"][index2]["photo"]["width"].intValue
+                        photos.height = json["fwd_messages"][index1]["attachments"][index2]["photo"]["height"].intValue
+                        photos.text = json["fwd_messages"][index1]["attachments"][index2]["photo"]["text"].stringValue
+                        photos.photo604 = json["fwd_messages"][index1]["attachments"][index2]["photo"]["photo_604"].stringValue
+                        photos.photo807 = json["fwd_messages"][index1]["attachments"][index2]["photo"]["photo_807"].stringValue
+                        photos.accessKey = json["fwd_messages"][index1]["attachments"][index2]["photo"]["access_key"].stringValue
+                        att.photos.append(photos)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "video" {
+                        let video = VideoAttach(json: JSON.null)
+                        video.id = json["fwd_messages"][index1]["attachments"][index2]["video"]["id"].intValue
+                        video.ownerID = json["fwd_messages"][index1]["attachments"][index2]["video"]["owner_id"].intValue
+                        video.title = json["fwd_messages"][index1]["attachments"][index2]["video"]["title"].stringValue
+                        video.description = json["fwd_messages"][index1]["attachments"][index2]["video"]["description"].stringValue
+                        video.date = json["fwd_messages"][index1]["attachments"][index2]["video"]["date"].intValue
+                        video.duration = json["fwd_messages"][index1]["attachments"][index2]["video"]["duration"].intValue
+                        video.photo320 = json["fwd_messages"][index1]["attachments"][index2]["video"]["photo_320"].stringValue
+                        video.isPrivate = json["fwd_messages"][index1]["attachments"][index2]["video"]["is_private"].intValue
+                        video.accessKey = json["fwd_messages"][index1]["attachments"][index2]["video"]["access_key"].stringValue
+                        att.videos.append(video)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "audio" {
+                        let audio = AudioAttach(json: JSON.null)
+                        audio.id = json["fwd_messages"][index1]["attachments"][index2]["audio"]["id"].intValue
+                        audio.ownerID = json["fwd_messages"][index1]["attachments"][index2]["audio"]["owner_id"].intValue
+                        audio.artist = json["fwd_messages"][index1]["attachments"][index2]["audio"]["artist"].stringValue
+                        audio.title = json["fwd_messages"][index1]["attachments"][index2]["audio"]["title"].stringValue
+                        audio.duration = json["fwd_messages"][index1]["attachments"][index2]["audio"]["duration"].intValue
+                        audio.url = json["fwd_messages"][index1]["attachments"][index2]["audio"]["url"].intValue
+                        audio.albumID = json["fwd_messages"][index1]["attachments"][index2]["audio"]["album_id"].intValue
+                        audio.accessKey = json["fwd_messages"][index1]["attachments"][index2]["audio"]["access_key"].stringValue
+                        att.audio.append(audio)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "sticker" {
+                        let sticker = StickerAttach(json: JSON.null)
+                        sticker.id = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["id"].intValue
+                        sticker.productID = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["product_id"].intValue
+                        sticker.width = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["width"].intValue
+                        sticker.height = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["height"].intValue
+                        sticker.photo256 = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_256"].stringValue
+                        sticker.photo128 = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_128"].stringValue
+                        att.stickers.append(sticker)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "wall" {
+                        let wall = WallAttach(json: JSON.null)
+                        wall.id = json["fwd_messages"][index1]["attachments"][index2]["wall"]["id"].intValue
+                        wall.fromID = json["fwd_messages"][index1]["attachments"][index2]["wall"]["from_id"].intValue
+                        wall.date = json["fwd_messages"][index1]["attachments"][index2]["wall"]["date"].intValue
+                        wall.text = json["fwd_messages"][index1]["attachments"][index2]["wall"]["text"].stringValue
+                        wall.postType = json["fwd_messages"][index1]["attachments"][index2]["wall"]["post_type"].stringValue
+                        att.wall.append(wall)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "gift" {
+                        let gift = GiftAttach(json: JSON.null)
+                        gift.id = json["fwd_messages"][index1]["attachments"][index2]["gift"]["id"].intValue
+                        gift.thumb48 = json["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_48"].stringValue
+                        gift.thumb96 = json["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_96"].stringValue
+                        gift.thumb256 = json["fwd_messages"][index1]["attachments"][index2]["gift"]["thumb_256"].stringValue
+                        att.gift.append(gift)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "doc" {
+                        let doc = DocAttach(json: JSON.null)
+                        doc.id = json["fwd_messages"][index1]["attachments"][index2]["doc"]["id"].intValue
+                        doc.ownerID = json["fwd_messages"][index1]["attachments"][index2]["doc"]["owner_id"].intValue
+                        doc.title = json["fwd_messages"][index1]["attachments"][index2]["doc"]["title"].stringValue
+                        doc.size = json["fwd_messages"][index1]["attachments"][index2]["doc"]["size"].intValue
+                        doc.ext = json["fwd_messages"][index1]["attachments"][index2]["doc"]["ext"].stringValue
+                        doc.url = json["fwd_messages"][index1]["attachments"][index2]["doc"]["url"].stringValue
+                        doc.date = json["fwd_messages"][index1]["attachments"][index2]["doc"]["date"].intValue
+                        doc.type = json["fwd_messages"][index1]["attachments"][index2]["doc"]["type"].intValue
+                        doc.accessKey = json["fwd_messages"][index1]["attachments"][index2]["doc"]["access_key"].stringValue
+                        
+                        doc.linkMP3 = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["link_mp3"].stringValue
+                        doc.linkOGG = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["link_ogg"].stringValue
+                        doc.duration = json["fwd_messages"][index1]["attachments"][index2]["doc"]["preview"]["audio_msg"]["duration"].intValue
+                        
+                        att.docs.append(doc)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "link" {
+                        let link = LinkAttach(json: JSON.null)
+                        link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["title"].stringValue
+                        if link.title == "" {
+                            link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["description"].stringValue
+                            if link.title == "" {
+                                link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["caption"].stringValue
+                                if link.title == "" {
+                                    link.title = json["fwd_messages"][index1]["attachments"][index2]["link"]["photo"]["text"].stringValue
+                                }
+                            }
+                        }
+                        link.url = json["fwd_messages"][index1]["attachments"][index2]["link"]["url"].stringValue
+                        att.link.append(link)
+                        mess.attach.append(att)
+                    }
+                }
+                fwdMessage.append(mess)
             }
         }
     }

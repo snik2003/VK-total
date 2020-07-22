@@ -55,6 +55,8 @@ class BrowserController: InnerViewController, WKNavigationDelegate {
         let configuration = WKWebViewConfiguration()
         let frameRect = CGRect(x: 0, y: navHeight + 50, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight - 50 - 44)
         
+        urlTextField.changeKeyboardAppearanceMode()
+        
         webView = WKWebView(frame: frameRect, configuration: configuration)
         webView.translatesAutoresizingMaskIntoConstraints = false
         webView.customUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/48.0.2564.109 Safari/537.36"
@@ -235,7 +237,7 @@ class BrowserController: InnerViewController, WKNavigationDelegate {
             //print(realm.configuration.fileURL!)
             
             realm.beginWrite()
-            realm.add(song, update: true)
+            realm.add(song, update: .all)
             try realm.commitWrite()
             showSuccessMessage(title: "Моя музыка iTunes", msg: "Песня «\(self.song)» успешно записана в «Избранное»")
         } catch {

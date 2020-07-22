@@ -66,28 +66,16 @@ class VideoListCell: UITableViewCell {
         durationLabel.font = UIFont(name: "Verdana-Bold", size: 10.0)!
         durationLabel.textAlignment = .center
         durationLabel.contentMode = .center
-        if #available(iOS 13.0, *) {
-            durationLabel.textColor = .label
-            durationLabel.backgroundColor = .secondarySystemBackground
-        } else {
-            durationLabel.textColor = .black
-            durationLabel.backgroundColor = UIColor.lightText.withAlphaComponent(0.5)
-        }
-        durationLabel.layer.cornerRadius = 5
+        durationLabel.textColor = .white
+        durationLabel.backgroundColor = UIColor.darkGray.withAlphaComponent(0.8)
+        durationLabel.layer.cornerRadius = 4
         durationLabel.clipsToBounds = true
-        if let length = durationLabel.text?.length, length > 5 {
-            durationLabel.frame = CGRect(x: width - 2 * leftInsets - 10 - 60, y: height - 2 * topInsets - 5 - 16, width: 60, height: 16)
-        } else {
-            durationLabel.frame = CGRect(x: width - 2 * leftInsets - 10 - 40, y: height - 2 * topInsets - 5 - 16, width: 40, height: 16)
-        }
+        let durationLabelWidth = durationLabel.getTextWidth(maxWidth: 200)
+        durationLabel.frame = CGRect(x: width - 2 * leftInsets - 10 - durationLabelWidth, y: height - 2 * topInsets - 5 - 16, width: durationLabelWidth, height: 16)
         videoImage.addSubview(durationLabel)
         
         titleLabel = UILabel()
-        if #available(iOS 13.0, *) {
-            titleLabel.textColor = .label
-        } else {
-            titleLabel.textColor = .black
-        }
+        titleLabel.textColor = vkSingleton.shared.labelColor
         titleLabel.text = video.title
         titleLabel.prepareTextForPublish2(self.delegate)
         titleLabel.font = UIFont(name: "Verdana", size: 13)!
@@ -107,11 +95,7 @@ class VideoListCell: UITableViewCell {
         
         if video.description != "" {
             descriptionLabel = UILabel()
-            if #available(iOS 13.0, *) {
-                descriptionLabel.textColor = .secondaryLabel
-            } else {
-                descriptionLabel.textColor = .lightGray
-            }
+            descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
             descriptionLabel.text = video.description
             descriptionLabel.prepareTextForPublish2(self.delegate)
             descriptionLabel.font = UIFont(name: "Verdana", size: 12)!
