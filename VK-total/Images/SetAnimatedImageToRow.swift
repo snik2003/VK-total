@@ -36,8 +36,8 @@ class SetAnimatedImageToRow: Operation {
             let imageViewGif = FLAnimatedImageView()
             imageViewGif.animatedImage = imageGIF
             imageViewGif.frame = CGRect(x: 0, y: 0, width: imageView.frame.width, height: imageView.frame.height)
-            imageView.image = nil
             imageView.addSubview(imageViewGif)
+            imageView.image = nil
         }
     }
 }

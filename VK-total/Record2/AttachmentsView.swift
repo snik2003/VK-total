@@ -31,10 +31,10 @@ class AttachmentsView: UIView {
                     var height = CGFloat(photos[0].height)
                     
                     if width > height {
-                        width = maxSize
+                        width = maxSize - 2.5
                         height = width * CGFloat(photos[0].height) / CGFloat(photos[0].width)
                     } else {
-                        height = maxSize
+                        height = maxSize - 2.5
                         width = height * CGFloat(photos[0].width) / CGFloat(photos[0].height)
                     }
                     
@@ -69,8 +69,8 @@ class AttachmentsView: UIView {
                         }
                         OperationQueue().addOperation(getCacheImage)
                         
-                        if width < maxSize {
-                            photoImage.frame = CGRect(x: (maxSize - width) / 2, y: topY + 2.5, width: width, height: height)
+                        if width < maxSize - 2.5 {
+                            photoImage.frame = CGRect(x: (maxSize - 2.5 - width) / 2, y: topY + 2.5, width: width, height: height)
                         } else {
                             photoImage.frame = CGRect(x: 0, y: topY + 2.5, width: width, height: height)
                         }
@@ -101,7 +101,6 @@ class AttachmentsView: UIView {
                     
                     if width > height {
                         width = maxSize
-                        
                         height = width * CGFloat(photos[0].height) / CGFloat(photos[0].width)
                     } else {
                         height = maxSize

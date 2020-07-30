@@ -145,6 +145,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
         
         tableView.allowsSelection = true
         tableView.allowsMultipleSelection = false
+        tableView.showsVerticalScrollIndicator = false
         
         tableView.register(Record2Cell.self, forCellReuseIdentifier: "recordCell")
         tableView.register(CommentCell2.self, forCellReuseIdentifier: "commentCell")
@@ -367,7 +368,7 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
         
         if type == "post" {
             
-            var code = "var a = API.wall.getById({\"posts\":\"\(ownerID)_\(itemID)\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"extended\":\"1\",\"copy_history_depth\":\"1\",\"fields\":\"id,first_name,last_name,photo_max\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+            var code = "var a = API.wall.getById({\"posts\":\"\(ownerID)_\(itemID)\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"extended\":\"1\",\"copy_history_depth\":\"1\",\"fields\":\"id,first_name,last_name,photo_max\",\"v\":\"5.85\"}); \n"
             
             code = "\(code) var b = API.likes.getList({\"type\":\"post\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(ownerID)\",\"item_id\":\"\(itemID)\",\"filter\":\"likes\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\": \"\(vkSingleton.shared.version)\"}); \n"
             
@@ -1017,6 +1018,8 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                             mess = "\(mess)[Подарок]"
                         } else if comment.attach[0].type == "wall" {
                             mess = "\(mess)[Запись на стене]"
+                        } else if comment.attach[0].type == "doc" && comment.attach[0].ext == "gif" {
+                            mess = "\(mess)[Фотография]"
                         } else if comment.attach[0].type == "doc" {
                             mess = "\(mess)[Документ]"
                         } else if comment.attach[0].type == "link" {
@@ -1287,131 +1290,6 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                     }
                 }
                 OperationQueue().addOperation(parseComments)
-            }
-        }
-    }
-    
-    @objc func pollVote(sender: UITapGestureRecognizer) {
-        let position: CGPoint = sender.location(in: self.tableView)
-        let indexPath = self.tableView.indexPathForRow(at: position)
-    
-        if let cell = tableView.cellForRow(at: indexPath!) as? Record2Cell, let label = sender.view as? UILabel {
-            let num = label.tag
-            
-            if cell.poll.answerID == 0 {
-                let alertController = UIAlertController(title: "Вы выбрали следующий вариант:", message: "\(num+1). \(cell.poll.answers[num].text)", preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                alertController.addAction(cancelAction)
-                
-                let action1 = UIAlertAction(title: "Отдать свой голос", style: .default) { action in
-                    let url = "/method/polls.addVote"
-                    let parameters = [
-                        "access_token": vkSingleton.shared.accessToken,
-                        "owner_id": "\(cell.poll.ownerID)",
-                        "poll_id": "\(cell.poll.id)",
-                        "answer_id": "\(cell.poll.answers[num].id)",
-                        "v": vkSingleton.shared.version
-                    ]
-                    
-                    let request = GetServerDataOperation(url: url, parameters: parameters)
-                    
-                    request.completionBlock = {
-                        guard let data = request.data else { return }
-                        
-                        guard let json = try? JSON(data: data) else { print("json error"); return }
-                        
-                        let error = ErrorJson(json: JSON.null)
-                        error.errorCode = json["error"]["error_code"].intValue
-                        error.errorMsg = json["error"]["error_msg"].stringValue
-                        
-                        if error.errorCode == 0 {
-                            OperationQueue.main.addOperation {
-                                cell.poll.votes += 1
-                                cell.poll.answers[num].votes += 1
-                                for answer in cell.poll.answers {
-                                    answer.rate = Int(Double(answer.votes) / Double(cell.poll.votes) * 100)
-                                }
-                                cell.poll.answerID = cell.poll.answers[num].id
-                                cell.updatePoll()
-                            }
-                        } else if error.errorCode == 250 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Нет доступа к опросу.")
-                        } else if error.errorCode == 251 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор опроса.")
-                        } else if error.errorCode == 252 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
-                        } else {
-                            error.showErrorMessage(controller: self)
-                        }
-                    }
-                    
-                    OperationQueue().addOperation(request)
-                }
-                alertController.addAction(action1)
-                
-                present(alertController, animated: true)
-            } else {
-                
-                var message = ""
-                for index in 0...cell.poll.answers.count-1 {
-                    if cell.poll.answers[index].id == cell.poll.answerID {
-                        message = "\(index+1). \(cell.poll.answers[index].text)"
-                    }
-                }
-                
-                let alertController = UIAlertController(title: "Вы проголосовали за вариант:", message: message, preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                alertController.addAction(cancelAction)
-                
-                let action1 = UIAlertAction(title: "Отозвать свой голос", style: .destructive) { action in
-                    let url = "/method/polls.deleteVote"
-                    let parameters = [
-                        "access_token": vkSingleton.shared.accessToken,
-                        "owner_id": "\(cell.poll.ownerID)",
-                        "poll_id": "\(cell.poll.id)",
-                        "answer_id": "\(cell.poll.answerID)",
-                        "v": vkSingleton.shared.version
-                    ]
-                    
-                    let request = GetServerDataOperation(url: url, parameters: parameters)
-                    
-                    request.completionBlock = {
-                        guard let data = request.data else { return }
-                        
-                        guard let json = try? JSON(data: data) else { print("json error"); return }
-                        
-                        let error = ErrorJson(json: JSON.null)
-                        error.errorCode = json["error"]["error_code"].intValue
-                        error.errorMsg = json["error"]["error_msg"].stringValue
-                        
-                        if error.errorCode == 0 {
-                            OperationQueue.main.addOperation {
-                                cell.poll.votes -= 1
-                                cell.poll.answers[num].votes -= 1
-                                for answer in cell.poll.answers {
-                                    answer.rate = Int(Double(answer.votes) / Double(cell.poll.votes) * 100)
-                                }
-                                cell.poll.answerID = 0
-                                cell.updatePoll()
-                            }
-                        } else if error.errorCode == 250 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Нет доступа к опросу.")
-                        } else if error.errorCode == 251 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор опроса.")
-                        } else if error.errorCode == 252 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
-                        } else {
-                            error.showErrorMessage(controller: self)
-                        }
-                    }
-                    
-                    OperationQueue().addOperation(request)
-                }
-                alertController.addAction(action1)
-                
-                present(alertController, animated: true)
             }
         }
     }

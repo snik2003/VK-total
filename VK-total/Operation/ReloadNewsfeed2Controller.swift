@@ -42,6 +42,7 @@ class ReloadNewsfeed2Controller: Operation {
         controller.startFrom = parseNewsfeed.nextFrom
         controller.offset += controller.count
         controller.tableView.reloadData()
+        controller.tableView.isScrollEnabled = true
         controller.refreshControl?.endRefreshing()
         controller.spinner.startAnimating()
         controller.menuView.isUserInteractionEnabled = true

@@ -139,7 +139,7 @@ class ProfileController: InnerTableViewController {
             "count": "\(count)",
             "filter": filterRecords,
             "extended": "1",
-            "v": vkSingleton.shared.version
+            "v": "5.85"
         ]
         
         let getServerDataOperation3 = GetServerDataOperation(url: url3, parameters: parameters3)

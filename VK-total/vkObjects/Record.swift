@@ -84,160 +84,134 @@ class Record {
         self.signerID = json["signer_id"].intValue
         self.postSource = json["post_source"]["platform"].stringValue
         
-        if self.repostOwnerID == 0 {
-            for index in 0...9 {
-                self.mediaType[index] = json["attachments"][index]["type"].stringValue
+        var json2 = json
+        if self.repostOwnerID != 0 { json2 = json["copy_history"][0] }
+            
+        //print(json2)
+        
+        self.signerID = json2["signer_id"].intValue
+        
+        for index in 0...9 {
+            self.mediaType[index] = json2["attachments"][index]["type"].stringValue
+            
+            if self.mediaType[index] == "photo" {
+                self.photoID[index] = json2["attachments"][index]["photo"]["id"].intValue
+                self.photoOwnerID[index] = json2["attachments"][index]["photo"]["owner_id"].intValue
+                self.photoText[index] = json2["attachments"][index]["photo"]["text"].stringValue
+                self.photoAccessKey[index] = json2["attachments"][index]["photo"]["access_key"].stringValue
                 
-                if self.mediaType[index] == "photo" {
-                    self.photoURL[index] = json["attachments"][index]["photo"]["photo_1204"].stringValue
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["attachments"][index]["photo"]["photo_807"].stringValue
-                    }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["attachments"][index]["photo"]["photo_604"].stringValue
-                    }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["attachments"][index]["photo"]["photo_130"].stringValue
-                    }
-                    self.photoID[index] = json["attachments"][index]["photo"]["id"].intValue
-                    self.photoOwnerID[index] = json["attachments"][index]["photo"]["owner_id"].intValue
-                    self.photoWidth[index] = json["attachments"][index]["photo"]["width"].intValue
-                    self.photoHeight[index] = json["attachments"][index]["photo"]["height"].intValue
-                    self.photoText[index] = json["attachments"][index]["photo"]["text"].stringValue
-                }
                 
-                if self.mediaType[index] == "video" {
-                    self.photoURL[index] = json["attachments"][index]["video"]["photo_800"].stringValue
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["attachments"][index]["video"]["photo_640"].stringValue
-                    }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["attachments"][index]["video"]["photo_320"].stringValue
-                    }
-                    self.photoID[index] = json["attachments"][index]["video"]["id"].intValue
-                    self.photoOwnerID[index] = json["attachments"][index]["video"]["owner_id"].intValue
-                    self.photoWidth[index] = json["attachments"][index]["video"]["width"].intValue
-                    self.photoHeight[index] = json["attachments"][index]["video"]["height"].intValue
-                    self.photoText[index] = json["attachments"][index]["video"]["title"].stringValue
-                    self.size[index] = json["attachments"][index]["video"]["duration"].intValue
-                    self.videoViews[index] = json["attachments"][index]["video"]["views"].intValue
-                }
-                
-                if self.mediaType[index] == "link" {
-                    self.photoURL[index] = json["attachments"][index]["link"]["photo"]["photo_807"].stringValue
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["attachments"][index]["link"]["photo"]["photo_604"].stringValue
-                    }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["attachments"][index]["link"]["photo"]["photo_320"].stringValue
-                    }
-                    self.photoWidth[index] = json["attachments"][index]["link"]["photo"]["width"].intValue
-                    self.photoHeight[index] = json["attachments"][index]["link"]["photo"]["height"].intValue
-                    self.photoText[index] = json["attachments"][index]["link"]["description"].stringValue
-                    
-                    self.linkText[index] = json["attachments"][index]["link"]["title"].stringValue
-                    self.linkURL[index] = json["attachments"][index]["link"]["url"].stringValue
-                    
-                }
-                
-                if self.mediaType[index] == "doc" {
-                    self.photoID[index] = json["attachments"][index]["doc"]["id"].intValue
-                    self.photoOwnerID[index] = json["attachments"][index]["doc"]["owner_id"].intValue
-                    self.photoText[index] = json["attachments"][index]["doc"]["ext"].stringValue
-                    self.videoURL[index] = json["attachments"][index]["doc"]["url"].stringValue
-                    self.size[index] = json["attachments"][index]["doc"]["size"].intValue
-                    self.photoURL[index] = json["attachments"][index]["doc"]["preview"]["photo"]["sizes"][2]["src"].stringValue
-                    self.photoWidth[index] = json["attachments"][index]["doc"]["preview"]["photo"]["sizes"][2]["width"].intValue
-                    self.photoHeight[index] = json["attachments"][index]["doc"]["preview"]["photo"]["sizes"][2]["height"].intValue
-                }
-                
-                if self.mediaType[index]  == "audio" {
-                    self.audioArtist[index] = json["attachments"][index]["audio"]["artist"].stringValue
-                    self.audioTitle[index] = json["attachments"][index]["audio"]["title"].stringValue
-                }
-                
-                if self.mediaType[index] == "poll" {
-                    self.poll = Poll(json: json["attachments"][index]["poll"])
+                let sizes = json2["attachments"][index]["photo"]["sizes"].arrayValue
+                if let size = sizes.filter({ $0["type"].stringValue == "x" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "y" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "q" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "p" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
                 }
             }
-        } else {
-            self.signerID = json["copy_history"][0]["signer_id"].intValue
             
-            for index in 0...9 {
-                self.mediaType[index] = json["copy_history"][0]["attachments"][index]["type"].stringValue
+            if self.mediaType[index] == "video" {
+                self.photoID[index] = json2["attachments"][index]["video"]["id"].intValue
+                self.photoOwnerID[index] = json2["attachments"][index]["video"]["owner_id"].intValue
+                self.photoText[index] = json2["attachments"][index]["video"]["title"].stringValue
+                self.size[index] = json2["attachments"][index]["video"]["duration"].intValue
+                self.videoViews[index] = json2["attachments"][index]["video"]["views"].intValue
+                self.videoURL[index] = json2["attachments"][index]["video"]["player"].stringValue
                 
-                if self.mediaType[index] == "photo" {
-                    self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_1204"].stringValue
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_807"].stringValue
-                    }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_604"].stringValue
-                    }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["photo"]["photo_130"].stringValue
-                    }
-                    self.photoID[index] = json["copy_history"][0]["attachments"][index]["photo"]["id"].intValue
-                    self.photoOwnerID[index] = json["copy_history"][0]["attachments"][index]["photo"]["owner_id"].intValue
-                    self.photoWidth[index] = json["copy_history"][0]["attachments"][index]["photo"]["width"].intValue
-                    self.photoHeight[index] = json["copy_history"][0]["attachments"][index]["photo"]["height"].intValue
-                    self.photoText[index] = json["copy_history"][0]["attachments"][index]["photo"]["text"].stringValue
-                }
+                self.photoWidth[index] = json2["attachments"][index]["video"]["width"].intValue
+                self.photoHeight[index] = json2["attachments"][index]["video"]["height"].intValue
                 
-                if self.mediaType[index] == "video" {
-                    self.photoID[index] = json["copy_history"][0]["attachments"][index]["video"]["id"].intValue
-                    self.photoOwnerID[index] = json["copy_history"][0]["attachments"][index]["video"]["owner_id"].intValue
-                    
-                    self.photoURL[index] = json["copy_history"][0]["attachments"][index]["video"]["photo_800"].stringValue
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["video"]["photo_640"].stringValue
-                    }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["video"]["photo_320"].stringValue
-                    }
-                    self.photoWidth[index] = json["copy_history"][0]["attachments"][index]["video"]["width"].intValue
-                    self.photoHeight[index] = json["copy_history"][0]["attachments"][index]["video"]["height"].intValue
-                    self.photoText[index] = json["copy_history"][0]["attachments"][index]["video"]["title"].stringValue
-                    self.size[index] = json["copy_history"][0]["attachments"][index]["video"]["duration"].intValue
-                    self.videoViews[index] = json["copy_history"][0]["attachments"][index]["video"]["views"].intValue
-                }
+                if self.photoWidth[index] == 0 { self.photoWidth[index] = 640 }
+                if self.photoHeight[index] == 0 { self.photoHeight[index] = 480 }
                 
-                if self.mediaType[index] == "link" {
-                    self.photoURL[index] = json["copy_history"][0]["attachments"][index]["link"]["photo"]["photo_807"].stringValue
+                self.photoURL[index] = json2["attachments"][index]["video"]["photo_640"].stringValue
+                if self.photoURL[index] == "" {
+                    self.photoURL[index] = json2["attachments"][index]["video"]["photo_320"].stringValue
                     if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["link"]["photo"]["photo_604"].stringValue
+                        self.photoURL[index] = json2["attachments"][index]["video"]["photo_800"].stringValue
+                        self.photoWidth[index] = 800
+                        self.photoHeight[index] = 450
                     }
-                    if self.photoURL[index] == "" {
-                        self.photoURL[index] = json["copy_history"][0]["attachments"][index]["link"]["photo"]["photo_130"].stringValue
-                    }
-                    self.photoWidth[index] = json["copy_history"][0]["attachments"][index]["link"]["photo"]["width"].intValue
-                    self.photoHeight[index] = json["copy_history"][0]["attachments"][index]["link"]["photo"]["height"].intValue
-                    self.photoText[index] = json["copy_history"][0]["attachments"][index]["link"]["description"].stringValue
-                    
-                    self.linkText[index] = json["copy_history"][0]["attachments"][index]["link"]["title"].stringValue
-                    self.linkURL[index] = json["copy_history"][0]["attachments"][index]["link"]["url"].stringValue
-                    
                 }
+            }
+            
+            if self.mediaType[index] == "link" {
+                self.photoText[index] = json2["attachments"][index]["link"]["description"].stringValue
+                self.linkText[index] = json2["attachments"][index]["link"]["title"].stringValue
+                self.linkURL[index] = json2["attachments"][index]["link"]["url"].stringValue
                 
-                if self.mediaType[index] == "doc" {
-                    self.photoID[index] = json["copy_history"][0]["attachments"][index]["doc"]["id"].intValue
-                    self.photoOwnerID[index] = json["copy_history"][0]["attachments"][index]["doc"]["owner_id"].intValue
-                    self.photoText[index] = json["copy_history"][0]["attachments"][index]["doc"]["ext"].stringValue
-                    self.videoURL[index] = json["copy_history"][0]["attachments"][index]["doc"]["url"].stringValue
-                    self.size[index] = json["copy_history"][0]["attachments"][index]["doc"]["size"].intValue
-                    self.photoURL[index] = json["copy_history"][0]["attachments"][index]["doc"]["preview"]["photo"]["sizes"][2]["src"].stringValue
-                    self.photoWidth[index] = json["copy_history"][0]["attachments"][index]["doc"]["preview"]["photo"]["sizes"][2]["width"].intValue
-                    self.photoHeight[index] = json["copy_history"][0]["attachments"][index]["doc"]["preview"]["photo"]["sizes"][2]["height"].intValue
-                }
                 
-                if self.mediaType[index]  == "audio" {
-                    self.audioArtist[index] = json["copy_history"][0]["attachments"][index]["audio"]["artist"].stringValue
-                    self.audioTitle[index] = json["copy_history"][0]["attachments"][index]["audio"]["title"].stringValue
+                let sizes = json2["attachments"][index]["link"]["photo"]["sizes"].arrayValue
+                if let size = sizes.filter({ $0["type"].stringValue == "x" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "y" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "q" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "p" }).first {
+                    self.photoURL[index] = size["url"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
                 }
+            }
+            
+            if self.mediaType[index] == "doc" {
+                self.photoText[index] = json2["attachments"][index]["doc"]["ext"].stringValue
+                self.videoURL[index] = json2["attachments"][index]["doc"]["url"].stringValue
+                self.size[index] = json2["attachments"][index]["doc"]["size"].intValue
                 
-                if self.mediaType[index] == "poll" {
-                    self.poll = Poll(json: json["copy_history"][0]["attachments"][index]["poll"])
+                let sizes = json2["attachments"][index]["doc"]["preview"]["photo"]["sizes"].arrayValue
+                if let size = sizes.filter({ $0["type"].stringValue == "x" }).first {
+                    self.photoURL[index] = size["src"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "y" }).first {
+                    self.photoURL[index] = size["src"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "q" }).first {
+                    self.photoURL[index] = size["src"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "p" }).first {
+                    self.photoURL[index] = size["src"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "o" }).first {
+                    self.photoURL[index] = size["src"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
+                } else if let size = sizes.filter({ $0["type"].stringValue == "i" }).first {
+                    self.photoURL[index] = size["src"].stringValue
+                    self.photoWidth[index] = size["width"].intValue
+                    self.photoHeight[index] = size["height"].intValue
                 }
+            }
+            
+            if self.mediaType[index]  == "audio" {
+                self.audioArtist[index] = json2["attachments"][index]["audio"]["artist"].stringValue
+                self.audioTitle[index] = json2["attachments"][index]["audio"]["title"].stringValue
+            }
+            
+            if self.mediaType[index] == "poll" {
+                self.poll = Poll(json: json2["attachments"][index]["poll"])
             }
         }
     }

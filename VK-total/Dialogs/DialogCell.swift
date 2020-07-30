@@ -160,7 +160,7 @@ class DialogCell: UITableViewCell {
                 let aView = AttachmentsView()
                 aView.photos = photos
                 
-                let width = 0.7 * (UIScreen.main.bounds.width - 2 * leftInsets - avatarSize)
+                let width = 0.7 * (UIScreen.main.bounds.width - 2 * leftInsets - avatarSize) + 2.5
                 
                 if drawCell {
                     let height = aView.configureAttachView(maxSize: width, getRow: false)
@@ -742,7 +742,7 @@ class DialogCell: UITableViewCell {
             let aView = AttachmentsView()
             aView.photos = photos
             
-            let width = rect.width - 10
+            let width = rect.width - 10 + 2.5
             
             if drawCell {
                 let height = aView.configureAttachView(maxSize: width, getRow: false)
@@ -758,8 +758,6 @@ class DialogCell: UITableViewCell {
                 let height = aView.configureAttachView(maxSize: width, getRow: true)
                 heightTotal += 5 + height
             }
-            
-            
         }
         
         for attach in mess.attach {

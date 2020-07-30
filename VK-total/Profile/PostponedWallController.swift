@@ -62,6 +62,7 @@ class PostponedWallController: InnerViewController, UITableViewDelegate, UITable
         
         tableView.delegate = self
         tableView.dataSource = self
+        tableView.showsVerticalScrollIndicator = false
         
         tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "wallRecordCell")
         

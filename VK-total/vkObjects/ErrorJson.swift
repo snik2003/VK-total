@@ -50,6 +50,12 @@ class ErrorJson {
             controller.showErrorMessage(title: "Доступ к аудио запрещён!", msg: "Убедитесь, что доступ к запрашиваемому контенту для текущего пользователя есть в полной версии сайта.")
         case 203:
             controller.showErrorMessage(title: "Доступ к группе запрещён!", msg: "Убедитесь, что доступ к запрашиваемому контенту для текущего пользователя есть в полной версии сайта.")
+        case 250:
+            controller.showErrorMessage(title: "Голосование по опросу!", msg: "Нет доступа к опросу.")
+        case 251:
+            controller.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор опроса.")
+        case 252:
+            controller.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
         case 300:
             controller.showErrorMessage(title: "Альбом переполнен!", msg: "Перед продолжением работы нужно удалить лишние объекты из альбома или использовать другой альбом.")
         default:

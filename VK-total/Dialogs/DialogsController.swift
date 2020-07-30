@@ -79,6 +79,7 @@ class DialogsController: InnerTableViewController {
         menuView.cellTextLabelColor = vkSingleton.shared.mainColor
         menuView.cellSeparatorColor = vkSingleton.shared.mainColor
         
+        menuView.cellHeight = 43
         menuView.checkMarkImage = UIImage(named: "checkmark")
         
         menuView.cellTextLabelAlignment = .center

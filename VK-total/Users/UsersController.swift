@@ -8,6 +8,7 @@
 
 import UIKit
 import Alamofire
+import SwiftyJSON
 import SCLAlertView
 import BEMCheckBox
 
@@ -18,6 +19,8 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
     @IBOutlet weak var segmentedControl: UISegmentedControl!
     
     var delegate: UIViewController!
+    var poll: Poll!
+    var pollIndex = 0
     
     var userID = ""
     var type = "friends"
@@ -286,6 +289,72 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                 self.tableView.reloadData()
                 ViewControllerUtils().hideActivityIndicator()
             }
+        } else if type == "voters" {
+            if let poll = self.poll {
+                let url = "/method/polls.getVoters"
+                var parameters = [
+                    "access_token": vkSingleton.shared.accessToken,
+                    "owner_id": "\(poll.ownerID)",
+                    "poll_id": "\(poll.id)",
+                    "answer_ids": "\(poll.answers[pollIndex].id)",
+                    "offset": "0",
+                    "count": "1000",
+                    "fields": "online,photo_max,last_seen,sex,is_friend",
+                    "v": vkSingleton.shared.version
+                ]
+                
+                if self.source == "friends" {
+                    parameters["friends_only"] = "1"
+                }
+                
+                let request = GetServerDataOperation(url: url, parameters: parameters)
+                request.completionBlock = {
+                    guard let data = request.data else { return }
+                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    
+                    let error = ErrorJson(json: JSON.null)
+                    error.errorCode = json["error"]["error_code"].intValue
+                    error.errorMsg = json["error"]["error_msg"].stringValue
+                    
+                    if error.errorCode == 0 {
+                        print(json)
+                        
+                        OperationQueue.main.addOperation {
+                            let count = json["response"][0]["users"]["count"].intValue
+                            if count > 0 {
+                                self.users = json["response"][0]["users"]["items"].compactMap({ Friends(json: $0.1) })
+                                self.friends = self.users
+                                self.sortedFriends = self.users
+                                
+                                if self.source == "friends" { self.segmentedControl.setTitle("Друзья: \(self.users.count)", forSegmentAt: 0) }
+                                else { self.segmentedControl.setTitle("Пользователи: \(self.users.count)", forSegmentAt: 0) }
+                                
+                                var onlineCount = 0
+                                for user in self.users {
+                                    if user.onlineStatus == 1 {
+                                        onlineCount += 1
+                                    }
+                                }
+                                self.segmentedControl.setTitle("Онлайн: \(onlineCount)", forSegmentAt: 1)
+                                
+                                self.tableView.separatorStyle = .singleLine
+                                self.tableView.reloadData()
+                                ViewControllerUtils().hideActivityIndicator()
+                            } else {
+                                if self.source == "friends" { self.segmentedControl.setTitle("Друзья: 0", forSegmentAt: 0) }
+                                else { self.segmentedControl.setTitle("Пользователи: 0", forSegmentAt: 0) }
+                                self.segmentedControl.setTitle("Онлайн: 0", forSegmentAt: 1)
+                                self.tableView.separatorStyle = .singleLine
+                                self.tableView.reloadData()
+                                ViewControllerUtils().hideActivityIndicator()
+                            }
+                        }
+                    } else {
+                        error.showErrorMessage(controller: self)
+                    }
+                }
+                opq.addOperation(request)
+            }
         }
     }
 
@@ -362,6 +431,10 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                 segmentedControl.setTitle("Заявки: \(self.sortedFriends.count)", forSegmentAt: 0)
             } else if type == "chat_users" {
                 segmentedControl.setTitle("Участники: \(self.sortedFriends.count)", forSegmentAt: 0)
+            } else if type == "voters" && source.isEmpty {
+                segmentedControl.setTitle("Пользователи: \(self.sortedFriends.count)", forSegmentAt: 0)
+            } else if type == "voters" && !source.isEmpty {
+                segmentedControl.setTitle("Друзья: \(self.sortedFriends.count)", forSegmentAt: 0)
             }
             segmentedControl.setTitle("Онлайн: \(self.sortedFriends.filter({ $0.onlineStatus == 1 }).count)", forSegmentAt: 1)
             
@@ -383,6 +456,10 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                 segmentedControl.setTitle("Заявки: \(self.searchUsers.count)", forSegmentAt: 0)
             } else if type == "chat_users" {
                 segmentedControl.setTitle("Участники: \(self.searchUsers.count)", forSegmentAt: 0)
+            } else if type == "voters" && source.isEmpty {
+                segmentedControl.setTitle("Пользователи: \(self.searchUsers.count)", forSegmentAt: 0)
+            } else if type == "voters" && !source.isEmpty {
+                segmentedControl.setTitle("Друзья: \(self.searchUsers.count)", forSegmentAt: 0)
             }
             segmentedControl.setTitle("Онлайн: \(self.searchUsers.filter({ $0.onlineStatus == 1 }).count)", forSegmentAt: 1)
             
@@ -428,6 +505,10 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                 sender.setTitle("Заявки: \(self.users.count)", forSegmentAt: 0)
             } else if type == "chat_users" {
                 sender.setTitle("Участники: \(self.users.count)", forSegmentAt: 0)
+            } else if type == "voters" && source.isEmpty {
+                sender.setTitle("Пользователи: \(self.users.count)", forSegmentAt: 0)
+            } else if type == "voters" && !source.isEmpty {
+                sender.setTitle("Друзья: \(self.users.count)", forSegmentAt: 0)
             }
         case 1:
             if isSearch {
@@ -442,6 +523,10 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                     sender.setTitle("Заявки: \(self.searchUsers.count)", forSegmentAt: 0)
                 } else if type == "chat_users" {
                     sender.setTitle("Участники: \(self.searchUsers.count)", forSegmentAt: 0)
+                } else if type == "voters" && source.isEmpty {
+                    sender.setTitle("Пользователи: \(self.searchUsers.count)", forSegmentAt: 0)
+                } else if type == "voters" && !source.isEmpty {
+                    sender.setTitle("Друзья: \(self.searchUsers.count)", forSegmentAt: 0)
                 }
             } else {
                 users = sortedFriends.filter({ $0.onlineStatus == 1 })
@@ -455,6 +540,10 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                     sender.setTitle("Заявки: \(self.sortedFriends.count)", forSegmentAt: 0)
                 } else if type == "chat_users" {
                     sender.setTitle("Участники: \(self.sortedFriends.count)", forSegmentAt: 0)
+                } else if type == "voters" && source.isEmpty {
+                    sender.setTitle("Пользователи: \(self.sortedFriends.count)", forSegmentAt: 0)
+                } else if type == "voters" && !source.isEmpty {
+                    sender.setTitle("Друзья: \(self.sortedFriends.count)", forSegmentAt: 0)
                 }
             }
             sender.setTitle("Онлайн: \(self.users.count)", forSegmentAt: 1)
@@ -493,28 +582,33 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
             return sections[section].countRows
         case "chat_users":
             return sections[section].countRows
+        case "voters":
+            return sections[section].countRows
         default:
             return 0
         }
     }
     
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        
         return 50
     }
     
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
         if type == "friends" || type == "commonFriends" {
-            return 18
+            if sections[section].countRows > 0 { return 18 }
         }
-        return 0.01
+        
+        return 0.0001
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        if section == tableView.numberOfSections - 1 {
-            return 18
+        if type == "friends" || type == "commonFriends" {
+            if section == tableView.numberOfSections - 1 && sections[section].countRows > 0 { return 18 }
         }
-        return 0.01
+        
+        return 0.0001
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -622,6 +716,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
             }
         }
     }
+    
     func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         if type == "requests" {
             return true
@@ -720,7 +815,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
         cell.detailTextLabel?.textColor = vkSingleton.shared.secondaryLabelColor
         
         switch type {
-        case "friends","commonFriends","followers","subscript","requests","chat_users":
+        case "friends","commonFriends","followers","subscript","requests","chat_users","voters":
             
             let user = sections[indexPath.section].users[indexPath.row]
             
@@ -832,7 +927,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
             sections.append(section)
         }
         
-        if type == "followers" || type == "subscript" {
+        if type == "followers" || type == "subscript" || type == "voters" {
             num = 1
             let section = Sections(num: num - 1, letter: "", count: users.count, users: users)
             sections.append(section)
@@ -940,6 +1035,16 @@ extension Int {
         }
         
         return str
+    }
+    
+    func toStringPollEndDate() -> String {
+        let date = NSDate(timeIntervalSince1970: Double(self))
+        let dateFormatter = DateFormatter()
+        dateFormatter.locale = NSLocale(localeIdentifier: "ru_RU") as Locale?
+        dateFormatter.dateFormat = "HH:mm dd MMMM yyyy"
+        dateFormatter.timeZone = TimeZone.current
+            
+        return dateFormatter.string(from: date as Date)
     }
     
     func toStringCommentLastTime() -> String {

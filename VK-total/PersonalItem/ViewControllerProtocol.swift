@@ -3111,6 +3111,331 @@ extension UIViewController: NotificationCellProtocol {
             print("Ошибка: \(error.localizedDescription)")
         }
     }
+    
+    @objc func pollVote(sender: UITapGestureRecognizer) {
+        
+        var tableView: UITableView!
+        
+        if let controller = self as? Record2Controller {
+            tableView = controller.tableView
+        } else if let controller = self as? FavePostsController2 {
+            tableView = controller.tableView
+        } else if let controller = self as? Newsfeed2Controller {
+            tableView = controller.tableView
+        } else if let controller = self as? NewsfeedSearchController {
+            tableView = controller.tableView
+        } else if let controller = self as? ProfileController2 {
+            tableView = controller.tableView
+        } else if let controller = self as? GroupProfileController2 {
+            tableView = controller.tableView
+        }
+        
+        if tableView != nil {
+            let position: CGPoint = sender.location(in: tableView)
+            let indexPath = tableView.indexPathForRow(at: position)
+            
+            if let cell = tableView.cellForRow(at: indexPath!) as? Record2Cell, let label = sender.view as? UILabel {
+                cell.delegate = self
+                
+                let num = label.tag
+                
+                if cell.poll.answerIDs.count == 0 && !cell.poll.multiple {
+                    
+                    if cell.poll.closed || !cell.poll.canVote { return }
+                    
+                    cell.poll.answers[num].isSelect = !cell.poll.answers[num].isSelect
+                    cell.updatePoll()
+                    
+                    var message: String? = "Вы выбрали следующий вариант: \n«\(cell.poll.answers[num].text)»"
+                    var title: String? = nil
+                    if cell.poll.disableUnvote { title = "Внимание!\nОтменить голосование по этому опросу\n будет впоследствии невозможно\n\n"}
+                    else { title = message; message = nil }
+                    
+                    let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
+                    
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+                        cell.poll.answers[num].isSelect = false
+                        cell.updatePoll()
+                    }
+                    alertController.addAction(cancelAction)
+                    
+                    let action1 = UIAlertAction(title: "Проголосовать", style: .default) { action in
+                        let url = "/method/polls.addVote"
+                        let parameters = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "owner_id": "\(cell.poll.ownerID)",
+                            "poll_id": "\(cell.poll.id)",
+                            "answer_ids": "\(cell.poll.answers[num].id)",
+                            "v": "5.85"
+                        ]
+                        
+                        let request = GetServerDataOperation(url: url, parameters: parameters)
+                        
+                        request.completionBlock = {
+                            guard let data = request.data else { return }
+                            
+                            guard let json = try? JSON(data: data) else { print("json error"); return }
+                            
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            
+                            if error.errorCode == 0 {
+                                OperationQueue.main.addOperation {
+                                    cell.poll.votes += 1
+                                    cell.poll.answers[num].votes += 1
+                                    cell.poll.answers[num].isSelect = false
+                                    for answer in cell.poll.answers {
+                                        answer.rate = Double(answer.votes) / Double(cell.poll.votes) * 100
+                                    }
+                                    cell.poll.answerIDs = [cell.poll.answers[num].id]
+                                    cell.updatePoll()
+                                }
+                            } else {
+                                error.showErrorMessage(controller: self)
+                            }
+                        }
+                        
+                        OperationQueue().addOperation(request)
+                    }
+                    alertController.addAction(action1)
+                    
+                    present(alertController, animated: true)
+                } else if cell.poll.answerIDs.contains(cell.poll.answers[num].id) {
+                    
+                    if cell.poll.closed || !cell.poll.canVote || cell.poll.disableUnvote { return }
+                    
+                    let title = "Вы проголосовали за вариант: \n«\(cell.poll.answers[num].text)»"
+                    
+                    let alertController = UIAlertController(title: title, message: nil, preferredStyle: .actionSheet)
+                    
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+                        cell.poll.answers[num].isSelect = false
+                        cell.updatePoll()
+                    }
+                    alertController.addAction(cancelAction)
+                    
+                    let action1 = UIAlertAction(title: "Отозвать свой голос", style: .destructive) { action in
+                        let url = "/method/polls.deleteVote"
+                        let parameters = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "owner_id": "\(cell.poll.ownerID)",
+                            "poll_id": "\(cell.poll.id)",
+                            "answer_id": "\(cell.poll.answers[num].id)",
+                            "v": "5.85"
+                        ]
+                        
+                        let request = GetServerDataOperation(url: url, parameters: parameters)
+                        
+                        request.completionBlock = {
+                            guard let data = request.data else { return }
+                            
+                            guard let json = try? JSON(data: data) else { print("json error"); return }
+                            
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            
+                            if error.errorCode == 0 {
+                                OperationQueue.main.addOperation {
+                                    cell.poll.answerIDs.remove(object: cell.poll.answers[num].id)
+                                    if cell.poll.answerIDs.count == 0 { cell.poll.votes -= 1 }
+                                    cell.poll.answers[num].votes -= 1
+                                    cell.poll.answers[num].isSelect = false
+                                    for answer in cell.poll.answers {
+                                        answer.rate = Double(answer.votes) / Double(cell.poll.votes) * 100
+                                    }
+                                    cell.updatePoll()
+                                }
+                            } else {
+                                error.showErrorMessage(controller: self)
+                            }
+                        }
+                        
+                        OperationQueue().addOperation(request)
+                    }
+                    alertController.addAction(action1)
+                    
+                    present(alertController, animated: true)
+                } else if cell.poll.multiple {
+                    
+                    if cell.poll.closed || !cell.poll.canVote || cell.poll.answerIDs.count > 0 { return }
+                    
+                    cell.poll.answers[num].isSelect = !cell.poll.answers[num].isSelect
+                    cell.updatePoll()
+                }
+            } else if let cell = tableView.cellForRow(at: indexPath!) as? WallRecordCell2, let label = sender.view as? UILabel {
+                cell.delegate = self
+                
+                let num = label.tag
+                
+                if cell.poll.answerIDs.count == 0 && !cell.poll.multiple {
+                    
+                    if cell.poll.closed || !cell.poll.canVote { return }
+                    
+                    cell.poll.answers[num].isSelect = !cell.poll.answers[num].isSelect
+                    cell.updatePoll()
+                    
+                    var message: String? = "Вы выбрали следующий вариант: \n«\(cell.poll.answers[num].text)»"
+                    var title: String? = nil
+                    if cell.poll.disableUnvote { title = "Внимание!\nОтменить голосование по этому опросу\n будет впоследствии невозможно\n\n"}
+                    else { title = message; message = nil }
+                    
+                    let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
+                    
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+                        cell.poll.answers[num].isSelect = false
+                        cell.updatePoll()
+                    }
+                    alertController.addAction(cancelAction)
+                    
+                    let action1 = UIAlertAction(title: "Проголосовать", style: .default) { action in
+                        let url = "/method/polls.addVote"
+                        let parameters = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "owner_id": "\(cell.poll.ownerID)",
+                            "poll_id": "\(cell.poll.id)",
+                            "answer_ids": "\(cell.poll.answers[num].id)",
+                            "v": "5.85"
+                        ]
+                        
+                        let request = GetServerDataOperation(url: url, parameters: parameters)
+                        
+                        request.completionBlock = {
+                            guard let data = request.data else { return }
+                            
+                            guard let json = try? JSON(data: data) else { print("json error"); return }
+                            
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            
+                            if error.errorCode == 0 {
+                                OperationQueue.main.addOperation {
+                                    cell.poll.votes += 1
+                                    cell.poll.answers[num].votes += 1
+                                    cell.poll.answers[num].isSelect = false
+                                    for answer in cell.poll.answers {
+                                        answer.rate = Double(answer.votes) / Double(cell.poll.votes) * 100
+                                    }
+                                    cell.poll.answerIDs = [cell.poll.answers[num].id]
+                                    cell.updatePoll()
+                                }
+                            } else {
+                                error.showErrorMessage(controller: self)
+                            }
+                        }
+                        
+                        OperationQueue().addOperation(request)
+                    }
+                    alertController.addAction(action1)
+                    
+                    present(alertController, animated: true)
+                } else if cell.poll.answerIDs.contains(cell.poll.answers[num].id) {
+                    
+                    if cell.poll.closed || !cell.poll.canVote || cell.poll.disableUnvote { return }
+                    
+                    let title = "Вы проголосовали за вариант: \n«\(cell.poll.answers[num].text)»"
+                    
+                    let alertController = UIAlertController(title: title, message: nil, preferredStyle: .actionSheet)
+                    
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+                        cell.poll.answers[num].isSelect = false
+                        cell.updatePoll()
+                    }
+                    alertController.addAction(cancelAction)
+                    
+                    let action1 = UIAlertAction(title: "Отозвать свой голос", style: .destructive) { action in
+                        let url = "/method/polls.deleteVote"
+                        let parameters = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "owner_id": "\(cell.poll.ownerID)",
+                            "poll_id": "\(cell.poll.id)",
+                            "answer_id": "\(cell.poll.answers[num].id)",
+                            "v": "5.85"
+                        ]
+                        
+                        let request = GetServerDataOperation(url: url, parameters: parameters)
+                        
+                        request.completionBlock = {
+                            guard let data = request.data else { return }
+                            
+                            guard let json = try? JSON(data: data) else { print("json error"); return }
+                            
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            
+                            if error.errorCode == 0 {
+                                OperationQueue.main.addOperation {
+                                    cell.poll.answerIDs.remove(object: cell.poll.answers[num].id)
+                                    if cell.poll.answerIDs.count == 0 { cell.poll.votes -= 1 }
+                                    cell.poll.answers[num].votes -= 1
+                                    cell.poll.answers[num].isSelect = false
+                                    for answer in cell.poll.answers {
+                                        answer.rate = Double(answer.votes) / Double(cell.poll.votes) * 100
+                                    }
+                                    cell.updatePoll()
+                                }
+                            } else {
+                                error.showErrorMessage(controller: self)
+                            }
+                        }
+                        
+                        OperationQueue().addOperation(request)
+                    }
+                    alertController.addAction(action1)
+                    
+                    present(alertController, animated: true)
+                } else if cell.poll.multiple {
+                    
+                    if cell.poll.closed || !cell.poll.canVote || cell.poll.answerIDs.count > 0 { return }
+                    
+                    cell.poll.answers[num].isSelect = !cell.poll.answers[num].isSelect
+                    cell.updatePoll()
+                }
+            }
+        }
+    }
+    
+    func getPollVoters(poll: Poll, index: Int) {
+        let alertController = UIAlertController(title: "Узнайте, кто из пользователей\nпроголосовал за вариант ответа", message: "«\(poll.answers[index].text)»", preferredStyle: .actionSheet)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        let action1 = UIAlertAction(title: "Все пользователи", style: .default) { action in
+            let usersController = self.storyboard?.instantiateViewController(withIdentifier: "UsersController") as! UsersController
+            
+            usersController.userID = vkSingleton.shared.userID
+            usersController.type = "voters"
+            usersController.source = ""
+            usersController.title = "Проголосовавшие пользователи"
+            usersController.delegate = self
+            usersController.poll = poll
+            usersController.pollIndex = index
+            
+            self.navigationController?.pushViewController(usersController, animated: true)
+        }
+        alertController.addAction(action1)
+        
+        let action2 = UIAlertAction(title: "Мои друзья", style: .default) { action in
+            let usersController = self.storyboard?.instantiateViewController(withIdentifier: "UsersController") as! UsersController
+            
+            usersController.userID = vkSingleton.shared.userID
+            usersController.type = "voters"
+            usersController.source = "friends"
+            usersController.title = "Проголосовавшие друзья"
+            usersController.delegate = self
+            usersController.poll = poll
+            usersController.pollIndex = index
+            
+            self.navigationController?.pushViewController(usersController, animated: true)
+        }
+        alertController.addAction(action2)
+        
+        present(alertController, animated: true)
+    }
 }
 
 extension UIViewController {

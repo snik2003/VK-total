@@ -86,7 +86,6 @@
 		1793F4E32028E7F2001DF358 /* Record.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1793F4E22028E7F2001DF358 /* Record.swift */; };
 		1793F4E52028E8E7001DF358 /* ParseRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1793F4E42028E8E7001DF358 /* ParseRecord.swift */; };
 		17973392202EF116005BE6DD /* Newsfeed2Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17973391202EF116005BE6DD /* Newsfeed2Controller.swift */; };
-		17973394202EF14D005BE6DD /* Newsfeed2Cell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17973393202EF14D005BE6DD /* Newsfeed2Cell.swift */; };
 		17973396202EF39B005BE6DD /* ReloadNewsfeed2Controller.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17973395202EF39B005BE6DD /* ReloadNewsfeed2Controller.swift */; };
 		1797339820308F38005BE6DD /* ParseGroupWall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1797339720308F38005BE6DD /* ParseGroupWall.swift */; };
 		1797339A20309BFF005BE6DD /* WallRecordCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1797339920309BFF005BE6DD /* WallRecordCell.swift */; };
@@ -307,7 +306,6 @@
 		1793F4E22028E7F2001DF358 /* Record.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Record.swift; sourceTree = "<group>"; };
 		1793F4E42028E8E7001DF358 /* ParseRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseRecord.swift; sourceTree = "<group>"; };
 		17973391202EF116005BE6DD /* Newsfeed2Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Newsfeed2Controller.swift; sourceTree = "<group>"; };
-		17973393202EF14D005BE6DD /* Newsfeed2Cell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Newsfeed2Cell.swift; sourceTree = "<group>"; };
 		17973395202EF39B005BE6DD /* ReloadNewsfeed2Controller.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadNewsfeed2Controller.swift; sourceTree = "<group>"; };
 		1797339720308F38005BE6DD /* ParseGroupWall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseGroupWall.swift; sourceTree = "<group>"; };
 		1797339920309BFF005BE6DD /* WallRecordCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallRecordCell.swift; sourceTree = "<group>"; };
@@ -587,7 +585,6 @@
 			isa = PBXGroup;
 			children = (
 				17973391202EF116005BE6DD /* Newsfeed2Controller.swift */,
-				17973393202EF14D005BE6DD /* Newsfeed2Cell.swift */,
 				179D2EEF20512F6D000B4ED6 /* NewsfeedSearchController.swift */,
 			);
 			path = Newsfeed;
@@ -1185,7 +1182,6 @@
 				17C6389D208A629600160EBE /* DialogsCell.swift in Sources */,
 				170259B02024A70E00E682CD /* ReloadGroupProfileController.swift in Sources */,
 				17A15C5C20496A9900C0E2B2 /* ReloadGroupProfileController2.swift in Sources */,
-				17973394202EF14D005BE6DD /* Newsfeed2Cell.swift in Sources */,
 				17B5BA63200A1C8B0095E7F5 /* StartViewController.swift in Sources */,
 				17F7AE5E2021F41800A30910 /* ParseNewsfeed.swift in Sources */,
 				17B69F60204D269600F1E21F /* CommentCell2.swift in Sources */,
@@ -1440,7 +1436,7 @@
 				CODE_SIGN_ENTITLEMENTS = "VK-total/VK-total.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WML363H532;
 				ENABLE_BITCODE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1451,7 +1447,7 @@
 				INFOPLIST_FILE = "VK-total/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0;
+				MARKETING_VERSION = 3.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1492,14 +1488,14 @@
 				CODE_SIGN_ENTITLEMENTS = "VK-total/VK-totalRelease.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 5;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = WML363H532;
 				ENABLE_BITCODE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
 				INFOPLIST_FILE = "VK-total/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.0;
+				MARKETING_VERSION = 3.1;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",

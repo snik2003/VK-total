@@ -132,7 +132,10 @@ class WallRecordCell2: UITableViewCell {
     
     var answerLabels: [UILabel] = []
     var rateLabels: [UILabel] = []
+    var votersLabels: [UILabel] = []
     var totalLabel = UILabel()
+    var voteButton = UIButton()
+    
     var poll: Poll!
     
     var webView: WKWebView!
@@ -439,7 +442,7 @@ class WallRecordCell2: UITableViewCell {
         }
         
         var photos: [Photos] = []
-        let maxWidth = UIScreen.main.bounds.width - 20
+        let maxWidth = UIScreen.main.bounds.width - 20 + 2.5
         for index in 0...9 {
             if record.mediaType[index] == "photo" {
                 let photo = Photos(json: JSON.null)
@@ -472,7 +475,6 @@ class WallRecordCell2: UITableViewCell {
             
             topY += aHeight
         } else {
-            let aView = AttachmentsView()
             aView.tag = 100
             aView.photos = photos
             let aHeight = aView.configureAttachView(maxSize: maxWidth, getRow: true)
@@ -623,57 +625,168 @@ class WallRecordCell2: UITableViewCell {
         
         if drawCell {
             let view = UIView()
-            view.backgroundColor = .clear
             view.tag = 100
             
             let textColor = vkSingleton.shared.secondaryLabelColor
             
-            let qLabel = UILabel()
-            qLabel.font = qLabelFont
-            qLabel.text = "Опрос: \(poll.question)"
-            qLabel.textAlignment = .center
-            qLabel.backgroundColor = vkSingleton.shared.mainColor
-            qLabel.textColor = .white
-            qLabel.numberOfLines = 0
-            
-            let qLabelSize = getPollLabelSize(text: "Опрос: \(poll.question)", font: qLabelFont)
-            qLabel.frame = CGRect(x: 5, y: viewY, width: bounds.width - 2 * leftInsets, height: qLabelSize.height + 5)
-            view.addSubview(qLabel)
+            if !poll.photo.isEmpty {
+                let qLabel = PollQuestionLabel()
+                qLabel.font = qLabelFont
+                qLabel.text = poll.question
+                qLabel.textAlignment = .center
+                qLabel.backgroundColor = vkSingleton.shared.mainColor
+                qLabel.textColor = UIColor.white
+                qLabel.numberOfLines = 0
+                
+                let qLabelSize = getPollQuestionLabelSize(text: poll.question, font: qLabelFont)
+                qLabel.frame = CGRect(x: 5, y: viewY, width: bounds.width - 2 * leftInsets - 10, height: qLabelSize.height + 5)
+                view.addSubview(qLabel)
+                
+                let qImage = UIImageView()
+                qImage.frame = CGRect(x: 6, y: (qLabelSize.height - 44) / 2, width: 48, height: 48)
+                qLabel.addSubview(qImage)
+                
+                let getCacheImage = GetCacheImage(url: poll.photo, lifeTime: .newsFeedImage)
+                getCacheImage.completionBlock = {
+                    OperationQueue.main.addOperation {
+                        qImage.image = getCacheImage.outputImage
+                        qImage.contentMode = .scaleAspectFill
+                        qImage.layer.borderWidth = 1
+                        qImage.layer.borderColor = UIColor.white.cgColor
+                        qImage.clipsToBounds = true
+                    }
+                }
+                OperationQueue().addOperation(getCacheImage)
+                
+                viewY += qLabelSize.height + 5
+            } else {
+                let qLabel = UILabel()
+                qLabel.font = qLabelFont
+                qLabel.text = poll.question
+                qLabel.textAlignment = .center
+                qLabel.backgroundColor = vkSingleton.shared.mainColor
+                qLabel.textColor = UIColor.white
+                qLabel.numberOfLines = 0
+                
+                let qLabelSize = getPollLabelSize(text: poll.question, font: qLabelFont)
+                qLabel.frame = CGRect(x: 5, y: viewY, width: bounds.width - 2 * leftInsets - 10, height: qLabelSize.height + 5)
+                view.addSubview(qLabel)
+                viewY += qLabelSize.height + 5
+            }
             
             if poll.anonymous == 1 {
                 let anonLabel = UILabel()
                 anonLabel.text = "Анонимный опрос"
-                anonLabel.textAlignment = .right
                 anonLabel.textColor = textColor
-                anonLabel.font = UIFont(name: "Verdana", size: 10)!
-                anonLabel.frame = CGRect(x: 2 * leftInsets, y: viewY + qLabelSize.height + 5, width: bounds.width - 4 * leftInsets, height: 15)
+                anonLabel.textAlignment = .left
+                anonLabel.font = UIFont(name: "Verdana", size: 11)!
+                anonLabel.frame = CGRect(x: leftInsets, y: viewY, width: (bounds.width - 2 * leftInsets) / 2 - leftInsets, height: 15)
                 view.addSubview(anonLabel)
             }
-            viewY += qLabelSize.height + 25
             
+            if poll.canVote && poll.endDate > 0 {
+                let dateLabel = UILabel()
+                dateLabel.font = UIFont(name: "Verdana", size: 11)!
+                dateLabel.textColor = textColor
+                dateLabel.textAlignment = .right
+                dateLabel.numberOfLines = 1
+                dateLabel.adjustsFontSizeToFitWidth = true
+                dateLabel.minimumScaleFactor = 0.7
+                dateLabel.text = "Опрос до \(poll.endDate.toStringPollEndDate())"
+                dateLabel.frame = CGRect(x: (bounds.width - 2 * leftInsets) / 2, y: viewY, width: (bounds.width - 2 * leftInsets) / 2 - leftInsets, height: 15)
+                view.addSubview(dateLabel)
+            }
+
+            viewY += 15
+            
+            if !poll.canVote && !poll.disableUnvote {
+                let closedLabel = UILabel()
+                closedLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
+                closedLabel.text = "Опрос завершен"
+                closedLabel.textAlignment = .center
+                closedLabel.textColor = vkSingleton.shared.labelColor
+                closedLabel.isEnabled = true
+                closedLabel.numberOfLines = 1
+                closedLabel.frame = CGRect(x: leftInsets, y: viewY, width: bounds.width - 4 * leftInsets, height: 40)
+                view.addSubview(closedLabel)
+                
+                viewY += 40
+            } else if poll.disableUnvote && poll.answerIDs.count > 0 {
+                let closedLabel = UILabel()
+                closedLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
+                closedLabel.text = "Вы уже проголосовали"
+                closedLabel.textAlignment = .center
+                closedLabel.textColor = vkSingleton.shared.labelColor
+                closedLabel.isEnabled = true
+                closedLabel.numberOfLines = 1
+                closedLabel.frame = CGRect(x: leftInsets, y: viewY, width: bounds.width - 4 * leftInsets, height: 40)
+                view.addSubview(closedLabel)
+                
+                viewY += 40
+            } else {
+                let multiLabel = UILabel()
+                multiLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
+                multiLabel.textAlignment = .center
+                multiLabel.textColor = vkSingleton.shared.labelColor
+                multiLabel.numberOfLines = 2
+                multiLabel.text = "Выберите один вариант ответа:"
+                if poll.multiple { multiLabel.text = "Выберите один или несколько вариантов ответа:" }
+                multiLabel.frame = CGRect(x: leftInsets, y: viewY, width: bounds.width - 4 * leftInsets, height: 40)
+                view.addSubview(multiLabel)
+                
+                viewY += 40
+            }
             
             for index in 0...poll.answers.count-1 {
-                let aLabel = UILabel()
+                let aLabel = PollAnswerLabel()
                 aLabel.font = aLabelFont
-                aLabel.text = "\(index+1). \(poll.answers[index].text)"
+                aLabel.text = poll.answers[index].text
+                aLabel.backgroundColor = vkSingleton.shared.mainColor
+                aLabel.isEnabled = true
+                aLabel.isUserInteractionEnabled = true
                 aLabel.textColor = .white
                 aLabel.numberOfLines = 0
                 aLabel.tag = index
                 
-                let aLabelSize = getPollLabelSize(text: "\(index+1). \(poll.answers[index].text)", font: aLabelFont)
-                aLabel.frame = CGRect(x: 5, y: viewY, width: aLabelSize.width, height: aLabelSize.height + 5)
+                let aLabelSize = getPollAnswerLabelSize(text: "\(index+1). \(poll.answers[index].text)", font: aLabelFont)
+                aLabel.frame = CGRect(x: 5, y: viewY, width: bounds.width - 2 * leftInsets - 10, height: aLabelSize.height + 10)
                 view.addSubview(aLabel)
-                    
-                viewY += aLabelSize.height
+                
+                viewY += aLabelSize.height + 10
                 
                 let rLabel = UILabel()
                 rLabel.text = ""
                 rLabel.textAlignment = .right
-                rLabel.textColor = .clear
-                rLabel.font = UIFont(name: "Verdana-Bold", size: 10)!
-                rLabel.frame = CGRect(x: 5, y: viewY + 5, width: aLabelSize.width, height: 15)
+                
+                rLabel.textColor = UIColor.clear
+                rLabel.font = UIFont(name: "Verdana", size: 11)!
+                rLabel.frame = CGRect(x: (bounds.width - 2 * leftInsets - 10) / 2, y: viewY, width: (bounds.width - 2 * leftInsets - 10) / 2, height: 15)
+                rLabel.adjustsFontSizeToFitWidth = true
+                rLabel.minimumScaleFactor = 0.5
                 view.addSubview(rLabel)
                 rateLabels.append(rLabel)
+                
+                if poll.anonymous == 0 {
+                    let vLabel = UILabel()
+                    vLabel.text = "Кто проголосовал?"
+                    vLabel.textAlignment = .left
+                    vLabel.textColor = UIColor.systemBlue
+                    vLabel.isHidden = true
+                    vLabel.font = UIFont(name: "Verdana", size: 11)!
+                    vLabel.frame = CGRect(x: 10, y: viewY, width: (bounds.width - 2 * leftInsets - 10) / 2 - 10, height: 15)
+                    vLabel.adjustsFontSizeToFitWidth = true
+                    vLabel.minimumScaleFactor = 0.5
+                    view.addSubview(vLabel)
+                    
+                    let votersTap = UITapGestureRecognizer()
+                    vLabel.isUserInteractionEnabled = true
+                    vLabel.addGestureRecognizer(votersTap)
+                    votersTap.add {
+                        self.delegate.getPollVoters(poll: poll, index: index)
+                    }
+                    
+                    votersLabels.append(vLabel)
+                }
                 
                 
                 viewY += 25
@@ -682,68 +795,210 @@ class WallRecordCell2: UITableViewCell {
             
             totalLabel.font = UIFont(name: "Verdana-Bold", size: 12)!
             totalLabel.textAlignment = .right
-            totalLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            totalLabel.textColor = vkSingleton.shared.mainColor
             totalLabel.isEnabled = true
+            totalLabel.adjustsFontSizeToFitWidth = true
+            totalLabel.minimumScaleFactor = 0.5
             totalLabel.numberOfLines = 1
             
-            totalLabel.frame = CGRect(x: 2 * leftInsets, y: viewY, width: bounds.width - 4 * leftInsets, height: 20)
+            totalLabel.frame = CGRect(x: 5, y: viewY, width: bounds.width - 2 * leftInsets - 10, height: 20)
             view.addSubview(totalLabel)
             viewY += 20
             
-            view.frame = CGRect(x: 5, y: topY, width: bounds.width - 10, height: viewY)
+            if poll.multiple && poll.canVote {
+                voteButton.setTitleColor(.white, for: .normal)
+                voteButton.backgroundColor = vkSingleton.shared.separatorColor
+                voteButton.titleLabel?.font = UIFont(name: "Verdana", size: 13)!
+                voteButton.setTitle("Проголосовать", for: .normal)
+                voteButton.frame = CGRect(x: 5, y: viewY + 10, width: bounds.width - 2 * leftInsets - 10, height: 25)
+                voteButton.contentHorizontalAlignment = .center
+                voteButton.addTarget(self, action: #selector(self.pollMultipleVote), for: .touchUpInside)
+                voteButton.layer.cornerRadius = 2
+                voteButton.clipsToBounds = true
+                voteButton.isEnabled = false
+                view.addSubview(voteButton)
+                viewY += 40
+            }
+            
+            view.frame = CGRect(x: leftInsets, y: topY + 5, width: bounds.width - 2 * leftInsets, height: viewY)
             view.layer.borderColor = vkSingleton.shared.mainColor.cgColor
             view.layer.borderWidth = 1.0
             self.addSubview(view)
-        
+            
             updatePoll()
         } else {
             let qLabelSize = getPollLabelSize(text: "Опрос: \(poll.question)", font: qLabelFont)
-            viewY += qLabelSize.height + 25
+            viewY += qLabelSize.height + 60
             
             for index in 0...poll.answers.count-1 {
-                let aLabelSize = getPollLabelSize(text: "\(index+1). \(poll.answers[index].text)", font: aLabelFont)
-                viewY += aLabelSize.height + 25
+                let aLabelSize = getPollAnswerLabelSize(text: poll.answers[index].text, font: aLabelFont)
+                viewY += aLabelSize.height + 35
             }
             
             viewY += 20
+            if poll.multiple && poll.canVote { viewY += 40 }
         }
         
-        return topY + viewY + verticalSpacingElements
+        return topY + 5 + viewY + verticalSpacingElements
     }
     
     func updatePoll() {
         if answerLabels.count > 0 {
+            var selectedAnswers = 0
+            
             for index in 0...answerLabels.count-1 {
-                if self.poll.answerID != 0 {
-                    answerLabels[index].backgroundColor = vkSingleton.shared.mainColor.withAlphaComponent(0.4)
+                let label = answerLabels[index]
+                
+                if poll.answerIDs.contains(poll.answers[index].id) {
+                    label.textColor = .systemRed
+                    let bounds = label.bounds
                     
-                    if self.poll.answerID == self.poll.answers[index].id {
-                        answerLabels[index].backgroundColor = UIColor.purple.withAlphaComponent(0.75)
-                        answerLabels[index].textColor = .white
-                        answerLabels[index].isEnabled = true
-                    } else {
-                        answerLabels[index].textColor = .white
-                    }
+                    let voteImage = UIImageView()
+                    voteImage.image = UIImage(named: "checkmark")
+                    voteImage.tintColor = .systemRed
+                    voteImage.frame = CGRect(x: bounds.width - 30, y: bounds.minY + (bounds.height - 15)/2, width: 15, height: 15)
+                    label.addSubview(voteImage)
                 } else {
-                    answerLabels[index].backgroundColor = vkSingleton.shared.mainColor
-                    answerLabels[index].textColor = .white
+                    label.textColor = .white
+                    for subview in label.subviews {
+                        if subview is UIImageView { subview.removeFromSuperview() }
+                    }
                 }
+                
+                if poll.answers[index].isSelect {
+                    selectedAnswers += 1
+                    label.backgroundColor = UIColor.purple
+                } else {
+                    label.backgroundColor = vkSingleton.shared.mainColor
+                }
+            }
+            
+            if selectedAnswers == 0 {
+                voteButton.isEnabled = false
+                voteButton.backgroundColor = vkSingleton.shared.separatorColor
+            } else {
+                voteButton.isEnabled = true
+                voteButton.backgroundColor = vkSingleton.shared.mainColor
             }
         }
         
         if rateLabels.count > 0 {
             for index in 0...rateLabels.count-1 {
-                rateLabels[index].text = "\(self.poll.answers[index].votes.rateAdder()) (\(self.poll.answers[index].rate) %)"
+                let formatter = NumberFormatter()
+                formatter.maximumFractionDigits = 2
+                if let rate = formatter.string(from: NSNumber(value: poll.answers[index].rate)) {
+                    rateLabels[index].text = "\(rate) % (\(poll.answers[index].votes.rateAdder()))"
+                }
+                rateLabels[index].textColor = .clear
                 
-                if self.poll.answerID != 0 {
+                if !poll.canVote || poll.answerIDs.count > 0 {
                     rateLabels[index].textColor = vkSingleton.shared.secondaryLabelColor
-                } else {
-                    rateLabels[index].textColor = UIColor.clear
+                }
+                
+                if votersLabels.count > 0 {
+                    votersLabels[index].isHidden = true
+                    
+                    if !poll.canVote || poll.answerIDs.count > 0 {
+                        votersLabels[index].isHidden = poll.answers[index].votes == 0
+                    }
                 }
             }
         }
         
         totalLabel.text = "Всего проголосовало: \(self.poll.votes)"
+    }
+    
+    @objc func pollMultipleVote() {
+        
+        if let poll = self.poll {
+            
+            var variants = ""
+            var answerIDs = ""
+            var selectedAnswers = 0
+            
+            if poll.answers.count > 0 {
+                for index in 0...poll.answers.count - 1 {
+                    if poll.answers[index].isSelect {
+                        selectedAnswers += 1
+                        variants = "\(variants)«\(poll.answers[index].text)»"
+                        answerIDs = "\(answerIDs)\(poll.answers[index].id)"
+                        
+                        if index < poll.answers.count - 1 {
+                            variants = "\(variants)\n"
+                            answerIDs = "\(answerIDs),"
+                        }
+                    }
+                }
+                
+                var message: String? = "Вы выбрали следующий вариант:"
+                if selectedAnswers > 1 { message = "Вы выбрали следующие варианты:" }
+                
+                message = "\(message!) \n\(variants)"
+                var title: String? = nil
+                if poll.disableUnvote { title = "Внимание!\nОтменить голосование по этому опросу\n будет впоследствии невозможно\n\n"}
+                else { title = message; message = nil }
+                
+                let alertController = UIAlertController(title: title, message: message, preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { action in
+                    for answer in poll.answers {
+                        answer.isSelect = false
+                        self.updatePoll()
+                    }
+                }
+                alertController.addAction(cancelAction)
+                
+                let action1 = UIAlertAction(title: "Проголосовать", style: .default) { action in
+                    let url = "/method/polls.addVote"
+                    let parameters = [
+                        "access_token": vkSingleton.shared.accessToken,
+                        "owner_id": "\(poll.ownerID)",
+                        "poll_id": "\(poll.id)",
+                        "answer_ids": answerIDs,
+                        "v": "5.85"
+                    ]
+                    
+                    let request = GetServerDataOperation(url: url, parameters: parameters)
+                    
+                    request.completionBlock = {
+                        guard let data = request.data else { return }
+                        
+                        guard let json = try? JSON(data: data) else { print("json error"); return }
+                        
+                        let error = ErrorJson(json: JSON.null)
+                        error.errorCode = json["error"]["error_code"].intValue
+                        error.errorMsg = json["error"]["error_msg"].stringValue
+                        
+                        if error.errorCode == 0 {
+                            OperationQueue.main.addOperation {
+                                poll.answerIDs = []
+                                poll.votes += 1
+                                for answer in poll.answers {
+                                    if answer.isSelect {
+                                        answer.votes += 1
+                                        poll.answerIDs.append(answer.id)
+                                        answer.isSelect = false
+                                    }
+                                }
+                                        
+                                for answer in poll.answers {
+                                    answer.rate = Double(answer.votes) / Double(poll.votes) * 100
+                                }
+                                
+                                self.updatePoll()
+                            }
+                        } else {
+                            error.showErrorMessage(controller: self.delegate)
+                        }
+                    }
+                    
+                    OperationQueue().addOperation(request)
+                }
+                alertController.addAction(action1)
+                
+                delegate.present(alertController, animated: true)
+            }
+        }
     }
     
     func setLikesButton(record: Wall) {
@@ -792,6 +1047,7 @@ class WallRecordCell2: UITableViewCell {
             
             imageView.frame = CGRect(x: 5.0, y: topY, width: imageWidth, height: 0.0)
             imageView.backgroundColor = vkSingleton.shared.backColor
+            imageView.isOpaque = false
             imageView.image = nil
             
             self.addSubview(imageView)
@@ -816,7 +1072,7 @@ class WallRecordCell2: UITableViewCell {
                 if drawCell {
                     imageView.frame = CGRect(x: 10, y: topY + 2, width: imageWidth, height: imageHeight - 4)
                     if imageWidth < UIScreen.main.bounds.width - 20 {
-                        imageView.frame = CGRect(x: (UIScreen.main.bounds.width - 20 - imageWidth) / 2, y: topY + 2, width: imageWidth, height: imageHeight - 4)
+                        imageView.frame = CGRect(x: 10 + (UIScreen.main.bounds.width - 20 - imageWidth) / 2, y: topY + 2, width: imageWidth, height: imageHeight - 4)
                     }
                     
                     let getCacheImage = GetCacheImage(url: record.photoURL[index], lifeTime: .avatarImage)
@@ -1296,13 +1552,41 @@ class WallRecordCell2: UITableViewCell {
     }
     
     func getPollLabelSize(text: String, font: UIFont) -> CGSize {
-        let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets
+        let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets - 10
         let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
         
         let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
         let width = Double(maxWidth)
         let height = Double(rect.size.height)
         
+        return CGSize(width: ceil(width), height: ceil(height))
+    }
+    
+    func getPollQuestionLabelSize(text: String, font: UIFont) -> CGSize {
+        let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets - 10
+        let textBlock = CGSize(width: maxWidth - 65, height: CGFloat.greatestFiniteMagnitude)
+        
+        let rect = text.boundingRect(with: textBlock, options: .usesLineFragmentOrigin, attributes: [NSAttributedString.Key.font: font], context: nil)
+        let width = Double(maxWidth)
+        var height = max(Double(rect.size.height), 60)
+        
+        if text == "" {
+            height = 5.0
+        }
+        return CGSize(width: ceil(width), height: ceil(height))
+    }
+    
+    func getPollAnswerLabelSize(text: String, font: UIFont) -> CGSize {
+        let maxWidth = UIScreen.main.bounds.width - 2 * leftInsets - 10
+        let textBlock = CGSize(width: maxWidth - 60, height: CGFloat.greatestFiniteMagnitude)
+        
+        let rect = text.boundingRect(with: textBlock, options: [.usesLineFragmentOrigin], attributes: [NSAttributedString.Key.font: font], context: nil)
+        let width = Double(maxWidth)
+        var height = max(Double(rect.size.height),15)
+        
+        if text == "" {
+            height = 5.0
+        }
         return CGSize(width: ceil(width), height: ceil(height))
     }
     

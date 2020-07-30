@@ -75,6 +75,7 @@ class Newsfeed2Controller: InnerTableViewController {
         menuView.cellTextLabelColor = vkSingleton.shared.mainColor
         menuView.cellSeparatorColor = vkSingleton.shared.mainColor
         
+        menuView.cellHeight = 43
         menuView.checkMarkImage = UIImage(named: "checkmark")
         
         menuView.cellTextLabelAlignment = .center
@@ -242,7 +243,7 @@ class Newsfeed2Controller: InnerTableViewController {
                 "star_from": "\(startFrom)",
                 "count": "100",
                 "fields": "id,first_name,last_name,photo_100,photo_200,first_name_gen",
-                "v": vkSingleton.shared.version
+                "v": "5.85"
             ]
         } else {
             url = "/method/newsfeed.get"
@@ -257,7 +258,7 @@ class Newsfeed2Controller: InnerTableViewController {
                 "start_from": "\(startFrom)",
                 "count": "\(count)",
                 "fields": "id,first_name,last_name,photo_100,photo_200,first_name_gen",
-                "v": vkSingleton.shared.version
+                "v": "5.85"
             ]
         }
         
@@ -458,7 +459,7 @@ class Newsfeed2Controller: InnerTableViewController {
     }
     
     override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if isRefresh && tableView.numberOfSections >= count && indexPath.section == tableView.numberOfSections - 2 {
+        if isRefresh && tableView.numberOfSections >= count && indexPath.section == tableView.numberOfSections - 1 {
             isRefresh = false
         }
     }
@@ -468,12 +469,13 @@ class Newsfeed2Controller: InnerTableViewController {
         let y = scrollView.contentOffset.y + scrollView.bounds.size.height - scrollView.contentInset.bottom
         let h = scrollView.contentSize.height
         
-        if y >= (h - 30.0) {
+        if y >= (h - 20) {
             if viewCount >= offset {
                 if sourceIDs == "recommend" {
                     tableView.tableFooterView = nil
                     if !menuView.isShown { menuView.show() }
                 } else if !isRefresh {
+                    tableView.isScrollEnabled = false
                     refresh()
                 }
             } else {
@@ -491,133 +493,6 @@ class Newsfeed2Controller: InnerTableViewController {
             let record = news[index]
             
             self.openWallRecord(ownerID: record.ownerID, postID: record.id, accessKey: "", type: "post", scrollToComment: true)
-        }
-    }
-    
-    @objc func pollVote(sender: UITapGestureRecognizer) {
-        let position: CGPoint = sender.location(in: self.tableView)
-        let indexPath = self.tableView.indexPathForRow(at: position)
-        
-        if let cell = tableView.cellForRow(at: indexPath!) as? WallRecordCell2, let label = sender.view as? UILabel {
-            cell.delegate = self
-            
-            let num = label.tag
-            
-            if cell.poll.answerID == 0 {
-                let alertController = UIAlertController(title: "Вы выбрали следующий вариант:", message: "\(num+1). \(cell.poll.answers[num].text)", preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                alertController.addAction(cancelAction)
-                
-                let action1 = UIAlertAction(title: "Отдать свой голос", style: .default) { action in
-                    let url = "/method/polls.addVote"
-                    let parameters = [
-                        "access_token": vkSingleton.shared.accessToken,
-                        "owner_id": "\(cell.poll.ownerID)",
-                        "poll_id": "\(cell.poll.id)",
-                        "answer_id": "\(cell.poll.answers[num].id)",
-                        "v": vkSingleton.shared.version
-                    ]
-                    
-                    let request = GetServerDataOperation(url: url, parameters: parameters)
-                    
-                    request.completionBlock = {
-                        guard let data = request.data else { return }
-                        
-                        guard let json = try? JSON(data: data) else { print("json error"); return }
-                        
-                        let error = ErrorJson(json: JSON.null)
-                        error.errorCode = json["error"]["error_code"].intValue
-                        error.errorMsg = json["error"]["error_msg"].stringValue
-                        
-                        if error.errorCode == 0 {
-                            OperationQueue.main.addOperation {
-                                cell.poll.votes += 1
-                                cell.poll.answers[num].votes += 1
-                                for answer in cell.poll.answers {
-                                    answer.rate = Int(Double(answer.votes) / Double(cell.poll.votes) * 100)
-                                }
-                                cell.poll.answerID = cell.poll.answers[num].id
-                                cell.updatePoll()
-                            }
-                        } else if error.errorCode == 250 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Нет доступа к опросу.")
-                        } else if error.errorCode == 251 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор опроса.")
-                        } else if error.errorCode == 252 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
-                        } else {
-                            error.showErrorMessage(controller: self)
-                        }
-                    }
-                    
-                    OperationQueue().addOperation(request)
-                }
-                alertController.addAction(action1)
-                
-                present(alertController, animated: true)
-            } else {
-                
-                var message = ""
-                for index in 0...cell.poll.answers.count-1 {
-                    if cell.poll.answers[index].id == cell.poll.answerID {
-                        message = "\(index+1). \(cell.poll.answers[index].text)"
-                    }
-                }
-                
-                let alertController = UIAlertController(title: "Вы проголосовали за вариант:", message: message, preferredStyle: .actionSheet)
-                
-                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
-                alertController.addAction(cancelAction)
-                
-                let action1 = UIAlertAction(title: "Отозвать свой голос", style: .destructive) { action in
-                    let url = "/method/polls.deleteVote"
-                    let parameters = [
-                        "access_token": vkSingleton.shared.accessToken,
-                        "owner_id": "\(cell.poll.ownerID)",
-                        "poll_id": "\(cell.poll.id)",
-                        "answer_id": "\(cell.poll.answerID)",
-                        "v": vkSingleton.shared.version
-                    ]
-                    
-                    let request = GetServerDataOperation(url: url, parameters: parameters)
-                    
-                    request.completionBlock = {
-                        guard let data = request.data else { return }
-                        
-                        guard let json = try? JSON(data: data) else { print("json error"); return }
-                        
-                        let error = ErrorJson(json: JSON.null)
-                        error.errorCode = json["error"]["error_code"].intValue
-                        error.errorMsg = json["error"]["error_msg"].stringValue
-                        
-                        if error.errorCode == 0 {
-                            OperationQueue.main.addOperation {
-                                cell.poll.votes -= 1
-                                cell.poll.answers[num].votes -= 1
-                                for answer in cell.poll.answers {
-                                    answer.rate = Int(Double(answer.votes) / Double(cell.poll.votes) * 100)
-                                }
-                                cell.poll.answerID = 0
-                                cell.updatePoll()
-                            }
-                        } else if error.errorCode == 250 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Нет доступа к опросу.")
-                        } else if error.errorCode == 251 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор опроса.")
-                        } else if error.errorCode == 252 {
-                            self.showErrorMessage(title: "Голосование по опросу!", msg: "Недопустимый идентификатор ответа. ")
-                        } else {
-                            error.showErrorMessage(controller: self)
-                        }
-                    }
-                    
-                    OperationQueue().addOperation(request)
-                }
-                alertController.addAction(action1)
-                
-                present(alertController, animated: true)
-            }
         }
     }
     

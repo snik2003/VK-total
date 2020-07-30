@@ -18,7 +18,7 @@ class ParseRequest: Operation {
         guard let getServerDataOperation = dependencies.first as? GetServerDataOperation, let data = getServerDataOperation.data else { return }
         
         guard let json = try? JSON(data: data) else { print("json error"); return }
-        //print(json)
+        print(json)
         count = json["response"]["count"].intValue
         let ids = json["response"]["items"].compactMap { FriendRequest(json: $0.1) }
         if count > 0 {

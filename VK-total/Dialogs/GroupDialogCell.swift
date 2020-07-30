@@ -159,7 +159,7 @@ class GroupDialogCell: UITableViewCell {
                 let aView = AttachmentsView()
                 aView.photos = photos
                 
-                let width = 0.7 * (UIScreen.main.bounds.width - 2 * leftInsets - avatarSize)
+                let width = 0.7 * (UIScreen.main.bounds.width - 2 * leftInsets - avatarSize) + 2.5
                 
                 if drawCell {
                     aView.backgroundColor = .clear
@@ -694,7 +694,7 @@ class GroupDialogCell: UITableViewCell {
             let aView = AttachmentsView()
             aView.photos = photos
             
-            let width = rect.width - 10
+            let width = rect.width - 10 + 2.5
             let height = aView.configureAttachView(maxSize: width, getRow: !drawCell)
             
             if drawCell {
