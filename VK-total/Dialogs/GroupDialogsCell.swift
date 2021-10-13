@@ -10,8 +10,6 @@ import UIKit
 
 class GroupDialogsCell: UITableViewCell {
     
-    var timer = Timer()
-    
     var groupID = ""
     
     var userAvatar = UIImageView()
@@ -170,8 +168,6 @@ class GroupDialogsCell: UITableViewCell {
     }
     
     func updateMessageLabel(mess: Message, users: [DialogsUsers]) {
-        timer.invalidate()
-            
         if mess.body != "" {
             messLabel.text = mess.body.replacingOccurrences(of: "\n", with: " ").prepareTextForPublic()
             

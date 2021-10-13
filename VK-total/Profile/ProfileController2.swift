@@ -124,6 +124,17 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         viewFirstAppear = false
     }
     
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        
+        if !MyReachability.shared.isConnectedToNetwork() {
+            ViewControllerUtils().hideActivityIndicator()
+            showErrorMessage(title: "\nВнимание!", msg: "Отсутствует подключение к интернету.\nПроверьте настройки сети и повторите попытку.\n")
+            navigationController?.popToRootViewController(animated: true)
+            return
+        }
+    }
+    
     func createTableView() {
         tableView = UITableView()
         tableView.frame = CGRect(x: 0, y: navHeight, width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height - navHeight - tabHeight)
@@ -163,7 +174,13 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         
         code = "\(code) var d = API.wall.get({\"owner_id\":\(userID),\"offset\":\(offset),\"access_token\": \"\(vkSingleton.shared.accessToken)\",\"count\":\(count),\"filter\":\"postponed\",\"extended\":1,\"v\":\"5.85\"});\n"
         
-        code = "\(code) return [a,b,c,d];"
+        if (userID == vkSingleton.shared.userID && vkSingleton.shared.stickers.isEmpty) {
+            code = "\(code) var e = API.store.getProducts({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"type\": \"stickers\",\"merchant\":\"apple\",\"filters\":\"purchased,active\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+            
+            code = "\(code) return [a,b,c,d,e];"
+        } else {
+            code = "\(code) return [a,b,c,d];"
+        }
         
         let url = "/method/execute"
         let parameters = [
@@ -175,15 +192,18 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
         getServerDataOperation.completionBlock = {
             guard let data = getServerDataOperation.data else { return }
-            
             guard let json = try? JSON(data: data) else { print("json error"); return }
             
             self.userProfile = json["response"][0].compactMap { UserProfileInfo(json: $0.1) }
             self.photos = json["response"][1]["items"].compactMap { Photos(json: $0.1) }
             
-            //print(json["response"][2])
+            //print(json["response"][1]["items"])
             
             if self.userID == vkSingleton.shared.userID {
+                if vkSingleton.shared.stickers.isEmpty {
+                    vkSingleton.shared.stickers = json["response"][4]["items"].compactMap { Stickers(json: $0.1) }
+                }
+                
                 OperationQueue.main.addOperation {
                     if self.userProfile.count > 0 {
                         vkSingleton.shared.avatarURL = self.userProfile[0].maxPhotoURL
@@ -429,7 +449,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             "count": "\(count)",
             "filter": filterRecords,
             "extended": "1",
-            "v": "5.85"
+            "v": vkSingleton.shared.version
         ]
         
         let getServerDataOperation3 = GetServerDataOperation(url: url3, parameters: parameters3)
@@ -448,7 +468,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             "count": "100",
             "filter": "postponed",
             "extended": "1",
-            "v": "5.85"
+            "v": vkSingleton.shared.version
         ]
         
         let getServerDataOperation4 = GetServerDataOperation(url: url4, parameters: parameters4)
@@ -481,7 +501,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             "count": "\(count)",
             "filter": filterRecords,
             "extended": "1",
-            "v": "5.85"
+            "v": vkSingleton.shared.version
         ]
         
         let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
@@ -1453,6 +1473,7 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             "count": "1",
             "user_id": "\(self.userID)",
             "start_message_id": "-1",
+            "extended": "1",
             "v": vkSingleton.shared.version
         ]
         
@@ -1461,12 +1482,8 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         
         let parseDialog = ParseDialogHistory()
         parseDialog.completionBlock = {
-            var startID = parseDialog.inRead
-            if parseDialog.outRead > startID {
-                startID = parseDialog.outRead
-            }
             OperationQueue.main.addOperation {
-                self.openDialogController(userID: self.userID, chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                self.openDialogController(userID: self.userID, chatID: "", startID: parseDialog.lastMessageId, attachment: "", messIDs: [], image: nil)
             }
         }
         parseDialog.addDependency(getServerDataOperation)

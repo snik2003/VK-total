@@ -15,7 +15,6 @@ class GroupsListController: InnerViewController, UITableViewDelegate, UITableVie
     
     var delegate: UIViewController!
     
-    
     var userID = ""
     var type = ""
     var source = ""

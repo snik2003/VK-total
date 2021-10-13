@@ -71,7 +71,7 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             guard let data = getServerDataOperation.data else { return }
             
             guard let json = try? JSON(data: data) else { print("json error"); return }
-            //print(json)
+            print(json)
             
             let photos = json["response"][0].compactMap { Photo(json: $0.1) }
             let likes = json["response"][1]["items"].compactMap { Likes(json: $0.1) }
@@ -105,6 +105,9 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
                     }
                     
                     let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
+                    self.navigationItem.rightBarButtonItem = barButton
+                } else {
+                    let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem2(sender:)))
                     self.navigationItem.rightBarButtonItem = barButton
                 }
                 
@@ -180,11 +183,18 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             
             let action2 = UIAlertAction(title: "Сохранить на устройство", style: .default) { action in
                 
-                let getCacheImage = GetCacheImage(url: photo.bigPhotoURL, lifeTime: .avatarImage)
+                var url = photo.xxbigPhotoURL
+                if url.isEmpty { url = photo.xbigPhotoURL }
+                if url.isEmpty { url = photo.bigPhotoURL }
+                if url.isEmpty { url = photo.photoURL }
+                if url.isEmpty { url = photo.smallPhotoURL }
+                
+                let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
                 getCacheImage.completionBlock = {
-                    let image = getCacheImage.outputImage
-                    OperationQueue.main.addOperation {
-                        UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
+                    if let image = getCacheImage.outputImage {
+                        OperationQueue.main.addOperation {
+                            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                        }
                     }
                 }
                 OperationQueue().addOperation(getCacheImage)
@@ -492,6 +502,46 @@ class PhotoViewController: InnerTableViewController, PECropViewControllerDelegat
             
             self.present(alertController, animated: true)
         }
+    }
+    
+    @objc func tapBarButtonItem2(sender: UIBarButtonItem) {
+        
+        let photo = self.photos[numPhoto]
+        playSoundEffect(vkSingleton.shared.buttonSound)
+        
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        let action1 = UIAlertAction(title: "Сохранить на устройство", style: .default) { action in
+            
+            var url = photo.xxbigPhotoURL
+            if url.isEmpty { url = photo.xbigPhotoURL }
+            if url.isEmpty { url = photo.bigPhotoURL }
+            if url.isEmpty { url = photo.photoURL }
+            if url.isEmpty { url = photo.smallPhotoURL }
+            
+            let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
+            getCacheImage.completionBlock = {
+                if let image = getCacheImage.outputImage {
+                    OperationQueue.main.addOperation {
+                        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                    }
+                }
+            }
+            OperationQueue().addOperation(getCacheImage)
+            self.showSuccessMessage(title: "Сохранение на устройство", msg: "Фотография успешно сохранена на ваше устройство.")
+        }
+        alertController.addAction(action1)
+        
+        let action2 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
+                
+            self.reportOnObject(ownerID: photo.ownerID, itemID: photo.pid, type: "photo")
+        }
+        alertController.addAction(action2)
+        
+        self.present(alertController, animated: true)
     }
     
     func cropViewControllerDidCancel(_ controller: PECropViewController!) {

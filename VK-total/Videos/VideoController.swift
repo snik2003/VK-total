@@ -25,6 +25,8 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
     var totalComments = 0
     var accessKey = ""
     
+    var delegate: UIViewController?
+    
     var video = [Videos]()
     var users = [NewsProfiles]()
     var groups = [NewsGroups]()
@@ -318,14 +320,21 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
         sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 40
-        let height = width + 70
-        let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        stickerView.backgroundColor = vkSingleton.shared.backColor
-        configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
-        
-        self.popover = Popover(options: self.popoverOptions)
-        self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        if vkSingleton.shared.stickers.count <= 2 {
+            let width = self.view.bounds.width - 40
+            let height = width + 70
+            let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
+            stickerView.backgroundColor = vkSingleton.shared.backColor
+            configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
+            
+            self.popover = Popover(options: self.popoverOptions)
+            self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        } else {
+            let stickersView = StickersView()
+            stickersView.delegate = self
+            stickersView.configure(width: self.view.bounds.width - 40)
+            stickersView.show(fromView: self.commentView.stickerButton)
+        }
     }
     
     @objc func tapAccessoryButton(sender: UIButton) {
@@ -1344,6 +1353,46 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                 alertController.addAction(action3)
             }
             
+            if (vkSingleton.shared.userID == "\(video.ownerID)") || (video.ownerID < 0 && vkSingleton.shared.adminGroupID.contains(abs(video.ownerID))) {
+                let action4 = UIAlertAction(title: "Удалить видеозапись", style: .destructive) { action in
+                    
+                    var titleColor = UIColor.black
+                    var backColor = UIColor.white
+                    
+                    titleColor = vkSingleton.shared.labelColor
+                    backColor = vkSingleton.shared.backColor
+                    
+                    let appearance = SCLAlertView.SCLAppearance(
+                        kTitleTop: 32.0,
+                        kWindowWidth: UIScreen.main.bounds.width - 40,
+                        kTitleFont: UIFont(name: "Verdana-Bold", size: 12)!,
+                        kTextFont: UIFont(name: "Verdana", size: 13)!,
+                        kButtonFont: UIFont(name: "Verdana", size: 14)!,
+                        showCloseButton: false,
+                        showCircularIcon: true,
+                        circleBackgroundColor: backColor,
+                        contentViewColor: backColor,
+                        titleColor: titleColor
+                    )
+                    let alertView = SCLAlertView(appearance: appearance)
+                    
+                    alertView.addButton("Да, я уверен") {
+                        ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                        self.deleteVideoFromSite(ownerID: video.ownerID, videoID: video.id, delegate: self.delegate)
+                    }
+                    
+                    alertView.addButton("Отмена, я передумал") {}
+                    
+                    var subtitle = "Вы уверены, что хотите удалить данную видеозапись? Это действие необратимо."
+                    if !video.title.isEmpty {
+                        subtitle = "Вы уверены, что хотите удалить видеозапись «\(video.title)»? Это действие необратимо."
+                    }
+                    
+                    alertView.showWarning("Подтверждение!", subTitle: subtitle)
+                }
+                alertController.addAction(action4)
+            }
+            
             let action4 = UIAlertAction(title: "Удалить из «Мои видеозаписи»", style: .destructive) { action in
                 
                 let url = "/method/video.delete"
@@ -1393,6 +1442,12 @@ class VideoController: InnerViewController, UITableViewDelegate, UITableViewData
                 self.addLinkToFave(link: link, text: "Видеозапись")
             }
             alertController.addAction(action6)
+            
+            let action8 = UIAlertAction(title: "Открыть видео ВКонтакте", style: .destructive) { action in
+                let url = "https://vk.com/video\(self.ownerID)_\(self.vid)"
+                self.openBrowserControllerNoCheck(url: url)
+            }
+            alertController.addAction(action8)
             
             let action2 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in
                 

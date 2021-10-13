@@ -46,17 +46,15 @@ class GroupDialogsController: InnerTableViewController {
         self.refreshControl?.tintColor = vkSingleton.shared.labelColor
         tableView.addSubview(refreshControl!)
         
-        OperationQueue.main.addOperation {
-            self.navigationItem.hidesBackButton = true
-            let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
-            self.navigationItem.leftBarButtonItem = closeButton
-            
-            self.tableView.separatorStyle = .none
-            self.tableView.showsVerticalScrollIndicator = false
-            self.tableView.showsHorizontalScrollIndicator = false
+        let closeButton = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(self.tapCloseButton(sender:)))
+        self.navigationItem.hidesBackButton = true
+        self.navigationItem.leftBarButtonItem = closeButton
         
-            self.tableView.register(GroupDialogsCell.self, forCellReuseIdentifier: "dialogCell")
-        }
+        self.tableView.separatorStyle = .none
+        self.tableView.showsVerticalScrollIndicator = false
+        self.tableView.showsHorizontalScrollIndicator = false
+    
+        self.tableView.register(GroupDialogsCell.self, forCellReuseIdentifier: "dialogCell")
     }
     
     override func viewDidLayoutSubviews() {
@@ -64,6 +62,8 @@ class GroupDialogsController: InnerTableViewController {
         
         if isFirstAppear {
             isFirstAppear = false
+            
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
             refresh()
         }
     }
@@ -89,13 +89,7 @@ class GroupDialogsController: InnerTableViewController {
         let opq = OperationQueue()
         isRefresh = true
     
-        if let aView = self.tableView.superview {
-            ViewControllerUtils().showActivityIndicator(uiView: aView)
-        } else {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-        }
-    
-        let url = "/method/messages.getDialogs"
+        let url = "/method/messages.getConversations"
         let parameters = [
             "access_token": vkSingleton.shared.accessToken,
             "offset": "\(offset)",
@@ -110,14 +104,11 @@ class GroupDialogsController: InnerTableViewController {
         
         let parseDialogs = ParseDialogs()
         parseDialogs.completionBlock = {
-            var userIDs = ""
+            var userIDs = "\(vkSingleton.shared.userID)"
             for dialog in parseDialogs.outputData {
-                if userIDs != "" {
-                    userIDs = "\(userIDs),"
-                }
+                if userIDs != "" { userIDs = "\(userIDs)," }
                 userIDs = "\(userIDs)\(dialog.userID)"
             }
-            userIDs = "\(userIDs),\(vkSingleton.shared.userID)"
             
             let url = "/method/users.get"
             let parameters = [
@@ -140,9 +131,7 @@ class GroupDialogsController: InnerTableViewController {
             var groupIDs = self.groupID
             for dialog in parseDialogs.outputData {
                 if dialog.userID < 0 {
-                    if groupIDs != "" {
-                        groupIDs = "\(groupIDs),"
-                    }
+                    if groupIDs != "" { groupIDs = "\(groupIDs)," }
                     groupIDs = "\(groupIDs)\(abs(dialog.userID))"
                 }
             }
@@ -173,31 +162,24 @@ class GroupDialogsController: InnerTableViewController {
     }
     
     override func numberOfSections(in tableView: UITableView) -> Int {
-        
         return dialogs.count
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        
         return 1
     }
     
     override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        
         let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! GroupDialogsCell
-        
         return cell.userAvatarSize + 2 * cell.topInsets
     }
     
     override func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
-        if section == 0 {
-            return 6
-        }
+        if section == 0 { return 6 }
         return 0
     }
     
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        
         return 6
     }
     
@@ -222,7 +204,6 @@ class GroupDialogsController: InnerTableViewController {
         }
         
         cell.selectionStyle = .none
-        
         return cell
     }
     
@@ -245,6 +226,8 @@ class GroupDialogsController: InnerTableViewController {
     override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         
         if isRefresh == false {
+            if let aView = self.tableView.superview { ViewControllerUtils().showActivityIndicator(uiView: aView) }
+            else { ViewControllerUtils().showActivityIndicator(uiView: self.view) }
             self.refresh()
         }
     }

@@ -48,10 +48,8 @@ enum AppConfiguration: String {
 }
 
 struct Config {
-    // This is private because the use of 'appConfiguration' is preferred.
     private static let isTestFlight = Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt"
     
-    // This can be used to add debug statements.
     static var isDebug: Bool {
         #if DEBUG
         return true

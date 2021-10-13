@@ -28,7 +28,7 @@ final class vkSingleton {
     var userID: String = ""
     var commentFromGroup = 0
     
-    let version = "5.71"
+    let version = "5.85"
     let lpVersion = "3"
     
     var deviceToken = "" // "604a50395f505b94a0b8a15ae198d34d6cbb0b034387154701ddeabb0a873058"
@@ -40,7 +40,10 @@ final class vkSingleton {
     var pushInfo: [AnyHashable: Any]? = nil
     var pushInfo2: [AnyHashable: Any]? = nil
     
+    var stickers: [Stickers] = []
+    
     let appOpenedCountKey = "APP_OPENED_COUNT"
+    let dialogsOpenedCountKey = "DIALOGS_OPENED_COUNT"
     
     var deviceInterfaceStyle: VKUserInterfaceStyle = .light
     

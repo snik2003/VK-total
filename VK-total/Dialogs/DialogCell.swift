@@ -461,7 +461,6 @@ class DialogCell: UITableViewCell {
                     markCheck.tag = 200
                     markCheck.onTintColor = vkSingleton.shared.mainColor
                     markCheck.onCheckColor = vkSingleton.shared.mainColor
-                    markCheck.backgroundColor = vkSingleton.shared.backColor
                     markCheck.lineWidth = 2
                     markCheck.on = controller.markMessages.contains(dialog.id)
                     markCheck.isEnabled = false
@@ -514,7 +513,6 @@ class DialogCell: UITableViewCell {
             
             topY = messView.frame.maxY + 16 + 15
         } else {
-            
             if drawCell {
                 var text = ""
                 var actID = dialog.userID
@@ -547,6 +545,24 @@ class DialogCell: UITableViewCell {
                         text = "В беседе закреплено сообщение"
                     } else if dialog.action == "chat_unpin_message" {
                         text = "В беседе откреплено сообщение"
+                    } else {
+                        text = dialog.action
+                    }
+                } else {
+                    if dialog.action == "chat_create" {
+                        text = "Создана беседа с названием «\(dialog.actionText)»"
+                    } else if dialog.action == "chat_title_update" {
+                        text = "Изменено название беседы на «\(dialog.actionText)»"
+                    } else if dialog.action == "chat_photo_update" {
+                        text = "Обновлена главная фотография беседы"
+                    } else if dialog.action == "chat_photo_remove" {
+                        text = "Удалена главная фотография беседы"
+                    } else if dialog.action == "chat_pin_message" {
+                        text = "В беседе закреплено сообщение"
+                    } else if dialog.action == "chat_unpin_message" {
+                        text = "В беседе откреплено сообщение"
+                    } else {
+                        text = dialog.action
                     }
                 }
                 

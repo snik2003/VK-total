@@ -1,11 +1,11 @@
 PODS:
   - Alamofire (4.9.1)
   - BEMCheckBox (1.4.1)
-  - BTNavigationDropdownMenu (0.5)
+  - BTNavigationDropdownMenu (0.7)
   - CMPhotoCropEditor (1.0.1)
   - DCCommentView (0.1.6)
   - DropDown (2.3.13)
-  - FLAnimatedImage (1.0.12)
+  - FLAnimatedImage (1.0.16)
   - Popover (1.3.0)
   - Realm (3.21.0):
     - Realm/Headers (= 3.21.0)
@@ -15,9 +15,9 @@ PODS:
   - SCLAlertView (0.8)
   - SmileLock (3.0.7)
   - Swifter (1.4.7)
-  - SwiftMessages (7.0.1):
-    - SwiftMessages/App (= 7.0.1)
-  - SwiftMessages/App (7.0.1)
+  - SwiftMessages (9.0.5):
+    - SwiftMessages/App (= 9.0.5)
+  - SwiftMessages/App (9.0.5)
   - SwiftyJSON (4.3.0)
   - SWRevealViewController (2.3.0)
   - YandexMobileMetrica/Dynamic (3.7.1):
@@ -68,22 +68,22 @@ SPEC REPOS:
 SPEC CHECKSUMS:
   Alamofire: 85e8a02c69d6020a0d734f6054870d7ecb75cf18
   BEMCheckBox: 5ba6e37ade3d3657b36caecc35c8b75c6c2b1a4e
-  BTNavigationDropdownMenu: ba3a26fdb6a56c4721c31df8a0875106c259663a
+  BTNavigationDropdownMenu: 57a72c74dc211db3564f5be168f4f7643491a7de
   CMPhotoCropEditor: 50010afad0ec87be9c49c98a99e65be90f23a249
   DCCommentView: 9b46fc2c78f64a28c72f482e5f7d75574b8ff5a8
   DropDown: 8a2116376c1981888557f72ec2ffc9a5e0e456ec
-  FLAnimatedImage: 4a0b56255d9b05f18b6dd7ee06871be5d3b89e31
+  FLAnimatedImage: 8f3e854ebf9680b71f0b6e700939687fc4d82b4b
   Popover: 10e1d9528f81d9504df984b7b3f491292bc1822d
   Realm: 38e9dcb19104b58407167d99f70d4995f7c16023
   RealmSwift: 3183cc1ad48378fbcd634311b22c0e6c44021152
   SCLAlertView: 6a77bb2edfc65e04dbe57725546cb4107a506b85
   SmileLock: 46b847b3ad963e3140d083b53f09036a4d210537
   Swifter: 2327ef5d872c638aebab79646ce494af508b0c8f
-  SwiftMessages: b577dc7043be8b299857ab35bb663dbff6483bd0
+  SwiftMessages: 9cca50659fa22bb523b4dd2a958d4442e843a354
   SwiftyJSON: 6faa0040f8b59dead0ee07436cbf76b73c08fd08
   SWRevealViewController: 6d3fd97f70112fd7cef9de14df4260eacce4c63a
   YandexMobileMetrica: 95e93ee5af38520c9e470533dc8df6cf72fa171d
 
 PODFILE CHECKSUM: 90279c1f0e876073f446c1d1c42842ac476bc1c1
 
-COCOAPODS: 1.9.2
+COCOAPODS: 1.10.1

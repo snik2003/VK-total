@@ -221,6 +221,8 @@ extension UIViewController: NotificationCellProtocol {
         videoController.accessKey = accessKey
         videoController.title = title
         
+        videoController.delegate = self
+        
         self.navigationController?.pushViewController(videoController, animated: true)
         self.playSoundEffect(vkSingleton.shared.dialogSound)
     }
@@ -556,6 +558,7 @@ extension UIViewController: NotificationCellProtocol {
                             "count": "1",
                             "user_id": "\(2000000000 + chatID)",
                             "start_message_id": "-1",
+                            "extended": "1",
                             "v": vkSingleton.shared.version
                         ]
                         
@@ -564,12 +567,8 @@ extension UIViewController: NotificationCellProtocol {
                         
                         let parseDialog = ParseDialogHistory()
                         parseDialog.completionBlock = {
-                            var startID = parseDialog.inRead
-                            if parseDialog.outRead > startID {
-                                startID = parseDialog.outRead
-                            }
                             OperationQueue.main.addOperation {
-                                self.openDialogController(userID: "\(2000000000 + chatID)", chatID: "\(chatID)", startID: startID, attachment: "", messIDs: [], image: nil)
+                                self.openDialogController(userID: "\(2000000000 + chatID)", chatID: "\(chatID)", startID: parseDialog.lastMessageId, attachment: "", messIDs: [], image: nil)
                             }
                         }
                         parseDialog.addDependency(getServerDataOperation)
@@ -793,9 +792,8 @@ extension UIViewController: NotificationCellProtocol {
                                "v": vkSingleton.shared.version ]
             
             let request = GetServerDataOperation(url: url, parameters: parameters)
-            if let operation = dependence {
-                request.addDependency(operation)
-            }
+            if let operation = dependence { request.addDependency(operation) }
+            
             request.completionBlock = {
                 guard let data = request.data else { return }
                 
@@ -818,9 +816,8 @@ extension UIViewController: NotificationCellProtocol {
                                "v": vkSingleton.shared.version ]
             
             let request = GetServerDataOperation(url: url, parameters: parameters)
-            if let operation = dependence {
-                request.addDependency(operation)
-            }
+            if let operation = dependence { request.addDependency(operation) }
+            
             request.completionBlock = {
                 guard let data = request.data else { return }
                 
@@ -3007,6 +3004,41 @@ extension UIViewController: NotificationCellProtocol {
         }
     }
     
+    func showSetOnlineAlert(title: String, body: String, doneCompletion: @escaping ()->(Void), cancelCompletion: @escaping ()->(Void)) {
+        
+        OperationQueue.main.addOperation {
+            var titleColor = UIColor.black
+            var backColor = UIColor.white
+            
+            titleColor = vkSingleton.shared.labelColor
+            backColor = vkSingleton.shared.backColor
+            
+            let appearance = SCLAlertView.SCLAppearance(
+                kWindowWidth: UIScreen.main.bounds.width - 40,
+                kTitleFont: UIFont(name: "Verdana", size: 13)!,
+                kTextFont: UIFont(name: "Verdana", size: 12)!,
+                kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
+                showCloseButton: false,
+                circleBackgroundColor: backColor,
+                contentViewColor: backColor,
+                titleColor: titleColor
+            )
+            
+            let alert = SCLAlertView(appearance: appearance)
+            
+            alert.addButton("Хорошо, я согласен", action: {
+                doneCompletion()
+            })
+            
+            alert.addButton("Нет, хочу остаться офлайн", action: {
+                cancelCompletion()
+            })
+            
+            alert.showError(title, subTitle: body)
+            self.playSoundEffect(vkSingleton.shared.errorSound)
+        }
+    }
+    
     func addBookmarkOnHomeScreen(name: String, screenName: String, image: UIImage) {
         
         var html = ""
@@ -3059,7 +3091,7 @@ extension UIViewController: NotificationCellProtocol {
         html = html.replacingOccurrences(of: "SHORTCUT-NAME-HERE", with: name)
         html = html.replacingOccurrences(of: "YOUR-CUSTOM-URL", with: "vktotal://vk.com/\(screenName)")
         html = html.replacingOccurrences(of: "ICON-IMAGE-DATA", with: image.convertToBase64())
-        print(html)
+        //print(html)
         
         do {
             let server = HttpServer()
@@ -3166,7 +3198,7 @@ extension UIViewController: NotificationCellProtocol {
                             "owner_id": "\(cell.poll.ownerID)",
                             "poll_id": "\(cell.poll.id)",
                             "answer_ids": "\(cell.poll.answers[num].id)",
-                            "v": "5.85"
+                            "v": vkSingleton.shared.version
                         ]
                         
                         let request = GetServerDataOperation(url: url, parameters: parameters)
@@ -3222,7 +3254,7 @@ extension UIViewController: NotificationCellProtocol {
                             "owner_id": "\(cell.poll.ownerID)",
                             "poll_id": "\(cell.poll.id)",
                             "answer_id": "\(cell.poll.answers[num].id)",
-                            "v": "5.85"
+                            "v": vkSingleton.shared.version
                         ]
                         
                         let request = GetServerDataOperation(url: url, parameters: parameters)
@@ -3296,7 +3328,7 @@ extension UIViewController: NotificationCellProtocol {
                             "owner_id": "\(cell.poll.ownerID)",
                             "poll_id": "\(cell.poll.id)",
                             "answer_ids": "\(cell.poll.answers[num].id)",
-                            "v": "5.85"
+                            "v": vkSingleton.shared.version
                         ]
                         
                         let request = GetServerDataOperation(url: url, parameters: parameters)
@@ -3352,7 +3384,7 @@ extension UIViewController: NotificationCellProtocol {
                             "owner_id": "\(cell.poll.ownerID)",
                             "poll_id": "\(cell.poll.id)",
                             "answer_id": "\(cell.poll.answers[num].id)",
-                            "v": "5.85"
+                            "v": vkSingleton.shared.version
                         ]
                         
                         let request = GetServerDataOperation(url: url, parameters: parameters)

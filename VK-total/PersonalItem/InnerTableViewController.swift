@@ -53,6 +53,13 @@ class InnerTableViewController: UITableViewController {
             self.openBrowserController(url: vkSingleton.shared.openLink)
             vkSingleton.shared.openLink = ""
         }
+        
+        if !MyReachability.shared.isConnectedToNetwork() {
+            ViewControllerUtils().hideActivityIndicator()
+            showErrorMessage(title: "\nВнимание!", msg: "Отсутствует подключение к интернету.\nПроверьте настройки сети и повторите попытку.\n")
+            navigationController?.popToRootViewController(animated: true)
+            return
+        }
     }
     
     @objc func hideKeyboard() {

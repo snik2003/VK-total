@@ -29,14 +29,12 @@ class DialogsCell: UITableViewCell {
     let messFont = UIFont(name: "Verdana", size: 11)!
     let dateFont = UIFont(name: "Verdana", size: 10)!
     
-    func configureCell(mess: Message, users: [DialogsUsers], indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
+    func configureCell(mess: Message, conversation: Conversation?, users: [DialogsUsers], indexPath: IndexPath, cell: UITableViewCell, tableView: UITableView) {
         
         self.backgroundColor = .clear
         
         for subview in self.subviews {
-            if subview.tag == 100 {
-                subview.removeFromSuperview()
-            }
+            if subview.tag == 100 { subview.removeFromSuperview() }
         }
         
         var url = ""
@@ -82,6 +80,17 @@ class DialogsCell: UITableViewCell {
         userAvatar.tag = 100
         userAvatar.frame = CGRect(x: leftInsets, y: topInsets, width: userAvatarSize, height: userAvatarSize)
         self.addSubview(userAvatar)
+        
+        if let conversation = conversation, conversation.important {
+            let favoriteImage = UIImageView()
+            favoriteImage.tag = 100
+            favoriteImage.image = UIImage(named: "favorite")
+            favoriteImage.contentMode = .scaleAspectFill
+            let leftX = leftInsets + userAvatarSize - 20
+            let topY = topInsets + userAvatarSize - 20
+            favoriteImage.frame = CGRect(x: leftX, y: topY, width: 20, height: 20)
+            self.addSubview(favoriteImage)
+        }
         
         nameLabel.tag = 100
         nameLabel.text = name
@@ -273,8 +282,27 @@ class DialogsCell: UITableViewCell {
                         messLabel.text = "В беседе закреплено сообщение"
                     } else if mess.action == "chat_unpin_message" {
                         messLabel.text = "В беседе откреплено сообщение"
+                    } else {
+                        messLabel.text = mess.action
+                    }
+                } else {
+                    if mess.action == "chat_create" {
+                        messLabel.text = "Создана беседа с названием «\(mess.actionText)»"
+                    } else if mess.action == "chat_title_update" {
+                        messLabel.text = "Изменено название беседы на «\(mess.actionText)»"
+                    } else if mess.action == "chat_photo_update" {
+                        messLabel.text = "Обновлена главная фотография беседы"
+                    } else if mess.action == "chat_photo_remove" {
+                        messLabel.text = "Удалена главная фотография беседы"
+                    } else if mess.action == "chat_pin_message" {
+                        messLabel.text = "В беседе закреплено сообщение"
+                    } else if mess.action == "chat_unpin_message" {
+                        messLabel.text = "В беседе откреплено сообщение"
+                    } else {
+                        messLabel.text = mess.action
                     }
                 }
+                
                 messLabel.numberOfLines = 2
                 messLabel.textColor = vkSingleton.shared.secondaryLabelColor
             } else {

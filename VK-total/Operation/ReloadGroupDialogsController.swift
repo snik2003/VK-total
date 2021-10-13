@@ -39,14 +39,6 @@ class ReloadGroupDialogsController: Operation {
             controller.dialogs.append(dialog)
         }
         
-        /*if let item = controller.tabBarController?.tabBar.items?[3] {
-            if parseDialogs.unread > 0 {
-                item.badgeValue = "\(parseDialogs.unread)"
-            } else {
-                item.badgeValue = nil
-            }
-        }*/
-        
         controller.totalCount = parseDialogs.count
         controller.offset += controller.count
         controller.tableView.reloadData()

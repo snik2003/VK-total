@@ -10,6 +10,8 @@ import UIKit
 import SwiftyJSON
 import Alamofire
 import DCCommentView
+import SCLAlertView
+import DropDown
 
 protocol VkOperationProtocol {
     
@@ -73,6 +75,8 @@ protocol VkOperationProtocol {
     
     func deletePhotoFromSite(ownerID: String, photoID: String, delegate: UIViewController)
     
+    func deleteVideoFromSite(ownerID: Int, videoID: Int, delegate: UIViewController?)
+    
     func repostObject(object: String, message: String)
     
     func editPost(ownerID: Int, postID: Int, message: String, attachments: String, friendsOnly: Int, signed: Int, publish: Int, controller: Record2Controller)
@@ -110,9 +114,66 @@ protocol VkOperationProtocol {
     func loadWallPhotosToServer(ownerID: Int, image: UIImage, filename: String, completion: @escaping (String) -> Void)
     
     func loadDocsToServer(ownerID: Int, image: UIImage, filename: String, imageData: Data, completion: @escaping (String) -> Void)
+    
+    func getUploadVideoURL(isLink: Bool, groupID: Int, isPrivate: Int, wallpost: Int, completion: @escaping (String, String) -> Void)
+    
+    func getImportantConversations() -> [Int]
+    
+    func saveImportantConversations(importantIds: [Int])
+    
+    func addImportantConversation(importantID: Int)
+    
+    func deleteImportantConversation(importantID: Int)
+    
+    func actualConversationArray(conversations: [Conversation]) -> [Conversation]
 }
 
 extension UIViewController: VkOperationProtocol {
+    
+    func getImportantConversations() -> [Int] {
+    
+        let key = "\(vkSingleton.shared.userID)_important_conversation"
+        if let importantIds = UserDefaults.standard.object(forKey: key) as? [Int] { return importantIds }
+        
+        return []
+    }
+    
+    func saveImportantConversations(importantIds: [Int]) {
+        
+        let key = "\(vkSingleton.shared.userID)_important_conversation"
+        UserDefaults.standard.set(importantIds, forKey: key)
+    }
+    
+    func addImportantConversation(importantID: Int) {
+        
+        var importantIDs = getImportantConversations()
+        
+        if !importantIDs.contains(importantID) {
+            importantIDs.append(importantID)
+            saveImportantConversations(importantIds: importantIDs)
+        }
+    }
+    
+    func deleteImportantConversation(importantID: Int) {
+        
+        var importantIDs = getImportantConversations()
+        
+        if importantIDs.contains(importantID) {
+            importantIDs.remove(object: importantID)
+            saveImportantConversations(importantIds: importantIDs)
+        }
+    }
+    
+    func actualConversationArray(conversations: [Conversation]) -> [Conversation] {
+        
+        let importantIDs = getImportantConversations()
+        
+        for conversation in conversations {
+            conversation.important = importantIDs.contains(conversation.peerID) ? true : false
+        }
+        
+        return conversations
+    }
     
     func unregisterDeviceOnPush() {
         
@@ -274,7 +335,7 @@ extension UIViewController: VkOperationProtocol {
             "access_token": vkSingleton.shared.accessToken,
             "v": vkSingleton.shared.version
             ] as [String : Any]
-        print(parameters)
+        //print(parameters)
         
         let request = GetServerDataOperation(url: url, parameters: parameters)
         request.completionBlock = {
@@ -1786,6 +1847,54 @@ extension UIViewController: VkOperationProtocol {
         OperationQueue().addOperation(request)
     }
     
+    func deleteVideoFromSite(ownerID: Int, videoID: Int, delegate: UIViewController?) {
+        
+        let url = "/method/video.delete"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "target_id": "\(ownerID)",
+            "owner_id": "\(ownerID)",
+            "video_id": "\(videoID)",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { ViewControllerUtils().hideActivityIndicator(); print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error"]["error_code"].intValue
+            error.errorMsg = json["error"]["error_msg"].stringValue
+            
+            ViewControllerUtils().hideActivityIndicator()
+            
+            if error.errorCode == 0 {
+                OperationQueue.main.addOperation {
+                    if let controller = delegate as? VideoListController {
+                        self.navigationController?.popViewController(animated: true)
+                        
+                        controller.videos = controller.videos.filter({ !($0.ownerID == ownerID && $0.id == videoID) })
+                        controller.tableView.reloadData()
+                    } else {
+                        self.navigationController?.popViewController(animated: true)
+                    
+                        if ownerID > 0 {
+                            self.showSuccessMessage(title: "Видео успешно удалено!", msg: "Видеозапись была успешно удалена с Вашей страницы.")
+                        } else if ownerID < 0 {
+                            self.showSuccessMessage(title: "Видео успешно удалено!", msg: "Видеозапись была успешно удалена со страницы сообщества.")
+                        }
+                    }
+                }
+            } else {
+                error.showErrorMessage(controller: self)
+            }
+        }
+        OperationQueue().addOperation(request)
+    }
+    
     func repostObject(object: String, message: String) {
         let url = "/method/wall.repost"
         let parameters = [
@@ -3188,7 +3297,7 @@ extension UIViewController: VkOperationProtocol {
                 let uploadURL = json["response"]["upload_url"].stringValue
                 
                 self.myImageUploadRequest(url: uploadURL, image: image, filename: filename, squareCrop: "") { json2 in
-                    print("json2 = \(json2)")
+                    //print("json2 = \(json2)")
                     
                     let error2 = ErrorJson(json: JSON.null)
                     error2.errorCode = json2["error"]["error_code"].intValue
@@ -3344,7 +3453,7 @@ extension UIViewController: VkOperationProtocol {
                     let error = json2["error_descr"].stringValue
                     if error.isEmpty {
                         let file = json2["file"].stringValue
-                        print("json2 = \(json2)")
+                        //print("json2 = \(json2)")
                         
                         let url2 = "/method/docs.save"
                         let parameters2 = [
@@ -3359,7 +3468,7 @@ extension UIViewController: VkOperationProtocol {
                             guard let data = request2.data else { return }
                             
                             let json3 = try! JSON(data: data)
-                            print("json3 = \(json3)")
+                            //print("json3 = \(json3)")
                             
                             let error = ErrorJson(json: JSON.null)
                             error.errorCode = json3["error"]["error_code"].intValue
@@ -3518,9 +3627,482 @@ extension UIViewController: VkOperationProtocol {
         
         OperationQueue().addOperation(request)
     }
+    
+    func getUploadVideoURL(isLink: Bool, groupID: Int, isPrivate: Int, wallpost: Int, completion: @escaping (String, String) -> Void) {
+        
+        var name = ""
+        var descriptionText = ""
+        
+        var privacyView: [String] = ["only_me"]
+        var privacyComment: [String] = ["only_me"]
+
+        let titleColor = vkSingleton.shared.labelColor
+        let backColor = vkSingleton.shared.backColor
+        
+        let appearance = SCLAlertView.SCLAppearance(
+            kTitleTop: 12.0,
+            kWindowWidth: UIScreen.main.bounds.width - 40,
+            kTitleFont: UIFont(name: "Verdana", size: 13)!,
+            kTextFont: UIFont(name: "Verdana", size: 12)!,
+            kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
+            showCloseButton: false,
+            showCircularIcon: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
+        )
+        
+        let textView = UITextView(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 100))
+        
+        textView.layer.borderColor = titleColor.cgColor
+        textView.layer.borderWidth = 1
+        textView.layer.cornerRadius = 5
+        textView.backgroundColor = backColor
+        textView.font = UIFont(name: "Verdana", size: 13)
+        textView.textColor = vkSingleton.shared.secondaryLabelColor
+        textView.text = ""
+        textView.changeKeyboardAppearanceMode()
+        
+        if isLink {
+            var link = ""
+            
+            let alert = SCLAlertView(appearance: appearance)
+            textView.text = ""
+            alert.customSubview = textView
+            
+            alert.addButton("Продолжить", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                textView.resignFirstResponder()
+                link = textView.text
+                
+                if link.isEmpty {
+                    var titleColor = UIColor.black
+                    var backColor = UIColor.white
+                    
+                    titleColor = vkSingleton.shared.labelColor
+                    backColor = vkSingleton.shared.backColor
+                    
+                    let appearance = SCLAlertView.SCLAppearance(
+                        kTitleTop: 32.0,
+                        kWindowWidth: UIScreen.main.bounds.width - 40,
+                        kTitleFont: UIFont(name: "Verdana-Bold", size: 12)!,
+                        kTextFont: UIFont(name: "Verdana", size: 13)!,
+                        kButtonFont: UIFont(name: "Verdana", size: 14)!,
+                        showCloseButton: false,
+                        showCircularIcon: true,
+                        circleBackgroundColor: backColor,
+                        contentViewColor: backColor,
+                        titleColor: titleColor
+                    )
+                    let alertView = SCLAlertView(appearance: appearance)
+                    
+                    alertView.addButton("Хорошо") {
+                        completion("","")
+                    }
+                    
+                    alertView.showWarning("Внимание!", subTitle: "URL видео является обязательным для заполнения. Повторите процедуру.")
+                } else {
+                    let alert = SCLAlertView(appearance: appearance)
+                    textView.text = ""
+                    alert.customSubview = textView
+                    
+                    alert.addButton("Продолжить", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                        textView.resignFirstResponder()
+                        name = textView.text
+                        
+                        let alert = SCLAlertView(appearance: appearance)
+                        textView.text = ""
+                        alert.customSubview = textView
+                        
+                        alert.addButton("Продолжить", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                            textView.resignFirstResponder()
+                            descriptionText = textView.text
+                            
+                            if groupID == 0 {
+                                self.getPrivacySetting(titleText: "Кто сможет просматривать данное видео?", completion: { privacy in
+                                    if privacy.count > 0 {
+                                        privacyView = privacy
+                                        
+                                        self.getPrivacySetting(titleText: "Кто сможет комментировать данное видеозапись?", completion: { privacy in
+                                            if privacy.count > 0 {
+                                                privacyComment = privacy
+                                                
+                                                var parameters: [String: Any] = [
+                                                    "access_token": vkSingleton.shared.accessToken,
+                                                    "is_private": isPrivate,
+                                                    "wallpost": wallpost,
+                                                    "link": link,
+                                                    "repeat": 0,
+                                                    "compression": 0,
+                                                    "privacy_view": JSON(privacyView),
+                                                    "privacy_comment": JSON(privacyComment),
+                                                    "v": vkSingleton.shared.version
+                                                ]
+                                                
+                                                if !name.isEmpty { parameters["name"] = name }
+                                                if !descriptionText.isEmpty { parameters["description"] = descriptionText }
+                                                
+                                                self.methodVideoSave(parameters: parameters, completion: { uploadURL, attach in
+                                                    completion(uploadURL,attach)
+                                                })
+                                            } else {
+                                                completion("","")
+                                            }
+                                        })
+                                    } else {
+                                        completion("","")
+                                    }
+                                })
+                            } else {
+                                var parameters: [String: Any] = [
+                                    "access_token": vkSingleton.shared.accessToken,
+                                    "is_private": isPrivate,
+                                    "wallpost": wallpost,
+                                    "link": link,
+                                    "group_id": abs(groupID),
+                                    "no_comments": 0,
+                                    "repeat": 0,
+                                    "compression": 0,
+                                    "v": vkSingleton.shared.version
+                                ]
+                                
+                                if !name.isEmpty { parameters["name"] = name }
+                                if !descriptionText.isEmpty { parameters["description"] = descriptionText }
+                                
+                                self.methodVideoSave(parameters: parameters, completion: { uploadURL, attach in
+                                    completion(uploadURL,attach)
+                                })
+                            }
+                        }
+                        
+                        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                            completion("","")
+                        }
+                        
+                        alert.showInfo("Введите описание видео\n(необязательно):", subTitle: "", closeButtonTitle: "Готово")
+                    }
+                    
+                    alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                        completion("","")
+                    }
+                    
+                    alert.showInfo("Введите наименование видео\n(необязательно):", subTitle: "", closeButtonTitle: "Готово")
+                }
+            }
+            
+            alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                completion("","")
+            }
+            
+            alert.showInfo("Введите URL видео с внешнего сайта:\n(обязательно)", subTitle: "", closeButtonTitle: "Готово")
+        } else {
+            let alert = SCLAlertView(appearance: appearance)
+            textView.text = ""
+            alert.customSubview = textView
+            
+            alert.addButton("Продолжить", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                textView.resignFirstResponder()
+                name = textView.text
+                
+                let alert = SCLAlertView(appearance: appearance)
+                textView.text = ""
+                alert.customSubview = textView
+                
+                alert.addButton("Продолжить", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                    textView.resignFirstResponder()
+                    descriptionText = textView.text
+                    
+                    if groupID == 0 && isPrivate == 0 && wallpost == 0 {
+                        self.getPrivacySetting(titleText: "Кто сможет просматривать данное видео?", completion: { privacy in
+                            if privacy.count > 0 {
+                                privacyView = privacy
+                                
+                                self.getPrivacySetting(titleText: "Кто сможет комментировать данное видеозапись?", completion: { privacy in
+                                    if privacy.count > 0 {
+                                        privacyComment = privacy
+                                        
+                                        var parameters: [String: Any] = [
+                                            "access_token": vkSingleton.shared.accessToken,
+                                            "is_private": isPrivate,
+                                            "wallpost": wallpost,
+                                            "repeat": 0,
+                                            "compression": 0,
+                                            "privacy_view": JSON(privacyView),
+                                            "privacy_comment": JSON(privacyComment),
+                                            "v": vkSingleton.shared.version
+                                        ]
+                                        
+                                        if !name.isEmpty { parameters["name"] = name }
+                                        if !descriptionText.isEmpty { parameters["description"] = descriptionText }
+                                        
+                                        self.methodVideoSave(parameters: parameters, completion: { uploadURL, attach in
+                                            completion(uploadURL,attach)
+                                        })
+                                    } else {
+                                        completion("","")
+                                    }
+                                })
+                            } else {
+                                completion("","")
+                            }
+                        })
+                    } else {
+                        var parameters: [String: Any] = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "is_private": isPrivate,
+                            "wallpost": wallpost,
+                            "group_id": abs(groupID),
+                            "no_comments": 0,
+                            "repeat": 0,
+                            "compression": 0,
+                            "v": vkSingleton.shared.version
+                        ]
+                        
+                        if !name.isEmpty { parameters["name"] = name }
+                        if !descriptionText.isEmpty { parameters["description"] = descriptionText }
+                        
+                        self.methodVideoSave(parameters: parameters, completion: { uploadURL, attach in
+                            completion(uploadURL,attach)
+                        })
+                    }
+                }
+                
+                alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                    completion("","")
+                }
+                
+                alert.showInfo("Введите описание видео\n(необязательно):", subTitle: "", closeButtonTitle: "Готово")
+            }
+            
+            alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+                completion("","")
+            }
+            
+            alert.showInfo("Введите наименование видео\n(необязательно):", subTitle: "", closeButtonTitle: "Готово")
+        }
+    }
+    
+    func methodVideoSave(parameters: [String: Any], completion: @escaping (String, String) -> Void) {
+        
+        let url = "/method/video.save"
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error_code"].intValue
+            error.errorMsg = json["error_msg"].stringValue
+            
+            //print(json)
+            
+            if error.errorCode == 0 {
+                let uploadURL = json["response"]["upload_url"].stringValue
+                let ownerID = json["response"]["owner_id"].intValue
+                let videoID = json["response"]["video_id"].intValue
+                
+                completion(uploadURL,"video\(ownerID)_\(videoID)")
+            } else {
+                self.showErrorMessage(title: "\nОшибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                completion("","")
+            }
+        }
+        OperationQueue().addOperation(request)
+    }
+    
+    func getPrivacySetting(titleText: String, completion: @escaping ([String]) -> Void) {
+        
+        let titleColor = vkSingleton.shared.labelColor
+        let backColor = vkSingleton.shared.backColor
+        
+        var selectedBackgroundColor = vkSingleton.shared.mainColor
+        var dropBackgroundColor = UIColor(red: 233/255, green: 238/255, blue: 255/255, alpha: 1)
+        var shadowColor = UIColor.darkGray
+        var textColor = UIColor.black
+        
+        var selectedIndex = 2
+        
+        if #available(iOS 13.0, *) {
+            if AppConfig.shared.autoMode {
+                if self.traitCollection.userInterfaceStyle == .dark {
+                    selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                    dropBackgroundColor = UIColor(red: 67/255, green: 67/255, blue: 67/255, alpha: 1)
+                    shadowColor = .lightGray
+                    textColor = .white
+                } else {
+                    selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                    dropBackgroundColor = UIColor(red: 233/255, green: 238/255, blue: 255/255, alpha: 1)
+                    shadowColor = .darkGray
+                    textColor = .black
+                }
+            } else if AppConfig.shared.darkMode {
+                selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .dark))
+                dropBackgroundColor = UIColor(red: 67/255, green: 67/255, blue: 67/255, alpha: 1)
+                shadowColor = .lightGray
+                textColor = .white
+            } else {
+                selectedBackgroundColor = vkSingleton.shared.mainColor.resolvedColor(with: UITraitCollection(userInterfaceStyle: .light))
+                dropBackgroundColor = UIColor(red: 233/255, green: 238/255, blue: 255/255, alpha: 1)
+                shadowColor = .darkGray
+                textColor = .black
+            }
+        } else if AppConfig.shared.darkMode {
+            selectedBackgroundColor = vkSingleton.shared.mainColor
+            dropBackgroundColor = UIColor(red: 67/255, green: 67/255, blue: 67/255, alpha: 1)
+            shadowColor = .lightGray
+            textColor = .white
+        }
+        
+        let appearance = SCLAlertView.SCLAppearance(
+            kTitleTop: 12.0,
+            kWindowWidth: UIScreen.main.bounds.width - 40,
+            kTitleFont: UIFont(name: "Verdana", size: 13)!,
+            kTextFont: UIFont(name: "Verdana", size: 12)!,
+            kButtonFont: UIFont(name: "Verdana-Bold", size: 12)!,
+            showCloseButton: false,
+            showCircularIcon: false,
+            circleBackgroundColor: backColor,
+            contentViewColor: backColor,
+            titleColor: titleColor
+        )
+        
+        let alert = SCLAlertView(appearance: appearance)
+        let picker: [String] = ["все пользователи", "друзья и друзья друзей", "друзья", "никто, кроме меня"]
+        
+        let label = UILabel(frame: CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width - 64, height: 22))
+        label.text = picker[selectedIndex]
+        label.textColor = titleColor
+        label.font = UIFont(name: "Verdana", size: 13)!
+        label.textAlignment = .center
+        label.adjustsFontSizeToFitWidth = true
+        label.minimumScaleFactor = 0.8
+        label.backgroundColor = backColor
+        label.layer.cornerRadius = 4
+        label.layer.borderColor = titleColor.cgColor
+        label.layer.borderWidth = 0.8
+        
+        let downDrop = DropDown()
+        downDrop.anchorView = label
+        downDrop.dataSource = picker
+        
+        downDrop.textColor = textColor
+        downDrop.textFont = UIFont(name: "Verdana", size: 12)!
+        downDrop.selectedTextColor = textColor
+        downDrop.backgroundColor = dropBackgroundColor
+        downDrop.selectionBackgroundColor = selectedBackgroundColor
+        downDrop.cellHeight = 30
+        downDrop.shadowColor = shadowColor
+        
+        downDrop.selectionAction = { (index: Int, item: String) in
+            selectedIndex = index
+            label.tag = index
+            label.text = item
+            downDrop.hide()
+        }
+        
+        let tap = UITapGestureRecognizer()
+        tap.add {
+            self.view.endEditing(true)
+            downDrop.selectRow(selectedIndex)
+            downDrop.show()
+        }
+        label.isUserInteractionEnabled = true
+        label.addGestureRecognizer(tap)
+        
+        alert.customSubview = label
+        
+        alert.addButton("Продолжить", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+            switch label.tag {
+            case 0:
+                completion(["all"])
+            case 1:
+                completion(["friends_of_friends"])
+            case 2:
+                completion(["friends"])
+            case 3:
+                completion(["only_me"])
+            default:
+                completion([])
+            }
+        }
+        
+        alert.addButton("Отмена", backgroundColor: vkSingleton.shared.mainColor, textColor: UIColor.white) {
+            completion([])
+        }
+        
+        alert.showInfo(titleText, subTitle: "", closeButtonTitle: "Готово")
+    }
 }
 
 extension UIViewController {
+    func myVideoUploadLinkRequest(url: String, completion: @escaping (Int) -> Void) {
+        
+        let myUrl = NSURL(string: url)
+        
+        let request = NSMutableURLRequest(url: myUrl! as URL)
+        request.httpMethod = "POST"
+        
+        let task = URLSession.shared.dataTask(with: request as URLRequest) {
+            data, response, error in
+            
+            guard let json = try? JSON(data: data!) else { print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error_code"].intValue
+            error.errorMsg = json["error_msg"].stringValue
+            
+            //print(json)
+            
+            if error.errorCode == 0 {
+                let result = json["response"].intValue
+                completion(result)
+            } else {
+                self.showErrorMessage(title: "\nОшибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                completion(0)
+            }
+        }
+        
+        task.resume()
+    }
+    
+    func myVideoUploadRequest(url: String, videoData: Data, filename: String, completion: @escaping (String, String, Int) -> Void) {
+        
+        let myUrl = NSURL(string: url)
+        
+        let request = NSMutableURLRequest(url: myUrl! as URL)
+        request.httpMethod = "POST"
+        
+        let boundary = generateBoundaryString()
+        
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        request.httpBody = createBodyWithParameters(filePathKey: "file", imageDataKey: videoData as NSData, boundary: boundary, filepath: filename, squareCrop: "") as Data
+        
+        let task = URLSession.shared.dataTask(with: request as URLRequest) {
+            data, response, error in
+            
+            guard let json = try? JSON(data: data!) else { print("json error"); return }
+            
+            let error = ErrorJson(json: JSON.null)
+            error.errorCode = json["error_code"].intValue
+            error.errorMsg = json["error_msg"].stringValue
+            
+            if error.errorCode == 0 {
+                let ownerID = json["owner_id"].intValue
+                let videoID = json["video_id"].intValue
+                let videoSize = json["size"].intValue
+                let videoHash = json["video_hash"].stringValue
+                
+                completion("video\(ownerID)_\(videoID)",videoHash,videoSize)
+            } else {
+                self.showErrorMessage(title: "\nОшибка #\(error.errorCode)", msg: "\n\(error.errorMsg)\n")
+                completion("","",0)
+            }
+        }
+        
+        task.resume()
+    }
+    
     func myImageUploadRequest(url: String, image: UIImage, filename: String, squareCrop: String, completion: @escaping (JSON) -> Void) {
         
         let myUrl = NSURL(string: url)
@@ -3609,6 +4191,11 @@ extension UIViewController {
         if filepath.hasSuffix("m4a") {
             filename = "voice.mp3"
             mimetype = "audio/mp3"
+        }
+        
+        if filepath == "video_file" {
+            filename = filepath
+            mimetype = "video/mov"
         }
         
         body.appendString(string: "--\(boundary)\r\n")

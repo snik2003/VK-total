@@ -58,6 +58,8 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
     var commentsProfiles = [CommentsProfiles]()
     var commentsGroups = [CommentsGroups]()
     
+    var stickers = [Stickers]()
+    
     var rowHeightCache: [IndexPath: CGFloat] = [:]
     
     let queue: OperationQueue = {
@@ -273,14 +275,21 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
         sender.buttonTouched(controller: self.delegate)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 40
-        let height = width + 70
-        let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        stickerView.backgroundColor = vkSingleton.shared.backColor
-        configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
-        
-        self.popover = Popover(options: self.popoverOptions)
-        self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        if vkSingleton.shared.stickers.count <= 2 {
+            let width = self.view.bounds.width - 40
+            let height = width + 70
+            let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
+            stickerView.backgroundColor = vkSingleton.shared.backColor
+            configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
+            
+            self.popover = Popover(options: self.popoverOptions)
+            self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        } else {
+            let stickersView = StickersView()
+            stickersView.delegate = self
+            stickersView.configure(width: self.view.bounds.width - 40)
+            stickersView.show(fromView: self.commentView.stickerButton)
+        }
     }
     
     @objc func tapAccessoryButton(sender: UIButton) {
@@ -376,7 +385,6 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
             
             code = "\(code) var d = API.likes.getList({\"type\":\"post\",\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"owner_id\":\"\(ownerID)\",\"item_id\":\"\(itemID)\",\"filter\":\"copies\",\"extended\":\"1\",\"fields\":\"id, first_name, last_name, sex, has_photo, last_seen, online, photo_max_orig, photo_max, deactivated, first_name_dat, friend_status\",\"count\":\"1000\",\"skip_own\":\"0\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
             
-            
             code = "\(code) return [a,b,c,d];"
             
             let url = "/method/execute"
@@ -389,9 +397,9 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
             let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
             getServerDataOperation.completionBlock = {
                 guard let data = getServerDataOperation.data else { return }
-                
                 guard let json = try? JSON(data: data) else { print("json error"); return }
-                //print(json["response"][0])
+                
+                //print("\(json["response"][2])")
             
                 let record = json["response"][0]["items"].compactMap { Record(json: $0.1) }
                 let recordProfiles = json["response"][0]["profiles"].compactMap { RecordProfiles(json: $0.1) }
@@ -1860,11 +1868,12 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                 
                 let action8 = UIAlertAction(title: "Сохранить на устройство", style: .default) { action in
                     
-                    let getCacheImage = GetCacheImage(url: self.photo.bigPhotoURL, lifeTime: .avatarImage)
+                    let getCacheImage = GetCacheImage(url: self.photo.xxbigPhotoURL, lifeTime: .avatarImage)
                     getCacheImage.completionBlock = {
-                        let image = getCacheImage.outputImage
-                        OperationQueue.main.addOperation {
-                            UIImageWriteToSavedPhotosAlbum(image!, nil, nil, nil)
+                        if let image = getCacheImage.outputImage {
+                            OperationQueue.main.addOperation {
+                                UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+                            }
                         }
                     }
                     OperationQueue().addOperation(getCacheImage)
@@ -1929,6 +1938,40 @@ class Record2Controller: InnerViewController, UITableViewDelegate, UITableViewDa
                     alertController.addAction(action7)
                     
                 }
+            }
+            
+            let videos = record.mediaType.filter({ $0 == "video" })
+            if videos.count == 1 {
+                let action = UIAlertAction(title: "Открыть видео ВКонтакте", style: .destructive) { action in
+                    let url = "https://vk.com/video\(record.photoOwnerID[0])_\(record.photoID[0])"
+                    self.openBrowserControllerNoCheck(url: url)
+                }
+                alertController.addAction(action)
+            } else if videos.count > 0 {
+                let action = UIAlertAction(title: "Открыть видео ВКонтакте", style: .destructive) { action in
+                    let alertController2 = UIAlertController(title: "Выберите видеозапись:", message: nil, preferredStyle: .actionSheet)
+                    
+                    let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                    alertController2.addAction(cancelAction)
+                    
+                    for index in 0..<record.mediaType.count {
+                        if record.mediaType[index] == "video" {
+                            var title = "«\(record.photoText[index])»"
+                            if record.photoText[index].isEmpty {
+                                title = "Видеозапись (\(record.size[index].getVideoDurationToString())"
+                            }
+                            
+                            let action = UIAlertAction(title: title, style: .default) { action in
+                                let url = "https://vk.com/video\(record.photoOwnerID[index])_\(record.photoID[index])"
+                                self.openBrowserControllerNoCheck(url: url)
+                            }
+                            alertController2.addAction(action)
+                        }
+                    }
+                    
+                    self.present(alertController2, animated: true)
+                }
+                alertController.addAction(action)
             }
             
             let action6 = UIAlertAction(title: "Пожаловаться", style: .destructive) { action in

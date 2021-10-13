@@ -15,13 +15,11 @@ class ParseDialogsUsers: Operation {
     
     override func main() {
         guard let getServerDataOperation = dependencies.first as? GetServerDataOperation, let data = getServerDataOperation.data else {
-            ViewControllerUtils().hideActivityIndicator()
             return
         }
             
         guard let json = try? JSON(data: data) else {
             print("json error");
-            ViewControllerUtils().hideActivityIndicator()
             return
         }
         

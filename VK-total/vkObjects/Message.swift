@@ -20,6 +20,7 @@ class Message: Equatable, Codable {
     var id = 0
     var userID = 0
     var fromID = 0
+    var peerID = 0
     var date = 0
     var readState = 0
     var out = 0
@@ -30,8 +31,9 @@ class Message: Equatable, Codable {
     var important = 0
     var deleted = 0
     var randomID = 0
-    var in_read = 0
-    var out_read = 0
+    var inRead = 0
+    var outRead = 0
+    var unreadCount = 0
     var attach: [DialogAttach] = []
     var fwdMessage: [Message] = []
     
@@ -63,8 +65,8 @@ class Message: Equatable, Codable {
         self.important = json["message"]["important"].intValue
         self.deleted = json["message"]["deleted"].intValue
         self.randomID = json["message"]["random_id"].intValue
-        self.in_read = json["in_read"].intValue
-        self.out_read = json["out_read"].intValue
+        self.inRead = json["in_read"].intValue
+        self.outRead = json["out_read"].intValue
         
         if self.chatID != 0 {
             for index in 0...19 {
@@ -344,40 +346,55 @@ class Message: Equatable, Codable {
         }
     }
     
-    init(json: JSON, class: Int) {
+    init(json: JSON, conversations: [Conversation]) {
         self.id = json["id"].intValue
-        self.chatID = json["chat_id"].intValue
-        self.userID = json["user_id"].intValue
+        self.peerID = json["peer_id"].intValue
         self.fromID = json["from_id"].intValue
+        
+        if peerID > 2000000000 {
+            self.chatID = peerID - 2000000000
+            self.userID = self.fromID
+        } else {
+            self.chatID = 0
+            self.userID = self.peerID
+        }
+        
         self.date = json["date"].intValue
-        self.readState = json["read_state"].intValue
-        self.out = json["out"].intValue
-        self.title = json["title"].stringValue
-        self.body = json["body"].stringValue
+        self.body = json["text"].stringValue
         self.typeAttach = json["attachments"][0]["type"].stringValue
         self.emoji = json["emoji"].intValue
         self.important = json["important"].intValue
         self.deleted = json["deleted"].intValue
         self.randomID = json["random_id"].intValue
-        self.in_read = json["in_read"].intValue
-        self.out_read = json["out_read"].intValue
+        self.out = json["out"].intValue
         
-        if self.chatID != 0 {
-            for index in 0...19 {
-                let chActive = json["chat_active"][index].intValue
-                if chActive > 0 {
-                    self.chatActive.append(chActive)
-                }
+        if self.chatID > 0 {
+            self.adminID = json["admin_author_id"].intValue
+            self.actionID = json["action"]["member_id"].intValue
+            self.action = json["action"]["type"].stringValue
+            self.actionEmail = json["action"]["email"].stringValue
+            self.actionText = json["action"]["text"].stringValue
+            self.photo50 = json["photo"]["photo_50"].stringValue
+            self.photo100 = json["photo"]["photo_100"].stringValue
+            self.photo200 = json["photo"]["photo_200"].stringValue
+            self.usersCount = json["members_count"].intValue
+        }
+        
+        if let conversation = conversations.filter({ $0.peerID == self.peerID && $0.lastMessageID == self.id }).first {
+            self.inRead = conversation.inRead
+            self.outRead = conversation.outRead
+            self.important = conversation.important ? 1 : 0
+            
+            if self.out == 1 { self.readState = self.id > self.outRead ? 0 : 1 }
+            else if self.out == 0 { self.readState = self.id > self.inRead ? 0 : 1 }
+            
+            if chatID > 0 {
+                self.chatActive = conversation.chatSettings.activeIDs
+                self.title = conversation.chatSettings.title
+                self.photo50 = conversation.chatSettings.photo50
+                self.photo100 = conversation.chatSettings.photo100
+                self.photo200 = conversation.chatSettings.photo200
             }
-            self.usersCount = json["users_count"].intValue
-            self.adminID = json["admin_id"].intValue
-            self.actionID = json["action_mid"].intValue
-            self.action = json["action"].stringValue
-            self.actionEmail = json["action_email"].stringValue
-            self.actionText = json["action_text"].stringValue
-            self.photo50 = json["photo_50"].stringValue
-            self.photo100 = json["photo_100"].stringValue
-            self.photo200 = json["photo_200"].stringValue
         }
         
         for index in 0...9 {

@@ -262,7 +262,7 @@ extension UILabel {
                 }
                 
                 if isTap == false {
-                    print("tap nothing")
+                    //print("tap nothing")
                     
                     if let vc = delegate as? Record2Controller {
                         

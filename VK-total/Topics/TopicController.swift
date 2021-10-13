@@ -255,14 +255,21 @@ class TopicController: InnerViewController, UITableViewDelegate, UITableViewData
         sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 40
-        let height = width + 70
-        let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        stickerView.backgroundColor = vkSingleton.shared.backColor
-        configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
-        
-        self.popover = Popover(options: self.popoverOptions)
-        self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        if vkSingleton.shared.stickers.count <= 2 {
+            let width = self.view.bounds.width - 40
+            let height = width + 70
+            let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
+            stickerView.backgroundColor = vkSingleton.shared.backColor
+            configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
+            
+            self.popover = Popover(options: self.popoverOptions)
+            self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        } else {
+            let stickersView = StickersView()
+            stickersView.delegate = self
+            stickersView.configure(width: self.view.bounds.width - 40)
+            stickersView.show(fromView: self.commentView.stickerButton)
+        }
     }
     
     @objc func tapAccessoryButton(sender: UIButton) {

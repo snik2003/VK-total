@@ -54,6 +54,11 @@ class InnerViewController: UIViewController {
             self.openBrowserController(url: vkSingleton.shared.openLink)
             vkSingleton.shared.openLink = ""
         }
+        
+        if !MyReachability.shared.isConnectedToNetwork() {
+            navigationController?.popToRootViewController(animated: true)
+            return
+        }
     }
     
     @objc func hideKeyboard() {

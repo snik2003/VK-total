@@ -181,7 +181,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
             "count": "\(count)",
             "filter": "all",
             "extended": "1",
-            "v": "5.85"
+            "v": vkSingleton.shared.version
         ]
         
         let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
@@ -250,7 +250,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
             "count": "100",
             "filter": "postponed",
             "extended": "1",
-            "v": "5.85"
+            "v": vkSingleton.shared.version
         ]
         
         let getServerDataOperation3 = GetServerDataOperation(url: url3, parameters: parameters3)
@@ -547,6 +547,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
             "count": "1",
             "user_id": "-\(self.groupID)",
             "start_message_id": "-1",
+            "extended": "1",
             "v": vkSingleton.shared.version
         ]
         
@@ -555,12 +556,8 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         
         let parseDialog = ParseDialogHistory()
         parseDialog.completionBlock = {
-            var startID = parseDialog.inRead
-            if parseDialog.outRead > startID {
-                startID = parseDialog.outRead
-            }
             OperationQueue.main.addOperation {
-                self.openDialogController(userID: "-\(self.groupID)", chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                self.openDialogController(userID: "-\(self.groupID)", chatID: "", startID: parseDialog.lastMessageId, attachment: "", messIDs: [], image: nil)
             }
         }
         parseDialog.addDependency(getServerDataOperation)
@@ -1485,7 +1482,7 @@ extension GroupProfileController2: UICollectionViewDelegate, UICollectionViewDat
                 infoCounters = InfoInProfile("аудио", self.getCounterToString(profile.audiosCounter),"audiosCount")
                 self.countersSection.append(infoCounters)
             }*/
-            if profile.videosCounter > 0 {
+            if (profile.videosCounter > 0) || (profile.videosCounter == 0 && profile.isAdmin == 1) {
                 count += 1
                 infoCounters = InfoInProfile("видео", self.getCounterToString(profile.videosCounter),"videosCount")
                 self.countersSection.append(infoCounters)

@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Popover
 import SCLAlertView
 import SwiftyJSON
 import BTNavigationDropdownMenu
@@ -14,7 +15,7 @@ import BTNavigationDropdownMenu
 class DialogsController: InnerTableViewController {
 
     var selectedMenu = 0
-    let itemsMenu = ["Все диалоги", "Групповые чаты", "Диалоги с сообществами", "Непрочитанные диалоги"]
+    let itemsMenu = ["Все диалоги", "Важные личные диалоги", "Все групповые чаты", "Важные групповые чаты", "Диалоги с сообществами", "Непрочитанные диалоги"]
     
     var isFirstAppear = true
     var isRefresh = false
@@ -24,14 +25,27 @@ class DialogsController: InnerTableViewController {
     var attachImage: UIImage?
     
     var offset = 0
-    var count = 30
+    var count = 200
     var totalCount = 0
     
+    var scrollTableViewToTop = false
+    
+    var importantConversationIds: [Int] = []
+    var conversations: [Conversation] = []
     var menuDialogs: [Message] = []
     var dialogs: [Message] = []
     var users: [DialogsUsers] = []
     
     var fwdMessagesID: [Int] = []
+    
+    let feedbackText = "Внимание!\n\nВ режиме «Невидимка» некоторые диалоги могут не отображаться в общем списке.\n\nЭто связано с особенностями работы социальной сети ВКонтакте.\n\nЕсли Вы заметили такую ситуацию, то мы рекомендуем Вам выполнить один раз загрузку всех диалогов из верхнего меню •••.\n\nЭто поменяет Ваш статус в сети на «заходил только что», но все диалоги будут отображаться в общем списке и в дальнейшем обновляться уже в режиме «Невидимка»."
+    
+    fileprivate var popover: Popover!
+    fileprivate var popoverOptions: [PopoverOption] = [
+        .type(.up),
+        .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+        .color(vkSingleton.shared.backColor)
+    ]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -55,17 +69,18 @@ class DialogsController: InnerTableViewController {
         if isFirstAppear {
             isFirstAppear = false
             
-            if let aView = self.tableView.superview {
-                ViewControllerUtils().showActivityIndicator(uiView: aView)
-            } else {
-                ViewControllerUtils().showActivityIndicator(uiView: self.view)
-            }
-            self.offset = 0
+            offset = 0
             
             if AppConfig.shared.setOfflineStatus {
-                self.refreshExecute()
+                if menuDialogs.loadFromUserDefaults(KeyName: "\(vkSingleton.shared.userID)_all-dialogs").count == 0 {
+                    requestGetAllDialogsAlert()
+                } else {
+                    if let aView = self.tableView.superview { ViewControllerUtils().showActivityIndicator(uiView: aView) }
+                    else { ViewControllerUtils().showActivityIndicator(uiView: self.view) }
+                    refreshExecute()
+                }
             } else {
-                self.getAllDialogsOnline()
+                getAllDialogsOnline()
             }
         }
     }
@@ -102,9 +117,15 @@ class DialogsController: InnerTableViewController {
                 }
                 break
             case 1:
-                if let dialogs = self?.menuDialogs {
+                if let dialogs = self?.menuDialogs, let conversations = self?.conversations {
                     self?.removeDuplicatesFromMenuDialogs()
-                    self?.dialogs = dialogs.filter({ $0.chatID > 0 })
+                    var importantDialogs: [Message] = []
+                    for dialog in dialogs {
+                        if let conversation = conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            if dialog.chatID == 0 { importantDialogs.append(dialog) }
+                        }
+                    }
+                    self?.dialogs = importantDialogs
                     self?.dialogs.sort(by: { $0.date > $1.date })
                     self?.tableView.reloadData()
                 }
@@ -112,12 +133,34 @@ class DialogsController: InnerTableViewController {
             case 2:
                 if let dialogs = self?.menuDialogs {
                     self?.removeDuplicatesFromMenuDialogs()
-                    self?.dialogs = dialogs.filter({ $0.userID < 0 })
+                    self?.dialogs = dialogs.filter({ $0.chatID > 0 })
                     self?.dialogs.sort(by: { $0.date > $1.date })
                     self?.tableView.reloadData()
                 }
                 break
             case 3:
+                if let dialogs = self?.menuDialogs, let conversations = self?.conversations {
+                    self?.removeDuplicatesFromMenuDialogs()
+                    var importantChats: [Message] = []
+                    for dialog in dialogs {
+                        if let conversation = conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            if dialog.chatID > 0 { importantChats.append(dialog) }
+                        }
+                    }
+                    self?.dialogs = importantChats
+                    self?.dialogs.sort(by: { $0.date > $1.date })
+                    self?.tableView.reloadData()
+                }
+                break
+            case 4:
+                if let dialogs = self?.menuDialogs {
+                    self?.removeDuplicatesFromMenuDialogs()
+                    self?.dialogs = dialogs.filter({ $0.userID < 0 })
+                    self?.dialogs.sort(by: { $0.date > $1.date })
+                    self?.tableView.reloadData()
+                }
+                break
+            case 5:
                 if let dialogs = self?.menuDialogs {
                     self?.removeDuplicatesFromMenuDialogs()
                     self?.dialogs = dialogs.filter({ $0.readState == 0 && $0.out == 0 })
@@ -129,6 +172,60 @@ class DialogsController: InnerTableViewController {
                 break
             }
         }
+    }
+    
+    func checkAndShowFeedbackDialogsView() {
+        
+        guard let appOpenCount = UserDefaults.standard.value(forKey: vkSingleton.shared.dialogsOpenedCountKey) as? Int else {
+            UserDefaults.standard.set(1, forKey: vkSingleton.shared.dialogsOpenedCountKey)
+            checkAndShowFeedbackDialogsView()
+            return
+        }
+        
+        if appOpenCount == 1 {
+            showFeedbackDialogsView()
+        } else if appOpenCount == 10 {
+            showFeedbackDialogsView()
+        } else if appOpenCount == 50 {
+            showFeedbackDialogsView()
+        } else if appOpenCount % 200 == 0 {
+            showFeedbackDialogsView()
+        }
+        
+        print("Dialogs Opened Count is : \(appOpenCount)")
+        UserDefaults.standard.set(appOpenCount + 1, forKey: vkSingleton.shared.dialogsOpenedCountKey)
+    }
+    
+    func showFeedbackDialogsView() {
+        
+        let maxWidth = UIScreen.main.bounds.width - 60
+        let feedFont = UIFont(name: "Verdana", size: 13)!
+        
+        let textBlock = CGSize(width: maxWidth, height: CGFloat.greatestFiniteMagnitude)
+        let rect = feedbackText.boundingRect(with: textBlock, options: [.usesFontLeading,.usesLineFragmentOrigin], attributes: [NSAttributedString.Key.font: feedFont], context: nil)
+        
+        let width = maxWidth + 20
+        let height = rect.size.height + 40
+        
+        let view = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
+        
+        let textView = UITextView(frame: CGRect(x: 10, y: 10, width: maxWidth, height: height - 20))
+        textView.text = feedbackText
+        textView.textColor = .black
+        textView.backgroundColor = .clear
+        textView.font = feedFont
+        textView.textAlignment = .center
+        textView.changeKeyboardAppearanceMode()
+        view.addSubview(textView)
+        
+        textView.textColor = vkSingleton.shared.labelColor
+        
+        let startPoint = CGPoint(x: UIScreen.main.bounds.width - 24, y: 76)
+        
+        self.popover = Popover(options: [.type(.down),
+                                         .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
+                                         .color(vkSingleton.shared.backColor)])
+        self.popover.show(view, point: startPoint)
     }
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
@@ -243,25 +340,45 @@ class DialogsController: InnerTableViewController {
     func refreshExecute() {
         isRefresh = true
         
+        conversations.removeAll(keepingCapacity: false)
         menuDialogs.removeAll(keepingCapacity: false)
         users.removeAll(keepingCapacity: false)
+        
         
         menuDialogs = menuDialogs.loadFromUserDefaults(KeyName: "\(vkSingleton.shared.userID)_all-dialogs")
         users = users.loadFromUserDefaults(KeyName: "\(vkSingleton.shared.userID)_dialogs-users")
         
-        var code =  "var conversations = API.messages.searchConversations({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"q\":\"\",\"count\":\"200\",\"extended\":\"1\",\"v\":\"5.80\" });\n"
+        var peerIDs = ""
+        for dialog in menuDialogs {
+            if (dialog.chatID > 0 && !peerIDs.contains("\(2000000000 + dialog.chatID)")) {
+                if peerIDs.isEmpty { peerIDs = "\(2000000000 + dialog.chatID)" }
+                else { peerIDs = "\(peerIDs),\(2000000000 + dialog.chatID)" }
+            } else if !peerIDs.contains("\(dialog.userID)"){
+                if peerIDs.isEmpty { peerIDs = "\(dialog.userID)" }
+                else { peerIDs = "\(peerIDs),\(dialog.userID)" }
+            }
+        }
+        print("peerIDs = \(peerIDs)")
+        
+        var code =  "var conversations = API.messages.searchConversations({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"q\":\" \",\"count\":\"255\",\"extended\":\"0\",\"v\":\"\(vkSingleton.shared.version)\" });\n"
         
         code = "\(code) var mess_ids = conversations.items@.last_message_id;\n"
         
         code = "\(code) var dialogs = API.messages.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"message_ids\":mess_ids,\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
         
-        code = "\(code) return [dialogs,mess_ids];"
+        code =  "\(code) var conversations2 = API.messages.getConversationsById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"peer_ids\":\"\(peerIDs)\",\"count\":\"100\",\"extended\":\"0\",\"v\":\"\(vkSingleton.shared.version)\" });\n"
+        
+        code = "\(code) var mess_ids2 = conversations2.items@.last_message_id;\n"
+        
+        code = "\(code) var dialogs2 = API.messages.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"message_ids\":mess_ids2,\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
+        
+        code = "\(code) return [dialogs,conversations,dialogs2,conversations2];"
         
         let url = "/method/execute"
         let parameters = [
             "access_token": vkSingleton.shared.accessToken,
             "code": code,
-            "v": vkSingleton.shared.version
+            "v": "\(vkSingleton.shared.version)"
         ]
        
         let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
@@ -277,27 +394,47 @@ class DialogsController: InnerTableViewController {
                 return
             }
             
-            //print(json)
-            var dialogs = json["response"][0]["items"].compactMap { Message(json: $0.1, class: 2) }
-            dialogs = dialogs.filter({ $0.chatID == 0 || ($0.chatID > 0 && $0.chatActive.count > 0) })
+            //print("response = \(json["response"])")
+            //print("dialogs = \(json["response"][0]["items"])")
+            //print("conversations = \(json["response"][1]["items"])")
+            //print("dialogs2 = \(json["response"][2]["items"])")
+            //print("conversations2 = \(json["response"][3]["items"])")
             
-            var unreadDialogs: [Message] = []
-            for dialog in self.menuDialogs {
-                if dialogs.filter({ $0.userID == dialog.userID && $0.chatID == dialog.chatID }).first == nil { unreadDialogs.append(dialog) }
+            var conversations = json["response"][1]["items"].compactMap({ Conversation(json: $0.1) })
+            var dialogs = json["response"][0]["items"].compactMap { Message(json: $0.1, conversations: conversations) }
+            
+            let conversations2 = json["response"][3]["items"].compactMap({ Conversation(json: $0.1) })
+            let dialogs2 = json["response"][2]["items"].compactMap { Message(json: $0.1, conversations: conversations2) }
+            
+            for conversation in conversations2 {
+                if conversations.filter({ $0.peerID == conversation.peerID }).count == 0 {
+                    conversations.append(conversation)
+                }
             }
             
+            conversations = self.actualConversationArray(conversations: conversations)
+            
+            for dialog in dialogs2 {
+                if dialogs.filter({ $0.peerID == dialog.peerID }).count == 0 { dialogs.append(dialog)}
+            }
+            
+            dialogs = dialogs.filter({ $0.chatID == 0 || ($0.chatID > 0 && $0.chatActive.count > 0) })
+            
             for dialog in dialogs {
-                if let oldDialog = self.menuDialogs.filter({ $0.userID == dialog.userID && $0.chatID == dialog.chatID }).first {
-                    self.menuDialogs.remove(object: oldDialog)
-                }
+                let oldDialogs = self.menuDialogs.filter({ $0.peerID == dialog.peerID })
+                for oldDialog in oldDialogs { self.menuDialogs.remove(object: oldDialog) }
                 self.menuDialogs.append(dialog)
             }
             
-            let users = json["response"][0]["profiles"].compactMap { DialogsUsers(json: $0.1) }
-            self.users.append(contentsOf: users)
+            var users1 = json["response"][0]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+            let users2 = json["response"][2]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+            users1.append(contentsOf: users2)
+            self.users.append(contentsOf: users1)
             
-            let groups = json["response"][0]["groups"].compactMap { GroupProfile(json: $0.1) }
-            for group in groups {
+            var groups1 = json["response"][0]["groups"].compactMap { GroupProfile(json: $0.1) }
+            let groups2 = json["response"][2]["groups"].compactMap { GroupProfile(json: $0.1) }
+            groups1.append(contentsOf: groups2)
+            for group in groups1 {
                 let newGroup = DialogsUsers(json: JSON.null)
                 newGroup.uid = "-\(group.gid)"
                 newGroup.firstName = group.name
@@ -305,187 +442,63 @@ class DialogsController: InnerTableViewController {
                 self.users.append(newGroup)
             }
             
-            if unreadDialogs.count > 0 {
-                for dialog in unreadDialogs {
-                    usleep(333333)
-                    var peerID = dialog.userID
-                    if dialog.chatID > 0 { peerID = 2000000000 + dialog.chatID }
-                    
-                    var code = "var history = API.messages.getHistory({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"offset\":\"0\",\"count\":\"1\",\"extended\":\"0\",\"peer_id\": \"\(peerID)\",\"start_message_id\":\"-1\",\"v\": \"\(vkSingleton.shared.version)\"});\n"
-                    
-                    code = "\(code) return history;\n"
-                    
-                    let url2 = "/method/execute"
-                    let parameters2 = [
-                        "access_token": vkSingleton.shared.accessToken,
-                        "code": code,
-                        "v": vkSingleton.shared.version
-                    ]
-                    
-                    let getServerDataOperation2 = GetServerDataOperation(url: url2, parameters: parameters2)
-                    getServerDataOperation2.completionBlock = {
-                        guard let data = getServerDataOperation2.data else {
-                            ViewControllerUtils().hideActivityIndicator()
-                            return
-                        }
-                        
-                        guard let json = try? JSON(data: data) else {
-                            print("json error")
-                            ViewControllerUtils().hideActivityIndicator()
-                            return
-                        }
-                        
-                        //print(json)
-                        
-                        let unread = json["response"]["unread"].intValue
-                        let inRead = json["response"]["in_read"].intValue
-                        let outRead = json["response"]["out_read"].intValue
-                        let startID = max(inRead,outRead)
-                        
-                        if let user = json["response"]["profiles"].compactMap({ DialogsUsers(json: $0.1) }).first {
-                            if !self.users.contains(where: { $0.uid == user.uid }) { self.users.append(user) }
-                        }
-                        
-                        if let group = json["response"]["groups"].compactMap({ GroupProfile(json: $0.1) }).first {
-                            let newGroup = DialogsUsers(json: JSON.null)
-                            newGroup.uid = "-\(group.gid)"
-                            newGroup.firstName = group.name
-                            newGroup.photo100 = group.photo100
-                            if !self.users.contains(where: { $0.uid == newGroup.uid }) { self.users.append(newGroup) }
-                        }
-                            
-                        if startID != dialog.id || unread > 0 || (dialog.readState == 0 && unread == 0) {
-                            usleep(333333)
-                            
-                            let url3 = "/method/messages.getHistory"
-                            let parameters3 = [
-                                "access_token": vkSingleton.shared.accessToken,
-                                "offset": "0",
-                                "count": "1",
-                                "peer_id": "\(peerID)",
-                                "start_message_id": "\(startID)",
-                                "extended": "1",
-                                "v": vkSingleton.shared.version
-                            ]
-                            
-                            let getServerDataOperation3 = GetServerDataOperation(url: url3, parameters: parameters3)
-                            OperationQueue.main.addOperation(getServerDataOperation3)
-                            let parseDialog3 = ParseDialogHistory()
-                            parseDialog3.completionBlock = {
-                                if let newDialogHistory = parseDialog3.outputData.first {
-                                    let newMessage = dialog
-                                    newMessage.id = newDialogHistory.id
-                                    newMessage.chatID = newDialogHistory.chatID
-                                    newMessage.userID = newDialogHistory.userID
-                                    newMessage.fromID = newDialogHistory.fromID
-                                    newMessage.date = newDialogHistory.date
-                                    newMessage.readState = newDialogHistory.readState
-                                    newMessage.out = newDialogHistory.out
-                                    newMessage.body = newDialogHistory.body
-                                    newMessage.typeAttach = newDialogHistory.typeAttach
-                                    newMessage.deleted = newDialogHistory.deleted
-                                    newMessage.attach = newDialogHistory.attach
-                                    newMessage.fwdMessage = newDialogHistory.fwdMessage
-                                    
-                                    if newDialogHistory.chatID != 0 {
-                                        newMessage.chatActive = newDialogHistory.chatActive
-                                        newMessage.usersCount = newDialogHistory.usersCount
-                                        newMessage.adminID = newDialogHistory.adminID
-                                        newMessage.actionID = newDialogHistory.actionID
-                                        newMessage.action = newDialogHistory.action
-                                        newMessage.actionEmail = newDialogHistory.actionEmail
-                                        newMessage.actionText = newDialogHistory.actionText
-                                    }
-                                    
-                                    self.menuDialogs.removeAll(where: { $0.userID == dialog.userID && $0.chatID == dialog.chatID })
-                                    self.menuDialogs.append(newMessage)
-                                }
-                            }
-                            parseDialog3.addDependency(getServerDataOperation3)
-                            OperationQueue.main.addOperation(parseDialog3)
-                        }
-                        
-                        if dialog == unreadDialogs.last {
-                            self.menuDialogs.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_all-dialogs")
-                            self.users.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_dialogs-users")
-                            
-                            OperationQueue.main.addOperation {
-                                switch self.selectedMenu {
-                                case 0:
-                                    self.dialogs = self.menuDialogs
-                                    break
-                                case 1:
-                                    self.dialogs = self.menuDialogs.filter({ $0.chatID > 0 })
-                                    break
-                                case 2:
-                                    self.dialogs = self.menuDialogs.filter({ $0.userID < 0 })
-                                    break
-                                case 3:
-                                    self.dialogs = self.menuDialogs.filter({ $0.readState == 0 && $0.out == 0 })
-                                    break
-                                default:
-                                    break
-                                }
-                                
-                                self.removeDuplicatesFromDialogs()
-                                self.dialogs.sort(by: { $0.date > $1.date })
-                        
-                                self.totalCount = self.menuDialogs.count
-                                self.offset = self.totalCount
-                                self.tableView.reloadData()
-                                self.tableView.separatorStyle = .none
-                                self.refreshControl?.endRefreshing()
-                                
-                                let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
-                                self.navigationItem.rightBarButtonItem = barButton
-                            
-                                ViewControllerUtils().hideActivityIndicator()
-                            }
-                        
-                            self.setOfflineStatus(dependence: getServerDataOperation)
+            self.conversations = conversations
+            self.menuDialogs.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_all-dialogs")
+            self.users.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_dialogs-users")
+            
+            OperationQueue.main.addOperation {
+                switch self.selectedMenu {
+                case 0:
+                    self.dialogs = self.menuDialogs
+                    break
+                case 1:
+                    var importantDialogs: [Message] = []
+                    for dialog in self.menuDialogs {
+                        if let conversation = conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            if dialog.chatID == 0 { importantDialogs.append(dialog) }
                         }
                     }
-                    OperationQueue().addOperation(getServerDataOperation2)
+                    self.dialogs = importantDialogs
+                    break
+                case 2:
+                    self.dialogs = self.menuDialogs.filter({ $0.chatID > 0 })
+                    break
+                case 3:
+                    var importantChats: [Message] = []
+                    for dialog in self.menuDialogs {
+                        if let conversation = conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            if dialog.chatID > 0 { importantChats.append(dialog) }
+                        }
+                    }
+                    self.dialogs = importantChats
+                    break
+                case 4:
+                    self.dialogs = self.menuDialogs.filter({ $0.userID < 0 })
+                    break
+                case 5:
+                    self.dialogs = self.menuDialogs.filter({ $0.readState == 0 && $0.out == 0 })
+                    break
+                default:
+                    break
                 }
-            } else {
-                self.menuDialogs.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_all-dialogs")
-                self.users.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_dialogs-users")
                 
-                OperationQueue.main.addOperation {
-                    switch self.selectedMenu {
-                    case 0:
-                        self.dialogs = self.menuDialogs
-                        break
-                    case 1:
-                        self.dialogs = self.menuDialogs.filter({ $0.chatID > 0 })
-                        break
-                    case 2:
-                        self.dialogs = self.menuDialogs.filter({ $0.userID < 0 })
-                        break
-                    case 3:
-                        self.dialogs = self.menuDialogs.filter({ $0.readState == 0 && $0.out == 0 })
-                        break
-                    default:
-                        break
-                    }
-                    
-                    self.removeDuplicatesFromDialogs()
-                    self.dialogs.sort(by: { $0.date > $1.date })
-            
-                    self.totalCount = self.menuDialogs.count
-                    self.offset = self.totalCount
-                    self.tableView.reloadData()
-                    self.tableView.separatorStyle = .none
-                    self.refreshControl?.endRefreshing()
-                    
-                    let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
-                    self.navigationItem.rightBarButtonItem = barButton
-                    
-                    ViewControllerUtils().hideActivityIndicator()
-                }
-            
-                self.setOfflineStatus(dependence: getServerDataOperation)
+                self.removeDuplicatesFromDialogs()
+                self.dialogs.sort(by: { $0.date > $1.date })
+        
+                self.totalCount = self.menuDialogs.count
+                self.offset = self.totalCount
+                self.tableView.reloadData()
+                self.tableView.separatorStyle = .none
+                self.refreshControl?.endRefreshing()
+                
+                let barButton = UIBarButtonItem(image: UIImage(named: "three-dots"), style: .plain, target: self, action: #selector(self.tapBarButtonItem(sender:)))
+                self.navigationItem.rightBarButtonItem = barButton
+                
+                ViewControllerUtils().hideActivityIndicator()
+                self.checkAndShowFeedbackDialogsView()
             }
+            
+            self.setOfflineStatus(dependence: getServerDataOperation)
         }
         OperationQueue().addOperation(getServerDataOperation)
     }
@@ -494,11 +507,8 @@ class DialogsController: InnerTableViewController {
         let opq = OperationQueue()
         isRefresh = true
         
-        if let aView = self.tableView.superview {
-            ViewControllerUtils().showActivityIndicator(uiView: aView)
-        } else {
-            ViewControllerUtils().showActivityIndicator(uiView: self.view)
-        }
+        if let aView = self.tableView.superview { ViewControllerUtils().showActivityIndicator(uiView: aView) }
+        else { ViewControllerUtils().showActivityIndicator(uiView: self.view) }
         
         if offset == 0 {
             menuDialogs.removeAll(keepingCapacity: false)
@@ -506,7 +516,7 @@ class DialogsController: InnerTableViewController {
             users.removeAll(keepingCapacity: false)
         }
         
-        let url = "/method/messages.getDialogs"
+        let url = "/method/messages.getConversations"
         let parameters = [
             "access_token": vkSingleton.shared.accessToken,
             "offset": "\(offset)",
@@ -522,6 +532,7 @@ class DialogsController: InnerTableViewController {
         
         let parseDialogs = ParseDialogs()
         parseDialogs.completionBlock = {
+            self.conversations = self.actualConversationArray(conversations: parseDialogs.conversations)
             self.menuDialogs.append(contentsOf: parseDialogs.outputData)
             self.removeDuplicatesFromMenuDialogs()
             self.dialogs = self.menuDialogs
@@ -529,28 +540,25 @@ class DialogsController: InnerTableViewController {
             
             var userIDs = ""
             for dialog in self.dialogs {
-                if userIDs != "" {
-                    userIDs = "\(userIDs),"
-                }
+                if !userIDs.isEmpty { userIDs = "\(userIDs)," }
                 userIDs = "\(userIDs)\(dialog.userID)"
                 
-                if dialog.chatID != 0 {
+                if dialog.chatID > 0 {
                     if dialog.chatActive.count > 0 {
                         for index in 0...dialog.chatActive.count-1 {
-                            if userIDs != "" {
-                                userIDs = "\(userIDs),"
-                            }
+                            if !userIDs.isEmpty { userIDs = "\(userIDs)," }
                             userIDs = "\(userIDs)\(dialog.chatActive[index])"
                         }
                     }
-                    if userIDs != "" {
-                        userIDs = "\(userIDs),"
-                    }
+                    
+                    if !userIDs.isEmpty { userIDs = "\(userIDs),"}
                     userIDs = "\(userIDs)\(dialog.adminID)"
-                    if userIDs != "" {
-                        userIDs = "\(userIDs),"
-                    }
+                    
+                    if !userIDs.isEmpty { userIDs = "\(userIDs),"}
                     userIDs = "\(userIDs)\(dialog.actionID)"
+                    
+                    if !userIDs.isEmpty { userIDs = "\(userIDs),"}
+                    userIDs = "\(userIDs)\(dialog.fromID)"
                 }
             }
             userIDs = "\(userIDs),\(vkSingleton.shared.userID)"
@@ -576,9 +584,7 @@ class DialogsController: InnerTableViewController {
             var groupIDs = ""
             for dialog in self.dialogs {
                 if dialog.userID < 0 {
-                    if groupIDs != "" {
-                        groupIDs = "\(groupIDs),"
-                    }
+                    if !groupIDs.isEmpty { groupIDs = "\(groupIDs),"}
                     groupIDs = "\(groupIDs)\(abs(dialog.userID))"
                 }
             }
@@ -603,6 +609,20 @@ class DialogsController: InnerTableViewController {
             reloadController.addDependency(parseDialogsUsers)
             reloadController.addDependency(parseGroupProfile)
             OperationQueue.main.addOperation(reloadController)
+            
+            reloadController.completionBlock = {
+                OperationQueue.main.addOperation {
+                    if self.scrollTableViewToTop {
+                        self.scrollTableViewToTop = false
+                        
+                        if self.tableView.numberOfSections > 0 {
+                            if self.tableView.numberOfRows(inSection: 0) > 0 {
+                                self.tableView.scrollToRow(at: IndexPath(row: 0, section: 0), at: .top, animated: false)
+                            }
+                        }
+                    }
+                }
+            }
         }
         parseDialogs.addDependency(getServerDataOperation)
         opq.addOperation(parseDialogs)
@@ -653,7 +673,10 @@ class DialogsController: InnerTableViewController {
         let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell", for: indexPath) as! DialogsCell
         
         if indexPath.section < dialogs.count {
-            cell.configureCell(mess: dialogs[indexPath.section], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
+            let mess = dialogs[indexPath.section]
+            let conversation = conversations.filter({ $0.peerID == mess.peerID }).first
+            
+            cell.configureCell(mess: mess, conversation: conversation, users: users, indexPath: indexPath, cell: cell, tableView: tableView)
         }
         
         cell.selectionStyle = .none
@@ -770,7 +793,7 @@ class DialogsController: InnerTableViewController {
     
     override func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
         
-        if isRefresh == false && selectedMenu == 3 {
+        if isRefresh == false && selectedMenu == 100 {
             getAllDialogsOnline()
         }
     }
@@ -845,6 +868,7 @@ class DialogsController: InnerTableViewController {
             "count": "1",
             "user_id": "\(userID)",
             "start_message_id": "-1",
+            "extended": "1",
             "v": vkSingleton.shared.version
         ]
         
@@ -854,12 +878,12 @@ class DialogsController: InnerTableViewController {
         let parseDialog = ParseDialogHistory()
         parseDialog.completionBlock = {
             var startID = parseDialog.inRead
-            if parseDialog.outRead > startID {
-                startID = parseDialog.outRead
-            }
+            if parseDialog.outRead > startID { startID = parseDialog.outRead }
+            
             OperationQueue.main.addOperation {
                 ViewControllerUtils().hideActivityIndicator()
-                self.openDialogController(userID: userID, chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                
+                self.openDialogController(userID: userID, chatID: "", startID: parseDialog.lastMessageId, attachment: "", messIDs: [], image: nil)
             }
         }
         parseDialog.addDependency(getServerDataOperation)
@@ -870,7 +894,22 @@ class DialogsController: InnerTableViewController {
         
         self.showSetOnlineAlert(title: "\nВнимание!", body: "Загрузка всех диалогов в приложение изменяет ваш статус ВКонтакте на «онлайн».\n\nЕсли у вас активирован режим «Невидимка», то приложение сразу выставит вам статус «заходил только что».\n", doneCompletion: {
             self.offset = 0
+            self.scrollTableViewToTop = true
             self.getAllDialogsOnline()
+        })
+    }
+    
+    @objc func requestGetAllDialogsAlert() {
+        
+        self.showSetOnlineAlert(title: "\nВнимание!", body: "Перед первым открытием диалогов рекомендуется сделать загрузку всех диалогов, что поменяет ваш статус ВКонтакте на «онлайн».\n\nЕсли у вас активирован режим «Невидимка», то приложение сразу выставит вам статус «заходил только что».\n", doneCompletion: {
+            self.offset = 0
+            self.scrollTableViewToTop = true
+            self.getAllDialogsOnline()
+        }, cancelCompletion: {
+            if let aView = self.tableView.superview { ViewControllerUtils().showActivityIndicator(uiView: aView) }
+            else { ViewControllerUtils().showActivityIndicator(uiView: self.view) }
+            
+            self.refreshExecute()
         })
     }
     
@@ -879,8 +918,8 @@ class DialogsController: InnerTableViewController {
         var newDialogs: [Message] = []
         
         for dialog in menuDialogs {
-            if let newDialog = newDialogs.filter({ $0.userID == dialog.userID && $0.chatID == dialog.chatID }).first {
-                if dialog.date > newDialog.date {
+            if let newDialog = newDialogs.filter({ $0.peerID == dialog.peerID }).first {
+                if dialog.id > newDialog.id {
                     newDialogs.remove(object: newDialog)
                     newDialogs.append(dialog)
                 }
@@ -897,8 +936,8 @@ class DialogsController: InnerTableViewController {
         var newDialogs: [Message] = []
         
         for dialog in dialogs {
-            if let newDialog = newDialogs.filter({ $0.userID == dialog.userID && $0.chatID == dialog.chatID }).first {
-                if dialog.date > newDialog.date {
+            if let newDialog = newDialogs.filter({ $0.peerID == dialog.peerID }).first {
+                if dialog.id > newDialog.id {
                     newDialogs.remove(object: newDialog)
                     newDialogs.append(dialog)
                 }
@@ -918,39 +957,41 @@ class DialogsController: InnerTableViewController {
             ViewControllerUtils().showActivityIndicator(uiView: self.view)
         }
         
+        var peerID = "\(dialog.userID)"
+        if dialog.chatID > 0 { peerID = "\(2000000000 + dialog.chatID)" }
+        
         let url = "/method/messages.getHistory"
-        var parameters = [
+        let parameters = [
             "access_token": vkSingleton.shared.accessToken,
             "offset": "0",
             "count": "1",
-            "peer_id": "\(dialog.userID)",
+            "peer_id": peerID,
             "start_message_id": "-1",
+            "extended": "1",
             "v": vkSingleton.shared.version
         ]
-        
-        if dialog.chatID > 0 {
-            parameters["peer_id"] = "\(2000000000 + dialog.chatID)"
-        }
         
         let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
         OperationQueue().addOperation(getServerDataOperation)
         
         let parseDialog = ParseDialogHistory()
         parseDialog.completionBlock = {
-            var startID = parseDialog.inRead
-            if parseDialog.outRead > startID {
-                startID = parseDialog.outRead
-            }
-            
             OperationQueue.main.addOperation {
                 ViewControllerUtils().hideActivityIndicator()
-                if dialog.chatID == 0 {
-                    self.openDialogController(userID: "\(dialog.userID)", chatID: "", startID: dialog.id, attachment: self.attachment, messIDs: self.fwdMessagesID, image: self.attachImage)
-                } else {
-                    self.openDialogController(userID: "\(2000000000 + dialog.chatID)", chatID: "\(dialog.chatID)", startID: dialog.id, attachment: self.attachment, messIDs: self.fwdMessagesID, image: self.attachImage)
-                }
                 
-                self.fwdMessagesID.removeAll(keepingCapacity: false)
+                if let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as? DialogController {
+                
+                    controller.userID = peerID
+                    controller.chatID = dialog.chatID == 0 ? "" : "\(dialog.chatID)"
+                    controller.startMessageID = dialog.id
+                    controller.attachments = self.attachment
+                    controller.fwdMessagesID = self.fwdMessagesID
+                    controller.attachImage = self.attachImage
+                    controller.delegate = self
+                    
+                    self.navigationController?.pushViewController(controller, animated: true)
+                    self.fwdMessagesID.removeAll(keepingCapacity: false)
+                }
             }
         }
         parseDialog.addDependency(getServerDataOperation)

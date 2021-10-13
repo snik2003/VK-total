@@ -787,7 +787,7 @@ class Record2Cell: UITableViewCell {
                         "owner_id": "\(poll.ownerID)",
                         "poll_id": "\(poll.id)",
                         "answer_ids": answerIDs,
-                        "v": "5.85"
+                        "v": vkSingleton.shared.version
                     ]
                     
                     let request = GetServerDataOperation(url: url, parameters: parameters)

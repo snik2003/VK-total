@@ -33,12 +33,39 @@ class Photos {
         self.text = json["text"].stringValue
         self.width = json["width"].intValue
         self.height = json["height"].intValue
-        self.photoURL = json["photo_130"].stringValue
         self.photoAccessKey = json["access_key"].stringValue
-        self.smallPhotoURL = json["photo_75"].stringValue
-        self.bigPhotoURL = json["photo_604"].stringValue
-        self.xbigPhotoURL = json["photo_807"].stringValue
-        self.xxbigPhotoURL = json["photo_1204"].stringValue
+        
+        let photoSizes = json["sizes"]
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "m"}).first {
+            self.photoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "s"}).first {
+            self.smallPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "x"}).first {
+            self.bigPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "y"}).first {
+            self.xbigPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "z"}).first {
+            self.xxbigPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
     }
 }
 
@@ -79,11 +106,6 @@ class Photo {
         self.width = json["width"].intValue
         self.height = json["height"].intValue
         self.photoAccessKey = json["access_key"].stringValue
-        self.photoURL = json["photo_130"].stringValue
-        self.smallPhotoURL = json["photo_75"].stringValue
-        self.bigPhotoURL = json["photo_604"].stringValue
-        self.xbigPhotoURL = json["photo_807"].stringValue
-        self.xxbigPhotoURL = json["photo_1204"].stringValue
         self.likesCount = json["likes"]["count"].intValue
         self.userLikesThisPhoto = json["likes"]["user_likes"].intValue
         self.repostsCount = json["reposts"]["count"].intValue
@@ -92,5 +114,37 @@ class Photo {
         self.tagsCount = json["tags"]["count"].intValue
         self.canComment = json["can_comment"].intValue
         self.canRepost = json["can_repost"].intValue
+        
+        let photoSizes = json["sizes"]
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "m"}).first {
+            self.photoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "s"}).first {
+            self.smallPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "x"}).first {
+            self.bigPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "y"}).first {
+            self.xbigPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
+        
+        if let size = photoSizes.filter({ $0.1["type"] == "z"}).first {
+            self.xxbigPhotoURL = size.1["url"].stringValue
+            if width == 0 { self.width = size.1["width"].intValue }
+            if height == 0 { self.height = size.1["height"].intValue }
+        }
     }
 }

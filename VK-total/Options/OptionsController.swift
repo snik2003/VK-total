@@ -22,6 +22,8 @@ class OptionsController: InnerTableViewController {
     
     var changeStatus = false
     
+    var sizeCacheText = ""
+    
     let descriptions: [String] = [
         "При активации опции автоматического переключения темы, приложение будет использовать цветовую тему системы.\n\nДля ручного управления цветовой темой отключите опцию автопереключения.",
         "Чтобы получать уведомления о происходящих с вашим аакаунтом событиях, когда приложение закрыто, включите данный параметр.",
@@ -41,6 +43,7 @@ class OptionsController: InnerTableViewController {
         self.navigationItem.rightBarButtonItem = barButton
         //self.navigationItem.hidesBackButton = true
         
+        sizeCacheText = getSizeOfCachesDirectory()
         readAppConfig()
     }
 
@@ -58,11 +61,6 @@ class OptionsController: InnerTableViewController {
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         
-    }
-    
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        
-        return 9
     }
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
@@ -89,6 +87,15 @@ class OptionsController: InnerTableViewController {
         playSoundEffect(vkSingleton.shared.infoSound)
     }
     
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        
+        if vkSingleton.shared.userID == "34051891" {
+            return 11
+        }
+        
+        return 9
+    }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
             if #available(iOS 13.0, *) {
@@ -98,21 +105,25 @@ class OptionsController: InnerTableViewController {
             }
             return 1
         }
+        
         if section == 1 {
             if AppConfig.shared.pushNotificationsOn {
                 return 9
             }
             return 1
         }
+        
         if section == 8 {
             if passwordOn && touchAuthenticationAvailable() {
                 return 2
             }
             return 1
         }
+        
         if section > 1 {
             return 1
         }
+        
         return 0
     }
     
@@ -190,6 +201,22 @@ class OptionsController: InnerTableViewController {
             return 50
         }
         
+        if indexPath.section == 9 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
+            
+            if sizeCacheText.isEmpty {
+                return cell.getRowHeight(text: "Ошибка чтения кэша приложения в хранилище iPhone", font: cell.descriptionLabel.font)
+            }
+            
+            return cell.getRowHeight(text: sizeCacheText, font: cell.descriptionLabel.font)
+        }
+        
+        if indexPath.section == 10 {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell") as! SwitchCell
+            
+            return cell.getRowHeight(text: vkSingleton.shared.deviceToken, font: cell.descriptionLabel.font)
+        }
+        
         return 0
     }
     
@@ -242,6 +269,7 @@ class OptionsController: InnerTableViewController {
                 cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
                 cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
                 cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+                cell.pushSwitch.isHidden = false
                 
                 cell.nameLabel.textColor = vkSingleton.shared.labelColor
                 cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -309,6 +337,7 @@ class OptionsController: InnerTableViewController {
                 cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
                 cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
                 cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+                cell.pushSwitch.isHidden = false
                 
                 cell.nameLabel.textColor = vkSingleton.shared.labelColor
                 cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -563,6 +592,7 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
             cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
             cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = false
             
             cell.nameLabel.textColor = vkSingleton.shared.labelColor
             cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -584,6 +614,7 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
             cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
             cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = false
             
             cell.nameLabel.textColor = vkSingleton.shared.labelColor
             cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -605,6 +636,7 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
             cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
             cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = false
             
             cell.nameLabel.textColor = vkSingleton.shared.labelColor
             cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -628,6 +660,7 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
             cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
             cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = false
             
             cell.nameLabel.textColor = vkSingleton.shared.labelColor
             cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -649,6 +682,7 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
             cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
             cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = false
             
             cell.nameLabel.textColor = vkSingleton.shared.labelColor
             cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -670,6 +704,7 @@ class OptionsController: InnerTableViewController {
             cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
             cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
             cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = false
             
             cell.nameLabel.textColor = vkSingleton.shared.labelColor
             cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -693,6 +728,7 @@ class OptionsController: InnerTableViewController {
                 cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
                 cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
                 cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+                cell.pushSwitch.isHidden = false
                 
                 cell.nameLabel.textColor = vkSingleton.shared.labelColor
                 cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
@@ -720,8 +756,8 @@ class OptionsController: InnerTableViewController {
                 cell.simpleCheck.on = touchID
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkBoxValueChanged(sender:)), for: .valueChanged)
                 cell.simpleCheck.addTarget(self, action: #selector(self.checkboxClick(sender:)), for: .touchUpInside)
-                cell.nameLabel.text = "Использовать TouchID"
-                cell.nameLabel.accessibilityLabel = "Использовать тач айди"
+                cell.nameLabel.text = "Использовать TouchID / FaceID"
+                cell.nameLabel.accessibilityLabel = "Использовать тач айди / фейс айди"
                 cell.nameLabel.isEnabled = cell.simpleCheck.on
                 
                 cell.simpleCheck.setCurrentStateForVoiceOver(name: "Использовать тач айди", indexPath: indexPath)
@@ -742,6 +778,84 @@ class OptionsController: InnerTableViewController {
                 
                 return cell
             }
+        case 9:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = true
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            
+            cell.nameLabel.text = "Размер кэша приложения"
+            cell.descriptionLabel.isHidden = false
+            
+            if sizeCacheText.isEmpty {
+                cell.descriptionLabel.text = "Ошибка чтения кэша приложения в хранилище iPhone"
+            } else {
+                cell.descriptionLabel.text = sizeCacheText
+                
+                if sizeCacheText != "0 байт" {
+                    let tap = UITapGestureRecognizer()
+                    tap.add {
+                        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                        
+                        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                        alertController.addAction(cancelAction)
+                        
+                        let action = UIAlertAction(title: "Очистить кэш приложения", style: .destructive){ action in
+                            self.clearCachesDirectory()
+                        }
+                        alertController.addAction(action)
+                
+                        self.present(alertController, animated: true)
+                    }
+                    cell.isUserInteractionEnabled = true
+                    cell.addGestureRecognizer(tap)
+                }
+            }
+            
+            return cell
+        case 10:
+            let cell = tableView.dequeueReusableCell(withIdentifier: "pushCheckCell", for: indexPath) as! SwitchCell
+            cell.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.backgroundColor = vkSingleton.shared.backColor
+            cell.pushSwitch.onTintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.tintColor = vkSingleton.shared.mainColor
+            cell.pushSwitch.isHidden = true
+            
+            cell.nameLabel.textColor = vkSingleton.shared.labelColor
+            cell.descriptionLabel.textColor = vkSingleton.shared.secondaryLabelColor
+            
+            cell.nameLabel.text = "Токен устройства"
+            cell.descriptionLabel.text = vkSingleton.shared.deviceToken
+            if cell.descriptionLabel.text != "" {
+                cell.descriptionLabel.isHidden = false
+            }
+            
+            let tap = UITapGestureRecognizer()
+            tap.add {
+                let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+                
+                let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+                alertController.addAction(cancelAction)
+                
+                let action = UIAlertAction(title: "Скопировать токен", style: .default){ action in
+                    UIPasteboard.general.string = vkSingleton.shared.deviceToken
+                    if let string = UIPasteboard.general.string {
+                        self.showInfoMessage(title: "Скопированное сообщение:" , msg: string)
+                    }
+                }
+                alertController.addAction(action)
+        
+                self.present(alertController, animated: true)
+            }
+            cell.isUserInteractionEnabled = true
+            cell.addGestureRecognizer(tap)
+            
+            return cell
         default:
             let cell = tableView.dequeueReusableCell(withIdentifier: "customCell", for: indexPath)
             
@@ -946,6 +1060,155 @@ class OptionsController: InnerTableViewController {
             
             alert.showInfo(title, subTitle: msg)
             self.playSoundEffect(vkSingleton.shared.errorSound)
+        }
+    }
+    
+    func getSizeOfCachesDirectory() -> String {
+        
+        let homeDir = NSHomeDirectory()
+        
+        var filesCount = 0
+        var totalSize = 0
+        var totalSizeText = ""
+        
+        do {
+            let dir1 = homeDir.appending("/Library/Preferences")
+            let files1 = try FileManager.default.contentsOfDirectory(atPath: dir1)
+            
+            for file in files1 {
+                if file.contains(".plist.") {
+                    filesCount += 1
+                    let path = dir1.appending("/\(file)")
+                    let folder = try FileManager.default.attributesOfItem(atPath: path)
+                    
+                    for (key, size) in folder {
+                        if key == FileAttributeKey.size {
+                            totalSize += (size as AnyObject).integerValue
+                        }
+                    }
+                }
+            }
+            
+            let dir2 = homeDir.appending("/Library/Cookies")
+            let files2 = try FileManager.default.contentsOfDirectory(atPath: dir2)
+            filesCount += files2.count
+            
+            for file in files2 {
+                let path = dir2.appending("/\(file)")
+                let folder = try FileManager.default.attributesOfItem(atPath: path)
+                
+                for (key, size) in folder {
+                    if key == FileAttributeKey.size {
+                        totalSize += (size as AnyObject).integerValue
+                    }
+                }
+            }
+            
+            let dir3 = homeDir.appending("/Library/Caches/images")
+            let files3 = try FileManager.default.contentsOfDirectory(atPath: dir3)
+            filesCount += files3.count
+            
+            for file in files3 {
+                let path = dir3.appending("/\(file)")
+                let folder = try FileManager.default.attributesOfItem(atPath: path)
+                
+                for (key, size) in folder {
+                    if key == FileAttributeKey.size {
+                        totalSize += (size as AnyObject).integerValue
+                    }
+                }
+            }
+            
+            let dir4 = homeDir.appending("/Library/Caches/Snik2003.VK-inThe-City/fsCachedData")
+            let files4 = try FileManager.default.contentsOfDirectory(atPath: dir4)
+            filesCount += files4.count
+            
+            for file in files4 {
+                let path = dir4.appending("/\(file)")
+                let folder = try FileManager.default.attributesOfItem(atPath: path)
+                
+                for (key, size) in folder {
+                    if key == FileAttributeKey.size {
+                        totalSize += (size as AnyObject).integerValue
+                    }
+                }
+            }
+        } catch {
+            return ""
+        }
+        
+        if totalSize == 0 {
+            return "0 байт"
+        } else if totalSize < 1024 {
+            if filesCount > 1 {
+                totalSizeText = "\(totalSize) байт (\(filesCount) файлов)"
+            } else {
+                totalSizeText = "\(totalSize) байт"
+            }
+        } else if totalSize < 1024 * 1024 {
+            if filesCount > 1 {
+                totalSizeText = "\(totalSize / 1024) КБ (\(filesCount) файлов)"
+            } else {
+                totalSizeText = "\(totalSize / 1024) КБ"
+            }
+        } else {
+            if filesCount > 1 {
+                totalSizeText = "\(totalSize / 1024 / 1024) МБ (\(filesCount) файлов)"
+            } else {
+                totalSizeText = "\(totalSize / 1024 / 1024) МБ"
+            }
+        }
+        
+        return "\(totalSizeText) - нажмите, чтобы очистить кэш приложения в хранилище iPhone"
+    }
+    
+    func clearCachesDirectory() {
+        
+        ViewControllerUtils().showActivityIndicator(uiView: tableView)
+        let homeDir = NSHomeDirectory()
+        
+        do {
+            let dir1 = homeDir.appending("/Library/Preferences")
+            let files1 = try FileManager.default.contentsOfDirectory(atPath: dir1)
+            
+            for file in files1 {
+                if file.contains(".plist.") {
+                    let path = dir1.appending("/\(file)")
+                    try FileManager.default.removeItem(atPath: path)
+                }
+            }
+            
+            let dir2 = homeDir.appending("/Library/Cookies")
+            let files2 = try FileManager.default.contentsOfDirectory(atPath: dir2)
+            
+            for file in files2 {
+                let path = dir2.appending("/\(file)")
+                try FileManager.default.removeItem(atPath: path)
+            }
+            
+            let dir3 = homeDir.appending("/Library/Caches/images")
+            let files3 = try FileManager.default.contentsOfDirectory(atPath: dir3)
+            
+            for file in files3 {
+                let path = dir3.appending("/\(file)")
+                try FileManager.default.removeItem(atPath: path)
+            }
+            
+            let dir4 = homeDir.appending("/Library/Caches/Snik2003.VK-inThe-City/fsCachedData")
+            let files4 = try FileManager.default.contentsOfDirectory(atPath: dir4)
+            
+            for file in files4 {
+                let path = dir4.appending("/\(file)")
+                try FileManager.default.removeItem(atPath: path)
+            }
+            
+            ViewControllerUtils().hideActivityIndicator()
+            showInfoMessage(title: "Внимание!", msg: "Кэш приложения удалён из хранилища iPhone", completion: {
+                self.navigationController?.popViewController(animated: true)
+            })
+        } catch {
+            ViewControllerUtils().hideActivityIndicator()
+            showErrorMessage(title: "Внимание!", msg: "Ошибка удаления кэша приложения в хранилище iPhone")
         }
     }
 }

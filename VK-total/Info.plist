@@ -57,6 +57,8 @@
 	<string>Вы сможете делать фотографии и отправлять их в личных сообщениях, прикреплять к вашим записям и комментариям.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>$(PRODUCT_NAME) contact use</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Вы сможете включить возможность запуска приложения только после разблокировки по FaceID.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>$(PRODUCT_NAME) location use</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

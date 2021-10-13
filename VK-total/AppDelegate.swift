@@ -32,6 +32,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             YMMYandexMetrica.activate(with: configuration!)
         #endif
         
+        clearPreferencesDirectory()
         registerForPushNotifications()
         application.applicationIconBadgeNumber = 0
         UNUserNotificationCenter.current().delegate = self
@@ -44,6 +45,49 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         return true
     }
 
+    func clearPreferencesDirectory() {
+        do {
+            let homeDir = NSHomeDirectory()
+            let fileManager = FileManager.default
+            
+            let directory = homeDir.appending("/Library/Preferences")
+            let files = try fileManager.contentsOfDirectory(atPath: directory)
+            
+            for file in files {
+                if file.contains(".plist.") {
+                    let path = directory.appending("/\(file)")
+                    try fileManager.removeItem(atPath: path)
+                }
+            }
+            
+            let directory2 = homeDir.appending("/Library/Cookies")
+            let files2 = try fileManager.contentsOfDirectory(atPath: directory2)
+            
+            for file in files2 {
+                let path = directory2.appending("/\(file)")
+                try fileManager.removeItem(atPath: path)
+            }
+            
+            let directory3 = homeDir.appending("/Library/Caches/Snik2003.VK-inThe-City/fsCachedData")
+            let files3 = try fileManager.contentsOfDirectory(atPath: directory3)
+            
+            for file in files3 {
+                let path = directory3.appending("/\(file)")
+                try fileManager.removeItem(atPath: path)
+            }
+            
+            let directory4 = homeDir.appending("/Library/Caches/images")
+            let files4 = try fileManager.contentsOfDirectory(atPath: directory4)
+            
+            for file in files4 {
+                let path = directory4.appending("/\(file)")
+                try fileManager.removeItem(atPath: path)
+            }
+        } catch {
+            print("Ошибка удаления кэша приложения в хранилище iPhone")
+        }
+    }
+    
     func applicationWillResignActive(_ application: UIApplication) {
         
     }
@@ -101,7 +145,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 if let dc = controller as? DialogController, dc.mode == .dialog {
                     dc.commentView.endEditing(true)
                     
-                    var code = "var a = API.messages.getHistory({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"offset\":\"0\",\"count\":\"1\",\"user_id\":\"\(dc.userID)\",\"start_message_id\":\"-1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+                    var code = "var a = API.messages.getHistory({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"offset\":\"0\",\"count\":\"1\",\"user_id\":\"\(dc.userID)\",\"start_message_id\":\"-1\",\"extended\": \"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
                     
                     if dc.chatID == "" {
                         code = "\(code) var b = API.users.get({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"user_id\":\"\(dc.userID)\",\"fields\":\"id,first_name,last_name,maiden_name,domain,sex,relation,bdate,home_town,has_photo,city,country,status,last_seen,online,photo_max_orig,photo_max,photo_id,followers_count,counters,deactivated,education,contacts,connections,site,about,interests,activities,books,games,movies,music,tv,quotes,first_name_abl,first_name_gen,first_name_acc,can_post,can_send_friend_request,can_write_private_message,friend_status,is_favorite,blacklisted,blacklisted_by_me,crop_photo,is_hidden_from_feed,wall_default,personal,relatives\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
@@ -419,6 +463,28 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
                 controller.tabBarController?.selectedIndex = 1
                 if vkSingleton.shared.userID == "357365563" || vkSingleton.shared.userID == "34051891" {
                     controller.showInfoMessage(title: "Push Settings", msg: "category = \"\(type)\"")
+                }
+            }
+        } else if let type = (userInfo["data"] as AnyObject).object(forKey: "type") as? String {
+            if type == "msg" || type == "chat" {
+                if let string = (userInfo["data"] as AnyObject).object(forKey: "id") as? String {
+                    let comp = string.components(separatedBy: "_")
+                    if comp.count == 3, let startID = Int(comp[2]), let chatID = Int(comp[1]) {
+                        let userID = comp[1]
+                        let type = comp[0]
+                        
+                        if type == "chat" {
+                            controller.openDialogController(userID: "\(userID)", chatID: "\(chatID - 2000000000)", startID: startID, attachment: "", messIDs: [], image: nil)
+                        } else if type == "msg" {
+                            if userID == vkSingleton.shared.userID { return }
+                            controller.openDialogController(userID: "\(userID)", chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                        }
+                    }
+                }
+            } else if let url = (userInfo["data"] as AnyObject).object(forKey: "url") as? String {
+                let urls = url.components(separatedBy: "?")
+                if let vkURL = urls.first {
+                    controller.openBrowserController(url: vkURL)
                 }
             }
         }

@@ -86,8 +86,8 @@ struct Parent {
     var attach = [Attachment]()
     var repostText = ""
     var repostAttach = [Attachment]()
+    
     init(json: JSON, type: String) {
-        
         if type == "mention_comments" || type == "comment_post" || type == "like_post" || type == "copy_post" {
             self.id = json["parent"]["id"].intValue
             self.toID = json["parent"]["to_id"].intValue
@@ -140,17 +140,37 @@ struct Parent {
             self.ownerID = json["parent"]["owner_id"].intValue
             self.text = json["parent"]["text"].stringValue
             self.date = json["parent"]["date"].intValue
-            self.width = json["parent"]["width"].intValue
-            self.height = json["parent"]["height"].intValue
-            self.photoURL = json["parent"]["photo_807"].stringValue
-            if self.photoURL == "" {
-                self.photoURL = json["parent"]["photo_604"].stringValue
+            
+            let photoSizes = json["parent"]["sizes"]
+            
+            if let size = photoSizes.filter({ $0.1["type"] == "z"}).first {
+                self.photoURL = size.1["url"].stringValue
+                if width == 0 { self.width = size.1["width"].intValue }
+                if height == 0 { self.height = size.1["height"].intValue }
             }
-            if self.photoURL == "" {
-                self.photoURL = json["parent"]["photo_130"].stringValue
+            
+            if self.photoURL.isEmpty, let size = photoSizes.filter({ $0.1["type"] == "y"}).first {
+                self.photoURL = size.1["url"].stringValue
+                if width == 0 { self.width = size.1["width"].intValue }
+                if height == 0 { self.height = size.1["height"].intValue }
             }
-            if self.photoURL == "" {
-                self.photoURL = json["parent"]["photo_75"].stringValue
+            
+            if self.photoURL.isEmpty, let size = photoSizes.filter({ $0.1["type"] == "x"}).first {
+                self.photoURL = size.1["url"].stringValue
+                if width == 0 { self.width = size.1["width"].intValue }
+                if height == 0 { self.height = size.1["height"].intValue }
+            }
+            
+            if self.photoURL.isEmpty, let size = photoSizes.filter({ $0.1["type"] == "m"}).first {
+                self.photoURL = size.1["url"].stringValue
+                if width == 0 { self.width = size.1["width"].intValue }
+                if height == 0 { self.height = size.1["height"].intValue }
+            }
+            
+            if self.photoURL.isEmpty, let size = photoSizes.filter({ $0.1["type"] == "s"}).first {
+                self.photoURL = size.1["url"].stringValue
+                if width == 0 { self.width = size.1["width"].intValue }
+                if height == 0 { self.height = size.1["height"].intValue }
             }
         
         } else if type == "comment_video" || type == "like_video" || type == "copy_video" || type == "mention_comment_video" {

@@ -20,6 +20,8 @@
 		170259BE202634D200E682CD /* ParseGroupList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 170259BD202634D200E682CD /* ParseGroupList.swift */; };
 		170259C02026357600E682CD /* ReloadGroupsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 170259BF2026357600E682CD /* ReloadGroupsController.swift */; };
 		170259C220263B5900E682CD /* ReloadAddGroupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 170259C120263B5900E682CD /* ReloadAddGroupController.swift */; };
+		1716FB5026D8DA5400E6485D /* Sticker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1716FB4F26D8DA5400E6485D /* Sticker.swift */; };
+		1716FB5226D8E71B00E6485D /* StickersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1716FB5126D8E71B00E6485D /* StickersView.swift */; };
 		171708EC20A9ADEA006C2982 /* GroupDialogsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171708EB20A9ADEA006C2982 /* GroupDialogsController.swift */; };
 		171708EE20A9AE26006C2982 /* GroupDialogsCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171708ED20A9AE26006C2982 /* GroupDialogsCell.swift */; };
 		171708F020A9B0FC006C2982 /* ReloadGroupDialogsController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 171708EF20A9B0FC006C2982 /* ReloadGroupDialogsController.swift */; };
@@ -150,6 +152,7 @@
 		17A475DE20603A5D00EE07BC /* FriendRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A475DD20603A5D00EE07BC /* FriendRequest.swift */; };
 		17A475E02060402E00EE07BC /* ParseRequestList.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A475DF2060402E00EE07BC /* ParseRequestList.swift */; };
 		17A5DBF5200B562700225AAC /* ProfileController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A5DBF4200B562700225AAC /* ProfileController.swift */; };
+		17A619A3270DA2A200DE7FF6 /* Conversation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A619A2270DA2A200DE7FF6 /* Conversation.swift */; };
 		17A87AFA206FA484005FFBB2 /* Poll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A87AF9206FA484005FFBB2 /* Poll.swift */; };
 		17A8F27B1FFEBBD800DEE851 /* AddGroupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A8F27A1FFEBBD800DEE851 /* AddGroupController.swift */; };
 		17A8F27D1FFEBBF300DEE851 /* AddGroupCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17A8F27C1FFEBBF300DEE851 /* AddGroupCell.swift */; };
@@ -199,6 +202,7 @@
 		17C638A9208F404C00160EBE /* vkUserLongPoll.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C638A8208F404C00160EBE /* vkUserLongPoll.swift */; };
 		17C638AB208F413E00160EBE /* vkUserLongPollProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C638AA208F413E00160EBE /* vkUserLongPollProtocol.swift */; };
 		17C638AE208F466F00160EBE /* LongPollServerRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C638AD208F466F00160EBE /* LongPollServerRequest.swift */; };
+		17C8FBE326DA68910033A410 /* MyReachability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C8FBE226DA68910033A410 /* MyReachability.swift */; };
 		17C9025320459A5B0007E0F4 /* UsersController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C9025220459A5B0007E0F4 /* UsersController.swift */; };
 		17C902572045A3A10007E0F4 /* ReloadUsersController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17C902562045A3A10007E0F4 /* ReloadUsersController.swift */; };
 		17CC8FD3205D1235000CA5FB /* ViewControllerUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17CC8FD2205D1235000CA5FB /* ViewControllerUtils.swift */; };
@@ -237,6 +241,8 @@
 		170259BD202634D200E682CD /* ParseGroupList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseGroupList.swift; sourceTree = "<group>"; };
 		170259BF2026357600E682CD /* ReloadGroupsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadGroupsController.swift; sourceTree = "<group>"; };
 		170259C120263B5900E682CD /* ReloadAddGroupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadAddGroupController.swift; sourceTree = "<group>"; };
+		1716FB4F26D8DA5400E6485D /* Sticker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sticker.swift; sourceTree = "<group>"; };
+		1716FB5126D8E71B00E6485D /* StickersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StickersView.swift; sourceTree = "<group>"; };
 		171708EB20A9ADEA006C2982 /* GroupDialogsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupDialogsController.swift; sourceTree = "<group>"; };
 		171708ED20A9AE26006C2982 /* GroupDialogsCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupDialogsCell.swift; sourceTree = "<group>"; };
 		171708EF20A9B0FC006C2982 /* ReloadGroupDialogsController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadGroupDialogsController.swift; sourceTree = "<group>"; };
@@ -373,6 +379,7 @@
 		17A475DD20603A5D00EE07BC /* FriendRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FriendRequest.swift; sourceTree = "<group>"; };
 		17A475DF2060402E00EE07BC /* ParseRequestList.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseRequestList.swift; sourceTree = "<group>"; };
 		17A5DBF4200B562700225AAC /* ProfileController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileController.swift; sourceTree = "<group>"; };
+		17A619A2270DA2A200DE7FF6 /* Conversation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Conversation.swift; sourceTree = "<group>"; };
 		17A87AF9206FA484005FFBB2 /* Poll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Poll.swift; sourceTree = "<group>"; };
 		17A8F27A1FFEBBD800DEE851 /* AddGroupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddGroupController.swift; sourceTree = "<group>"; };
 		17A8F27C1FFEBBF300DEE851 /* AddGroupCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddGroupCell.swift; sourceTree = "<group>"; };
@@ -423,6 +430,7 @@
 		17C638A8208F404C00160EBE /* vkUserLongPoll.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = vkUserLongPoll.swift; sourceTree = "<group>"; };
 		17C638AA208F413E00160EBE /* vkUserLongPollProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = vkUserLongPollProtocol.swift; sourceTree = "<group>"; };
 		17C638AD208F466F00160EBE /* LongPollServerRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LongPollServerRequest.swift; sourceTree = "<group>"; };
+		17C8FBE226DA68910033A410 /* MyReachability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyReachability.swift; sourceTree = "<group>"; };
 		17C9025220459A5B0007E0F4 /* UsersController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsersController.swift; sourceTree = "<group>"; };
 		17C902562045A3A10007E0F4 /* ReloadUsersController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReloadUsersController.swift; sourceTree = "<group>"; };
 		17CC8FD2205D1235000CA5FB /* ViewControllerUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewControllerUtils.swift; sourceTree = "<group>"; };
@@ -796,6 +804,8 @@
 				17C63899208A518900160EBE /* DialogsUsers.swift */,
 				17C638A6208BCAAF00160EBE /* DialogAttach.swift */,
 				17B40AAB20A45A5A00DBC2D1 /* ChatInfo.swift */,
+				1716FB4F26D8DA5400E6485D /* Sticker.swift */,
+				17A619A2270DA2A200DE7FF6 /* Conversation.swift */,
 			);
 			path = vkObjects;
 			sourceTree = "<group>";
@@ -817,6 +827,7 @@
 				174F42A8205A856500248187 /* NewRecordOptionsController.swift */,
 				179C33ED2063A47D00B412E0 /* NewCommentController.swift */,
 				176FB0512476664100EF302D /* AttachmentsView.swift */,
+				1716FB5126D8E71B00E6485D /* StickersView.swift */,
 			);
 			path = Record2;
 			sourceTree = "<group>";
@@ -894,6 +905,7 @@
 				1718D98320B85D1B0032837F /* URLsInLabels.swift */,
 				178A0D9920C0374F00DD2422 /* StoreReviewHelper.swift */,
 				17F120A020C1775A0005C37A /* BarButtonBadge.swift */,
+				17C8FBE226DA68910033A410 /* MyReachability.swift */,
 			);
 			path = AdditionalFeatures;
 			sourceTree = "<group>";
@@ -1105,6 +1117,7 @@
 				171708F220A9BBE2006C2982 /* GroupDialogCell.swift in Sources */,
 				170259B72025FAEC00E682CD /* ParseFollowersList.swift in Sources */,
 				17A8F27D1FFEBBF300DEE851 /* AddGroupCell.swift in Sources */,
+				1716FB5026D8DA5400E6485D /* Sticker.swift in Sources */,
 				1797339A20309BFF005BE6DD /* WallRecordCell.swift in Sources */,
 				1780C5C82026ED5C00662E09 /* GetServerResponseOperation.swift in Sources */,
 				17F7AE622021FD2500A30910 /* ParsePhotoData.swift in Sources */,
@@ -1259,10 +1272,12 @@
 				17AB2137204C129B00DB1083 /* VideoListCell.swift in Sources */,
 				17A8F27B1FFEBBD800DEE851 /* AddGroupController.swift in Sources */,
 				17206A882018A10A009F52E6 /* Newsfeed.swift in Sources */,
+				1716FB5226D8E71B00E6485D /* StickersView.swift in Sources */,
 				173CD4702472DCC700615506 /* InnerViewController.swift in Sources */,
 				17C0F2F92049D7E00072FA19 /* ProfileView.swift in Sources */,
 				17A0523020483FD3007B1DFF /* ParseVideos.swift in Sources */,
 				1780B3782065522C0079C55B /* GetITunesDataOperation.swift in Sources */,
+				17C8FBE326DA68910033A410 /* MyReachability.swift in Sources */,
 				17C0F2FB204B1F730072FA19 /* WallRecordCell2.swift in Sources */,
 				170259BA2025FE4400E682CD /* GetCacheImage.swift in Sources */,
 				171708EC20A9ADEA006C2982 /* GroupDialogsController.swift in Sources */,
@@ -1283,6 +1298,7 @@
 				17A0521E20470DF3007B1DFF /* ReloadFavePostsController.swift in Sources */,
 				179D2EF020512F6D000B4ED6 /* NewsfeedSearchController.swift in Sources */,
 				17ACBD8F2010A0520025748C /* Groups.swift in Sources */,
+				17A619A3270DA2A200DE7FF6 /* Conversation.swift in Sources */,
 				177C319820316D3000CC223F /* GroupProfileCell.swift in Sources */,
 				17B69F67204DB14A00F1E21F /* ReloadRecord2Controller.swift in Sources */,
 				17AB213D204C1B9B00DB1083 /* ReloadVideoListController.swift in Sources */,
@@ -1436,7 +1452,7 @@
 				CODE_SIGN_ENTITLEMENTS = "VK-total/VK-total.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = WML363H532;
 				ENABLE_BITCODE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
@@ -1447,7 +1463,7 @@
 				INFOPLIST_FILE = "VK-total/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1472,7 +1488,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Snik2003.VK-inThe-City";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "36a0a398-8d4a-4564-a76c-37361945b0aa";
-				PROVISIONING_PROFILE_SPECIFIER = "vl-total.development";
+				PROVISIONING_PROFILE_SPECIFIER = snik2003.vk.development;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = 1;
@@ -1488,14 +1504,14 @@
 				CODE_SIGN_ENTITLEMENTS = "VK-total/VK-totalRelease.entitlements";
 				CODE_SIGN_IDENTITY = "iPhone Distribution";
 				CODE_SIGN_STYLE = Manual;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = WML363H532;
 				ENABLE_BITCODE = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = "";
 				INFOPLIST_FILE = "VK-total/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 3.2;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -1520,7 +1536,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "Snik2003.VK-inThe-City";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE = "744fe015-9152-4ce5-9a50-eaa59f9c0122";
-				PROVISIONING_PROFILE_SPECIFIER = "snik2003.vk-in-the-city.distribution";
+				PROVISIONING_PROFILE_SPECIFIER = snik2003.vk.production;
 				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = 1;
 			};

@@ -11,6 +11,7 @@ import SwiftyJSON
 
 class ParseDialogs: Operation {
     
+    var conversations: [Conversation] = []
     var outputData: [Message] = []
     var unread: Int = 0
     var count: Int = 0
@@ -21,7 +22,8 @@ class ParseDialogs: Operation {
         guard let json = try? JSON(data: data) else { print("json error"); return }
         //print(json)
         
-        let dialogs = json["response"]["items"].compactMap { Message(json: $0.1) }
+        conversations = json["response"]["items"].compactMap({ Conversation(json: $0.1["conversation"]) })
+        let dialogs = json["response"]["items"].compactMap { Message(json: $0.1["last_message"], conversations: conversations) }
         unread = json["response"]["unread_dialogs"].intValue
         count = json["response"]["count"].intValue
         outputData = dialogs

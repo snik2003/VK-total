@@ -241,6 +241,7 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
         
         if selectIndex == 0 {
             let cell = tableView.dequeueReusableCell(withIdentifier: "photoCell", for: indexPath) as! PhotosListCell
+            cell.contentView.isUserInteractionEnabled = true
             
             cell.delegate = self
             cell.configureCell(photos: photos, indexPath: indexPath)
@@ -261,6 +262,7 @@ class PhotosListController: InnerViewController, UITableViewDelegate, UITableVie
             return cell
         } else {
             let cell = tableView.dequeueReusableCell(withIdentifier: "albumCell", for: indexPath) as! PhotoAlbumsListCell
+            cell.contentView.isUserInteractionEnabled = true
             
             cell.configureCell(albums: albums, indexPath: indexPath)
             cell.selectionStyle = .none

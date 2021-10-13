@@ -67,7 +67,7 @@ class NewsfeedSearchController: InnerTableViewController {
             "extended": "1",
             "count": "200",
             "fields": "id,first_name,last_name,photo_100,photo_200,first_name_gen",
-            "v": "5.85"
+            "v": vkSingleton.shared.version
         ]
         
         let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)

@@ -165,6 +165,7 @@ class PersonalController: InnerTableViewController {
                 "count": "1",
                 "user_id": "-166099539",
                 "start_message_id": "-1",
+                "extended": "1",
                 "v": vkSingleton.shared.version
             ]
             
@@ -173,12 +174,8 @@ class PersonalController: InnerTableViewController {
             
             let parseDialog = ParseDialogHistory()
             parseDialog.completionBlock = {
-                var startID = parseDialog.inRead
-                if parseDialog.outRead > startID {
-                    startID = parseDialog.outRead
-                }
                 OperationQueue.main.addOperation {
-                    self.openDialogController(userID: "-166099539", chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                    self.openDialogController(userID: "-166099539", chatID: "", startID: parseDialog.lastMessageId, attachment: "", messIDs: [], image: nil)
                 }
             }
             parseDialog.addDependency(getServerDataOperation)

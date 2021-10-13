@@ -22,9 +22,7 @@ class AddAccountController: InnerTableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         //readAccountsFromRealm()
-        
         
         if let aView = self.tableView.superview {
             ViewControllerUtils().showActivityIndicator(uiView: aView)
@@ -32,17 +30,23 @@ class AddAccountController: InnerTableViewController {
             ViewControllerUtils().showActivityIndicator(uiView: self.view)
         }
         
+        let requestGroup = DispatchGroup()
+        
         for account in accounts {
+            requestGroup.enter()
             self.getAccountCounters(account: account, counters: { token, friendsCounters, messagesCounters, notesCounters in
-                OperationQueue.main.addOperation {
-                    self.friendsCounters[token] = friendsCounters
-                    self.notesCounters[token] = notesCounters
-                    self.messagesCounters[token] = messagesCounters
-                    
-                    self.tableView.reloadData()
-                    if account == self.accounts.last { ViewControllerUtils().hideActivityIndicator() }
-                }
+                self.friendsCounters[token] = friendsCounters
+                self.notesCounters[token] = notesCounters
+                self.messagesCounters[token] = messagesCounters
+                requestGroup.leave()
             })
+        }
+        
+        requestGroup.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            
+            self.tableView.reloadData()
+            ViewControllerUtils().hideActivityIndicator()
         }
     }
 
@@ -111,6 +115,7 @@ class AddAccountController: InnerTableViewController {
                         
                         vkSingleton.shared.userID = "\(account.userID)"
                         vkSingleton.shared.avatarURL = ""
+                        vkSingleton.shared.stickers = []
                         
                         self.userDefaults.set(vkSingleton.shared.userID, forKey: "vkUserID")
                         self.readAppConfig()
@@ -166,6 +171,7 @@ class AddAccountController: InnerTableViewController {
         let action1 = UIAlertAction(title: "Добавить учетную запись", style: .destructive) { action in
             
             vkSingleton.shared.avatarURL = ""
+            vkSingleton.shared.stickers = []
             
             vkUserLongPoll.shared.request.cancel()
             vkUserLongPoll.shared.firstLaunch = true

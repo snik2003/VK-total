@@ -217,7 +217,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                 "count": "\(count)",
                 "extended": "1",
                 "fields": "id, first_name, last_name, photo_max, photo_100",
-                "v": "5.85"
+                "v": vkSingleton.shared.version
             ]
         } else if source == "photo" {
             url = "/method/fave.getPhotos"

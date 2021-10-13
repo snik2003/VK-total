@@ -31,8 +31,10 @@ class DialogHistory: Equatable {
     var important = 0
     var deleted = 0
     var randomID = 0
+    var type = ""
     var attach: [DialogAttach] = []
     var fwdMessage: [Message] = []
+    var canWrite = true
     
     // доп.поля для групповой беседы
     var chatID = 0
@@ -49,9 +51,8 @@ class DialogHistory: Equatable {
     
     var hasSticker = false
     
-    init(json: JSON) {
+    init(json: JSON, conversation: JSON? = nil) {
         self.id = json["id"].intValue
-        self.chatID = json["chat_id"].intValue
         self.userID = json["user_id"].intValue
         self.fromID = json["from_id"].intValue
         self.peerID = json["peer_id"].intValue
@@ -66,22 +67,25 @@ class DialogHistory: Equatable {
         self.deleted = json["deleted"].intValue
         self.randomID = json["random_id"].intValue
         
-        if self.chatID != 0 {
-            for index in 0...19 {
-                let chActive = json["chat_active"][index].intValue
-                if chActive > 0 {
-                    self.chatActive.append(chActive)
-                }
+        
+        if let conversation = conversation {
+            self.type = conversation["peer"]["type"].stringValue
+            self.canWrite = conversation["can_write"]["allowed"].boolValue
+        
+            if self.type == "chat" { self.chatID = conversation["peer"]["id"].intValue }
+        
+            if self.chatID != 0 {
+                self.chatActive = conversation["chat_settings"]["active_ids"].map({ $0.1.intValue })
+                self.usersCount = conversation["chat_settings"]["members_count"].intValue
+                self.adminID = json["admin_id"].intValue
+                self.actionID = json["action"]["member_id"].intValue
+                self.action = json["action"]["type"].stringValue
+                self.actionEmail = json["action_email"].stringValue
+                self.actionText = json["action"]["text"].stringValue
+                self.photo50 = conversation["chat_settings"]["photo_50"].stringValue
+                self.photo100 = conversation["chat_settings"]["photo_100"].stringValue
+                self.photo200 = conversation["chat_settings"]["photo_200"].stringValue
             }
-            self.usersCount = json["users_count"].intValue
-            self.adminID = json["admin_id"].intValue
-            self.actionID = json["action_mid"].intValue
-            self.action = json["action"].stringValue
-            self.actionEmail = json["action_email"].stringValue
-            self.actionText = json["action_text"].stringValue
-            self.photo50 = json["photo_50"].stringValue
-            self.photo100 = json["photo_100"].stringValue
-            self.photo200 = json["photo_200"].stringValue
         }
         
         if self.fromID == 0 {
@@ -109,12 +113,29 @@ class DialogHistory: Equatable {
                 photos.ownerID = json["attachments"][index]["photo"]["owner_id"].intValue
                 photos.userID = json["attachments"][index]["photo"]["user_id"].intValue
                 photos.date = json["attachments"][index]["photo"]["date"].intValue
-                photos.width = json["attachments"][index]["photo"]["width"].intValue
-                photos.height = json["attachments"][index]["photo"]["height"].intValue
                 photos.text = json["attachments"][index]["photo"]["text"].stringValue
-                photos.photo604 = json["attachments"][index]["photo"]["photo_604"].stringValue
-                photos.photo807 = json["attachments"][index]["photo"]["photo_807"].stringValue
                 photos.accessKey = json["attachments"][index]["photo"]["access_key"].stringValue
+                
+                let photoSizes = json["attachments"][index]["photo"]["sizes"]
+                
+                if let size = photoSizes.filter({ $0.1["type"] == "x"}).first {
+                    photos.photo604 = size.1["url"].stringValue
+                    photos.width = size.1["width"].intValue
+                    photos.height = size.1["height"].intValue
+                }
+                
+                if let size = photoSizes.filter({ $0.1["type"] == "y"}).first {
+                    photos.photo807 = size.1["url"].stringValue
+                    if photos.width == 0 { photos.width = size.1["width"].intValue }
+                    if photos.height == 0 { photos.height = size.1["height"].intValue }
+                }
+                
+                if let size = photoSizes.filter({ $0.1["type"] == "z"}).first {
+                    photos.photo1280 = size.1["url"].stringValue
+                    if photos.width == 0 { photos.width = size.1["width"].intValue }
+                    if photos.height == 0 { photos.height = size.1["height"].intValue }
+                }
+                
                 att.photos.append(photos)
             }
             
@@ -149,12 +170,21 @@ class DialogHistory: Equatable {
                 self.hasSticker = true
                 
                 let sticker = StickerAttach(json: JSON.null)
-                sticker.id = json["attachments"][index]["sticker"]["id"].intValue
+                sticker.id = json["attachments"][index]["sticker"]["sticker_id"].intValue
                 sticker.productID = json["attachments"][index]["sticker"]["product_id"].intValue
-                sticker.width = json["attachments"][index]["sticker"]["width"].intValue
-                sticker.height = json["attachments"][index]["sticker"]["height"].intValue
-                sticker.photo256 = json["attachments"][index]["sticker"]["photo_256"].stringValue
-                sticker.photo128 = json["attachments"][index]["sticker"]["photo_128"].stringValue
+                
+                let sImages = json["attachments"][index]["sticker"]["images"]
+                if sImages.count > 2 {
+                    sticker.width = sImages[2]["width"].intValue
+                    sticker.height = sImages[2]["height"].intValue
+                    sticker.photo256 = sImages[2]["url"].stringValue
+                    sticker.photo128 = sImages[2]["url"].stringValue
+                } else {
+                    sticker.width = sImages[0]["width"].intValue
+                    sticker.height = sImages[0]["height"].intValue
+                    sticker.photo256 = sImages[0]["url"].stringValue
+                    sticker.photo128 = sImages[0]["url"].stringValue
+                }
                 att.stickers.append(sticker)
             }
             
@@ -210,6 +240,27 @@ class DialogHistory: Equatable {
                 att.docs.append(doc)
             }
             
+            if att.type == "audio_message" {
+                att.type = "doc"
+                
+                let doc = DocAttach(json: JSON.null)
+                doc.id = json["attachments"][index]["audio_message"]["id"].intValue
+                doc.ownerID = json["attachments"][index]["audio_message"]["owner_id"].intValue
+                doc.title = json["attachments"][index]["audio_message"]["title"].stringValue
+                doc.size = json["attachments"][index]["audio_message"]["size"].intValue
+                doc.ext = "ogg"
+                doc.url = json["attachments"][index]["audio_message"]["url"].stringValue
+                doc.date = json["attachments"][index]["audio_message"]["date"].intValue
+                doc.type = 5
+                doc.accessKey = json["attachments"][index]["audio_message"]["access_key"].stringValue
+                
+                doc.linkMP3 = json["attachments"][index]["audio_message"]["link_mp3"].stringValue
+                doc.linkOGG = json["attachments"][index]["audio_message"]["link_ogg"].stringValue
+                doc.duration = json["attachments"][index]["audio_message"]["duration"].intValue
+                
+                att.docs.append(doc)
+            }
+            
             if att.type == "link" {
                 let link = LinkAttach(json: JSON.null)
                 link.title = json["attachments"][index]["link"]["title"].stringValue
@@ -256,12 +307,29 @@ class DialogHistory: Equatable {
                         photos.ownerID = json["fwd_messages"][index1]["attachments"][index2]["photo"]["owner_id"].intValue
                         photos.userID = json["fwd_messages"][index1]["attachments"][index2]["photo"]["user_id"].intValue
                         photos.date = json["fwd_messages"][index1]["attachments"][index2]["photo"]["date"].intValue
-                        photos.width = json["fwd_messages"][index1]["attachments"][index2]["photo"]["width"].intValue
-                        photos.height = json["fwd_messages"][index1]["attachments"][index2]["photo"]["height"].intValue
                         photos.text = json["fwd_messages"][index1]["attachments"][index2]["photo"]["text"].stringValue
-                        photos.photo604 = json["fwd_messages"][index1]["attachments"][index2]["photo"]["photo_604"].stringValue
-                        photos.photo807 = json["fwd_messages"][index1]["attachments"][index2]["photo"]["photo_807"].stringValue
                         photos.accessKey = json["fwd_messages"][index1]["attachments"][index2]["photo"]["access_key"].stringValue
+                        
+                        let photoSizes = json["fwd_messages"][index1]["attachments"][index2]["photo"]["sizes"]
+                        
+                        if let size = photoSizes.filter({ $0.1["type"] == "x"}).first {
+                            photos.photo604 = size.1["url"].stringValue
+                            photos.width = size.1["width"].intValue
+                            photos.height = size.1["height"].intValue
+                        }
+                        
+                        if let size = photoSizes.filter({ $0.1["type"] == "y"}).first {
+                            photos.photo807 = size.1["url"].stringValue
+                            if photos.width == 0 { photos.width = size.1["width"].intValue }
+                            if photos.height == 0 { photos.height = size.1["height"].intValue }
+                        }
+                        
+                        if let size = photoSizes.filter({ $0.1["type"] == "z"}).first {
+                            photos.photo1280 = size.1["url"].stringValue
+                            if photos.width == 0 { photos.width = size.1["width"].intValue }
+                            if photos.height == 0 { photos.height = size.1["height"].intValue }
+                        }
+                        
                         att.photos.append(photos)
                         mess.attach.append(att)
                     }
@@ -299,12 +367,22 @@ class DialogHistory: Equatable {
                         self.hasSticker = true
                         
                         let sticker = StickerAttach(json: JSON.null)
-                        sticker.id = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["id"].intValue
+                        sticker.id = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["sticker_id"].intValue
                         sticker.productID = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["product_id"].intValue
-                        sticker.width = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["width"].intValue
-                        sticker.height = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["height"].intValue
-                        sticker.photo256 = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_256"].stringValue
-                        sticker.photo128 = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["photo_128"].stringValue
+                        
+                        let sImages = json["fwd_messages"][index1]["attachments"][index2]["sticker"]["images"]
+                        if sImages.count > 2 {
+                            sticker.width = sImages[2]["width"].intValue
+                            sticker.height = sImages[2]["height"].intValue
+                            sticker.photo256 = sImages[2]["url"].stringValue
+                            sticker.photo128 = sImages[2]["url"].stringValue
+                        } else {
+                            sticker.width = sImages[0]["width"].intValue
+                            sticker.height = sImages[0]["height"].intValue
+                            sticker.photo256 = sImages[0]["url"].stringValue
+                            sticker.photo128 = sImages[0]["url"].stringValue
+                        }
+                        
                         att.stickers.append(sticker)
                         mess.attach.append(att)
                     }
@@ -360,6 +438,28 @@ class DialogHistory: Equatable {
                             }
                         }
                     
+                        att.docs.append(doc)
+                        mess.attach.append(att)
+                    }
+                    
+                    if att.type == "audio_message" {
+                        att.type = "doc"
+                        
+                        let doc = DocAttach(json: JSON.null)
+                        doc.id = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["id"].intValue
+                        doc.ownerID = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["owner_id"].intValue
+                        doc.title = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["title"].stringValue
+                        doc.size = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["size"].intValue
+                        doc.ext = "ogg"
+                        doc.url = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["url"].stringValue
+                        doc.date = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["date"].intValue
+                        doc.type = 5
+                        doc.accessKey = json["fwd_messages"][index1]["attachments"][index2]["doc"]["access_key"].stringValue
+                        
+                        doc.linkMP3 = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["link_mp3"].stringValue
+                        doc.linkOGG = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["link_ogg"].stringValue
+                        doc.duration = json["fwd_messages"][index1]["attachments"][index2]["audio_message"]["duration"].intValue
+
                         att.docs.append(doc)
                         mess.attach.append(att)
                     }

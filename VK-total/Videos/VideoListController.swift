@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MobileCoreServices
 
 class VideoListController: InnerViewController, UITableViewDelegate, UITableViewDataSource, UISearchBarDelegate {
 
@@ -29,6 +30,8 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
     var type = ""
     var source = ""
     
+    var isGroup = false
+    
     var markPhotos: [Int:UIImage] = [:]
     var selectButton: UIBarButtonItem!
     
@@ -46,6 +49,8 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
     var tabHeight: CGFloat = 49
     var firstAppear = true
     
+    let pickerController = UIImagePickerController()
+    
     let queue: OperationQueue = {
         let queue = OperationQueue()
         queue.qualityOfService = .userInteractive
@@ -56,6 +61,9 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
         super.viewDidLoad()
         
         OperationQueue.main.addOperation {
+            self.pickerController.delegate = self
+            self.pickerController.allowsEditing = false
+            
             self.createSearchBar()
             self.createTableView()
             
@@ -69,7 +77,11 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
             self.searchBar.backgroundColor = vkSingleton.shared.backColor
             
             if self.ownerID == vkSingleton.shared.userID && self.type == "" && self.source == "" {
-                let barButton = UIBarButtonItem(barButtonSystemItem: .search, target: self, action: #selector(self.tapBarButtonItem(sender:)))
+                let barButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(self.tapBarButtonItem(sender:)))
+                self.navigationItem.rightBarButtonItem = barButton
+            } else if let groupID = Int(self.ownerID), vkSingleton.shared.adminGroupID.contains(abs(groupID)), self.type.isEmpty, self.source.isEmpty {
+                self.isGroup = true
+                let barButton = UIBarButtonItem(barButtonSystemItem: .action, target: self, action: #selector(self.tapBarButtonItemForGroup(sender:)))
                 self.navigationItem.rightBarButtonItem = barButton
             }
             
@@ -330,8 +342,8 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
                             vc.typeOf.append("video")
                             vc.photos.append(videoImage)
                         }
-                        
                     }
+                    
                     vc.setAttachments()
                     vc.configureStartView()
                     self.navigationController?.popViewController(animated: true)
@@ -430,7 +442,201 @@ class VideoListController: InnerViewController, UITableViewDelegate, UITableView
     
     @objc func tapBarButtonItem(sender: UIBarButtonItem) {
         
-        playSoundEffect(vkSingleton.shared.buttonSound)
-        self.openVideoListController(ownerID: ownerID, title: "Поиск", type: "search")
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        
+        let action0 = UIAlertAction(title: "Записать новое видео", style: .default) { action in
+                
+            self.playSoundEffect(vkSingleton.shared.buttonSound)
+            
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                self.pickerController.sourceType = .camera
+                self.pickerController.mediaTypes =  [kUTTypeMovie as String]
+                self.pickerController.cameraCaptureMode = .video
+                self.pickerController.modalPresentationStyle = .fullScreen
+                self.pickerController.videoQuality = .typeMedium
+                
+                self.present(self.pickerController, animated: true)
+            } else {
+                self.showErrorMessage(title: "Ошибка", msg: "Камера на устройстве не активна.")
+            }
+        }
+        alertController.addAction(action0)
+        
+        
+        let action1 = UIAlertAction(title: "Загрузить видео с устройства", style: .default) { action in
+                
+            self.playSoundEffect(vkSingleton.shared.buttonSound)
+            self.pickerController.sourceType = .photoLibrary
+            self.pickerController.mediaTypes =  [kUTTypeMovie as String]
+        
+            self.present(self.pickerController, animated: true)
+        }
+        alertController.addAction(action1)
+        
+        
+        let action2 = UIAlertAction(title: "Загрузить видео по ссылке", style: .default) { action in
+                
+            self.playSoundEffect(vkSingleton.shared.buttonSound)
+            self.getUploadVideoURL(isLink: true, groupID: 0, isPrivate: 0, wallpost: 0, completion: { uploadURL, attachString in
+                if !uploadURL.isEmpty {
+                    self.myVideoUploadLinkRequest(url: uploadURL, completion: { result in
+                        ViewControllerUtils().hideActivityIndicator()
+                        if result == 1 {
+                            OperationQueue.main.addOperation {
+                                self.showSuccessMessage(title: "Видео успешно загружено!", msg: "После загрузки видеозапись проходит обработку и в списке видеозаписей может появиться спустя некоторое время.")
+                            }
+                        }
+                    })
+                }
+            })
+        }
+        alertController.addAction(action2)
+        
+        
+        let action3 = UIAlertAction(title: "Поиск новых видеозаписей", style: .destructive) { action in
+            
+            self.playSoundEffect(vkSingleton.shared.buttonSound)
+            self.openVideoListController(ownerID: self.ownerID, title: "Поиск", type: "search")
+        }
+        alertController.addAction(action3)
+        
+        
+        self.present(alertController, animated: true)
+    }
+    
+    @objc func tapBarButtonItemForGroup(sender: UIBarButtonItem) {
+        
+        let alertController = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
+        alertController.addAction(cancelAction)
+        
+        
+        let action0 = UIAlertAction(title: "Записать новое видео", style: .default) { action in
+                
+            self.playSoundEffect(vkSingleton.shared.buttonSound)
+            
+            if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                self.pickerController.sourceType = .camera
+                self.pickerController.mediaTypes =  [kUTTypeMovie as String]
+                self.pickerController.cameraCaptureMode = .video
+                self.pickerController.modalPresentationStyle = .fullScreen
+                self.pickerController.videoQuality = .typeMedium
+                
+                self.present(self.pickerController, animated: true)
+            } else {
+                self.showErrorMessage(title: "Ошибка", msg: "Камера на устройстве не активна.")
+            }
+        }
+        alertController.addAction(action0)
+        
+        
+        let action1 = UIAlertAction(title: "Загрузить видео с устройства", style: .default) { action in
+                
+            self.playSoundEffect(vkSingleton.shared.buttonSound)
+            self.pickerController.sourceType = .photoLibrary
+            self.pickerController.mediaTypes =  [kUTTypeMovie as String]
+        
+            self.present(self.pickerController, animated: true)
+        }
+        alertController.addAction(action1)
+        
+        
+        let action2 = UIAlertAction(title: "Загрузить видео по ссылке", style: .default) { action in
+                
+            self.playSoundEffect(vkSingleton.shared.buttonSound)
+            self.getUploadVideoURL(isLink: true, groupID: Int(self.ownerID)!, isPrivate: 0, wallpost: 0, completion: { uploadURL, attachString in
+                if !uploadURL.isEmpty {
+                    self.myVideoUploadLinkRequest(url: uploadURL, completion: { result in
+                        ViewControllerUtils().hideActivityIndicator()
+                        if result == 1 {
+                            OperationQueue.main.addOperation {
+                                self.showSuccessMessage(title: "Видео успешно загружено!", msg: "После загрузки видеозапись проходит обработку и в списке видеозаписей может появиться спустя некоторое время.")
+                            }
+                        }
+                    })
+                }
+            })
+        }
+        alertController.addAction(action2)
+        
+        
+        self.present(alertController, animated: true)
+    }
+}
+
+extension VideoListController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        picker.dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        
+        if let videoURL = info[UIImagePickerController.InfoKey.mediaURL] as? URL {
+            if isGroup {
+                self.getUploadVideoURL(isLink: false, groupID: Int(ownerID)!, isPrivate: 0, wallpost: 0, completion: { uploadURL, attachString in
+                    if !uploadURL.isEmpty {
+                        print("uploadURL = \(uploadURL)")
+                        print("attachment = \(attachString)")
+                        
+                        do {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                            }
+                            
+                            let videoData = try Data(contentsOf: videoURL, options: .mappedIfSafe)
+                            
+                            self.myVideoUploadRequest(url: uploadURL, videoData: videoData, filename: "video_file", completion: { attachment, hash, size in
+                                ViewControllerUtils().hideActivityIndicator()
+                                if !hash.isEmpty && size > 0 && attachString == attachment {
+                                    OperationQueue.main.addOperation {
+                                        self.showSuccessMessage(title: "Видео успешно загружено!", msg: "После загрузки видеозапись проходит обработку и в списке видеозаписей может появиться спустя некоторое время.")
+                                    }
+                                }
+                            })
+                        } catch {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().hideActivityIndicator()
+                            }
+                            
+                            return
+                        }
+                    }
+                })
+            } else {
+                self.getUploadVideoURL(isLink: false, groupID: 0, isPrivate: 0, wallpost: 0, completion: { uploadURL, attachString in
+                    if !uploadURL.isEmpty {
+                        do {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                            }
+                            
+                            let videoData = try Data(contentsOf: videoURL, options: .mappedIfSafe)
+                            
+                            self.myVideoUploadRequest(url: uploadURL, videoData: videoData, filename: "video_file", completion: { attachment, hash, size in
+                                ViewControllerUtils().hideActivityIndicator()
+                                if !hash.isEmpty && size > 0 && attachString == attachment {
+                                    OperationQueue.main.addOperation {
+                                        self.showSuccessMessage(title: "Видео успешно загружено!", msg: "После загрузки видеозапись проходит обработку и в списке видеозаписей может появиться спустя некоторое время.")
+                                    }
+                                }
+                            })
+                        } catch {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().hideActivityIndicator()
+                            }
+                            return
+                        }
+                    }
+                })
+            }
+        }
+        
+        picker.dismiss(animated:true, completion: nil)
     }
 }

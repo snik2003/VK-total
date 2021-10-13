@@ -18,7 +18,7 @@ class ParsePhotosList: Operation {
         guard let getServerDataOperation = dependencies.first as? GetServerDataOperation, let data = getServerDataOperation.data else { return }
         
         guard let json = try? JSON(data: data) else { print("json error"); return }
-        //print(json)
+        //print("photos = \(json)")
         let photos = json["response"]["items"].compactMap { Photos(json: $0.1) }
         count = json["response"]["count"].intValue
         outputData = photos

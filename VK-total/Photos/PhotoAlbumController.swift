@@ -608,6 +608,7 @@ class PhotoAlbumController: InnerViewController, UIImagePickerControllerDelegate
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "photoCell", for: indexPath) as! PhotosListCell
+        cell.contentView.isUserInteractionEnabled = true
         
         cell.delegate = self
         cell.configureCell(photos: photos, indexPath: indexPath)

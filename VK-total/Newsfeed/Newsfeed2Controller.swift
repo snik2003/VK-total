@@ -243,7 +243,7 @@ class Newsfeed2Controller: InnerTableViewController {
                 "star_from": "\(startFrom)",
                 "count": "100",
                 "fields": "id,first_name,last_name,photo_100,photo_200,first_name_gen",
-                "v": "5.85"
+                "v": vkSingleton.shared.version
             ]
         } else {
             url = "/method/newsfeed.get"
@@ -258,7 +258,7 @@ class Newsfeed2Controller: InnerTableViewController {
                 "start_from": "\(startFrom)",
                 "count": "\(count)",
                 "fields": "id,first_name,last_name,photo_100,photo_200,first_name_gen",
-                "v": "5.85"
+                "v": vkSingleton.shared.version
             ]
         }
         

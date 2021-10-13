@@ -11,6 +11,8 @@ import DCCommentView
 import Popover
 import SwiftyJSON
 import AVFoundation
+import MobileCoreServices
+
 
 enum DialogSource {
     case all
@@ -37,6 +39,8 @@ enum MediaType: String {
 
 class DialogController: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, AVAudioRecorderDelegate {
     
+    var delegate: DialogsController!
+    
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
                return (view.window?.windowScene?.statusBarManager?.statusBarFrame.height ?? 0.0) +
@@ -50,6 +54,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
     var firstAppear = true
     
     var chat: [ChatInfo] = []
+    var conversation: Conversation?
     var dialogs: [DialogHistory] = []
     var users: [DialogsUsers] = []
     var chatUsers: [Friends] = []
@@ -84,12 +89,15 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
     
     var estimatedHeightCache: [IndexPath: CGFloat] = [:]
     
+    var favoriteImage = UIImageView()
     var statusLabel = UILabel()
     var timer = Timer()
     var isTimer = false
     
     let pickerController = UIImagePickerController()
     let pickerController2 = UIImagePickerController()
+    let pickerController3 = UIImagePickerController()
+    
     var collectionView: UICollectionView!
     
     var markMessages: [Int] = []
@@ -138,6 +146,10 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         searchBar.showsCancelButton = false
         searchBar.sizeToFit()
         searchBar.placeholder = ""
+        
+        favoriteImage.image = UIImage(named: "favorite")
+        favoriteImage.contentMode = .scaleAspectFill
+        favoriteImage.frame = CGRect(x: 214 + 38 - 16, y: 1 + 38 - 16, width: 16, height: 16)
     }
 
     override func viewDidLayoutSubviews() {
@@ -152,6 +164,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             
             self.pickerController.delegate = self
             self.pickerController2.delegate = self
+            self.pickerController3.delegate = self
             
             let layout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
             layout.scrollDirection = .horizontal
@@ -647,6 +660,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             "offset": "\(offset)",
             "count": "\(count)",
             "peer_id": "\(userID)",
+            "extended": "1",
             "start_message_id": "-1",
             "v": vkSingleton.shared.version
         ]
@@ -661,6 +675,10 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         
         let parseDialog = ParseDialogHistory()
         parseDialog.completionBlock = {
+            if let conversation = parseDialog.conversation {
+                self.conversation = self.actualConversationArray(conversations: [conversation]).first
+            }
+            
             var userIDs = "\(vkSingleton.shared.userID)"
             
             if let id = Int(self.userID), id > 0 {
@@ -673,6 +691,9 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             }
             
             for dialog in parseDialog.outputData {
+                if dialog.out == 1 { dialog.readState = dialog.id > parseDialog.outRead ? 0 : 1 }
+                else if dialog.out == 0 { dialog.readState = dialog.id > parseDialog.inRead ? 0 : 1 }
+                    
                 for index in 0...9 {
                     if dialog.attach[index].type == "wall" {
                         let id = dialog.attach[index].wall[0].fromID
@@ -895,6 +916,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             "count": "\(count+1)",
             "peer_id": "\(userID)",
             "start_message_id": "\(startID)",
+            "extended": "1",
             "v": vkSingleton.shared.version
         ]
         
@@ -914,6 +936,9 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             }
             
             for dialog in parseDialog.outputData {
+                if dialog.out == 1 { dialog.readState = dialog.id > parseDialog.outRead ? 0 : 1 }
+                else if dialog.out == 0 { dialog.readState = dialog.id > parseDialog.inRead ? 0 : 1 }
+                
                 for index in 0...9 {
                     if dialog.attach[index].type == "wall" {
                         let id = dialog.attach[index].wall[0].fromID
@@ -1011,6 +1036,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                 
                 cell.delegate = self
                 cell.drawCell = false
+                
                 let height = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
                 estimatedHeightCache[indexPath] = height
                 return height
@@ -1050,7 +1076,8 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             }
             return 10
         }
-        return 0
+        
+        return CGFloat.leastNormalMagnitude
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
@@ -1060,7 +1087,8 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             }
             return 40
         }
-        return 0
+        
+        return CGFloat.leastNormalMagnitude
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -1272,29 +1300,21 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                         alertController.addAction(action5)
                     }
                     
-                    let action6 = UIAlertAction(title: "Переслать", style: .default){ action in
+                    let action6 = UIAlertAction(title: "Ответить", style: .default){ action in
                         
-                        let alertController2 = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-                        
-                        let cancelAction2 = UIAlertAction(title: "Отмена", style: .cancel)
-                        alertController2.addAction(cancelAction2)
-                        
-                        let action1 = UIAlertAction(title: "Переслать в текущий диалог", style: .default) { action in
-                            self.fwdMessagesID.append(dialog.id)
-                            self.setAttachments()
-                            self.configureStartView()
-                            self.collectionView.reloadData()
-                        }
-                        alertController2.addAction(action1)
-                        
-                        let action2 = UIAlertAction(title: "Переслать в другой диалог", style: .destructive) { action in
-                            self.openDialogsController(attachments: "", image: nil, messIDs: [dialog.id], source: "forward_message")
-                        }
-                        alertController2.addAction(action2)
-                        
-                        self.present(alertController2, animated: true)
+                        self.fwdMessagesID.append(dialog.id)
+                        self.setAttachments()
+                        self.configureStartView()
+                        self.collectionView.reloadData()
                     }
                     alertController.addAction(action6)
+                    
+                    let action7 = UIAlertAction(title: "Переслать", style: .default){ action in
+                        
+                        self.openDialogsController(attachments: "", image: nil, messIDs: [dialog.id], source: "forward_message")
+                    }
+                    alertController.addAction(action7)
+                    
                     
                     if dialog.canEdit() {
                         let action3 = UIAlertAction(title: "Редактировать", style: .default){ action in
@@ -1376,6 +1396,40 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             self.setOfflineStatus(dependence: request)
         }
         OperationQueue().addOperation(request)
+    }
+    
+    func setImportantConversation(conversation: Conversation) {
+        
+        if (conversation.important) {
+            conversation.important = false
+            favoriteImage.isHidden = conversation.important ? false : true
+            
+            if let delegate = self.delegate,
+                let conversation = delegate.conversations.filter({ $0.peerID == conversation.peerID }).first {
+                conversation.important = false
+                delegate.tableView.reloadData()
+            }
+            
+            self.deleteImportantConversation(importantID: conversation.peerID)
+            
+            let message = "С текущего \(conversation.peerID > 2000000000 ? "группового чата" : "личного диалога")\nснята пометка «Важный»"
+            self.showSuccessMessage(title: "Внимание!", msg: message)
+        } else {
+            conversation.important = true
+            favoriteImage.isHidden = conversation.important ? false : true
+            
+            if let delegate = self.delegate,
+                let conversation = delegate.conversations.filter({ $0.peerID == conversation.peerID }).first {
+                conversation.important = true
+                delegate.tableView.reloadData()
+            }
+            
+            self.addImportantConversation(importantID: conversation.peerID)
+            
+            let message = "Текущий \(conversation.peerID > 2000000000 ? "групповой чат" : "личный диалог")\n помечен как «Важный»"
+            self.showSuccessMessage(title: "Внимание!", msg: message)
+        }
+        
     }
     
     func tapEditMessage(dialog: DialogHistory) {
@@ -1531,14 +1585,14 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
         alertController.addAction(cancelAction)
         
-        let action = UIAlertAction(title: "Переслать \(markMessages.count.messageAdder())", style: .destructive){ action in
+        let action = UIAlertAction(title: "Переслать / Ответить на \(markMessages.count.messageAdder())", style: .destructive){ action in
             
             let alertController2 = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
             
             let cancelAction2 = UIAlertAction(title: "Отмена", style: .cancel)
             alertController2.addAction(cancelAction2)
             
-            let action1 = UIAlertAction(title: "Переслать в текущий диалог", style: .default) { action in
+            let action1 = UIAlertAction(title: "Ответить", style: .default) { action in
                 self.fwdMessagesID.append(contentsOf: self.markMessages)
                 self.markMessages.removeAll(keepingCapacity: false)
                 self.mode = .dialog
@@ -1549,7 +1603,7 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             }
             alertController2.addAction(action1)
             
-            let action2 = UIAlertAction(title: "Переслать в другой диалог", style: .destructive) { action in
+            let action2 = UIAlertAction(title: "Переслать", style: .destructive) { action in
                 self.openDialogsController(attachments: "", image: nil, messIDs: self.markMessages, source: "forward_message")
                 self.markMessages.removeAll(keepingCapacity: false)
                 self.mode = .dialog
@@ -1598,8 +1652,11 @@ extension DialogController {
                 }
             }
             OperationQueue().addOperation(getCacheImage)
-            
+        
             view.addSubview(imageView)
+            
+            if let conversation = self.conversation { favoriteImage.isHidden = conversation.important ? false : true }
+            view.addSubview(favoriteImage)
             
             let tap = UITapGestureRecognizer()
             tap.add {
@@ -1638,6 +1695,7 @@ extension DialogController {
         let view = UIView(frame: CGRect(x: UIScreen.main.bounds.width - 250, y: 8, width: 250, height: 40))
         
         let imageView = UIImageView()
+        
         let getCacheImage = GetCacheImage(url: user.maxPhotoOrigURL, lifeTime: .avatarImage)
         getCacheImage.completionBlock = {
             OperationQueue.main.addOperation {
@@ -1649,10 +1707,14 @@ extension DialogController {
                 imageView.clipsToBounds = true
                 imageView.frame = CGRect(x: 214, y: 1, width: 38, height: 38)
                 imageView.contentMode = .scaleAspectFill
+                
             }
         }
         OperationQueue().addOperation(getCacheImage)
         view.addSubview(imageView)
+        
+        if let conversation = self.conversation { favoriteImage.isHidden = conversation.important ? false : true }
+        view.addSubview(favoriteImage)
         
         let tap = UITapGestureRecognizer()
         tap.add {
@@ -1900,6 +1962,49 @@ extension DialogController {
                     alertController.addAction(action)
                 }
                 
+                if let conversation = self.conversation {
+                    if (conversation.important) {
+                        let action = UIAlertAction(title: "Снять пометку «Важный» с диалога", style: .destructive) { action in
+                            self.setImportantConversation(conversation: conversation)
+                        }
+                        alertController.addAction(action)
+                    } else {
+                        let action = UIAlertAction(title: "Пометить диалог как «Важный»", style: .default) { action in
+                            self.setImportantConversation(conversation: conversation)
+                        }
+                        alertController.addAction(action)
+                    }
+                }
+                
+                if let dialog = dialogs.last, dialog.out == 0, dialog.readState == 0, !AppConfig.shared.readMessageInDialog {
+                    let action = UIAlertAction(title: "Прочитать все сообщения", style: .destructive) { action in
+                        
+                        let url = "/method/messages.markAsRead"
+                        let parameters = [
+                            "access_token": vkSingleton.shared.accessToken,
+                            "peer_id": self.userID,
+                            "v": vkSingleton.shared.version
+                        ]
+                        
+                        let request = GetServerDataOperation(url: url, parameters: parameters)
+                        request.completionBlock = {
+                            guard let data = request.data else { return }
+                            
+                            guard let json = try? JSON(data: data) else { print("json error"); return }
+                            
+                            let error = ErrorJson(json: JSON.null)
+                            error.errorCode = json["error"]["error_code"].intValue
+                            error.errorMsg = json["error"]["error_msg"].stringValue
+                            
+                            if error.errorCode != 0 {
+                                print(json)
+                            }
+                        }
+                        OperationQueue().addOperation(request)
+                    }
+                    alertController.addAction(action)
+                }
+                
                 self.present(alertController, animated: true)
             }
         } else {
@@ -2051,6 +2156,20 @@ extension DialogController {
             }
             alertController.addAction(action1)
             
+            if let conversation = self.conversation {
+                if (conversation.important) {
+                    let action = UIAlertAction(title: "Снять пометку «Важный» с чата", style: .destructive) { action in
+                        self.setImportantConversation(conversation: conversation)
+                    }
+                    alertController.addAction(action)
+                } else {
+                    let action = UIAlertAction(title: "Пометить чат как «Важный»", style: .default) { action in
+                        self.setImportantConversation(conversation: conversation)
+                    }
+                    alertController.addAction(action)
+                }
+            }
+            
             if chat.count > 0, let user = Int(vkSingleton.shared.userID), chat[0].adminID != user {
                 let action2 = UIAlertAction(title: "Покинуть групповой чат", style: .destructive){ action in
                     
@@ -2178,14 +2297,21 @@ extension DialogController {
         sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 40
-        let height = width + 70
-        let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        stickerView.backgroundColor = vkSingleton.shared.backColor
-        configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
+        if vkSingleton.shared.stickers.count <= 2 {
+            let width = self.view.bounds.width - 40
+            let height = width + 70
+            let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
+            stickerView.backgroundColor = vkSingleton.shared.backColor
+            configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
 
-        self.popover = Popover(options: self.popoverOptions)
-        self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+            self.popover = Popover(options: self.popoverOptions)
+            self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        } else {
+            let stickersView = StickersView()
+            stickersView.delegate = self
+            stickersView.configure(width: self.view.bounds.width - 40)
+            stickersView.show(fromView: self.commentView.stickerButton)
+        }
     }
     
     @objc func tapAccessoryButton(sender: UIButton) {
@@ -2199,7 +2325,7 @@ extension DialogController {
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alertController.addAction(cancelAction)
             
-            let action5 = UIAlertAction(title: "Сфотографировать", style: .default){ action in
+            let action1 = UIAlertAction(title: "Сфотографировать", style: .default){ action in
                 
                 if UIImagePickerController.isSourceTypeAvailable(.camera) {
                     self.pickerController.sourceType = .camera
@@ -2211,7 +2337,8 @@ extension DialogController {
                     self.showErrorMessage(title: "Ошибка", msg: "Камера на устройстве не активна.")
                 }
             }
-            alertController.addAction(action5)
+            alertController.addAction(action1)
+            
             
             let action2 = UIAlertAction(title: "Фотография с устройства", style: .default){ action in
                 
@@ -2224,7 +2351,8 @@ extension DialogController {
             }
             alertController.addAction(action2)
             
-            let action1 = UIAlertAction(title: "Мои фотографии", style: .default){ action in
+            
+            let action3 = UIAlertAction(title: "Мои фотографии", style: .default){ action in
                 let photosController = self.storyboard?.instantiateViewController(withIdentifier: "PhotosListController") as! PhotosListController
                 
                 photosController.ownerID = vkSingleton.shared.userID
@@ -2237,9 +2365,39 @@ extension DialogController {
                 
                 self.navigationController?.pushViewController(photosController, animated: true)
             }
-            alertController.addAction(action1)
+            alertController.addAction(action3)
             
-            let action3 = UIAlertAction(title: "Мои видеозаписи", style: .default){ action in
+            
+            let action4 = UIAlertAction(title: "Записать новое видео", style: .default){ action in
+                
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    self.pickerController3.sourceType = .camera
+                    self.pickerController3.mediaTypes =  [kUTTypeMovie as String]
+                    self.pickerController3.cameraCaptureMode = .video
+                    self.pickerController3.modalPresentationStyle = .fullScreen
+                    self.pickerController3.videoQuality = .typeMedium
+                    
+                    self.present(self.pickerController3, animated: true)
+                } else {
+                    self.showErrorMessage(title: "Ошибка", msg: "Камера на устройстве не активна.")
+                }
+            }
+            alertController.addAction(action4)
+            
+            
+            let action5 = UIAlertAction(title: "Видеозапись с устройства", style: .default){ action in
+                
+                self.pickerController3.allowsEditing = false
+                
+                self.pickerController3.sourceType = .photoLibrary
+                self.pickerController3.mediaTypes =  [kUTTypeMovie as String]
+                
+                self.present(self.pickerController3, animated: true)
+            }
+            alertController.addAction(action5)
+            
+            
+            let action6 = UIAlertAction(title: "Мои видеозаписи", style: .default) { action in
                 let videoController = self.storyboard?.instantiateViewController(withIdentifier: "VideoListController") as! VideoListController
                 
                 videoController.ownerID = vkSingleton.shared.userID
@@ -2250,7 +2408,8 @@ extension DialogController {
                 
                 self.navigationController?.pushViewController(videoController, animated: true)
             }
-            alertController.addAction(action3)
+            alertController.addAction(action6)
+            
             
             self.present(alertController, animated: true)
         } else {
@@ -2562,21 +2721,17 @@ extension DialogController {
         picker.dismiss(animated: true, completion: nil)
     }
     
-    @objc internal func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        
-        // Local variable inserted by Swift 4.2 migrator.
-        let info = convertFromUIImagePickerControllerInfoKeyDictionary(info)
-
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         
         if picker == pickerController {
-            if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
+            if let chosenImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
                 
                 var imageType = "JPG"
                 var imagePath = NSURL(string: "photo.jpg")
                 var imageData: Data!
                 if pickerController.sourceType == .photoLibrary {
                     if #available(iOS 11.0, *) {
-                        imagePath = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.imageURL)] as? NSURL
+                        imagePath = info[UIImagePickerController.InfoKey.mediaURL] as? NSURL
                     }
                     
                     if (imagePath?.absoluteString?.containsIgnoringCase(find: ".gif"))! {
@@ -2636,8 +2791,55 @@ extension DialogController {
         }
         
         if picker == pickerController2 {
-            if let chosenImage = info[convertFromUIImagePickerControllerInfoKey(UIImagePickerController.InfoKey.originalImage)] as? UIImage {
+            if let chosenImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
                 loadChatPhotoToServer(chatID: self.chatID, image: chosenImage, filename: "file")
+            }
+        }
+        
+        if picker == pickerController3 {
+            if let videoURL = info[UIImagePickerController.InfoKey.mediaURL] as? URL {
+                DispatchQueue.global(qos: .background).async {
+                    if let image = self.imageFromVideo(url: videoURL, at: 0) {
+                        DispatchQueue.main.async {
+                            self.photos.append(image)
+                        }
+                    }
+                }
+                
+                isLoad.append(true)
+                typeOf.append("video")
+                configureStartView()
+                
+                self.getUploadVideoURL(isLink: false, groupID: 0, isPrivate: 1, wallpost: 0, completion: { uploadURL, attachString in
+                    if !uploadURL.isEmpty {
+                        do {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().showActivityIndicator(uiView: self.view)
+                            }
+                            
+                            let videoData = try Data(contentsOf: videoURL, options: .mappedIfSafe)
+                            
+                            self.myVideoUploadRequest(url: uploadURL, videoData: videoData, filename: "video_file", completion: { attachment, hash, size in
+                                OperationQueue.main.addOperation {
+                                    ViewControllerUtils().hideActivityIndicator()
+                                    
+                                    self.attach.append(attachment)
+                                    self.isLoad[self.photos.count-1] = false
+                                    self.typeOf.append("video")
+                                    
+                                    self.setAttachments()
+                                    self.configureStartView()
+                                }
+                            })
+                        } catch {
+                            OperationQueue.main.addOperation {
+                                ViewControllerUtils().hideActivityIndicator()
+                            }
+                            
+                            return
+                        }
+                    }
+                })
             }
         }
         
@@ -2888,6 +3090,25 @@ extension DialogController: UICollectionViewDelegate, UICollectionViewDataSource
         }
         
         return cell
+    }
+    
+    func imageFromVideo(url: URL, at time: TimeInterval) -> UIImage? {
+        let asset = AVURLAsset(url: url)
+
+        let assetIG = AVAssetImageGenerator(asset: asset)
+        assetIG.appliesPreferredTrackTransform = true
+        assetIG.apertureMode = AVAssetImageGenerator.ApertureMode.encodedPixels
+
+        let cmTime = CMTime(seconds: time, preferredTimescale: 60)
+        let thumbnailImageRef: CGImage
+        do {
+            thumbnailImageRef = try assetIG.copyCGImage(at: cmTime, actualTime: nil)
+        } catch let error {
+            print("Error: \(error)")
+            return nil
+        }
+
+        return UIImage(cgImage: thumbnailImageRef)
     }
 }
 

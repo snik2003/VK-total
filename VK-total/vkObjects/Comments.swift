@@ -83,12 +83,21 @@ struct Attachment {
         self.type = json["attachments"][index]["type"].stringValue
         
         if self.type == "sticker" {
-            self.id = json["attachments"][index]["sticker"]["id"].intValue
+            self.id = json["attachments"][index]["sticker"]["sticker_id"].intValue
             self.productID = json["attachments"][index]["sticker"]["product_id"].intValue
-            self.photoWidth = json["attachments"][index]["sticker"]["width"].intValue
-            self.photoHeight = json["attachments"][index]["sticker"]["height"].intValue
-            self.photoURL = json["attachments"][index]["sticker"]["photo_256"].stringValue
             self.text = json["attachments"][index]["sticker"]["text"].stringValue
+            
+            let sImages = json["attachments"][index]["sticker"]["images"]
+            if sImages.count > 2 {
+                self.photoWidth = sImages[2]["width"].intValue
+                self.photoHeight = sImages[2]["height"].intValue
+                self.photoURL = sImages[2]["url"].stringValue
+            } else {
+                self.photoWidth = sImages[0]["width"].intValue
+                self.photoHeight = sImages[0]["height"].intValue
+                self.photoURL = sImages[0]["url"].stringValue
+            }
+            
         }
         
         if self.type == "photo" {
@@ -98,11 +107,27 @@ struct Attachment {
             self.accessKey = json["attachments"][index]["photo"]["access_key"].stringValue
             self.photoWidth = json["attachments"][index]["photo"]["width"].intValue
             self.photoHeight = json["attachments"][index]["photo"]["height"].intValue
-            self.photoURL = json["attachments"][index]["photo"]["photo_604"].stringValue
-            if self.photoURL == "" {
-                self.photoURL = json["attachments"][index]["photo"]["photo_807"].stringValue
-            }
             self.text = json["attachments"][index]["photo"]["text"].stringValue
+            
+            let photoSizes = json["attachments"][index]["photo"]["sizes"]
+            
+            if let size = photoSizes.filter({ $0.1["type"] == "x"}).first {
+                self.photoURL = size.1["url"].stringValue
+                self.photoWidth = size.1["width"].intValue
+                self.photoHeight = size.1["height"].intValue
+            }
+            
+            if self.photoURL.isEmpty, let size = photoSizes.filter({ $0.1["type"] == "r"}).first {
+                self.photoURL = size.1["url"].stringValue
+                self.photoWidth = size.1["width"].intValue
+                self.photoHeight = size.1["height"].intValue
+            }
+            
+            if self.photoURL.isEmpty, let size = photoSizes.filter({ $0.1["type"] == "y"}).first {
+                self.photoURL = size.1["url"].stringValue
+                self.photoWidth = size.1["width"].intValue
+                self.photoHeight = size.1["height"].intValue
+            }
         }
         
         if self.type == "doc" {

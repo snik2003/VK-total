@@ -317,8 +317,6 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
                     error.errorMsg = json["error"]["error_msg"].stringValue
                     
                     if error.errorCode == 0 {
-                        print(json)
-                        
                         OperationQueue.main.addOperation {
                             let count = json["response"][0]["users"]["count"].intValue
                             if count > 0 {
@@ -779,6 +777,7 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
             "count": "1",
             "user_id": userID,
             "start_message_id": "-1",
+            "extended": "1",
             "v": vkSingleton.shared.version
         ]
         
@@ -787,13 +786,9 @@ class UsersController: InnerViewController, UITableViewDelegate, UITableViewData
         
         let parseDialog = ParseDialogHistory()
         parseDialog.completionBlock = {
-            var startID = parseDialog.inRead
-            if parseDialog.outRead > startID {
-                startID = parseDialog.outRead
-            }
             OperationQueue.main.addOperation {
                 self.navigationController?.popViewController(animated: true)
-                self.openDialogController(userID: userID, chatID: "", startID: startID, attachment: attachment, messIDs: [], image: self.attachImage)
+                self.openDialogController(userID: userID, chatID: "", startID: parseDialog.lastMessageId, attachment: attachment, messIDs: [], image: self.attachImage)
                 
             }
         }

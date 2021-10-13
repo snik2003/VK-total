@@ -251,6 +251,7 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             "peer_id": "\(userID)",
             "start_message_id": "-1",
             "group_id": groupID,
+            "extended": "1",
             "v": vkSingleton.shared.version
         ]
         
@@ -276,6 +277,9 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             }
             
             for dialog in parseDialog.outputData {
+                if dialog.out == 1 { dialog.readState = dialog.id > parseDialog.outRead ? 0 : 1 }
+                else if dialog.out == 0 { dialog.readState = dialog.id > parseDialog.inRead ? 0 : 1 }
+                
                 for index in 0...9 {
                     if dialog.attach[index].type == "wall" {
                         let id = dialog.attach[index].wall[0].fromID
@@ -432,6 +436,7 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             "count": "\(count+1)",
             "peer_id": "\(userID)",
             "start_message_id": "\(startID)",
+            "extended": "1",
             "group_id": groupID,
             "v": vkSingleton.shared.version
         ]
@@ -544,6 +549,7 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             } else {
                 let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! DialogCell
                 
+                
                 cell.drawCell = false
                 let height = cell.configureCell(dialog: dialogs[indexPath.row], users: users, indexPath: indexPath, cell: cell, tableView: tableView)
                 
@@ -581,7 +587,8 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             }
             return 10
         }
-        return 0
+        
+        return CGFloat.leastNormalMagnitude
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
@@ -591,7 +598,8 @@ class GroupDialogController: InnerViewController, UITableViewDelegate, UITableVi
             }
             return 40
         }
-        return 0
+        
+        return CGFloat.leastNormalMagnitude
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -1175,14 +1183,21 @@ extension GroupDialogController {
         
         commentView.endEditing(true)
         
-        let width = self.view.bounds.width - 40
-        let height = width + 70
-        let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-        stickerView.backgroundColor = vkSingleton.shared.backColor
-        configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
-        
-        self.popover = Popover(options: self.popoverOptions)
-        self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        if vkSingleton.shared.stickers.count <= 2 {
+            let width = self.view.bounds.width - 40
+            let height = width + 70
+            let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
+            stickerView.backgroundColor = vkSingleton.shared.backColor
+            configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
+            
+            self.popover = Popover(options: self.popoverOptions)
+            self.popover.show(stickerView, fromView: self.commentView.stickerButton)
+        } else {
+            let stickersView = StickersView()
+            stickersView.delegate = self
+            stickersView.configure(width: self.view.bounds.width - 40)
+            stickersView.show(fromView: self.commentView.stickerButton)
+        }
     }
     
     @objc func tapAccessoryButton(sender: UIButton) {
