@@ -21,7 +21,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     var source = "users"
     
     var selectedMenu = 0
-    let itemsMenu = ["Пользователи", "Записи на стене", "Фотографии", "Видеозаписи", "Сообщества", "Ссылки", "Черный список"]
+    let itemsMenu = ["Пользователи", "Избранные диалоги", "Записи на стене", "Фотографии", "Видеозаписи", "Сообщества", "Ссылки", "Черный список"]
     
     var wall = [Wall]()
     var wallProfiles = [WallProfiles]()
@@ -37,6 +37,10 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     
     var faveLinks = [FaveLinks]()
     var favePages = [FavePages]()
+    
+    var conversations: [Conversation] = []
+    var dialogs: [Message] = []
+    var dialogsProfiles: [DialogsUsers] = []
     
     var offset = 0
     let count = 40
@@ -61,83 +65,12 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     }()
     
     var tableView: UITableView!
-    var menuView: BTNavigationDropdownMenu!
     var player = AVPlayer()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         createTableView()
-        
-        menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[view.tag], items: itemsMenu)
-        menuView.cellBackgroundColor = vkSingleton.shared.separatorColor2
-        menuView.cellSelectionColor = vkSingleton.shared.separatorColor2
-        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
-        menuView.cellSeparatorColor = vkSingleton.shared.mainColor
-        
-        menuView.cellHeight = 43
-        menuView.checkMarkImage = UIImage(named: "checkmark")
-        
-        menuView.cellTextLabelAlignment = .center
-        menuView.selectedCellTextLabelColor = .systemRed
-        menuView.cellTextLabelFont = UIFont.boldSystemFont(ofSize: 15)
-        menuView.navigationBarTitleFont = UIFont.boldSystemFont(ofSize: 17)
-        navigationItem.titleView = menuView
-        
-        menuView.didSelectItemAtIndexHandler = {[weak self] (indexPath: Int) -> () in
-            self?.menuView.isUserInteractionEnabled = false
-            self?.selectedMenu = indexPath
-            self?.view.tag = indexPath
-            
-            switch indexPath {
-            case 0:
-                self?.source = "users"
-                self?.offset = 0
-                self?.refresh()
-                self?.estimatedHeightCache.removeAll(keepingCapacity: false)
-                break
-            case 1:
-                self?.source = "post"
-                self?.offset = 0
-                self?.refresh()
-                self?.estimatedHeightCache.removeAll(keepingCapacity: false)
-                break
-            case 2:
-                self?.source = "photo"
-                self?.offset = 0
-                self?.refresh()
-                self?.estimatedHeightCache.removeAll(keepingCapacity: false)
-                break
-            case 3:
-                self?.source = "video"
-                self?.offset = 0
-                self?.refresh()
-                self?.estimatedHeightCache.removeAll(keepingCapacity: false)
-                break
-            case 4:
-                self?.source = "groups"
-                self?.offset = 0
-                self?.refresh()
-                self?.estimatedHeightCache.removeAll(keepingCapacity: false)
-                break
-            case 5:
-                self?.source = "links"
-                self?.offset = 0
-                self?.refresh()
-                self?.estimatedHeightCache.removeAll(keepingCapacity: false)
-                break
-            case 6:
-                self?.source = "banned"
-                self?.offset = 0
-                self?.refresh()
-                self?.estimatedHeightCache.removeAll(keepingCapacity: false)
-                break
-            default:
-                break
-            }
-        }
-        
-        menuView.isUserInteractionEnabled = false
         refresh()
     }
 
@@ -153,6 +86,80 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        let menuView = BTNavigationDropdownMenu(navigationController: self.navigationController, title: itemsMenu[view.tag], items: itemsMenu)
+        menuView.cellBackgroundColor = vkSingleton.shared.separatorColor2
+        menuView.cellSelectionColor = vkSingleton.shared.separatorColor2
+        menuView.cellTextLabelColor = vkSingleton.shared.mainColor
+        menuView.cellSeparatorColor = vkSingleton.shared.mainColor
+        
+        menuView.cellHeight = 43
+        menuView.checkMarkImage = UIImage(named: "checkmark")
+        
+        menuView.cellTextLabelAlignment = .center
+        menuView.selectedCellTextLabelColor = .systemRed
+        menuView.cellTextLabelFont = UIFont.boldSystemFont(ofSize: 15)
+        menuView.navigationBarTitleFont = UIFont.boldSystemFont(ofSize: 17)
+        navigationItem.titleView = menuView
+        
+        menuView.didSelectItemAtIndexHandler = {[weak self] (indexPath: Int) -> () in
+            guard let self = self else { return }
+            
+            self.selectedMenu = indexPath
+            self.view.tag = indexPath
+            
+            switch indexPath {
+            case 0:
+                self.source = "users"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            case 1:
+                self.source = "important dialogs"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            case 2:
+                self.source = "post"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            case 3:
+                self.source = "photo"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            case 4:
+                self.source = "video"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            case 5:
+                self.source = "groups"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            case 6:
+                self.source = "links"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            case 7:
+                self.source = "banned"
+                self.offset = 0
+                self.refresh()
+                self.estimatedHeightCache.removeAll(keepingCapacity: false)
+                break
+            default:
+                break
+            }
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -178,11 +185,13 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         tableView.dataSource = self
         
         tableView.register(WallRecordCell2.self, forCellReuseIdentifier: "recordCell")
+        tableView.register(DialogsCell.self, forCellReuseIdentifier: "dialogCell")
         tableView.register(FavePhotoCell.self, forCellReuseIdentifier: "photoCell")
         tableView.register(VideoListCell.self, forCellReuseIdentifier: "videoCell")
         tableView.register(FaveUsersCell.self, forCellReuseIdentifier: "usersCell")
         tableView.register(FaveLinksCell.self, forCellReuseIdentifier: "linksCell")
         tableView.register(FavePagesCell.self, forCellReuseIdentifier: "pagesCell")
+        
         
         tableView.separatorStyle = .none
         self.view.addSubview(tableView)
@@ -196,7 +205,8 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         
         OperationQueue.main.addOperation {
             self.tableView.separatorStyle = .none
-            ViewControllerUtils().showActivityIndicator(uiView: self.tableView.superview!)
+            if let aView = self.tableView.superview { ViewControllerUtils().showActivityIndicator(uiView: aView) }
+            else { ViewControllerUtils().showActivityIndicator(uiView: self.view) }
         }
         
         if offset == 0 {
@@ -205,6 +215,10 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             wallGroups.removeAll(keepingCapacity: false)
             photos.removeAll(keepingCapacity: false)
             videos.removeAll(keepingCapacity: false)
+            dialogs.removeAll(keepingCapacity: false)
+            conversations.removeAll(keepingCapacity: false)
+            dialogsProfiles.removeAll(keepingCapacity: false)
+            
             tableView.separatorStyle = .none
             tableView.reloadData()
         }
@@ -218,6 +232,25 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                 "extended": "1",
                 "fields": "id, first_name, last_name, photo_max, photo_100",
                 "v": vkSingleton.shared.version
+            ]
+        } else if source == "important dialogs" {
+            
+            let importantIds = self.getImportantConversations()
+            let peerIDs = ",".join(array: importantIds)
+            
+            var code =  "var conversations = API.messages.getConversationsById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"peer_ids\":\"\(peerIDs)\",\"count\":\"100\",\"extended\":\"0\",\"v\":\"\(vkSingleton.shared.version)\" });\n"
+            
+            code = "\(code) var mess_ids = conversations.items@.last_message_id;\n"
+            
+            code = "\(code) var dialogs = API.messages.getById({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"message_ids\":mess_ids,\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"});\n"
+            
+            code = "\(code) return [conversations,dialogs];"
+            
+            url = "/method/execute"
+            parameters = [
+                "access_token": vkSingleton.shared.accessToken,
+                "code": code,
+                "v": "\(vkSingleton.shared.version)"
             ]
         } else if source == "photo" {
             url = "/method/fave.getPhotos"
@@ -347,6 +380,8 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         switch source {
         case "post":
             return wall.count
+        case "important dialogs":
+            return dialogs.count
         case "photo":
             return photos.count
         case "video":
@@ -367,6 +402,8 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch source {
         case "post":
+            return 1
+        case "important dialogs":
             return 1
         case "photo":
             return 1
@@ -399,6 +436,9 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                 estimatedHeightCache[indexPath] = height
                 return height
             }
+        } else if source == "important dialogs" {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! DialogsCell
+            return cell.userAvatarSize + 2 * cell.topInsets
         } else if source == "photo" {
             if let height = estimatedHeightCache[indexPath] {
                 return height
@@ -433,6 +473,7 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                 return height
             }
         }
+        
         return UITableView.automaticDimension
     }
     
@@ -450,6 +491,9 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                 estimatedHeightCache[indexPath] = height
                 return height
             }
+        } else if source == "important dialogs" {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell") as! DialogsCell
+            return cell.userAvatarSize + 2 * cell.topInsets
         } else if source == "photo" {
             if let height = estimatedHeightCache[indexPath] {
                 return height
@@ -490,13 +534,13 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
     func tableView(_ tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
         
         if section == 0 {
-            return 8
+            return source == "important dialogs" ? 6 : 8
         }
         return 0
     }
     
     func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return 8
+        return source == "important dialogs" ? 6 : 8
     }
     
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
@@ -540,6 +584,15 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
             
             tableView.beginUpdates()
             tableView.endUpdates()
+            
+            cell.selectionStyle = .none
+            return cell
+        case "important dialogs":
+            let cell = tableView.dequeueReusableCell(withIdentifier: "dialogCell", for: indexPath) as! DialogsCell
+            let dialog = dialogs[indexPath.section]
+            let conversation = conversations.filter({ $0.peerID == dialog.peerID }).first
+                
+            cell.configureCell(mess: dialog, conversation: conversation, users: dialogsProfiles, indexPath: indexPath, cell: cell, tableView: tableView)
             
             cell.selectionStyle = .none
             return cell
@@ -619,6 +672,11 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
         switch source {
         case "post":
             break
+            
+        case "important dialogs":
+            let dialog = dialogs[indexPath.section]
+            openDialog(dialog: dialog)
+            
         case "photo":
             if let visibleIndexPath = tableView.indexPathsForVisibleRows {
                 for index in visibleIndexPath {
@@ -927,5 +985,53 @@ class FavePostsController2: InnerViewController, UITableViewDelegate, UITableVie
                 tableView.reloadData()
             }
         }
+    }
+    
+    func openDialog(dialog: Message) {
+        
+        if let aView = self.tableView.superview {
+            ViewControllerUtils().showActivityIndicator(uiView: aView)
+        } else {
+            ViewControllerUtils().showActivityIndicator(uiView: self.view)
+        }
+        
+        var peerID = "\(dialog.userID)"
+        if dialog.chatID > 0 { peerID = "\(2000000000 + dialog.chatID)" }
+        
+        let url = "/method/messages.getHistory"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "offset": "0",
+            "count": "1",
+            "peer_id": peerID,
+            "start_message_id": "-1",
+            "extended": "1",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let getServerDataOperation = GetServerDataOperation(url: url, parameters: parameters)
+        OperationQueue().addOperation(getServerDataOperation)
+        
+        let parseDialog = ParseDialogHistory()
+        parseDialog.completionBlock = {
+            OperationQueue.main.addOperation {
+                ViewControllerUtils().hideActivityIndicator()
+                
+                if let controller = self.storyboard?.instantiateViewController(withIdentifier: "DialogController") as? DialogController {
+                
+                    controller.userID = peerID
+                    controller.chatID = dialog.chatID == 0 ? "" : "\(dialog.chatID)"
+                    controller.startMessageID = dialog.id
+                    controller.attachments = ""
+                    controller.fwdMessagesID = []
+                    controller.attachImage = nil
+                    controller.delegate2 = self
+                    
+                    self.navigationController?.pushViewController(controller, animated: true)
+                }
+            }
+        }
+        parseDialog.addDependency(getServerDataOperation)
+        OperationQueue().addOperation(parseDialog)
     }
 }

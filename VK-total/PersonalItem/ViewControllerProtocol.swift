@@ -2550,7 +2550,7 @@ extension UIViewController: NotificationCellProtocol {
         SwiftMessages.hideAll()
         
         let recordView = MessageView.viewFromNib(layout: .centeredView)
-        recordView.backgroundView.backgroundColor = vkSingleton.shared.backColor
+        recordView.backgroundView.backgroundColor = vkSingleton.shared.backPopupColor
         let mainColor = vkSingleton.shared.mainColor
         
         if #available(iOS 13.0, *) {
@@ -2560,7 +2560,7 @@ extension UIViewController: NotificationCellProtocol {
         let title = "Внимание! Идет запись!"
         let body = "После записи голосового сообщения,\nнажмите ниже кнопку «Готово»\n\nДля отмены записи сообщения\nдва раза нажмите по этой форме\n"
         let iImage = UIImage(named: "mic")
-        let bText = "Готово"
+        let bText = "       Готово       "
         
         let blinkTimer = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(blinkAction(timer:)), userInfo: recordView, repeats: true)
         
@@ -2588,7 +2588,9 @@ extension UIViewController: NotificationCellProtocol {
             
             button.setTitle("Прослушать", for: .normal)
             
-            let bounds = recordView.convert(button.frame, to: self.view)
+            let midX = recordView.frame.midX
+            let minY = button.frame.maxY
+            let bHeight = button.frame.height
             
             let playButton = UIButton()
             playButton.tintColor = mainColor
@@ -2597,8 +2599,7 @@ extension UIViewController: NotificationCellProtocol {
             playButton.setTitle("Прослушать", for: .normal)
             playButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
             playButton.layer.cornerRadius = 4
-            playButton.frame = CGRect(x: bounds.maxX - 130, y: bounds.minY + bounds.height + 3, width: 100, height: bounds.height)
-            playButton.frame = self.view.convert(playButton.frame, to: recordView)
+            playButton.frame = CGRect(x: midX - 125, y: minY, width: 110, height: bHeight)
             recordView.addSubview(playButton)
             playButton.add(for: .touchUpInside) {
                 recordView.tag = duration
@@ -2628,8 +2629,7 @@ extension UIViewController: NotificationCellProtocol {
             sendButton.setTitle("Отправить", for: .normal)
             sendButton.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
             sendButton.layer.cornerRadius = 4
-            sendButton.frame = CGRect(x: bounds.maxX - 10, y: bounds.minY + bounds.height + 3, width: 100, height: bounds.height)
-            sendButton.frame = self.view.convert(sendButton.frame, to: recordView)
+            sendButton.frame = CGRect(x: midX + 15, y: minY, width: 110, height: bHeight)
             recordView.addSubview(sendButton)
             sendButton.add(for: .touchUpInside) {
                 controller.player.pause()
@@ -2683,14 +2683,14 @@ extension UIViewController: NotificationCellProtocol {
         recordView.button?.tintColor = mainColor
         recordView.button?.backgroundColor = mainColor
         recordView.button?.setTitleColor(.white, for: .normal)
-        recordView.button?.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 12)!
+        recordView.button?.titleLabel?.font = UIFont(name: "Verdana-Bold", size: 10)!
         recordView.button?.layer.cornerRadius = 4
         
         recordView.id = vkSingleton.shared.userID
         
-        recordView.titleLabel?.textColor = vkSingleton.shared.labelColor
-        recordView.bodyLabel?.textColor = vkSingleton.shared.secondaryLabelColor
-        recordView.iconImageView?.tintColor = vkSingleton.shared.labelColor
+        recordView.titleLabel?.textColor = vkSingleton.shared.labelPopupColor
+        recordView.bodyLabel?.textColor = vkSingleton.shared.secondaryLabelPopupColor
+        recordView.iconImageView?.tintColor = vkSingleton.shared.labelPopupColor
         
         let tap = UITapGestureRecognizer()
         tap.numberOfTapsRequired = 2
@@ -2785,7 +2785,7 @@ extension UIViewController: NotificationCellProtocol {
         let popoverOptions: [PopoverOption] = [
             .type(.up),
             .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
-            .color(vkSingleton.shared.backColor)
+            .color(vkSingleton.shared.backPopupColor)
         ]
         
         let view = UIView()
@@ -2795,7 +2795,7 @@ extension UIViewController: NotificationCellProtocol {
         
         let titleLabel = UILabel()
         titleLabel.text = "Отправлять комментарии:"
-        titleLabel.textColor = vkSingleton.shared.labelColor
+        titleLabel.textColor = vkSingleton.shared.labelPopupColor
         titleLabel.font = UIFont(name: "Verdana", size: 13)!
         titleLabel.textAlignment = .center
         titleLabel.frame = CGRect(x: 10, y: height, width: width - 20, height: 20)
@@ -2805,7 +2805,7 @@ extension UIViewController: NotificationCellProtocol {
         
         let ownLabel = UILabel()
         ownLabel.text = "от своего имени"
-        ownLabel.textColor = vkSingleton.shared.labelColor
+        ownLabel.textColor = vkSingleton.shared.labelPopupColor
         
         let fullString = "от своего имени"
         let rangeOfColoredString = (fullString as NSString).range(of: "своего имени")
@@ -2848,7 +2848,7 @@ extension UIViewController: NotificationCellProtocol {
         }
         OperationQueue().addOperation(getCacheImage)
         avatar.layer.cornerRadius = 15
-        avatar.layer.borderColor = vkSingleton.shared.separatorColor.cgColor
+        avatar.layer.borderColor = vkSingleton.shared.secondaryLabelPopupColor.cgColor
         avatar.layer.borderWidth = 0.6
         avatar.clipsToBounds = true
         avatar.frame = CGRect(x: width - 40, y: height, width: 30, height: 30)
@@ -2900,7 +2900,7 @@ extension UIViewController: NotificationCellProtocol {
                     for group in groups {
                         let ownLabel = UILabel()
                         ownLabel.text = "от \(group.name)"
-                        ownLabel.textColor = vkSingleton.shared.labelColor
+                        ownLabel.textColor = vkSingleton.shared.labelPopupColor
                         
                         if let gid = Int(group.gid) {
                             let fullString = "от \(group.name)"
@@ -2943,7 +2943,7 @@ extension UIViewController: NotificationCellProtocol {
                         }
                         OperationQueue().addOperation(getCacheImage)
                         avatar2.layer.cornerRadius = 15
-                        avatar2.layer.borderColor = UIColor.gray.cgColor
+                        avatar2.layer.borderColor = vkSingleton.shared.secondaryLabelPopupColor.cgColor
                         avatar2.layer.borderWidth = 0.6
                         avatar2.clipsToBounds = true
                         avatar2.frame = CGRect(x: width - 40, y: height, width: 30, height: 30)

@@ -182,7 +182,7 @@ extension UILabel {
             attachment.bounds = CGRect(x: 0, y: -1, width: 12, height: 12)
         } else {
             attachment.image = UIImage(named: "onlinemobile")?.withRenderingMode(.alwaysTemplate)
-            attachment.bounds = CGRect(x: -5, y: -5, width: 20, height: 20)
+            attachment.bounds = CGRect(x: -5, y: -4, width: 16, height: 16)
         }
         
         let attachmentStr = NSAttributedString(attachment: attachment)
@@ -215,11 +215,10 @@ extension UILabel {
             attachment.bounds = CGRect(x: 0, y: -4, width: 15, height: 15)
         } else {
             attachment.image = UIImage(named: "onlinemobile")?.withRenderingMode(.alwaysTemplate)
-            attachment.bounds = CGRect(x: 5, y: -6, width: 20, height: 20)
+            attachment.bounds = CGRect(x: -8, y: -4, width: 16, height: 16)
         }
         
         let attachmentStr = NSAttributedString(attachment: attachment)
-        
         let mutableAttributedString = NSMutableAttributedString(string: " ")
         mutableAttributedString.append(attachmentStr)
         

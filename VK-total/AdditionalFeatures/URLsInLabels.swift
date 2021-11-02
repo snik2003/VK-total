@@ -97,6 +97,19 @@ extension String {
 
         return newString
     }
+    
+    func join(array: [Int]) -> String {
+        var str: String = ""
+            
+        for (index, item) in array.enumerated() {
+            str += "\(item)"
+            if index < array.count - 1 {
+                str += self
+            }
+        }
+        
+        return str
+    }
 }
 
 extension UILabel {

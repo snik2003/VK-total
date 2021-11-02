@@ -64,6 +64,7 @@ class Stickers {
         }
         
         let stickersJSON = json["stickers"]
-        self.stickers = stickersJSON.compactMap({ Sticker(json: $0.1) })
+        self.stickers = stickersJSON.compactMap({ Sticker(json: $0.1) }).filter({ $0.isAllowed == true })
+        self.stickers = self.stickers.sorted(by: { $0.stickerID < $1.stickerID })
     }
 }

@@ -39,7 +39,10 @@ enum MediaType: String {
 
 class DialogController: InnerViewController, UITableViewDelegate, UITableViewDataSource, DCCommentViewDelegate, UIImagePickerControllerDelegate, UINavigationControllerDelegate, AVAudioRecorderDelegate {
     
+    let maxImportantConversations = 100
+    
     var delegate: DialogsController!
+    var delegate2: FavePostsController2!
     
     var navHeight: CGFloat {
            if #available(iOS 13.0, *) {
@@ -112,21 +115,6 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
         .color(vkSingleton.shared.backColor)
     ]
-    
-    let product1 = [97, 98, 99, 100, 101, 102, 103, 105, 106, 107, 108, 109, 110,
-                    111, 112, 113, 114, 115, 116, 118, 121, 125, 126, 127, 128]
-    
-    let product2 = [1, 2, 3, 4, 10, 13, 14, 15, 18, 21, 22, 25, 27, 28, 29, 30, 31,
-                    35, 36, 37, 39, 40, 45, 46, 48]
-    
-    let product3 = [49, 50, 51, 54, 57, 59, 61, 63, 65, 66, 67, 68, 71, 72, 73, 74, 75,
-                    76, 82, 83, 86, 87, 88, 89, 91]
-    
-    let product4 = [134, 140, 145, 136, 143, 151, 148, 144, 142, 137, 135, 133, 138,
-                    156, 150, 153, 149, 147, 141, 159, 164, 161, 130, 132, 160]
-    
-    let product5 = [215, 232, 231, 211, 214, 218, 224, 225, 209, 226, 229, 223, 210,
-                    220, 217, 227, 212, 216, 219, 228, 337, 338, 221, 213, 222]
     
     var player = AVPlayer()
     var audioPlayer = AVAudioPlayer()
@@ -267,8 +255,11 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             commentView.tintColor = vkSingleton.shared.secondaryLabelColor
             
             commentView.sendImage = UIImage(named: "send")
-            commentView.stickerImage = UIImage(named: "sticker")
-            commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+            
+            if (vkSingleton.shared.stickers.count > 0) {
+                commentView.stickerImage = UIImage(named: "sticker")
+                commentView.stickerButton.addTarget(self, action: #selector(self.tapStickerButton(sender:)), for: .touchUpInside)
+            }
             
             commentView.tabHeight = 0
             /*if #available(iOS 13.0, *) {
@@ -284,10 +275,10 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             commentView.accessoryImage = UIImage(named: "attachment")
             commentView.accessoryButton.addTarget(self, action: #selector(self.tapAccessoryButton(sender:)), for: .touchUpInside)
             
-            setCommentFromGroupID(id: 0, controller: self)
+            //setCommentFromGroupID(id: 0, controller: self)
             
-            //commentView.fromGroupImage = UIImage(named: "mic")
-            //commentView.fromGroupButton.addTarget(self, action: #selector(self.tapMicButton(sender:)), for: .touchUpInside)
+            commentView.fromGroupImage = UIImage(named: "mic")
+            commentView.fromGroupButton.addTarget(self, action: #selector(self.tapMicButton(sender:)), for: .touchUpInside)
             
             self.view.addSubview(commentView)
         }
@@ -361,13 +352,13 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
         view.addSubview(textView)
         
         
-        textView.textColor = vkSingleton.shared.labelColor
+        textView.textColor = vkSingleton.shared.labelPopupColor
     
         let startPoint = CGPoint(x: UIScreen.main.bounds.width - 34, y: 66)
         
         self.popover = Popover(options: [.type(.down),
                                          .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
-                                         .color(vkSingleton.shared.backColor)])
+                                         .color(vkSingleton.shared.backPopupColor)])
         self.popover.show(view, point: startPoint)
     }
     
@@ -874,7 +865,12 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
                                 self.title = ""
                             }
                         }
-                    
+                        
+                        if let peerID = Int(self.userID) {
+                            if self.dialogs.count > 0 { self.addPeerIdToMenuDialogs(peerID: peerID) }
+                            else if self.dialogs.count == 0 { self.removePeerIdFromMenuDialogs(peerID: peerID )}
+                        }
+                        
                         self.offset += self.count
                         self.collectionView.reloadData()
                         self.tableView.reloadData()
@@ -1404,29 +1400,92 @@ class DialogController: InnerViewController, UITableViewDelegate, UITableViewDat
             conversation.important = false
             favoriteImage.isHidden = conversation.important ? false : true
             
+            self.deleteImportantConversation(importantID: conversation.peerID)
+            
             if let delegate = self.delegate,
                 let conversation = delegate.conversations.filter({ $0.peerID == conversation.peerID }).first {
                 conversation.important = false
+                
+                if (delegate.selectedMenu == 1) {
+                    var importantDialogs: [Message] = []
+                    for dialog in delegate.menuDialogs {
+                        if let conversation = delegate.conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            importantDialogs.append(dialog)
+                        }
+                    }
+                    delegate.dialogs = importantDialogs
+                }
+                
+                delegate.tableView.reloadData()
+            } else if let delegate = self.delegate2,
+                let conversation = delegate.conversations.filter({ $0.peerID == conversation.peerID }).first {
+                conversation.important = false
+                  
+                if (delegate.selectedMenu == 1) {
+                    var importantDialogs: [Message] = []
+                    for dialog in delegate.dialogs {
+                        if let conversation = delegate.conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            importantDialogs.append(dialog)
+                        }
+                    }
+                    delegate.dialogs = importantDialogs
+                }
+                  
                 delegate.tableView.reloadData()
             }
+        
             
-            self.deleteImportantConversation(importantID: conversation.peerID)
-            
-            let message = "С текущего \(conversation.peerID > 2000000000 ? "группового чата" : "личного диалога")\nснята пометка «Важный»"
+            let message = "Текущий \(conversation.peerID > 2000000000 ? "групповой чат" : "личный диалог")\nудален из раздела «Избранное»"
             self.showSuccessMessage(title: "Внимание!", msg: message)
         } else {
+            
+            let importantIds = self.getImportantConversations()
+            guard importantIds.count <= self.maxImportantConversations else {
+                
+                let message = "Общее количество избранных диалогов\nне может превышать \(self.maxImportantConversations.dialogAdder())\n"
+                self.showErrorMessage(title: "\nВнимание!", msg: message)
+                
+                return
+            }
+            
             conversation.important = true
             favoriteImage.isHidden = conversation.important ? false : true
+            
+            self.addImportantConversation(importantID: conversation.peerID)
             
             if let delegate = self.delegate,
                 let conversation = delegate.conversations.filter({ $0.peerID == conversation.peerID }).first {
                 conversation.important = true
+                
+                if (delegate.selectedMenu == 1) {
+                    var importantDialogs: [Message] = []
+                    for dialog in delegate.menuDialogs {
+                        if let conversation = delegate.conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            importantDialogs.append(dialog)
+                        }
+                    }
+                    delegate.dialogs = importantDialogs
+                }
+                
+                delegate.tableView.reloadData()
+            } else if let delegate = self.delegate2,
+                let conversation = delegate.conversations.filter({ $0.peerID == conversation.peerID }).first {
+                conversation.important = true
+                      
+                if (delegate.selectedMenu == 1) {
+                    var importantDialogs: [Message] = []
+                    for dialog in delegate.dialogs {
+                        if let conversation = delegate.conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                            importantDialogs.append(dialog)
+                        }
+                    }
+                    delegate.dialogs = importantDialogs
+                }
+                      
                 delegate.tableView.reloadData()
             }
             
-            self.addImportantConversation(importantID: conversation.peerID)
-            
-            let message = "Текущий \(conversation.peerID > 2000000000 ? "групповой чат" : "личный диалог")\n помечен как «Важный»"
+            let message = "Текущий \(conversation.peerID > 2000000000 ? "групповой чат" : "личный диалог")\nдобавлен в раздел «Избранное»"
             self.showSuccessMessage(title: "Внимание!", msg: message)
         }
         
@@ -1964,12 +2023,12 @@ extension DialogController {
                 
                 if let conversation = self.conversation {
                     if (conversation.important) {
-                        let action = UIAlertAction(title: "Снять пометку «Важный» с диалога", style: .destructive) { action in
+                        let action = UIAlertAction(title: "Удалить диалог из «Избранное»", style: .destructive) { action in
                             self.setImportantConversation(conversation: conversation)
                         }
                         alertController.addAction(action)
                     } else {
-                        let action = UIAlertAction(title: "Пометить диалог как «Важный»", style: .default) { action in
+                        let action = UIAlertAction(title: "Добавить диалог в «Избранное»", style: .default) { action in
                             self.setImportantConversation(conversation: conversation)
                         }
                         alertController.addAction(action)
@@ -2107,16 +2166,6 @@ extension DialogController {
                 alertController.addAction(action6)
             }
             
-            if chat.count > 0 {
-                let action = UIAlertAction(title: "Добавить чат в «Избранное»", style: .default){ action in
-                    
-                    let text = "Групповой чат: \"\(self.chat[0].title)\""
-                    let link = "https://vk.com/myownlink999_chat_\(self.chatID)"
-                    self.addLinkToFave(link: link, text: text)
-                }
-                alertController.addAction(action)
-            }
-            
             let action2 = UIAlertAction(title: "Добавить друзей в чат", style: .default){ action in
                 
                 let usersController = self.storyboard?.instantiateViewController(withIdentifier: "UsersController") as! UsersController
@@ -2158,12 +2207,12 @@ extension DialogController {
             
             if let conversation = self.conversation {
                 if (conversation.important) {
-                    let action = UIAlertAction(title: "Снять пометку «Важный» с чата", style: .destructive) { action in
+                    let action = UIAlertAction(title: "Удалить чат из «Избранное»", style: .destructive) { action in
                         self.setImportantConversation(conversation: conversation)
                     }
                     alertController.addAction(action)
                 } else {
-                    let action = UIAlertAction(title: "Пометить чат как «Важный»", style: .default) { action in
+                    let action = UIAlertAction(title: "Добавить чат в «Избранное»", style: .default) { action in
                         self.setImportantConversation(conversation: conversation)
                     }
                     alertController.addAction(action)
@@ -2182,136 +2231,15 @@ extension DialogController {
         }
     }
     
-    func configureStickerView(sView: UIView, product: [Int], numProd: Int, width: CGFloat) {
-        
-        sView.backgroundColor = vkSingleton.shared.backColor
-        
-        for subview in sView.subviews {
-            if subview is UIButton {
-                subview.removeFromSuperview()
-            }
-        }
-        
-        let bWidth = (width - 20) / 5
-        for index in 0...product.count-1 {
-            let sButton = UIButton()
-            sButton.frame = CGRect(x: 10 + bWidth * CGFloat(index % 5) + 3, y: 10 + bWidth * CGFloat(index / 5) + 3, width: bWidth - 6, height: bWidth - 6)
-            
-            sButton.tag = product[index]
-            let url = "https://vk.com/images/stickers/\(product[index])/256.png"
-            let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
-            getCacheImage.completionBlock = {
-                OperationQueue.main.addOperation {
-                    sButton.setImage(getCacheImage.outputImage, for: .normal)
-                    sButton.add(for: .touchUpInside) {
-                        self.sendMessage(message: "", attachment: "", fwdMessages: "", stickerID: sButton.tag, controller: self)
-                        self.popover.dismiss()
-                    }
-                    sView.addSubview(sButton)
-                }
-            }
-            OperationQueue().addOperation(getCacheImage)
-        }
-        
-        
-        for index in 1...5 {
-            var startX = width / 2 - 50 * 2.5 - 10
-            var url = "https://vk.com/images/stickers/105/256.png"
-            
-            if index == 2 {
-                startX = width / 2 - 50 * 1.5 - 5
-                url = "https://vk.com/images/stickers/3/256.png"
-            }
-            
-            if index == 3 {
-                startX = width / 2 - 25
-                url = "https://vk.com/images/stickers/63/256.png"
-            }
-            
-            if index == 4 {
-                startX = width / 2 + 25 + 5
-                url = "https://vk.com/images/stickers/145/256.png"
-            }
-            
-            if index == 5 {
-                startX = width / 2 + 50 * 1.5 + 10
-                url = "https://vk.com/images/stickers/231/256.png"
-            }
-            
-            let menuButton = UIButton()
-            menuButton.imageEdgeInsets = UIEdgeInsets(top: 10, left: 10, bottom: 10, right: 10)
-            menuButton.frame = CGRect(x: startX, y: width + 10, width: 50, height: 50)
-            
-            let getCacheImage = GetCacheImage(url: url, lifeTime: .avatarImage)
-            getCacheImage.completionBlock = {
-                OperationQueue.main.addOperation {
-                    let image = getCacheImage.outputImage
-                    
-                    menuButton.layer.cornerRadius = 10
-                    menuButton.layer.borderColor = UIColor.gray.cgColor
-                    menuButton.layer.borderWidth = 1
-                    
-                    if index == numProd {
-                        menuButton.backgroundColor = vkSingleton.shared.mainColor
-                        menuButton.layer.cornerRadius = 10
-                        menuButton.layer.borderColor = vkSingleton.shared.mainColor.cgColor
-                        menuButton.layer.borderWidth = 1
-                    }
-                    
-                    menuButton.setImage(image, for: .normal)
-                    
-                    if index == 1 {
-                        menuButton.add(for: .touchUpInside) {
-                            self.configureStickerView(sView: sView, product: self.product1, numProd: index, width: width)
-                        }
-                    }
-                    if index == 2 {
-                        menuButton.add(for: .touchUpInside) {
-                            self.configureStickerView(sView: sView, product: self.product2, numProd: index, width: width)
-                        }
-                    }
-                    if index == 3 {
-                        menuButton.add(for: .touchUpInside) {
-                            self.configureStickerView(sView: sView, product: self.product3, numProd: index, width: width)
-                        }
-                    }
-                    if index == 4 {
-                        menuButton.add(for: .touchUpInside) {
-                            self.configureStickerView(sView: sView, product: self.product4, numProd: index, width: width)
-                        }
-                    }
-                    if index == 5 {
-                        menuButton.add(for: .touchUpInside) {
-                            self.configureStickerView(sView: sView, product: self.product5, numProd: index, width: width)
-                        }
-                    }
-                    sView.addSubview(menuButton)
-                }
-            }
-            OperationQueue().addOperation(getCacheImage)
-        }
-    }
-    
     @objc func tapStickerButton(sender: UIButton) {
         
         sender.buttonTouched(controller: self)
         commentView.endEditing(true)
         
-        if vkSingleton.shared.stickers.count <= 2 {
-            let width = self.view.bounds.width - 40
-            let height = width + 70
-            let stickerView = UIView(frame: CGRect(x: 0, y: 0, width: width, height: height))
-            stickerView.backgroundColor = vkSingleton.shared.backColor
-            configureStickerView(sView: stickerView, product: product1, numProd: 1, width: width)
-
-            self.popover = Popover(options: self.popoverOptions)
-            self.popover.show(stickerView, fromView: self.commentView.stickerButton)
-        } else {
-            let stickersView = StickersView()
-            stickersView.delegate = self
-            stickersView.configure(width: self.view.bounds.width - 40)
-            stickersView.show(fromView: self.commentView.stickerButton)
-        }
+        let stickersView = StickersView()
+        stickersView.delegate = self
+        stickersView.configure(width: self.view.bounds.width - 40)
+        stickersView.show(fromView: self.commentView.stickerButton)
     }
     
     @objc func tapAccessoryButton(sender: UIButton) {

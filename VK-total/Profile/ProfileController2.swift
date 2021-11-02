@@ -174,10 +174,12 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
         
         code = "\(code) var d = API.wall.get({\"owner_id\":\(userID),\"offset\":\(offset),\"access_token\": \"\(vkSingleton.shared.accessToken)\",\"count\":\(count),\"filter\":\"postponed\",\"extended\":1,\"v\":\"5.85\"});\n"
         
-        if (userID == vkSingleton.shared.userID && vkSingleton.shared.stickers.isEmpty) {
-            code = "\(code) var e = API.store.getProducts({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"type\": \"stickers\",\"merchant\":\"apple\",\"filters\":\"purchased,active\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+        if (userID == vkSingleton.shared.userID) {
+            code = "\(code) var e = API.store.getProducts({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"type\": \"stickers\",\"merchant\":\"apple\",\"filters\":\"active\",\"extended\":\"1\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
+
+            code = "\(code) var f = API.store.getFavoriteStickers({\"access_token\":\"\(vkSingleton.shared.accessToken)\",\"v\":\"\(vkSingleton.shared.version)\"}); \n"
             
-            code = "\(code) return [a,b,c,d,e];"
+            code = "\(code) return [a,b,c,d,e,f];"
         } else {
             code = "\(code) return [a,b,c,d];"
         }
@@ -200,9 +202,9 @@ class ProfileController2: InnerViewController, UITableViewDelegate, UITableViewD
             //print(json["response"][1]["items"])
             
             if self.userID == vkSingleton.shared.userID {
-                if vkSingleton.shared.stickers.isEmpty {
-                    vkSingleton.shared.stickers = json["response"][4]["items"].compactMap { Stickers(json: $0.1) }
-                }
+                let stickers = json["response"][4]["items"].compactMap { Stickers(json: $0.1) }
+                vkSingleton.shared.stickers = stickers.filter({ $0.stickers.count > 0 })
+                vkSingleton.shared.getFavoriteStickers(json: json["response"][5]["items"])
                 
                 OperationQueue.main.addOperation {
                     if self.userProfile.count > 0 {

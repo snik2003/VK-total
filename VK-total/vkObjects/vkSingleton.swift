@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import SwiftyJSON
 import AVFoundation
 
 enum VKUserInterfaceStyle {
@@ -31,6 +32,8 @@ final class vkSingleton {
     let version = "5.85"
     let lpVersion = "3"
     
+    let maxFavoriteStickersCount = 20
+    
     var deviceToken = "" // "604a50395f505b94a0b8a15ae198d34d6cbb0b034387154701ddeabb0a873058"
     var deviceRegisterOnPush = false
     
@@ -41,6 +44,7 @@ final class vkSingleton {
     var pushInfo2: [AnyHashable: Any]? = nil
     
     var stickers: [Stickers] = []
+    var favoriteStickers = Stickers(json: JSON.null)
     
     let appOpenedCountKey = "APP_OPENED_COUNT"
     let dialogsOpenedCountKey = "DIALOGS_OPENED_COUNT"
@@ -53,6 +57,10 @@ final class vkSingleton {
     var separatorColor2 = UIColor(named: "appSeparatorColor2")!
     var labelColor = UIColor(named: "appLabelColor")!
     var secondaryLabelColor = UIColor(named: "appSecondaryLabelColor")!
+    
+    var backPopupColor = UIColor(named: "appMainBackPopupColor")!
+    var labelPopupColor = UIColor(named: "appLabelPopupColor")!
+    var secondaryLabelPopupColor = UIColor(named: "appSecondaryLabelPopupColor")!
     
     var inBackColor = UIColor(named: "messageInColor")!
     var outBackColor = UIColor(named: "messageOutColor")!
@@ -70,7 +78,7 @@ final class vkSingleton {
     var openLink = ""
     
     var actionColor = UIColor(named: "appSecondaryLabelColor")!
-    
+
     func configureColors(controller: UIViewController) {
         
         OperationQueue.main.addOperation {
@@ -93,6 +101,10 @@ final class vkSingleton {
                         vkSingleton.shared.labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.85)
                         vkSingleton.shared.secondaryLabelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.55)
                         
+                        vkSingleton.shared.backPopupColor = UIColor(red: 193/255, green: 198/255, blue: 215/255, alpha: 1)
+                        vkSingleton.shared.labelPopupColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.9)
+                        vkSingleton.shared.secondaryLabelPopupColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.75)
+                        
                         vkSingleton.shared.unreadColor = UIColor(red: 212/255, green: 139/255, blue: 204/255, alpha: 0.3)
                         vkSingleton.shared.likeColor = UIColor(red: 192/255, green: 90/255, blue: 242/255, alpha: 1)
                     } else {
@@ -103,6 +115,10 @@ final class vkSingleton {
                         vkSingleton.shared.separatorColor2 = UIColor(red: 209/255, green: 209/255, blue: 214/255, alpha: 1)
                         vkSingleton.shared.labelColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.85)
                         vkSingleton.shared.secondaryLabelColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.5)
+                        
+                        vkSingleton.shared.backPopupColor = vkSingleton.shared.backColor
+                        vkSingleton.shared.labelPopupColor = vkSingleton.shared.labelColor
+                        vkSingleton.shared.secondaryLabelPopupColor = vkSingleton.shared.secondaryLabelColor
                         
                         vkSingleton.shared.unreadColor = UIColor(red: 175/255, green: 82/255, blue: 222/255, alpha: 0.2)
                         vkSingleton.shared.likeColor = UIColor(red: 175/255, green: 82/255, blue: 222/255, alpha: 1)
@@ -121,6 +137,10 @@ final class vkSingleton {
                     vkSingleton.shared.labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.85)
                     vkSingleton.shared.secondaryLabelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.55)
                     
+                    vkSingleton.shared.backPopupColor = UIColor(red: 193/255, green: 198/255, blue: 215/255, alpha: 1)
+                    vkSingleton.shared.labelPopupColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.9)
+                    vkSingleton.shared.secondaryLabelPopupColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.75)
+                    
                     vkSingleton.shared.unreadColor = UIColor(red: 212/255, green: 139/255, blue: 204/255, alpha: 0.3)
                     vkSingleton.shared.likeColor = UIColor(red: 192/255, green: 90/255, blue: 242/255, alpha: 1)
                 } else {
@@ -136,6 +156,10 @@ final class vkSingleton {
                     vkSingleton.shared.separatorColor2 = UIColor(red: 209/255, green: 209/255, blue: 214/255, alpha: 1)
                     vkSingleton.shared.labelColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.85)
                     vkSingleton.shared.secondaryLabelColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.5)
+                    
+                    vkSingleton.shared.backPopupColor = vkSingleton.shared.backColor
+                    vkSingleton.shared.labelPopupColor = vkSingleton.shared.labelColor
+                    vkSingleton.shared.secondaryLabelPopupColor = vkSingleton.shared.secondaryLabelColor
                     
                     vkSingleton.shared.unreadColor = UIColor(red: 175/255, green: 82/255, blue: 222/255, alpha: 0.2)
                     vkSingleton.shared.likeColor = UIColor(red: 175/255, green: 82/255, blue: 222/255, alpha: 1)
@@ -183,6 +207,10 @@ final class vkSingleton {
                     vkSingleton.shared.labelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.85)
                     vkSingleton.shared.secondaryLabelColor = UIColor(red: 1, green: 1, blue: 1, alpha: 0.55)
                     
+                    vkSingleton.shared.backPopupColor = UIColor(red: 193/255, green: 198/255, blue: 215/255, alpha: 1)
+                    vkSingleton.shared.labelPopupColor = UIColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 0.9)
+                    vkSingleton.shared.secondaryLabelPopupColor = UIColor(red: 0.2, green: 0.2, blue: 0.2, alpha: 0.75)
+                    
                     vkSingleton.shared.unreadColor = UIColor(red: 212/255, green: 139/255, blue: 204/255, alpha: 0.3)
                     vkSingleton.shared.likeColor = UIColor(red: 192/255, green: 90/255, blue: 242/255, alpha: 1)
                 } else {
@@ -193,6 +221,10 @@ final class vkSingleton {
                     vkSingleton.shared.separatorColor2 = UIColor(red: 209/255, green: 209/255, blue: 214/255, alpha: 1)
                     vkSingleton.shared.labelColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.85)
                     vkSingleton.shared.secondaryLabelColor = UIColor(red: 0, green: 0, blue: 0, alpha: 0.5)
+                    
+                    vkSingleton.shared.backPopupColor = vkSingleton.shared.backColor
+                    vkSingleton.shared.labelPopupColor = vkSingleton.shared.labelColor
+                    vkSingleton.shared.secondaryLabelPopupColor = vkSingleton.shared.secondaryLabelColor
                     
                     vkSingleton.shared.unreadColor = UIColor(red: 175/255, green: 82/255, blue: 222/255, alpha: 0.2)
                     vkSingleton.shared.likeColor = UIColor(red: 175/255, green: 82/255, blue: 222/255, alpha: 1)
@@ -214,7 +246,37 @@ final class vkSingleton {
                     vc.tabBar.barTintColor = vkSingleton.shared.mainColor
                 }
             }
+            
+            if #available(iOS 15, *) {
+                let appearance = UINavigationBarAppearance()
+                appearance.configureWithOpaqueBackground()
+                appearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+                appearance.backgroundColor = vkSingleton.shared.mainColor
+                UINavigationBar.appearance().standardAppearance = appearance
+                UINavigationBar.appearance().scrollEdgeAppearance = appearance
+                UITableView.appearance().sectionHeaderTopPadding = 0.0
+            }
         }
+    }
+    
+    func getFavoriteStickers(json: JSON) {
+        self.stickers = self.stickers.filter({ $0.id > 0 })
+        
+        self.favoriteStickers.id = 0
+        self.favoriteStickers.title = "Избранные стикеры"
+        self.favoriteStickers.active = 1
+        
+        self.favoriteStickers.stickers = json.compactMap({ Sticker(json: $0.1) })
+        
+        if (self.favoriteStickers.stickers.count > 0) { self.stickers.insert(self.favoriteStickers, at: 0) }
+    }
+    
+    func containsInFavoriteStickers(stickerID: Int) -> Bool {
+        for sticker in self.favoriteStickers.stickers {
+            if sticker.stickerID == stickerID { return true }
+        }
+        
+        return false
     }
 }
 

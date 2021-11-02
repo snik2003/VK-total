@@ -41,6 +41,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             vkSingleton.shared.pushInfo2 = userInfo
         }
         
+        if #available(iOS 15, *) {
+            UITableView.appearance().sectionHeaderTopPadding = 0.0
+        }
+        
         StoreReviewHelper.incrementAppOpenedCount()
         return true
     }
@@ -408,11 +412,12 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             } else if type == "msg" {
                 if let pushID = (userInfo["data"] as AnyObject).object(forKey: "push_id") as? String {
                     let comp = pushID.components(separatedBy: "_")
-                    if comp.count == 3, let startID = Int(comp[2]) {
+                    if comp.count == 3, let startID = Int(comp[2]), let peerID = Int(comp[1]) {
                         let userID = comp[1]
                         
                         if userID != vkSingleton.shared.userID {
-                            controller.openDialogController(userID: "\(userID)", chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                            controller.addPeerIdToMenuDialogs(peerID: peerID)
+                            controller.openDialogController(userID: userID, chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
                         }
                     }
                 } else {
@@ -442,11 +447,12 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             } else if type == "chat" {
                 if let pushID = (userInfo["data"] as AnyObject).object(forKey: "push_id") as? String {
                     let comp = pushID.components(separatedBy: "_")
-                    if comp.count == 3, let startID = Int(comp[2]), let chatID = Int(comp[1]) {
+                    if comp.count == 3, let startID = Int(comp[2]), let peerID = Int(comp[1]) {
                         let userID = comp[1]
                         
                         if userID != vkSingleton.shared.userID {
-                            controller.openDialogController(userID: "\(userID)", chatID: "\(chatID - 2000000000)", startID: startID, attachment: "", messIDs: [], image: nil)
+                            controller.addPeerIdToMenuDialogs(peerID: peerID)
+                            controller.openDialogController(userID: userID, chatID: "\(peerID - 2000000000)", startID: startID, attachment: "", messIDs: [], image: nil)
                         }
                     }
                 } else {
@@ -469,15 +475,17 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
             if type == "msg" || type == "chat" {
                 if let string = (userInfo["data"] as AnyObject).object(forKey: "id") as? String {
                     let comp = string.components(separatedBy: "_")
-                    if comp.count == 3, let startID = Int(comp[2]), let chatID = Int(comp[1]) {
+                    if comp.count == 3, let startID = Int(comp[2]), let peerID = Int(comp[1]) {
                         let userID = comp[1]
                         let type = comp[0]
                         
                         if type == "chat" {
-                            controller.openDialogController(userID: "\(userID)", chatID: "\(chatID - 2000000000)", startID: startID, attachment: "", messIDs: [], image: nil)
+                            controller.addPeerIdToMenuDialogs(peerID: peerID)
+                            controller.openDialogController(userID: userID, chatID: "\(peerID - 2000000000)", startID: startID, attachment: "", messIDs: [], image: nil)
                         } else if type == "msg" {
                             if userID == vkSingleton.shared.userID { return }
-                            controller.openDialogController(userID: "\(userID)", chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
+                            controller.addPeerIdToMenuDialogs(peerID: peerID)
+                            controller.openDialogController(userID: userID, chatID: "", startID: startID, attachment: "", messIDs: [], image: nil)
                         }
                     }
                 }

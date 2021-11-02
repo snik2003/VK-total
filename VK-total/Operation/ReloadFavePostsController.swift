@@ -72,11 +72,19 @@ class ReloadFavePostsController: Operation {
             }
             controller.tableView.separatorStyle = .singleLine
             
+        } else if type == "important dialogs" {
+            
+            controller.dialogs = parseFaves.dialogs
+            controller.conversations = controller.actualConversationArray(conversations: parseFaves.conversations)
+            controller.dialogsProfiles = parseFaves.dialogsUsers
+            
+            controller.dialogs.sort(by: { $0.date > $1.date })
+            
+            controller.tableView.separatorStyle = .none
         }
         
         controller.offset += controller.count
         controller.tableView.reloadData()
-        controller.menuView.isUserInteractionEnabled = true
         ViewControllerUtils().hideActivityIndicator()
     }
 }

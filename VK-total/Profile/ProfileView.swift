@@ -452,7 +452,7 @@ class ProfileView: UIView {
         onlineStatusLabel.textAlignment = .center
         onlineStatusLabel.backgroundColor = .clear
         onlineStatusLabel.adjustsFontSizeToFitWidth = true
-        onlineStatusLabel.minimumScaleFactor = 0.5
+        onlineStatusLabel.minimumScaleFactor = 0.8
         onlineStatusLabel.font = UIFont(name: "Verdana", size: 12)
         
         if profile.onlineStatus == 1 {
@@ -532,9 +532,9 @@ class ProfileView: UIView {
         view.addSubview(nameLabel)
         height += 21
         
-        onlineStatusLabel.frame = CGRect(x: leftInsets + infoButtonHeight, y: height, width: width - 2 * (leftInsets + infoButtonHeight), height: 15)
+        onlineStatusLabel.frame = CGRect(x: leftInsets + infoButtonHeight, y: height, width: width - 2 * (leftInsets + infoButtonHeight), height: 18)
         view.addSubview(onlineStatusLabel)
-        height += 15
+        height += 18
         
         if let text = ageLabel.text, text != "" {
             ageLabel.frame = CGRect(x: leftInsets, y: height, width: width - 2 * leftInsets, height: 15)
@@ -663,6 +663,18 @@ extension Int {
         }
         
         return "\(mess) сообщений"
+    }
+    
+    func dialogAdder() -> String {
+        
+        let mess = self
+        if (mess % 10 == 1 && (mess % 100 != 11)) {
+            return "\(mess) диалог"
+        } else if ((mess % 10 >= 2 && mess % 10 < 5) && !(mess % 100 >= 12 && mess % 100 < 15)) {
+            return "\(mess) диалога"
+        }
+        
+        return "\(mess) диалогов"
     }
     
     func attachAdder() -> String {

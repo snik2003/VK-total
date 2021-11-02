@@ -24,6 +24,10 @@ class ParseFaves: Operation {
     var links: [FaveLinks] = []
     var pages: [FavePages] = []
     
+    var conversations: [Conversation] = []
+    var dialogs: [Message] = []
+    var dialogsUsers: [DialogsUsers] = []
+    
     var nextFrom: String = ""
     
     private var source: String
@@ -40,12 +44,28 @@ class ParseFaves: Operation {
             let groupsData = json["response"]["groups"].compactMap { WallGroups(json: $0.1) }
             let newFrom = json["response"]["next_from"].stringValue
             
-            
-            
             nextFrom = newFrom
             wall = newsData
             profiles = profilesData
             groups = groupsData
+            
+        } else if source == "important dialogs" {
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            conversations = json["response"][0]["items"].compactMap({ Conversation(json: $0.1) })
+            dialogs = json["response"][1]["items"].compactMap { Message(json: $0.1, conversations: conversations) }
+            
+            dialogsUsers = json["response"][1]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+            let groups = json["response"][1]["groups"].compactMap { GroupProfile(json: $0.1) }
+            for group in groups {
+                let newGroup = DialogsUsers(json: JSON.null)
+                newGroup.uid = "-\(group.gid)"
+                newGroup.firstName = group.name
+                newGroup.photo100 = group.photo100
+                dialogsUsers.append(newGroup)
+            }
+            
         } else if source == "photo" {
             
             guard let json = try? JSON(data: data) else { print("json error"); return }

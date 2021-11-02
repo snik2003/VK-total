@@ -70,7 +70,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.down),
         .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
-        .color(vkSingleton.shared.backColor)
+        .color(vkSingleton.shared.backPopupColor)
     ]
     
     var barButton: UIBarButtonItem!
@@ -884,7 +884,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
     func contactView(user: DialogsUsers, contact: Contact, topY: CGFloat) -> UIView {
     
         let view = UIView()
-        view.backgroundColor = vkSingleton.shared.backColor
+        view.backgroundColor = vkSingleton.shared.backPopupColor
         
         let width = UIScreen.main.bounds.width - 40
         var height: CGFloat = 0
@@ -921,7 +921,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         let nameLabel = UILabel()
         nameLabel.attributedText = nil
         nameLabel.text = "\(user.firstName) \(user.lastName)"
-        nameLabel.textColor = vkSingleton.shared.labelColor
+        nameLabel.textColor = vkSingleton.shared.labelPopupColor
         
         if user.online == 1 {
             if user.onlineMobile == 1 {
@@ -947,7 +947,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         if contact.desc != "" {
             let label = UILabel()
             label.text = "\(contact.desc)"
-            label.textColor = vkSingleton.shared.secondaryLabelColor
+            label.textColor = vkSingleton.shared.secondaryLabelPopupColor
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -959,7 +959,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         if contact.phone != "" {
             let label = UILabel()
             label.text = "\(contact.phone)"
-            label.textColor = vkSingleton.shared.secondaryLabelColor
+            label.textColor = vkSingleton.shared.secondaryLabelPopupColor
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -971,7 +971,7 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         if contact.email != "" {
             let label = UILabel()
             label.text = "\(contact.email)"
-            label.textColor = vkSingleton.shared.secondaryLabelColor
+            label.textColor = vkSingleton.shared.secondaryLabelPopupColor
             label.font = UIFont(name: "Verdana", size: 10)!
             label.adjustsFontSizeToFitWidth = true
             label.minimumScaleFactor = 0.5
@@ -1066,13 +1066,13 @@ class GroupProfileController2: InnerViewController, UITableViewDelegate, UITable
         }
 
         let descView = UIView(frame: CGRect(x: 0, y: 0, width: width - 20, height: height))
-        descView.backgroundColor = vkSingleton.shared.backColor
+        descView.backgroundColor = vkSingleton.shared.backPopupColor
         
         let textView = UILabel(frame: CGRect(x: 10, y: 10, width: width - 40, height: height - 20))
         textView.text = profile.description
-        textView.textColor = vkSingleton.shared.labelColor
+        textView.textColor = vkSingleton.shared.labelPopupColor
         
-        textView.prepareTextForPublish2(self)
+        textView.prepareTextForPublish2(self, color: vkSingleton.shared.labelPopupColor)
         textView.backgroundColor = .clear
         textView.font = dFont
         textView.textAlignment = .center

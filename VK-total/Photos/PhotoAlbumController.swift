@@ -68,7 +68,7 @@ class PhotoAlbumController: InnerViewController, UIImagePickerControllerDelegate
     fileprivate var popoverOptions: [PopoverOption] = [
         .type(.down),
         .blackOverlayColor(UIColor(white: 0.0, alpha: 0.6)),
-        .color(vkSingleton.shared.backColor)
+        .color(vkSingleton.shared.backPopupColor)
     ]
     
     override func viewDidLoad() {
@@ -296,13 +296,13 @@ class PhotoAlbumController: InnerViewController, UIImagePickerControllerDelegate
             }
 
             let descView = UIView(frame: CGRect(x: 0, y: 0, width: width - 20, height: height))
-            descView.backgroundColor = vkSingleton.shared.backColor
+            descView.backgroundColor = vkSingleton.shared.backPopupColor
             
             let textView = UILabel(frame: CGRect(x: 10, y: 10, width: width - 40, height: height - 20))
             textView.text = album.descriptionText
-            textView.textColor = vkSingleton.shared.labelColor
+            textView.textColor = vkSingleton.shared.labelPopupColor
             
-            textView.prepareTextForPublish2(self)
+            textView.prepareTextForPublish2(self, color: vkSingleton.shared.labelPopupColor)
             textView.backgroundColor = .clear
             textView.font = dFont
             textView.textAlignment = .center

@@ -12,6 +12,7 @@ import Alamofire
 import DCCommentView
 import SCLAlertView
 import DropDown
+import SmileLock
 
 protocol VkOperationProtocol {
     
@@ -126,9 +127,218 @@ protocol VkOperationProtocol {
     func deleteImportantConversation(importantID: Int)
     
     func actualConversationArray(conversations: [Conversation]) -> [Conversation]
+    
+    func convertMenuDialogs()
+    
+    func splitMenuDialogsArrayOn100(dialogsIDs: [Int]) -> [[Int]]
+    
+    func readMenuDialogs() -> [Int]
+    
+    func saveMenuDialogs(dialogsIds: [Int])
+    
+    func removeConversationWith(peerID: Int)
+    
+    func addPeerIdToMenuDialogs(peerID: Int)
+    
+    func removePeerIdFromMenuDialogs(peerID: Int)
+    
+    func addNewConversations(conversations: [Conversation]) -> [Int]
+    
+    func addStickersToFavorite(stickerID: Int, success: @escaping ()->())
+    
+    func removeStickersFromFavorite(stickerID: Int, success: @escaping ()->())
+    
+    func checkAndAddStickersToFavorite(stickerID: Int, success: @escaping ()->())
 }
 
 extension UIViewController: VkOperationProtocol {
+    
+    func checkAndAddStickersToFavorite(stickerID: Int, success: @escaping ()->()) {
+        if vkSingleton.shared.favoriteStickers.stickers.contains(where: {$0.stickerID == stickerID }) {
+            self.removeStickersFromFavorite(stickerID: stickerID, success: {
+                self.addStickersToFavorite(stickerID: stickerID, success: success)
+            })
+        } else if vkSingleton.shared.favoriteStickers.stickers.count < vkSingleton.shared.maxFavoriteStickersCount {
+            self.addStickersToFavorite(stickerID: stickerID, success: success)
+        } else if let lastSticker = vkSingleton.shared.favoriteStickers.stickers.last {
+            self.removeStickersFromFavorite(stickerID: lastSticker.stickerID, success: {
+                self.addStickersToFavorite(stickerID: stickerID, success: success)
+            })
+        }
+    }
+    
+    func addStickersToFavorite(stickerID: Int, success: @escaping ()->()) {
+        let url = "/method/store.addStickersToFavorite"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "sticker_ids": "\(stickerID)",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            let result = json["response"].intValue
+            
+            if result == 1 {
+                let url2 = "/method/store.getFavoriteStickers"
+                let parameters2 = [
+                    "access_token": vkSingleton.shared.accessToken,
+                    "v": vkSingleton.shared.version
+                ]
+                
+                let request2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                request2.completionBlock = {
+                    guard let data = request2.data else { return }
+                    
+                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    
+                    vkSingleton.shared.getFavoriteStickers(json: json["response"]["items"])
+                    success()
+                }
+                OperationQueue().addOperation(request2)
+            } else {
+                let error = ErrorJson(json: JSON.null)
+                error.errorCode = json["error"]["error_code"].intValue
+                error.errorMsg = json["error"]["error_msg"].stringValue
+                self.showErrorMessage(title: "Внимание!", msg: "\(error.errorMsg)")
+            }
+        }
+        OperationQueue().addOperation(request)
+    }
+    
+    func removeStickersFromFavorite(stickerID: Int, success: @escaping ()->()) {
+        let url = "/method/store.removeStickersFromFavorite"
+        let parameters = [
+            "access_token": vkSingleton.shared.accessToken,
+            "sticker_ids": "\(stickerID)",
+            "v": vkSingleton.shared.version
+        ]
+        
+        let request = GetServerDataOperation(url: url, parameters: parameters)
+        request.completionBlock = {
+            guard let data = request.data else { return }
+            
+            guard let json = try? JSON(data: data) else { print("json error"); return }
+            let result = json["response"].intValue
+            
+            if result == 1 {
+                let url2 = "/method/store.getFavoriteStickers"
+                let parameters2 = [
+                    "access_token": vkSingleton.shared.accessToken,
+                    "v": vkSingleton.shared.version
+                ]
+                
+                let request2 = GetServerDataOperation(url: url2, parameters: parameters2)
+                request2.completionBlock = {
+                    guard let data = request2.data else { return }
+                    
+                    guard let json = try? JSON(data: data) else { print("json error"); return }
+                    
+                    vkSingleton.shared.getFavoriteStickers(json: json["response"]["items"])
+                    success()
+                }
+                OperationQueue().addOperation(request2)
+            } else {
+                let error = ErrorJson(json: JSON.null)
+                error.errorCode = json["error"]["error_code"].intValue
+                error.errorMsg = json["error"]["error_msg"].stringValue
+                self.showErrorMessage(title: "Внимание!", msg: "\(error.errorMsg)")
+            }
+        }
+        OperationQueue().addOperation(request)
+    }
+    
+    func convertMenuDialogs() {
+        
+        let key = "\(vkSingleton.shared.userID)_all-dialogs"
+        if let dialogs = UserDefaults.standard.object(forKey: key) as? [Message] {
+        
+            var dialogsIDs = readMenuDialogs()
+            for dialog in dialogs {
+                if !dialogsIDs.contains(dialog.peerID) { dialogsIDs.append(dialog.peerID) }
+                saveMenuDialogs(dialogsIds: dialogsIDs)
+                UserDefaults.standard.removeObject(forKey: key)
+            }
+        }
+    }
+    
+    func splitMenuDialogsArrayOn100(dialogsIDs: [Int]) -> [[Int]] {
+        
+        var peer100: [[Int]] = []
+        let count = dialogsIDs.count % 100 == 0 ? dialogsIDs.count / 100 : dialogsIDs.count / 100 + 1
+        
+        if (count == 1) {
+            peer100.append(dialogsIDs)
+        } else {
+            for index in 0 ..< count {
+                let index0 = 100 * index
+                let index1 = min(99 + 100 * index,dialogsIDs.count - 1)
+                
+                let element = Array(dialogsIDs[index0 ... index1])
+                peer100.append(element)
+            }
+        }
+        
+        return peer100
+    }
+    
+    func readMenuDialogs() -> [Int] {
+    
+        let key = "\(vkSingleton.shared.userID)_menu-all-dialogs"
+        if let dialogsIds = UserDefaults.standard.object(forKey: key) as? [Int] { return dialogsIds }
+        
+        return []
+    }
+    
+    func saveMenuDialogs(dialogsIds: [Int]) {
+        
+        let key = "\(vkSingleton.shared.userID)_menu-all-dialogs"
+        UserDefaults.standard.set(dialogsIds, forKey: key)
+    }
+    
+    func removeConversationWith(peerID: Int) {
+        
+        let dialogsIDs = readMenuDialogs().filter({ $0 != peerID })
+        saveMenuDialogs(dialogsIds: dialogsIDs)
+    }
+    
+    func addPeerIdToMenuDialogs(peerID: Int) {
+        
+        var dialogsIDs = readMenuDialogs()
+        if !dialogsIDs.contains(peerID) {
+            dialogsIDs.append(peerID)
+            saveMenuDialogs(dialogsIds: dialogsIDs)
+            
+            print("add peerId \(peerID) to menu dialogs")
+        }
+    }
+    
+    func removePeerIdFromMenuDialogs(peerID: Int) {
+        
+        var dialogsIDs = readMenuDialogs()
+        if dialogsIDs.contains(peerID) {
+            dialogsIDs.remove(object: peerID)
+            saveMenuDialogs(dialogsIds: dialogsIDs)
+            
+            print("remove peerId \(peerID) from menu dialogs")
+        }
+    }
+    
+    func addNewConversations(conversations: [Conversation]) -> [Int] {
+        
+        var dialogsIDs = readMenuDialogs()
+        
+        for conversation in conversations {
+            if !dialogsIDs.contains(conversation.peerID) { dialogsIDs.append(conversation.peerID) }
+        }
+        
+        saveMenuDialogs(dialogsIds: dialogsIDs)
+        
+        return dialogsIDs
+    }
     
     func getImportantConversations() -> [Int] {
     
@@ -610,8 +820,6 @@ extension UIViewController: VkOperationProtocol {
                 "access_token": vkSingleton.shared.accessToken,
                 "owner_id": controller.ownerID,
                 "post_id": controller.itemID,
-                "message": text,
-                "attachments": attachments,
                 "guid": guid,
                 "v": vkSingleton.shared.version
             ]
@@ -623,13 +831,19 @@ extension UIViewController: VkOperationProtocol {
                 "access_token": vkSingleton.shared.accessToken,
                 "owner_id": controller.ownerID,
                 "photo_id": controller.itemID,
-                "message": text,
-                "attachments": attachments,
                 "guid": guid,
                 "v": vkSingleton.shared.version
             ]
         }
      
+        if !text.isEmpty {
+            parameters["message"] = text
+        }
+        
+        if !attachments.isEmpty {
+            parameters["attachments"] = attachments
+        }
+        
         if vkSingleton.shared.commentFromGroup > 0 {
             parameters["from_group"] = "\(vkSingleton.shared.commentFromGroup)"
         }
@@ -648,6 +862,8 @@ extension UIViewController: VkOperationProtocol {
             guard let data = request.data else { return }
             
             guard let json = try? JSON(data: data) else { print("json error"); return }
+            
+            //print(json)
             
             let error = ErrorJson(json: JSON.null)
             error.errorCode = json["error"]["error_code"].intValue
@@ -1343,8 +1559,11 @@ extension UIViewController: VkOperationProtocol {
                     controller.commentView.tintColor = vkSingleton.shared.labelColor
                     
                     controller.commentView.sendImage = UIImage(named: "send")
-                    controller.commentView.stickerImage = UIImage(named: "sticker")
-                    controller.commentView.stickerButton.addTarget(controller, action: #selector(controller.tapStickerButton(sender:)), for: .touchUpInside)
+                    
+                    if (vkSingleton.shared.stickers.count > 0) {
+                        controller.commentView.stickerImage = UIImage(named: "sticker")
+                        controller.commentView.stickerButton.addTarget(controller, action: #selector(controller.tapStickerButton(sender:)), for: .touchUpInside)
+                    }
                     
                     controller.commentView.tabHeight = 0
                     if #available(iOS 13.0, *) {
@@ -3440,6 +3659,7 @@ extension UIViewController: VkOperationProtocol {
             guard let data = request.data else { return }
             
             guard let json = try? JSON(data: data) else { print("json error"); return }
+            print("json1 = \(json)")
             
             let error = ErrorJson(json: JSON.null)
             error.errorCode = json["error"]["error_code"].intValue
@@ -3450,11 +3670,12 @@ extension UIViewController: VkOperationProtocol {
                 
                 self.myGifUploadRequest(url: uploadURL, imageData: data, filename: fileName) { json2 in
                     
+                    print("json2 = \(json2)")
+                    
                     let error = json2["error_descr"].stringValue
                     if error.isEmpty {
                         let file = json2["file"].stringValue
-                        //print("json2 = \(json2)")
-                        
+                    
                         let url2 = "/method/docs.save"
                         let parameters2 = [
                             "access_token": vkSingleton.shared.accessToken,
@@ -3463,12 +3684,11 @@ extension UIViewController: VkOperationProtocol {
                         ]
                         
                         let request2 = GetServerDataOperation(url: url2, parameters: parameters2)
-                        
                         request2.completionBlock = {
                             guard let data = request2.data else { return }
                             
                             let json3 = try! JSON(data: data)
-                            //print("json3 = \(json3)")
+                            print("json3 = \(json3)")
                             
                             let error = ErrorJson(json: JSON.null)
                             error.errorCode = json3["error"]["error_code"].intValue
@@ -4076,7 +4296,7 @@ extension UIViewController {
         
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
-        request.httpBody = createBodyWithParameters(filePathKey: "file", imageDataKey: videoData as NSData, boundary: boundary, filepath: filename, squareCrop: "") as Data
+        request.httpBody = createBodyWithParameters(filePathKey: "file", dataKey: videoData as NSData, boundary: boundary, filepath: filename, squareCrop: "") as Data
         
         let task = URLSession.shared.dataTask(with: request as URLRequest) {
             data, response, error in
@@ -4118,7 +4338,7 @@ extension UIViewController {
             
         if imageData == nil { return }
             
-        request.httpBody = createBodyWithParameters(filePathKey: "file", imageDataKey: imageData! as NSData, boundary: boundary, filepath: filename, squareCrop: squareCrop) as Data
+        request.httpBody = createBodyWithParameters(filePathKey: "file", dataKey: imageData! as NSData, boundary: boundary, filepath: filename, squareCrop: squareCrop) as Data
         
         let task = URLSession.shared.dataTask(with: request as URLRequest) {
             data, response, error in
@@ -4149,7 +4369,7 @@ extension UIViewController {
         
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
-        request.httpBody = createBodyWithParameters(filePathKey: "file", imageDataKey: imageData as NSData, boundary: boundary, filepath: filename, squareCrop: "") as Data
+        request.httpBody = createBodyWithParameters(filePathKey: "file", dataKey: imageData as NSData, boundary: boundary, filepath: filename, squareCrop: "") as Data
         
         let task = URLSession.shared.dataTask(with: request as URLRequest) {
             data, response, error in
@@ -4170,7 +4390,7 @@ extension UIViewController {
         task.resume()
     }
     
-    func createBodyWithParameters(filePathKey: String?, imageDataKey: NSData, boundary: String, filepath: String, squareCrop: String) -> NSData {
+    func createBodyWithParameters(filePathKey: String?, dataKey: NSData, boundary: String, filepath: String, squareCrop: String) -> NSData {
         
         let body = NSMutableData();
         
@@ -4189,8 +4409,18 @@ extension UIViewController {
         }
         
         if filepath.hasSuffix("m4a") {
-            filename = "voice.mp3"
+            filename = filepath
+            mimetype = "audio/mpeg"
+        }
+        
+        if filepath.hasSuffix("ogg") {
+            filename = filepath
             mimetype = "audio/mp3"
+        }
+        
+        if filepath.hasSuffix("opus") {
+            filename = filepath
+            mimetype = "audio/opus"
         }
         
         if filepath == "video_file" {
@@ -4201,7 +4431,7 @@ extension UIViewController {
         body.appendString(string: "--\(boundary)\r\n")
         body.appendString(string: "Content-Disposition: form-data; name=\"\(filePathKey!)\"; filename=\"\(filename)\"\r\n")
         body.appendString(string: "Content-Type: \(mimetype)\r\n\r\n")
-        body.append(imageDataKey as Data)
+        body.append(dataKey as Data)
         body.appendString(string: "\r\n")
         body.appendString(string: "--\(boundary)--\r\n")
         

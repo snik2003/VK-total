@@ -741,6 +741,236 @@ extension UIViewController: vkUserLongPollProtocol {
                     }
                 }
                 
+                if let controller = vc as? FavePostsController2, controller.selectedMenu == 1, controller.dialogsProfiles.count > 0 {
+                    var typing = false
+                    var change = false
+                    
+                    for update in vkUserLongPoll.shared.updates {
+                        if update.elements[0] == 8 {
+                            for dialog in controller.dialogs {
+                                if dialog.userID == abs(update.elements[1]) {
+                                    for user in controller.dialogsProfiles {
+                                        if "\(dialog.userID)" == user.uid {
+                                            user.online = 1
+                                            let platform = update.elements[2] % 256
+                                            if platform > 0 && platform != 7 {
+                                                user.onlineMobile = 1
+                                            }
+                                            change = true
+                                        }
+                                    }
+                                }
+                            }
+                        } else if update.elements[0] == 9 {
+                            for dialog in controller.dialogs {
+                                if dialog.userID == abs(update.elements[1]) {
+                                    for user in controller.dialogsProfiles {
+                                        if "\(dialog.userID)" == user.uid {
+                                            user.online = 0
+                                            user.lastSeen = update.elements[3]
+                                            change = true
+                                        }
+                                    }
+                                }
+                            }
+                        } else if update.elements[0] == 2 {
+                            var updateID = update.elements[3]
+                            if update.elements[3] > 2000000000 {
+                                updateID = update.elements[3] - 2000000000
+                            }
+                            
+                            let flags = update.elements[2]
+                            var summands: [Int] = []
+                            for number in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 65536, 131072] {
+                                if flags & number != 0 {
+                                    summands.append(number)
+                                }
+                            }
+                            
+                            for dialog in controller.dialogs {
+                                if dialog.userID == updateID || dialog.chatID == updateID {
+                                    if summands.contains(128) || summands.contains(131072) {
+                                        if dialog.id == update.elements[1] {
+                                            dialog.body = "Сообщение удалено..."
+                                            change = true
+                                        }
+                                    }
+                                }
+                            }
+                            
+                        } else if update.elements[0] == 4 {
+                            if controller.dialogs.count > 0 {
+                                var find = false
+                                var changeIndex = 0
+                                
+                                var updateID = update.elements[3]
+                                if update.elements[3] > 2000000000 {
+                                    updateID = update.elements[3] - 2000000000
+                                }
+                                
+                                for index in 0 ..< controller.dialogs.count {
+                                    if (controller.dialogs[index].userID == updateID && controller.dialogs[index].chatID == 0) || controller.dialogs[index].chatID == updateID {
+                                        
+                                        find = true
+                                        controller.dialogs[index].id = update.elements[1]
+                                        controller.dialogs[index].body = update.text
+                                        controller.dialogs[index].date = update.elements[4]
+                                        controller.dialogs[index].emoji = update.emoji
+                                        controller.dialogs[index].fromID = update.fromID
+                                        controller.dialogs[index].action = update.action
+                                        controller.dialogs[index].actionID = update.actionID
+                                        
+                                        let flags = update.elements[2]
+                                        var summands: [Int] = []
+                                        for number in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 65536] {
+                                            if flags & number != 0 {
+                                                summands.append(number)
+                                            }
+                                        }
+                                        
+                                        controller.dialogs[index].readState = summands.contains(1) ? 0 : 1
+                                        controller.dialogs[index].typeAttach = update.type
+                                        
+                                        if controller.dialogs[index].chatID == 0 {
+                                            controller.dialogs[index].out = summands.contains(2) ? 1 : 0
+                                            controller.dialogs[index].fromID = summands.contains(2) ? Int(vkSingleton.shared.userID)! : update.elements[3]
+                                        } else {
+                                            controller.dialogs[index].out = summands.contains(2) ? 1 : 0
+                                            controller.dialogs[index].fromID = update.fromID
+                                        }
+                                        
+                                        change = true
+                                        changeIndex = index
+                                    }
+                                }
+                                
+                                if find == false {
+                                    let mess = Message(json: JSON.null)
+                                    mess.id = update.elements[1]
+                                    mess.chatID = update.elements[3] > 2000000000 ? update.elements[3] - 2000000000 : 0
+                                    mess.userID = update.elements[3] > 2000000000 ? update.fromID : update.elements[3]
+                                    mess.userID = update.elements[3]
+                                    mess.body = update.text
+                                    mess.date = update.elements[4]
+                                    mess.emoji = update.emoji
+                                    mess.title = update.title
+                                    mess.fromID = update.fromID
+                                    mess.action = update.action
+                                    mess.actionID = update.actionID
+                                    
+                                    let flags = update.elements[2]
+                                    var summands: [Int] = []
+                                    for number in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 65536] {
+                                        if flags & number != 0 {
+                                            summands.append(number)
+                                        }
+                                    }
+                                    
+                                    mess.readState = summands.contains(1) ? 0 : 1
+                                    
+                                    if mess.chatID == 0 {
+                                        mess.out = summands.contains(2) ? 1 : 0
+                                        mess.fromID = summands.contains(2) ? Int(vkSingleton.shared.userID)! : update.elements[3]
+                                    } else {
+                                        mess.fromID = update.fromID
+                                        mess.out = summands.contains(2) ? 1 : 0
+                                    }
+                                    
+                                    controller.dialogs.insert(mess, at: 0)
+                                    change = true
+                                } else {
+                                    if changeIndex > 0 {
+                                        controller.dialogs.rearrange(from: changeIndex, to: 0)
+                                    }
+                                }
+                            } else {
+                                let mess = Message(json: JSON.null)
+                                mess.id = update.elements[1]
+                                mess.chatID = update.elements[3] > 2000000000 ? update.elements[3] - 2000000000 : 0
+                                mess.userID = update.elements[3] > 2000000000 ? update.fromID : update.elements[3]
+                                mess.userID = update.elements[3]
+                                mess.body = update.text
+                                mess.date = update.elements[4]
+                                mess.emoji = update.emoji
+                                mess.title = update.title
+                                mess.fromID = update.fromID
+                                mess.action = update.action
+                                mess.actionID = update.actionID
+                                
+                                let flags = update.elements[2]
+                                var summands: [Int] = []
+                                for number in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 65536] {
+                                    if flags & number != 0 {
+                                        summands.append(number)
+                                    }
+                                }
+                                
+                                mess.readState = summands.contains(1) ? 0 : 1
+                                mess.out = summands.contains(2) ? 1 : 0
+                                if mess.chatID == 0 {
+                                    mess.fromID = summands.contains(2) ? Int(vkSingleton.shared.userID)! : update.elements[3]
+                                } else {
+                                    mess.fromID = update.fromID
+                                    
+                                }
+                                
+                                controller.dialogs.append(mess)
+                                change = true
+                            }
+                        } else if update.elements[0] == 6 {
+                            var updateID = update.elements[1]
+                            if update.elements[1] > 2000000000 {
+                                updateID = update.elements[1] - 2000000000
+                            }
+                            
+                            for dialog in controller.dialogs {
+                                if dialog.userID == updateID || dialog.chatID == updateID {
+                                    for dialog in controller.dialogs {
+                                        if dialog.id == update.elements[2] && dialog.out == 0 {
+                                            dialog.readState = 1
+                                        }
+                                    }
+                                    change = true
+                                }
+                            }
+                        } else if update.elements[0] == 7 {
+                            var updateID = update.elements[1]
+                            if update.elements[1] > 2000000000 {
+                                updateID = update.elements[1] - 2000000000
+                            }
+                            
+                            for dialog in controller.dialogs {
+                                if dialog.userID == updateID || dialog.chatID == updateID {
+                                    for dialog in controller.dialogs {
+                                        if dialog.id == update.elements[2] && dialog.out == 1 {
+                                            dialog.readState = 1
+                                        }
+                                    }
+                                    
+                                    change = true
+                                }
+                            }
+                        } else if update.elements[0] == 61 {
+                            for dialog in controller.dialogs {
+                                if dialog.userID == update.elements[1] {
+                            
+                                    typing = true
+                                }
+                            }
+                        }
+                    }
+                    
+                    if typing == false {
+                        
+                    }
+                    
+                    if change {
+                        OperationQueue.main.addOperation {
+                            controller.tableView.reloadData()
+                        }
+                    }
+                }
+                
                 if let controller = vc as? UsersController {
                     for update in vkUserLongPoll.shared.updates {
                         for user in controller.users {

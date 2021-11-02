@@ -17,27 +17,37 @@ class ReloadDialogsController: Operation {
     }
     
     override func main() {
-        guard let parseDialogs = dependencies[0] as? ParseDialogs, let parseDialogsUsers = dependencies[1] as? ParseDialogsUsers, let parseDialogsGroups = dependencies[2] as? ParseGroupProfile else { return }
+        guard let parseDialogs = dependencies[0] as? ParseDialogs else { return }
         
-        if parseDialogsUsers.outputData.count > 0 {
-            for user in parseDialogsUsers.outputData {
-                controller.users.append(user)
+        
+        switch controller.selectedMenu {
+        case 0:
+            controller.dialogs = controller.menuDialogs
+            break
+        case 1:
+            var importantDialogs: [Message] = []
+            for dialog in controller.menuDialogs {
+                if let conversation = controller.conversations.filter({ $0.peerID == dialog.peerID }).first, conversation.important {
+                    importantDialogs.append(dialog)
+                }
             }
+            controller.dialogs = importantDialogs
+            break
+        case 2:
+            controller.dialogs = controller.menuDialogs.filter({ $0.chatID > 0 })
+            break
+        case 3:
+            controller.dialogs = controller.menuDialogs.filter({ $0.userID < 0 })
+            break
+        case 4:
+            controller.dialogs = controller.menuDialogs.filter({ $0.readState == 0 && $0.out == 0 })
+            break
+        default:
+            break
         }
         
-        if parseDialogsGroups.outputData.count > 0 {
-            for group in parseDialogsGroups.outputData {
-                let newGroup = DialogsUsers(json: JSON.null)
-                newGroup.uid = "-\(group.gid)"
-                newGroup.firstName = group.name
-                newGroup.maxPhotoOrigURL = group.photo200
-                newGroup.photo100 = group.photo100
-                controller.users.append(newGroup)
-            }
-        }
-        
-        controller.menuDialogs.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_all-dialogs")
-        controller.users.saveInUserDefaults(KeyName: "\(vkSingleton.shared.userID)_dialogs-users")
+        controller.removeDuplicatesFromDialogs()
+        controller.dialogs.sort(by: { $0.date > $1.date })
         
         controller.totalCount = parseDialogs.count
         controller.offset += controller.count

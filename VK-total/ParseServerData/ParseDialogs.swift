@@ -13,6 +13,7 @@ class ParseDialogs: Operation {
     
     var conversations: [Conversation] = []
     var outputData: [Message] = []
+    var users: [DialogsUsers] = []
     var unread: Int = 0
     var count: Int = 0
     
@@ -24,8 +25,21 @@ class ParseDialogs: Operation {
         
         conversations = json["response"]["items"].compactMap({ Conversation(json: $0.1["conversation"]) })
         let dialogs = json["response"]["items"].compactMap { Message(json: $0.1["last_message"], conversations: conversations) }
+    
+        var users = json["response"]["profiles"].compactMap { DialogsUsers(json: $0.1) }
+        let groups = json["response"]["groups"].compactMap { GroupProfile(json: $0.1) }
+        for group in groups {
+            let newGroup = DialogsUsers(json: JSON.null)
+            newGroup.uid = "-\(group.gid)"
+            newGroup.firstName = group.name
+            newGroup.photo100 = group.photo100
+            users.append(newGroup)
+        }
+        
         unread = json["response"]["unread_dialogs"].intValue
         count = json["response"]["count"].intValue
+    
+        self.users = users
         outputData = dialogs
     }
 }
